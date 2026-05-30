@@ -1,0 +1,47 @@
+{
+  "core": [
+    "core/util.js",
+    "core/vfs.js",
+    "core/audio.js",
+    "logo/data.js",
+    "logo/errors.js",
+    "logo/reader.js",
+    "logo/parser.js",
+    "logo/prims.js",
+    "logo/prims-data.js",
+    "logo/prims-math.js",
+    "logo/prims-control.js",
+    "logo/prims-workspace.js",
+    "logo/prims-io.js",
+    "logo/prims-turtle.js",
+    "logo/turtle.js",
+    "logo/interp.js",
+    "logo/debug.js",
+    "logo/highlight.js"
+  ],
+  "ide": [
+    "ide/ui.js",
+    "ide/editor.js",
+    "ide/zip.js",
+    "ide/share.js",
+    "ide/turtleview.js",
+    "ide/commander.js",
+    "ide/vartree.js",
+    "ide/inspector.js",
+    "ide/callout.js",
+    "ide/files.js",
+    "ide/samples-data.js",
+    "ide/samples.js",
+    "logo/help/*.js",
+    "ide/lessons/*.js",
+    "ide/library-data.js",
+    "ide/tour.js",
+    "ide/help.js",
+    "ide/lessons.js",
+    "ide/library.js",
+    "ide/app.js"
+  ],
+  "css": [
+    "ide/styles.css"
+  ]
+}
