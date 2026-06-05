@@ -1,0 +1,26 @@
+print word "abc "def
+print (word "a "b "c)
+show first "hello
+show last "hello
+show butfirst "hello
+show butlast "hello
+show bf bf "logo
+print count "turtle
+print item 3 "abcdef
+print uppercase "shout
+print lowercase "QUIET
+print ascii "A
+print char 66
+show member "l "hello
+print memberp "e "hello
+print emptyp "
+print reverse "stressed
+print fput "s "mile
+print lput "s "mile
+print equalp "Logo "LOGO
+print beforep "apple "banana
+print substringp "urt "turtle
+print wordp "abc
+print numberp "12.5
+print numberp "12a
+show "

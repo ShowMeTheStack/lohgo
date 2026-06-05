@@ -1,0 +1,26 @@
+show [a b [c d] e]
+print [a b [c d] e]
+show list 1 2
+show (list 1 2 3 4)
+show sentence [a b] [c d]
+show (sentence "a [b c] "d)
+show fput 0 [1 2 3]
+show lput 4 [1 2 3]
+show first [[a b] c]
+show butfirst [a b c]
+show butlast [a b c]
+show last [a b c]
+show item 2 [x y z]
+print count [a [b c] d]
+print emptyp []
+print memberp 2 [1 2 3]
+show member 2 [1 2 3]
+show remove 2 [1 2 3 2]
+show remdup [a b a c b]
+show reverse [1 2 3]
+show firsts [[a b] [c d]]
+show butfirsts [[a b] [c d]]
+show combine "a [b c]
+show iseq 3 7
+show rseq 0 1 5
+show parse "|one two [three]|

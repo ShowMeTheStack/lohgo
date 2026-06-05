@@ -1,0 +1,43 @@
+repeat 3 [type repcount] print "
+for [i 1 10 3] [type :i type "| |] print "
+for [i 5 1] [type :i] print "
+for [x 0 1 0.25] [type :x type "| |] print "
+make "n 0
+while [:n < 3] [make "n :n + 1]
+print :n
+until [:n = 0] [make "n :n - 1]
+print :n
+do.while [make "n :n + 1] [:n < 5]
+print :n
+print ifelse 2 > 1 ["yes] ["no]
+print (if "false ["a] ["b])
+test 1 = 1
+iftrue [print "t]
+iffalse [print "f]
+print case "b [[[a] 1] [[b c] 2] [else 3]]
+print case "z [[[a] 1] [else 3]]
+print cond [[[1 > 2] "x] [[3 > 2] "y] [else "z]]
+print run [sum 1 2]
+show runresult [print "hi]
+show runresult [product 2 3]
+print catch "done [repeat 10 [if repcount = 4 [(throw "done repcount)]] "never]
+catch "error [print 1 / 0]
+show error
+show error
+to forever.stop
+  make "k 0
+  forever [make "k :k + 1 if :k = 5 [stop]]
+end
+forever.stop
+print :k
+to jump
+  make "j 0
+  tag "again
+  make "j :j + 1
+  if :j < 3 [goto "again]
+  output :j
+end
+print jump
+print apply "sum [1 2 3]
+print invoke [? * 10] 4
+print (invoke "word "a "b "c)

@@ -1,0 +1,45 @@
+to square :n
+  output :n * :n
+end
+print square 7
+to greet :name [:greeting "Hello]
+  print (sentence :greeting :name)
+end
+greet "Ada
+(greet "Ada "Hi)
+to total [:nums]
+  output reduce "sum fput 0 :nums
+end
+print (total 1 2 3 4)
+print total
+to fact :n
+  if :n = 0 [output 1]
+  output :n * fact :n - 1
+end
+print fact 12
+to countdown :n
+  if :n = 0 [print "go stop]
+  type :n type "| |
+  countdown :n - 1
+end
+countdown 5
+to outer
+  local "x
+  make "x 10
+  inner
+  print :x
+end
+to inner
+  make "x :x + 1
+end
+outer
+print namep "x
+make "y 1
+to sety.local
+  localmake "y 99
+  print :y
+end
+sety.local
+print :y
+print arity "greet
+show text "square
