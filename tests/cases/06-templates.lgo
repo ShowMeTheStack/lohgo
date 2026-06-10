@@ -1,0 +1,20 @@
+show map [? * ?] [1 2 3]
+show map "first [[a b] [c d]]
+show (map [?1 + ?2] [1 2] [10 20])
+show map [[x] :x + 1] [1 2]
+show map [uppercase ?] "abc
+show filter [? > 2] [1 2 3 4]
+show filter "numberp [a 1 b 2]
+show find [? > 2] [1 2 3 4]
+show find [? > 9] [1 2]
+print reduce "sum [1 2 3 4]
+print reduce [word ?1 ?2] [a b c]
+foreach [x y z] [type # type ? type "| |] print "
+(foreach [1 2] [a b] [type ?1 type ?2]) print "
+show crossmap [list ?1 ?2] [[a b] [1 2]]
+show map.se [list ? ?] [a b]
+print cascade 5 [? * 2] 1
+print cascade [? > 100] [? * 3] 1
+show `[1 ,[sum 1 1] 3]
+make "v [x y]
+show `[a ,@:v b]

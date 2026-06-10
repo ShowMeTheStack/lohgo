@@ -1,0 +1,19 @@
+to try :code
+  catch "error [run :code stop]
+  print first butfirst error
+end
+try [foo]
+try [fd "abc]
+try [print sum 1]
+try [3]
+try [print :nope]
+try [print first []]
+try [print item 9 [a b]]
+try [print sqrt -1]
+try [(throw "error [custom message])]
+try [print 1 / 0]
+to noout
+end
+try [print noout]
+try [print 1)]
+try [print (sum 1 2]

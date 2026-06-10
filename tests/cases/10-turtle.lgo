@@ -1,0 +1,37 @@
+show pos
+fd 100
+show pos
+rt 90 fd 50
+show pos
+print heading
+seth 45
+print heading
+setxy -10 20
+show pos
+home
+show list xcor ycor
+print towards [0 100]
+print towards [100 0]
+print distance [30 40]
+pu fd 10 print pendownp pd
+print pendownp
+setpc 4 show pc
+setpc [10 20 30] show pc
+setpc "red show pc
+setpensize 3 show pensize
+setbg 1 show bg
+lt 90 print heading
+rt 450 print heading
+show turtlemode
+wrap show turtlemode
+window
+cs show pos print heading
+tell [1 2]
+show who
+ask 1 [fd 10]
+setturtle 1 show pos
+setturtle 0 show pos
+print turtles
+fence
+catch "error [fd 1000]
+show first error

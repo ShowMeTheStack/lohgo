@@ -1,0 +1,31 @@
+make "a {1 2 3}
+show :a
+print item 2 :a
+setitem 2 :a "x
+show :a
+make "b (array 3 0)
+setitem 0 :b 5
+show :b
+print first :b
+show arraytolist :a
+show listtoarray [p q]
+make "m mdarray [2 3]
+mdsetitem [2 3] :m 9
+show :m
+print mditem [2 3] :m
+pprop "cat "legs 4
+pprop "cat "sound "meow
+print gprop "cat "sound
+show plist "cat
+remprop "cat "legs
+show plist "cat
+show gprop "cat "wings
+make "s []
+push "s 1 push "s 2 push "s 3
+print pop "s
+show :s
+make "q []
+queue "q 1 queue "q 2
+print dequeue "q
+show :q
+print count {1 2 3 4}

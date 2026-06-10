@@ -1,0 +1,32 @@
+print [Name?]
+make "n readlist
+print sentence [Hello] :n
+make "w readword
+print word :w "!
+type "a type "b print "c
+show [a [b]] print [a [b]]
+(print "a "b [c d])
+(show "a [b])
+(type "x "y) print "
+openwrite "/projects/t.txt
+setwrite "/projects/t.txt
+print [line one]
+print [line two]
+setwrite []
+close "/projects/t.txt
+openread "/projects/t.txt
+setread "/projects/t.txt
+print readlist
+print readword
+print eofp
+setread []
+close "/projects/t.txt
+print filep "/projects/t.txt
+erasefile "/projects/t.txt
+print filep "/projects/t.txt
+openwrite [buf]
+setwrite [buf]
+type "captured
+setwrite []
+close [buf]
+print :buf
