@@ -1,0 +1,16 @@
+{
+  "name": "lohgo",
+  "version": "1.0.0",
+  "description": "A Logo programming studio in one HTML file: turtle graphics, a debugger that walks through recursion, lessons and a library of programs.",
+  "license": "GPL-3.0-or-later",
+  "author": "Jyotiprakash Mishra <mail@jyotiprakash.org>",
+  "homepage": "https://lohgo.jyotiprakash.org",
+  "repository": { "type": "git", "url": "https://github.com/ShowMeTheStack/lohgo.git" },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node tests/run.mjs && node tests/debugger.test.mjs && node tools/check-lib.mjs samples",
+    "test:e2e": "node tests/e2e/run.mjs"
+  }
+}

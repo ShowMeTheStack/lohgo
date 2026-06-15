@@ -1,0 +1,104 @@
+<!doctype html>
+<!--
+  Lohgo. Copyright (C) 2026 Jyotiprakash Mishra <mail@jyotiprakash.org>
+
+  This program is free software: you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free Software
+  Foundation, either version 3 of the License, or (at your option) any later
+  version. It is distributed WITHOUT ANY WARRANTY; see the GNU General Public
+  License for more details: https://www.gnu.org/licenses/gpl-3.0.html
+
+  Additional term under section 7(b) of the GPL: every copy and every modified or
+  derived version, including one offered over a network, must keep the notice
+  "Based on Lohgo by Jyotiprakash Mishra (https://lohgo.jyotiprakash.org)" in its
+  source code and show it in its about screen or other Appropriate Legal Notices.
+
+  Source code: https://github.com/ShowMeTheStack/lohgo
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="description" content="Lohgo: a Logo programming studio in your browser. Turtle graphics, a debugger that walks through recursion, lessons for kids and a library of programs. Berkeley Logo compatible.">
+<meta name="theme-color" content="#efe7d8">
+<title>Lohgo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232c8a55'/%3E%3Cellipse cx='32' cy='35' rx='14' ry='16' fill='%23f2b432'/%3E%3Ccircle cx='32' cy='14' r='6' fill='%238fcf7a'/%3E%3Cpath d='M22 35h20M32 21v28' stroke='%23b07800' stroke-width='2.5'/%3E%3C/svg%3E">
+<style>
+/*@@CSS@@*/
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <button class="brand" id="brand" type="button" title="About Lohgo" aria-label="About Lohgo">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <rect x="2" y="2" width="60" height="60" rx="18" fill="var(--accent)"/>
+        <g transform="translate(32 34)">
+          <ellipse cx="-12" cy="-8" rx="4" ry="6" transform="rotate(-30 -12 -8)" fill="#a6dd8f"/>
+          <ellipse cx="12" cy="-8" rx="4" ry="6" transform="rotate(30 12 -8)" fill="#a6dd8f"/>
+          <ellipse cx="-11" cy="10" rx="4" ry="6" transform="rotate(35 -11 10)" fill="#a6dd8f"/>
+          <ellipse cx="11" cy="10" rx="4" ry="6" transform="rotate(-35 11 10)" fill="#a6dd8f"/>
+          <ellipse cx="0" cy="-19" rx="5.5" ry="6.2" fill="#a6dd8f"/>
+          <circle cx="-2.2" cy="-21" r="1.2" fill="#123"/><circle cx="2.2" cy="-21" r="1.2" fill="#123"/>
+          <ellipse cx="0" cy="1" rx="13" ry="15" fill="#f2b432"/>
+          <path d="M-13 1h26M0-14v30M-9-9l18 20M9-9l-18 20" stroke="#b07800" stroke-width="2" opacity=".55"/>
+          <ellipse cx="0" cy="1" rx="13" ry="15" fill="none" stroke="#7a5400" stroke-width="2"/>
+        </g>
+      </svg>
+      <span class="word">L<i>o</i>hgo</span>
+    </button>
+    <span class="proj" id="proj"></span>
+    <div class="top-gap"></div>
+    <div class="pill-group" id="runGroup"></div>
+    <div class="pill-group top-hide-phone" id="debugGroup"></div>
+    <label class="speed" id="speedBox"></label>
+    <span class="state" id="state">Ready</span>
+    <div class="mviews"></div>
+    <button class="pbtn icon-only" id="menuBtn" type="button" title="Menu (Alt)" aria-label="Menu" aria-haspopup="menu"></button>
+  </header>
+  <div id="main">
+    <nav id="rail" aria-label="Panels"></nav>
+    <aside id="side" class="closed" aria-label="Side panel">
+      <div class="card" style="height:100%">
+        <div class="card-head"><span class="card-title" id="sideTitle"></span><span class="card-gap"></span><span id="sideTools"></span></div>
+        <div class="card-body" id="sideBody"></div>
+      </div>
+    </aside>
+    <div id="stage">
+      <div id="leftCol">
+        <section class="card" id="worldCard" aria-label="Turtle world">
+          <div class="card-head"><span class="card-title">Turtle world <span class="dim" id="worldInfo"></span></span><span class="card-gap"></span><span id="worldTools"></span></div>
+          <div class="card-body"><div id="worldWrap"><canvas id="worldCanvas" tabindex="0" aria-label="Turtle drawing. Click here to send keys to your program."></canvas><div class="world-hud" id="worldHud"></div><div class="world-keys" id="worldKeys"></div></div></div>
+        </section>
+        <div class="split-h" id="splitCmd" role="separator" aria-orientation="horizontal" aria-label="Resize command center"></div>
+        <section class="card" id="cmdCard" aria-label="Command center">
+          <div class="card-head"><span class="cmd-tabs" id="cmdTabs"></span><span class="card-gap"></span><span id="cmdTools"></span></div>
+          <div class="card-body">
+            <div id="transcript" aria-live="polite" tabindex="-1"></div>
+            <div class="cmd-input" id="cmdInputBox"><span class="prompt" id="cmdPrompt">?</span><textarea id="cmdInput" rows="1" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Type a Logo instruction and press Enter"></textarea></div>
+          </div>
+        </section>
+      </div>
+      <div class="split-v" id="splitRight" role="separator" aria-orientation="vertical" aria-label="Resize editor"></div>
+      <div id="rightCol">
+        <section class="card" id="editorCard" aria-label="Editor">
+          <div class="card-head"><div id="editorTabs" role="tablist"></div><span id="editorTools"></span></div>
+          <div class="card-body" style="display:flex;flex-direction:column"><div id="editors"></div></div>
+        </section>
+        <div class="split-h" id="splitInsp" role="separator" aria-orientation="horizontal" aria-label="Resize inspector"></div>
+        <section class="card" id="inspCard" aria-label="Debugger">
+          <div class="card-head"><span class="cmd-tabs" id="inspTabs" role="tablist"></span><span class="card-gap"></span><span id="inspTools"></span></div>
+          <div class="card-body" id="inspBody"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+  <footer id="status"><span class="msg" id="statusMsg"></span><span class="sb-item" id="sbTurtle"></span><span class="sb-item" id="sbPos"></span><span class="sb-item" id="sbCursor"></span><span class="sb-item">Logo</span></footer>
+  <nav id="mbar" aria-label="Views"></nav>
+</div>
+<div id="overlay-root"></div>
+<script>
+//@@JS@@
+</script>
+</body>
+</html>
