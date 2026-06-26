@@ -1,0 +1,27 @@
+; FLOWER.LGO - petals made of arcs, in every colour of the palette
+;
+; A petal is two arcs back to back. Turning a little after each petal
+; makes a flower. REPCOUNT tells us which time round the loop we are,
+; so we can use it to pick a different colour for each petal.
+
+to petal :size
+  repeat 2 [arc2 60 :size right 120]
+end
+
+; ARC2 walks the turtle along an arc (ARC itself leaves the turtle still)
+to arc2 :angle :radius
+  repeat :angle / 3 [forward :radius * 3.14159 / 60 right 3]
+end
+
+to flower :petals
+  repeat :petals [
+    setpencolor remainder repcount 15
+    petal 120
+    right 360 / :petals
+  ]
+end
+
+clearscreen
+setpensize 2
+flower 12
+hideturtle

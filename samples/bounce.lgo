@@ -1,0 +1,25 @@
+; BOUNCE.LGO - several turtles bouncing around at once
+;
+; TELL picks which turtles the next commands go to. ASK sends commands
+; to one turtle without changing who you are talking to. Each turtle
+; keeps its own position, heading and pen.
+
+to setup
+  for [t 0 4] [
+    ask :t [penup home setheading 20 + 70 * :t setpencolor :t + 1 setshape "circle showturtle pendown]
+  ]
+end
+
+to move.all
+  for [t 0 4] [
+    ask :t [
+      forward 6
+      if or (xcor > 390) (xcor < -390) [setheading 0 - heading]
+      if or (ycor > 290) (ycor < -290) [setheading 180 - heading]
+    ]
+  ]
+end
+
+clearscreen
+setup
+repeat 600 [move.all wait 1]

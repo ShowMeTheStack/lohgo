@@ -1,0 +1,17 @@
+; SPIRAL.LGO - a squared spiral that grows a little on every turn
+;
+; Each time round the loop the turtle walks a bit further than the
+; last time and turns a bit less than a right angle. That small
+; mismatch is what makes the square twist into a spiral.
+; Try: change 91 to 89, 120 or 144. Change the 2 to 1 or 4.
+
+to spiral :size :angle :grow
+  if :size > 400 [stop]
+  forward :size
+  right :angle
+  spiral :size + :grow :angle :grow
+end
+
+clearscreen hideturtle
+setpencolor [40 110 200]
+spiral 2 91 2

@@ -1,0 +1,30 @@
+; DIARY.LGO - keep notes in a file that is still there tomorrow
+;
+; OPENAPPEND opens a file and adds to the end of it, SETWRITE sends
+; PRINT there instead of the screen, and SETWRITE [] sends it back.
+; OPENREAD, SETREAD and READLIST read it back one line at a time.
+; The file lives in /projects/diary.txt on your browser's disk.
+
+make "file "/projects/diary.txt
+
+to note :words
+  openappend :file
+  setwrite :file
+  print (sentence first time item 2 time item 3 time "- :words)
+  setwrite []
+  close :file
+end
+
+to readback
+  if not filep :file [print [The diary is empty.] stop]
+  openread :file
+  setread :file
+  while [not eofp] [print readlist]
+  setread []
+  close :file
+end
+
+print [What happened today? Type a line and press Enter:]
+note readlist
+print [Your diary so far:]
+readback

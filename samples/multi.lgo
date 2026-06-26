@@ -1,0 +1,13 @@
+; MULTI.LGO - one program in two files
+;
+; LOAD reads another file: it defines the procedures in it and runs any
+; instructions it has. Here the shapes live in shapes.lgo, next to this
+; file, and this file uses them.
+
+load "/examples/shapes.lgo
+clearscreen hideturtle
+for [i 1 6] [
+  setpencolor :i
+  house 40 + 15 * :i
+  penup right 60 forward 10 pendown
+]

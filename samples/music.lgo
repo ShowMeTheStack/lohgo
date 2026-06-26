@@ -1,0 +1,18 @@
+; MUSIC.LGO - a tune played on the speaker
+;
+; SOUND takes a list of pairs: a frequency in hertz and how many
+; milliseconds to play it. A list of note names is turned into
+; frequencies with a property list.
+
+pprop "notes "c 262  pprop "notes "d 294  pprop "notes "e 330
+pprop "notes "f 349  pprop "notes "g 392  pprop "notes "a 440
+pprop "notes "b 494  pprop "notes "c2 523
+
+to play :tune
+  foreach :tune [
+    sound (list gprop "notes first ? 220 * last ?)
+  ]
+end
+
+; each note is [name beats]
+play [[c 1] [c 1] [g 1] [g 1] [a 1] [a 1] [g 2] [f 1] [f 1] [e 1] [e 1] [d 1] [d 1] [c 2]]

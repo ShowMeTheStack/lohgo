@@ -1,0 +1,20 @@
+; SIERPINSKI.LGO - triangles inside triangles inside triangles
+;
+; A Sierpinski triangle is three half-size Sierpinski triangles, one in
+; each corner. FILLED paints the smallest ones in solid colour.
+
+to sierpinski :size :level
+  if :level = 0 [
+    filled pick [[255 120 80] [255 180 60] [240 90 120]] [repeat 3 [forward :size right 120]]
+    stop
+  ]
+  repeat 3 [
+    sierpinski :size / 2 :level - 1
+    forward :size
+    right 120
+  ]
+end
+
+clearscreen hideturtle
+penup setxy -240 -200 setheading 30 pendown
+sierpinski 480 5

@@ -1,0 +1,30 @@
+; SORTING.LGO - putting a list in order, two different ways
+;
+; Lists are Logo's favourite thing. INSERT puts one number into an
+; already-sorted list; ISORT does that for every number. QSORT picks
+; the first number and sorts the smaller and bigger ones separately.
+; A ~ at the end of a line joins it to the next one.
+
+to insert :x :sorted
+  if emptyp :sorted [output (list :x)]
+  if :x <= first :sorted [output fput :x :sorted]
+  output fput first :sorted insert :x butfirst :sorted
+end
+
+to isort :list
+  if emptyp :list [output []]
+  output insert first :list isort butfirst :list
+end
+
+to qsort :list
+  if emptyp :list [output []]
+  localmake "pivot first :list
+  output (sentence qsort filter [? < :pivot] butfirst :list ~
+                   :pivot ~
+                   qsort filter [? >= :pivot] butfirst :list)
+end
+
+make "numbers [42 7 19 88 3 56 21 64 11 35]
+print sentence [Unsorted:] :numbers
+print sentence [Insertion sort:] isort :numbers
+print sentence [Quicksort:] qsort :numbers

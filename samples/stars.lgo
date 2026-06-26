@@ -1,0 +1,25 @@
+; STARS.LGO - a night sky with stars of every shape
+;
+; A star with an odd number of points can be drawn without lifting the
+; pen: turn by 180 - 180/points after each line. RANDOM picks where
+; each star goes and how big it is.
+
+to star :size :points
+  repeat :points [forward :size right 180 - 180 / :points]
+end
+
+to sky :count
+  repeat :count [
+    penup
+    setxy (random 760) - 380 (random 560) - 280
+    setheading random 360
+    pendown
+    setpencolor pick [yellow white orange [255 240 160]]
+    star 10 + random 30 pick [5 7 9]
+  ]
+end
+
+clearscreen
+setbackground [12 18 48]
+hideturtle
+sky 40

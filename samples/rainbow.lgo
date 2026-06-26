@@ -1,0 +1,19 @@
+; RAINBOW.LGO - colours mixed from red, green and blue
+;
+; SETPENCOLOR can take a list of three numbers from 0 to 255: how much
+; red, green and blue to mix. Here the mix changes smoothly as the
+; turtle goes round, making a colour wheel.
+
+to wheel
+  for [angle 0 359] [
+    setpencolor (list 127 + 127 * cos :angle
+                      127 + 127 * cos :angle - 120
+                      127 + 127 * cos :angle + 120)
+    penup home setheading :angle forward 60 pendown
+    forward 200
+  ]
+end
+
+clearscreen hideturtle
+setpensize 4
+wheel

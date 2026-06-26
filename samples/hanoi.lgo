@@ -1,0 +1,18 @@
+; HANOI.LGO - the Towers of Hanoi, solved by recursion
+;
+; Move a tower of discs from one peg to another, one disc at a time,
+; never putting a bigger disc on a smaller one. To move N discs: move
+; N-1 out of the way, move the biggest, then move the N-1 back on top.
+
+make "moves 0
+
+to hanoi :n :from :to :via
+  if :n = 0 [stop]
+  hanoi :n - 1 :from :via :to
+  make "moves :moves + 1
+  print (sentence [Move disc] :n [from] :from [to] :to)
+  hanoi :n - 1 :via :to :from
+end
+
+hanoi 4 "left "right "middle
+print (sentence [That took] :moves [moves.])

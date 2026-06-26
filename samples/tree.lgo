@@ -1,0 +1,27 @@
+; TREE.LGO - a recursive tree: every branch carries two smaller trees
+;
+; This is the classic example of recursion in Logo. TREE draws a trunk,
+; then calls TREE twice for the two branches, each a bit shorter.
+; When the branches get small enough it stops.
+;
+; Debugger tip: put a breakpoint on the "forward :size" line (click in
+; the margin) and press F5. Then open the Call Stack tab and press F11
+; a few times: you can see one TREE waiting inside another.
+
+to tree :size
+  if :size < 6 [stop]
+  setpensize :size / 8
+  setpencolor ifelse :size < 15 [[60 160 70]] [[110 70 40]]
+  forward :size
+  left 25
+  tree :size * 0.72
+  right 50
+  tree :size * 0.72
+  left 25
+  back :size
+end
+
+clearscreen
+penup setxy 0 -250 pendown
+tree 110
+hideturtle

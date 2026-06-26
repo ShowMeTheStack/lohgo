@@ -1,0 +1,19 @@
+; FACTORIAL.LGO - recursion you can watch, step by step
+;
+; 5! (five factorial) is 5 x 4 x 3 x 2 x 1. A recursive definition says
+; the same thing: the factorial of N is N times the factorial of N - 1,
+; and the factorial of 0 is 1.
+;
+; Try the debugger:
+;   1. Click in the margin next to the line "if :n = 0 [output 1]".
+;   2. Press F5. The program stops there.
+;   3. Open Call Stack: one FACTORIAL is waiting inside another.
+;   4. Click an older frame to see its own :n in Variables.
+;   5. Press F5 to continue, or F11 to take one step at a time.
+
+to factorial :n
+  if :n = 0 [output 1]
+  output :n * factorial :n - 1
+end
+
+for [i 0 10] [print (sentence :i "! "= factorial :i)]

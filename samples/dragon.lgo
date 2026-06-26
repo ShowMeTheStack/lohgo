@@ -1,0 +1,24 @@
+; DRAGON.LGO - the dragon curve, folded paper made of lines
+;
+; Fold a strip of paper in half again and again, then open every fold
+; to a right angle: the shape you get is the dragon curve. The two
+; procedures call each other, turning left and right in turn.
+
+to dragon :size :level
+  if :level = 0 [forward :size stop]
+  dragon :size :level - 1
+  left 90
+  nogard :size :level - 1
+end
+
+to nogard :size :level
+  if :level = 0 [forward :size stop]
+  dragon :size :level - 1
+  right 90
+  nogard :size :level - 1
+end
+
+clearscreen hideturtle
+penup setxy -120 80 pendown
+setpencolor [200 60 40]
+dragon 4 12

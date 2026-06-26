@@ -1,0 +1,18 @@
+; SHAPES.LGO - shapes used by multi.lgo
+; This file only defines procedures, so running it by itself draws
+; nothing. Run multi.lgo instead.
+
+to square :size
+  repeat 4 [forward :size right 90]
+end
+
+to triangle :size
+  repeat 3 [forward :size right 120]
+end
+
+to house :size
+  square :size
+  forward :size right 30
+  triangle :size
+  left 30 back :size
+end

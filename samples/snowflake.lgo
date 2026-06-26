@@ -1,0 +1,26 @@
+; SNOWFLAKE.LGO - the Koch snowflake, a famous fractal
+;
+; Every straight side is replaced by four shorter sides with a bump in
+; the middle, and every one of those by four more, and so on. The
+; LEVEL input says how many times to do the replacing.
+
+to side :size :level
+  if :level = 0 [forward :size stop]
+  side :size / 3 :level - 1
+  left 60
+  side :size / 3 :level - 1
+  right 120
+  side :size / 3 :level - 1
+  left 60
+  side :size / 3 :level - 1
+end
+
+to snowflake :size :level
+  repeat 3 [side :size :level right 120]
+end
+
+clearscreen
+penup setxy -180 100 setheading 90 pendown
+setpencolor [30 120 210]
+snowflake 360 4
+hideturtle

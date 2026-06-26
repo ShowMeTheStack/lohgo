@@ -1,0 +1,38 @@
+; CLOCK.LGO - a clock that keeps time
+;
+; TIME gives the day, date and time as a list. ITEM 4 of it is the time
+; as a word like 14:05:09, and PARSE plus a little trick split it up.
+; WAIT 60 pauses for a second (WAIT counts sixtieths of a second).
+; Press Stop when you have seen enough.
+
+to hand :angle :length :width :color
+  penup home setheading :angle pendown
+  setpensize :width setpencolor :color
+  forward :length
+end
+
+to face
+  penup home pendown
+  setpensize 3 setpencolor "black
+  penup setxy 0 -200 setheading 90 pendown
+  repeat 360 [forward 200 * 3.14159 / 180 left 1]
+  for [h 1 12] [
+    penup home setheading :h * 30 forward 175 pendown
+    setheading 0 forward 1
+  ]
+end
+
+to tick
+  local [t h m s]
+  make "t parse map [ifelse ? = ": ["| |] [?]] item 4 time
+  make "h item 1 :t  make "m item 2 :t  make "s item 3 :t
+  clean
+  face
+  hand (remainder :h 12) * 30 + :m / 2 100 8 [40 40 60]
+  hand :m * 6 + :s / 10 150 5 [40 40 60]
+  hand :s * 6 165 2 "red
+  hideturtle
+end
+
+clearscreen
+forever [tick wait 60]

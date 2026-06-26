@@ -1,0 +1,23 @@
+; GUESS.LGO - guess the number the turtle is thinking of
+;
+; READWORD waits for you to type in the command center and press
+; Enter. NUMBERP checks that what you typed really is a number.
+
+to play
+  make "secret 1 + random 100
+  make "tries 0
+  print [I am thinking of a number from 1 to 100.]
+  guess
+end
+
+to guess
+  type [Your guess? ]
+  make "g readword
+  if not numberp :g [print [That is not a number. Try again.] guess stop]
+  make "tries :tries + 1
+  if :g < :secret [print [Higher!] guess stop]
+  if :g > :secret [print [Lower!] guess stop]
+  print (sentence [Yes! It was] :secret [and you needed] :tries [tries.])
+end
+
+play

@@ -1,0 +1,46 @@
+; SNAKE.LGO - steer with the arrow keys and eat the dots
+;
+; Click the turtle world first so it gets your key presses.
+; KEYP says whether a key is waiting; READCHAR reads it. The arrow keys
+; come back as the words LEFT, RIGHT, UP and DOWN.
+
+to setup
+  clearscreen hideturtle
+  setpensize 6
+  make "score 0
+  make "dir 0
+  make "len 12
+  make "body []
+  make "x 0 make "y 0
+  newfood
+end
+
+to newfood
+  make "food list (random 30) * 20 - 300 (random 24) * 20 - 240
+  penup setpos :food setpencolor "red pendown forward 0.1
+end
+
+to steer
+  if not keyp [stop]
+  make "k readchar
+  if :k = "UP [make "dir 0]
+  if :k = "RIGHT [make "dir 90]
+  if :k = "DOWN [make "dir 180]
+  if :k = "LEFT [make "dir 270]
+end
+
+to move
+  make "x :x + 10 * sin :dir
+  make "y :y + 10 * cos :dir
+  if or (abs :x) > 390 (abs :y) > 290 [print (sentence [Crash! Score:] :score) throw "toplevel]
+  penup setxy :x :y setpencolor [40 150 70] pendown forward 0.1
+  make "body fput (list :x :y) :body
+  if (count :body) > :len [
+    penup setpos last :body setpencolor background pendown forward 0.1
+    make "body butlast :body
+  ]
+  if (distance :food) < 12 [make "score :score + 1 make "len :len + 4 newfood]
+end
+
+setup
+forever [steer move wait 3]

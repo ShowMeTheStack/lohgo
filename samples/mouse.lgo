@@ -1,0 +1,22 @@
+; MOUSE.LGO - draw with the mouse
+;
+; MOUSEON takes five instruction lists: what to do when the left button
+; goes down, when it comes up, the same for the right button, and when
+; the mouse moves. The program keeps running in the background while
+; the lists react to the mouse. Press Stop to finish.
+
+make "drawing "false
+to down
+  make "drawing "true
+  penup setpos mousepos pendown
+end
+to move
+  if :drawing [setpos mousepos]
+end
+
+clearscreen
+setpensize 3
+setpencolor [200 70 140]
+mouseon [down] [make "drawing "false] [clean] [] [move]
+print [Hold the left button down and move the mouse to draw. Right-click to clear.]
+forever [wait 6]

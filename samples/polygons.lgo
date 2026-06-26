@@ -1,0 +1,18 @@
+; POLYGONS.LGO - every regular shape from a triangle to a circle
+;
+; To draw a shape with N sides, turn 360/N after each side. When N is
+; big the shape looks like a circle. FOR counts N for us.
+
+to polygon :sides :length
+  repeat :sides [forward :length right 360 / :sides]
+end
+
+clearscreen hideturtle
+for [n 3 12] [
+  setpencolor :n
+  polygon :n 260 / :n
+  penup forward 4 pendown
+]
+penup home setxy -120 -220 pendown
+setpencolor "black
+label [Triangle to dodecagon: turn 360/N each time]
