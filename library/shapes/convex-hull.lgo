@@ -1,0 +1,111 @@
+; ============================================================
+; TITLE:    Gift Wrapping a Convex Hull
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Advanced
+; TAGS:     algorithm, convex hull, cross product, random, animation
+; SUMMARY:  Scatters random points and wraps the tightest convex polygon round them, showing every step of the search.
+; ============================================================
+;
+; WHAT IT DOES
+;   Imagine the points are nails in a board and you stretch a rubber
+;   band round all of them. The shape the band makes is the "convex
+;   hull". The program finds it with the gift wrapping method: start
+;   at the leftmost point, then keep turning as far right as you can.
+;   Grey lines show the points it tries, red lines the hull so far.
+;   At the end the hull is painted and its corners are counted.
+;
+; HOW TO USE
+;   Press Run. Run it again for new points. Change HOWMANY, or set
+;   DELAY to 0 to skip the animation.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the cross product tells whether three points turn left or right
+;   * an algorithm that repeats until it comes back to the start
+;   * DO.UNTIL: a loop that always runs at least once
+;   * points kept as [x y] lists inside a bigger list
+;
+; THINGS TO TRY
+;   * Put all the points on a circle (use SIN and COS). Are they all
+;     on the hull?
+;   * Count how many points the program tries in total. For n points
+;     and h hull corners it is about n x h.
+;   * Make the points cluster in the middle with (RANDOM 200) - 100
+;     added twice. Does the hull get smaller?
+; ============================================================
+
+make "howmany 40
+make "delay 2
+
+to randompoints :n
+  output map [list (random 600) - 300 (random 440) - 220] iseq 1 :n
+end
+
+; Cross product of the vectors a->b and a->c.
+; Positive: c is to the LEFT of the line from a to b.
+; Negative: c is to the RIGHT. Zero: all three are in a line.
+to cross :a :b :c
+  output ((first :b) - (first :a)) * ((last :c) - (last :a)) - ((last :b) - (last :a)) * ((first :c) - (first :a))
+end
+
+to sqdist :a :b
+  output ((first :a) - (first :b)) * ((first :a) - (first :b)) + ((last :a) - (last :b)) * ((last :a) - (last :b))
+end
+
+to leftmost :pts
+  output reduce [ifelse (first ?1) < (first ?2) [?1] [?2]] :pts
+end
+
+to line :a :b :color :size
+  setpencolor :color setpensize :size
+  penup setxy first :a last :a pendown setxy first :b last :b
+end
+
+; From the current hull corner, look at every point. Keep the one
+; that is furthest to the right: if a point is to the right of our
+; best guess, it becomes the new best guess. Ties (points in a line)
+; go to the further point so we skip the ones in between.
+to nextcorner :here :pts
+  localmake "best first :pts
+  if equalp :best :here [make "best item 2 :pts]
+  foreach :pts [
+    if not equalp ? :here [
+      line :here ? [210 210 210] 1
+      localmake "turn cross :here :best ?
+      if or :turn < 0 and :turn = 0 (sqdist :here ?) > (sqdist :here :best) [make "best ?]
+      wait :delay
+    ]
+  ]
+  output :best
+end
+
+to giftwrap :pts
+  localmake "start leftmost :pts
+  localmake "hull (list :start)
+  localmake "here :start
+  do.until [
+    localmake "next nextcorner :here :pts
+    line :here :next [220 40 40] 4
+    if not equalp :next :start [make "hull lput :next :hull]
+    make "here :next
+  ] [equalp :here :start]
+  output :hull
+end
+
+to showpoints :pts
+  setpencolor [30 30 30] setpensize 8
+  penup
+  foreach :pts [dot ?]
+end
+
+clearscreen hideturtle
+make "pts randompoints :howmany
+showpoints :pts
+make "hull giftwrap :pts
+; wipe away the grey search lines and draw the answer cleanly
+clean
+setpencolor [220 40 40] setpensize 4
+penup setxy first first :hull last first :hull pendown
+filled [255 225 200] [foreach butfirst :hull [setxy first ? last ?] setxy first first :hull last first :hull]
+showpoints :pts
+penup setxy -150 -270 setpencolor [40 40 40]
+label (sentence count :hull [of the] :howmany [points are corners of the hull])

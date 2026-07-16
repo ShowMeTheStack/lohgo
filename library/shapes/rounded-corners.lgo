@@ -1,0 +1,98 @@
+; ============================================================
+; TITLE:    Rounded Corners
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Intermediate
+; TAGS:     arcs, polygon, rounded rectangle, filled, buttons
+; SUMMARY:  Softens the corners of squares, triangles and rectangles by walking a small curve at every turn.
+; ============================================================
+;
+; WHAT IT DOES
+;   The top row shows the same square with rounder and rounder
+;   corners until it becomes a circle. Below are a rounded triangle,
+;   a rounded hexagon and a row of pill-shaped buttons with words on
+;   them, the kind you see in apps.
+;
+; HOW TO USE
+;   Press Run. Try  roundpoly 5 80 20  in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * replacing a sharp turn with a curve that turns the same amount
+;   * walking along a curve with many tiny steps and turns
+;   * the length of a curve: 2 x pi x radius x (angle / 360)
+;   * FILLED works with curves too, because the turtle really walks them
+;
+; THINGS TO TRY
+;   * Give ROUNDPOLY a radius of 0. What shape do you get?
+;   * Make buttons with your own words. Long words need wider buttons.
+;   * Draw a rounded star using CURVE in the outline star from Star Shapes.
+; ============================================================
+
+; Walk along a curve to the right: :angle degrees on a circle of
+; radius :radius, in 5 degree steps. Each step is the length of
+; that small piece of the circle.
+to curve :angle :radius
+  localmake "steps max 1 int :angle / 5
+  localmake "stepturn :angle / :steps
+  localmake "steplen 2 * pi * :radius * :stepturn / 360
+  repeat :steps [forward :steplen right :stepturn]
+end
+
+to max :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+; A polygon whose straight parts are :side long and whose corners
+; are curves. The curves do all the turning: 360 / sides each.
+to roundpoly :sides :side :radius
+  repeat :sides [forward :side curve 360 / :sides :radius]
+end
+
+; A rounded rectangle; with radius = height / 2 the ends become
+; half circles and we get a pill (a "stadium" shape).
+to roundrect :width :height :radius
+  repeat 2 [
+    forward :height - 2 * :radius curve 90 :radius
+    forward :width - 2 * :radius curve 90 :radius
+  ]
+end
+
+; Start a shape at (x, y) facing up. Rounded shapes start at the
+; bottom of their left straight edge, one corner radius above the
+; bottom of the shape.
+to startat :x :y
+  penup setxy :x :y setheading 0 pendown
+end
+
+; A button: a pill with a word written in the middle.
+to pillbutton :x :y :text :color
+  startat :x :y + 25
+  setpencolor :color
+  filled :color [roundrect 140 50 25]
+  penup setxy :x + 30 :y + 18 setpencolor [255 255 255]
+  label :text
+end
+
+clearscreen hideturtle
+setpensize 3
+setlabelheight 18
+
+; top row: the same 100 by 100 square, corner radius 0, 15, 30, 50
+foreach [0 15 30 50] [
+  startat -320 + 175 * (# - 1) 110 + ?
+  setpencolor item # [[40 90 200] [70 140 210] [90 180 200] [80 190 150]]
+  roundpoly 4 100 - 2 * ? ?
+]
+
+; middle row: a rounded triangle and a rounded hexagon, filled
+startat -240 -120
+setpencolor [200 70 70]
+filled [255 190 180] [right 30 roundpoly 3 120 25]
+startat 90 -100
+setpencolor [140 80 180]
+filled [220 200 245] [right 30 roundpoly 6 50 20]
+
+; bottom row: buttons
+pillbutton -330 -250 "Play [60 170 90]
+pillbutton -160 -250 "Settings [70 120 220]
+pillbutton 10 -250 "Help [240 150 40]
+pillbutton 180 -250 "Quit [220 70 70]

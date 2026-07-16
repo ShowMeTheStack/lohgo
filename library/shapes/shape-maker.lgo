@@ -1,0 +1,87 @@
+; ============================================================
+; TITLE:    Shape Maker
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Beginner
+; TAGS:     input, readlist, polygon, validation
+; SUMMARY:  Asks how many sides and how long they are, then draws that polygon in the middle of the screen.
+; ============================================================
+;
+; WHAT IT DOES
+;   The program asks you two questions in the command center:
+;   how many sides, and how long each side should be. Then it
+;   draws your shape, centered, in a new color. It keeps going
+;   so you can stack shapes on top of each other.
+;
+; HOW TO USE
+;   Press Run and answer in the command center (type a number
+;   and press Enter). Type quit at any question to finish.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READLIST waits for the user to type a line
+;   * checking an answer with NUMBERP before using it
+;   * a procedure that asks again until the answer makes sense
+;   * a little trigonometry to put a shape's center in the middle
+;
+; THINGS TO TRY
+;   * Draw 3, 4, 5 and 6 sides all with length 150.
+;   * Try 100 sides of length 5. What does it look like?
+;   * Change the color list in DRAWCENTERED.
+; ============================================================
+
+; Ask a question and give back a whole number between low and high.
+; If the answer is not a number, or is out of range, say so and ask
+; again. A typed "quit" comes back as the word quit.
+to asknumber :question :low :high
+  print :question
+  localmake "answer readlist
+  if emptyp :answer [output asknumber :question :low :high]
+  localmake "word first :answer
+  if equalp lowercase :word "quit [output "quit]
+  if not numberp :word [
+    print (sentence [Please type a number, like] :low)
+    output asknumber :question :low :high
+  ]
+  if or :word < :low :word > :high [
+    print (sentence [Choose a number from] :low [to] :high)
+    output asknumber :question :low :high
+  ]
+  output int :word
+end
+
+; Draw a regular polygon with its center at (0, 0).
+; The "apothem" is the distance from the center to the middle of
+; a side. We start in the middle of the bottom side's left half,
+; so the shape ends up balanced round the center of the screen.
+to drawcentered :sides :length
+  localmake "apothem :length / (2 * tan 180 / :sides)
+  penup
+  setxy minus :length / 2 minus :apothem
+  setheading 90
+  pendown
+  setpencolor item 1 + remainder :shapes 8 [1 4 2 13 14 5 10 8]
+  repeat :sides [forward :length left 360 / :sides]
+  make "shapes :shapes + 1
+end
+
+to shapemaker
+  make "shapes 0
+  forever [
+    localmake "sides asknumber [How many sides? Pick 3 to 30.] 3 30
+    if equalp :sides "quit [print [Goodbye!] stop]
+    localmake "length asknumber [How long is each side? Pick 5 to 250.] 5 250
+    if equalp :length "quit [print [Goodbye!] stop]
+    ; a big shape with many sides would not fit on the screen
+    ifelse (:length * :sides) > 1700 [
+      print [That shape is too big for the screen. Try a shorter side.]
+    ] [
+      drawcentered :sides :length
+      print (sentence [Here is your shape with] :sides [sides.])
+    ]
+  ]
+end
+
+clearscreen
+setpensize 3
+hideturtle
+print [Welcome to the Shape Maker. Type quit to stop.]
+shapemaker

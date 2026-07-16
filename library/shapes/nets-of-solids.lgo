@@ -1,0 +1,114 @@
+; ============================================================
+; TITLE:    Nets of Solids
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Intermediate
+; TAGS:     3d, nets, cube, pyramid, tetrahedron, prism
+; SUMMARY:  Draws the flat paper patterns that fold up into a cube, a tetrahedron, a square pyramid and a prism.
+; ============================================================
+;
+; WHAT IT DOES
+;   A net is what a box looks like when you cut it open and lay it
+;   flat. Four nets appear, each in its own color, with its name and
+;   the number of faces. Print the screen, cut round the outside,
+;   fold along the lines, and they really make the solids.
+;
+; HOW TO USE
+;   Press Run. Each net is a procedure with a size input, so you can
+;   try  clearscreen pyramidnet 120  in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * turning LEFT draws a shape on the other side of a line
+;   * attaching a shape to every side of another shape with REPEAT
+;   * reusing small procedures (SQ, TRI, RECT) to build bigger ones
+;
+; THINGS TO TRY
+;   * A cube has 11 different nets. Change CUBENET to draw another.
+;   * Make a pentagonal pyramid: a pentagon with 5 triangles round it.
+;   * Two squares and four rectangles make a cuboid. Draw its net.
+; ============================================================
+
+; The basic pieces. They all walk with RIGHT turns and come back
+; to where they started, facing the same way.
+to sq :s
+  repeat 4 [forward :s right 90]
+end
+
+to rect :w :h
+  repeat 2 [forward :h right 90 forward :w right 90]
+end
+
+; An equilateral triangle that sits on the turtle's LEFT side.
+; We will glue these onto the edges of shapes drawn with right turns,
+; so they always point outwards.
+to outtri :s :color
+  filled :color [repeat 3 [forward :s left 120]]
+end
+
+; Six squares in a cross. We place each square by grid column and row.
+to cubenet :s
+  localmake "x xcor localmake "y ycor
+  foreach [[1 0] [0 1] [1 1] [2 1] [3 1] [1 2]] [
+    penup setxy :x + :s * first ? :y + :s * last ? setheading 0 pendown
+    filled [255 200 200] [sq :s]
+  ]
+end
+
+; One triangle with a triangle glued to each of its three sides:
+; that is four triangles, which fold up into a tetrahedron.
+to tetranet :s
+  right 30
+  filled [255 230 160] [repeat 3 [forward :s right 120]]
+  repeat 3 [outtri :s [255 230 160] forward :s right 120]
+  left 30
+end
+
+; A square base with a triangle on every side.
+to pyramidnet :s
+  filled [200 235 200] [sq :s]
+  repeat 4 [outtri :s [200 235 200] forward :s right 90]
+end
+
+; Three rectangles in a row for the sides, and a triangle on the top
+; and the bottom of the middle one for the two ends.
+to prismnet :w :h
+  localmake "x xcor localmake "y ycor
+  repeat 3 [
+    penup setxy :x + :w * (repcount - 1) :y setheading 0 pendown
+    filled [200 215 255] [rect :w :h]
+  ]
+  ; bottom triangle: walk along the bottom edge of the middle rectangle
+  ; heading left to right, the outward side is on the turtle's right,
+  ; so we walk it from right to left instead
+  penup setxy :x + 2 * :w :y setheading 270 pendown
+  outtri :w [200 215 255]
+  ; top triangle: along the top edge from left to right
+  penup setxy :x + :w :y + :h setheading 90 pendown
+  outtri :w [200 215 255]
+end
+
+to caption :x :y :text
+  penup setxy :x :y setpencolor [60 60 60]
+  label :text
+  setpencolor [40 40 40]
+end
+
+clearscreen hideturtle
+setpensize 2
+setpencolor [40 40 40]
+setlabelheight 15
+
+penup setxy -370 70 pendown
+cubenet 50
+caption -360 30 [Cube: 6 squares]
+
+penup setxy 110 120 setheading 0 pendown
+tetranet 90
+caption 100 15 [Tetrahedron: 4 triangles]
+
+penup setxy -260 -200 setheading 0 pendown
+pyramidnet 70
+caption -330 -280 [Square pyramid: 1 square, 4 triangles]
+
+penup setxy 120 -190 setheading 0 pendown
+prismnet 60 110
+caption 80 -280 [Prism: 3 rectangles, 2 triangles]

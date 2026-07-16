@@ -1,0 +1,150 @@
+; ============================================================
+; TITLE:    The Twelve Pentominoes
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Advanced
+; TAGS:     pentomino, symmetry, rotation, reflection, lists, sorting
+; SUMMARY:  Draws all twelve pentominoes and works out how many different ways each one can be turned or flipped.
+; ============================================================
+;
+; WHAT IT DOES
+;   A pentomino is five squares joined edge to edge. There are
+;   exactly twelve of them, named after letters they look like.
+;   The program draws them all, then turns and flips each one in
+;   the computer's memory to count its different positions. The
+;   bottom row shows every position of the F pentomino.
+;
+; HOW TO USE
+;   Press Run. The counts are also printed in the command center.
+;   Change SHOWOFF to another letter to see its positions.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a shape stored as a list of [x y] squares
+;   * turning a square a quarter turn: [x y] becomes [y -x]
+;   * flipping it in a mirror: [x y] becomes [-x y]
+;   * a "canonical form": slide and sort so equal shapes look equal
+;   * removing duplicates with MEMBERP
+;
+; THINGS TO TRY
+;   * Which pentominoes have only 4 positions? What do they share?
+;   * Add the five tetrominoes (four squares) and count theirs.
+;   * Set SHOWOFF to "X. Why is there only one position?
+; ============================================================
+
+make "showoff "F
+
+make "pieces [
+  [F [[1 0] [2 0] [0 1] [1 1] [1 2]]]
+  [I [[0 0] [0 1] [0 2] [0 3] [0 4]]]
+  [L [[0 0] [0 1] [0 2] [0 3] [1 0]]]
+  [N [[0 0] [0 1] [1 1] [1 2] [1 3]]]
+  [P [[0 0] [1 0] [0 1] [1 1] [0 2]]]
+  [T [[0 2] [1 2] [2 2] [1 1] [1 0]]]
+  [U [[0 0] [1 0] [2 0] [0 1] [2 1]]]
+  [V [[0 0] [1 0] [2 0] [0 1] [0 2]]]
+  [W [[0 0] [1 0] [1 1] [2 1] [2 2]]]
+  [X [[1 0] [0 1] [1 1] [2 1] [1 2]]]
+  [Y [[0 1] [1 0] [1 1] [1 2] [1 3]]]
+  [Z [[0 2] [1 2] [1 1] [1 0] [2 0]]]
+]
+
+make "colors [[230 80 70] [240 150 40] [230 200 40] [140 190 60] [60 160 90] [50 170 170]
+              [60 130 220] [90 90 200] [150 80 200] [200 80 160] [150 110 80] [110 120 130]]
+
+to quarterturn :cells
+  output map [list last ? minus first ?] :cells
+end
+to mirror :cells
+  output map [list minus first ? last ?] :cells
+end
+to smallest :numbers
+  output reduce [ifelse ?1 < ?2 [?1] [?2]] :numbers
+end
+
+; Slide the shape so its lowest x and lowest y are both 0.
+to slide :cells
+  localmake "dx smallest map "first :cells
+  localmake "dy smallest map "last :cells
+  output map [list (first ?) - :dx (last ?) - :dy] :cells
+end
+
+; Is square a before square b? Compare y first, then x.
+to cellbefore :a :b
+  if (last :a) < (last :b) [output "true]
+  if (last :a) > (last :b) [output "false]
+  output (first :a) < (first :b)
+end
+
+; Insertion sort: put each square into its place in a sorted list.
+to insert :c :sorted
+  if emptyp :sorted [output (list :c)]
+  if cellbefore :c first :sorted [output fput :c :sorted]
+  output fput first :sorted insert :c butfirst :sorted
+end
+to sortcells :cells
+  if emptyp :cells [output []]
+  output insert first :cells sortcells butfirst :cells
+end
+
+; Two shapes that look the same now give exactly the same list.
+to canonical :cells
+  output sortcells slide :cells
+end
+
+; All the different positions: four turns, then flip and four more,
+; keeping only the ones we have not seen before.
+to positions :cells
+  localmake "found []
+  repeat 2 [
+    repeat 4 [
+      localmake "c canonical :cells
+      if not memberp :c :found [make "found lput :c :found]
+      make "cells quarterturn :cells
+    ]
+    make "cells mirror :cells
+  ]
+  output :found
+end
+
+to square :x :y :size :color
+  penup setxy :x :y setheading 0 pendown
+  filled :color [repeat 4 [forward :size right 90]]
+end
+to drawpiece :cells :x :y :size :color
+  foreach :cells [square :x + :size * first ? :y + :size * last ? :size :color]
+end
+
+to gallery
+  foreach :pieces [
+    localmake "name first ?
+    localmake "count count positions last ?
+    localmake "col remainder # - 1 6
+    localmake "row int (# - 1) / 6
+    localmake "x -370 + 128 * :col
+    localmake "y 130 - 180 * :row
+    drawpiece last ? :x :y 22 item # :colors
+    penup setxy :x :y - 28 setpencolor [50 50 50]
+    label (sentence :name "- :count "ways)
+    setpencolor [255 255 255]
+    print (sentence :name :count)
+    make "total :total + :count
+  ]
+end
+
+; Every position of one chosen piece, small, along the bottom.
+to showpositions :letter
+  localmake "piece find [equalp first ? :letter] :pieces
+  localmake "all positions last :piece
+  penup setxy -370 -150 setpencolor [50 50 50]
+  label (sentence [All] count :all [positions of] :letter)
+  setpencolor [255 255 255]
+  foreach :all [drawpiece ? -370 + 92 * (# - 1) -255 16 [120 120 140]]
+end
+
+clearscreen hideturtle
+setpensize 2
+setlabelheight 15
+make "total 0
+setpencolor [255 255 255]
+gallery
+print (sentence [Total positions:] :total)
+showpositions :showoff

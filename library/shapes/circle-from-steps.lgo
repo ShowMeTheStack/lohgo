@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Circles from Small Steps
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Beginner
+; TAGS:     circle, polygon, pi, radius
+; SUMMARY:  Shows how a polygon with more and more sides turns into a circle, then draws circles of any radius.
+; ============================================================
+;
+; WHAT IT DOES
+;   The top row shows shapes with 5, 8, 16 and 72 sides, all the
+;   same size. Watch them get rounder. The bottom row is a target
+;   made of circles drawn with a CIRCLE procedure that takes a
+;   radius, just like a compass.
+;
+; HOW TO USE
+;   Press Run. Then try  circle 100  in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a circle is "walk a tiny bit, turn a tiny bit", many times
+;   * the distance round a circle is 2 x pi x radius
+;   * dividing that distance into 36 steps gives the step length
+;   * how to start a circle from its center instead of its edge
+;
+; THINGS TO TRY
+;   * Change 72 in the top row to 360. Can you see any difference?
+;   * Use 12 steps in CIRCLE instead of 36. Is it still round enough?
+;   * Draw the Olympic rings with five calls to CIRCLEAT.
+; ============================================================
+
+; A polygon that fits round a circle of the given radius.
+; Each side is the circumference shared out between the sides.
+to roundpoly :sides :radius
+  localmake "side 2 * pi * :radius / :sides
+  repeat :sides [forward :side right 360 / :sides]
+end
+
+; 36 steps of 10 degrees each. Our eyes cannot tell this from
+; a perfect circle unless it is very big.
+to circle :radius
+  roundpoly 36 :radius
+end
+
+; The turtle draws a circle starting at the edge, so to put the
+; CENTER at (x, y) we start at the leftmost point facing up.
+to circleat :x :y :radius
+  penup setxy :x - :radius :y setheading 0 pendown
+  circle :radius
+end
+
+; same idea for the top row, so all four shapes line up
+to polyat :x :y :sides :radius
+  penup setxy :x - :radius :y setheading 0 pendown
+  roundpoly :sides :radius
+end
+
+; A target: circles that share a center, each one bigger.
+to target :x :y
+  for [i 1 6] [
+    setpencolor item :i [4 14 6 2 1 13]
+    circleat :x :y 15 * :i
+  ]
+end
+
+clearscreen
+setpensize 3
+
+; the top row: 5, 8, 16 and 72 sides
+setpencolor 1
+foreach [5 8 16 72] [
+  polyat -300 + 200 * (# - 1) 150 ? 60
+  penup setxy -310 + 200 * (# - 1) 60 setpencolor 0
+  label (sentence ? "sides)
+  setpencolor 1
+]
+
+; the bottom row: a target and two single circles
+target -150 -140
+setpencolor 10 circleat 100 -140 40
+setpencolor 5 circleat 250 -140 80
+hideturtle

@@ -1,0 +1,122 @@
+; ============================================================
+; TITLE:    Click a Polygon
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Advanced
+; TAGS:     mouse, events, area, shoelace formula, convex, lists
+; SUMMARY:  Click corners with the mouse to build any polygon, then the program measures its area and perimeter.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each left click adds a corner and joins it to the last one.
+;   A right click closes the shape, paints it, and writes its
+;   number of sides, perimeter, area, and whether it is convex
+;   (no corners pointing inwards). Then you can start another.
+;
+; HOW TO USE
+;   Press Run. Left-click in the turtle world to place corners.
+;   Right-click to close the polygon (you need at least 3 corners).
+;   Press Stop when you are done.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MOUSEON: running instructions when the mouse buttons are used
+;   * keeping the corners in a list that grows with LPUT
+;   * the shoelace formula for the area of any polygon
+;   * the cross product: which way does the path bend at a corner?
+;
+; THINGS TO TRY
+;   * Click a square on the grid lines. Is the area what you expect?
+;   * Make a star shape. Why does it say "not convex"?
+;   * Cross the lines over each other (a bow tie). The area is now
+;     wrong. Can you work out why?
+; ============================================================
+
+make "points []
+make "shapecount 0
+make "fills [[255 190 180] [190 225 255] [200 240 200] [255 230 160] [230 205 250]]
+
+; Left click: remember the point, mark it, and join it to the last one.
+to addpoint
+  localmake "p clickpos
+  ifelse emptyp :points [
+    penup setxy first :p last :p
+  ] [
+    pendown setxy first :p last :p
+  ]
+  setpensize 7 dot :p setpensize 2
+  make "points lput :p :points
+end
+
+; The shoelace formula: walk round the corners and add up
+; x1 * y2 - x2 * y1 for each side. Half of the total is the area,
+; positive if we went anticlockwise, negative if clockwise.
+to signedarea :pts
+  localmake "total 0
+  localmake "loop lput first :pts :pts
+  repeat count :pts [
+    localmake "a item repcount :loop
+    localmake "b item repcount + 1 :loop
+    make "total :total + (first :a) * (last :b) - (first :b) * (last :a)
+  ]
+  output :total / 2
+end
+
+to perimeter :pts
+  localmake "total 0
+  localmake "loop lput first :pts :pts
+  repeat count :pts [
+    localmake "a item repcount :loop
+    localmake "b item repcount + 1 :loop
+    localmake "dx (first :b) - (first :a)
+    localmake "dy (last :b) - (last :a)
+    make "total :total + sqrt :dx * :dx + :dy * :dy
+  ]
+  output :total
+end
+
+; At each corner, the cross product of the side coming in and the
+; side going out tells us if the path turns left (positive) or
+; right (negative). Convex means every turn goes the same way.
+to convexp :pts
+  localmake "n count :pts
+  localmake "loop sentence :pts list first :pts item 2 :pts
+  localmake "lefts 0
+  localmake "rights 0
+  repeat :n [
+    localmake "a item repcount :loop
+    localmake "b item repcount + 1 :loop
+    localmake "c item repcount + 2 :loop
+    localmake "cross ((first :b) - (first :a)) * ((last :c) - (last :b)) - ((last :b) - (last :a)) * ((first :c) - (first :b))
+    if :cross > 0 [make "lefts :lefts + 1]
+    if :cross < 0 [make "rights :rights + 1]
+  ]
+  output or :lefts = 0 :rights = 0
+end
+
+; Right click: close the shape, paint it, and report on it.
+to closeshape
+  if (count :points) < 3 [print [Click at least three corners first.] stop]
+  make "shapecount :shapecount + 1
+  localmake "color item 1 + remainder :shapecount count :fills :fills
+  ; walk round the corners again inside FILLED to paint the inside
+  penup setxy first first :points last first :points pendown
+  filled :color [
+    foreach butfirst :points [setxy first ? last ?]
+    setxy first first :points last first :points
+  ]
+  localmake "area abs signedarea :points
+  localmake "report (sentence count :points [sides. Perimeter] round perimeter :points [and area] round :area)
+  print :report
+  print ifelse convexp :points [[It is convex.]] [[It is not convex: some corners point inwards.]]
+  ; write the area near the first corner
+  penup setxy first first :points (last first :points) + 10
+  label (sentence [area] round :area)
+  make "points []
+end
+
+clearscreen
+hideturtle
+setpencolor [40 40 60]
+setpensize 2
+print [Left-click to add corners. Right-click to close the shape.]
+mouseon [addpoint] [] [closeshape] [] []
+forever [wait 10]

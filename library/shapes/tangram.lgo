@@ -1,0 +1,76 @@
+; ============================================================
+; TITLE:    Tangram Square
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Intermediate
+; TAGS:     tangram, coordinates, lists, centroid, puzzle
+; SUMMARY:  Draws the seven tangram pieces fitted into a square, then the same pieces pulled apart.
+; ============================================================
+;
+; WHAT IT DOES
+;   The tangram is an old Chinese puzzle: a square cut into seven
+;   pieces (five triangles, a square and a parallelogram). On the
+;   left the pieces fit together. On the right each piece has slid
+;   away from the middle so you can see its shape.
+;
+; HOW TO USE
+;   Press Run. Change SPREAD at the bottom to pull the pieces further
+;   apart, or 0 to put them back together.
+;
+; CONCEPTS YOU WILL LEARN
+;   * describing shapes as lists of corner points
+;   * scaling and moving points with simple arithmetic
+;   * the centroid (balance point) of a shape: the average of its corners
+;   * MAP to change every point of a list in the same way
+;
+; THINGS TO TRY
+;   * Check the areas: the big triangles are 4 grid squares each.
+;     Do all seven add up to 16?
+;   * Use the pieces to make a cat or a boat: move and turn them.
+;   * Give every piece the same color. Is the puzzle harder to see?
+; ============================================================
+
+; Each piece: a color and its corners on a 4 by 4 grid.
+make "pieces [
+  [[230 70 70]   [[0 4] [4 4] [2 2]]]
+  [[240 150 40]  [[0 0] [0 4] [2 2]]]
+  [[60 160 90]   [[2 0] [4 0] [4 2]]]
+  [[70 120 220]  [[2 2] [3 1] [4 2] [3 3]]]
+  [[150 80 190]  [[3 3] [4 2] [4 4]]]
+  [[240 200 50]  [[1 1] [3 1] [2 2]]]
+  [[60 180 200]  [[0 0] [2 0] [3 1] [1 1]]]
+]
+
+; Average of a list of numbers.
+to average :numbers
+  output (reduce "sum :numbers) / count :numbers
+end
+
+; Draw one piece. The grid point (gx, gy) lands on the screen at
+; (left + gx * unit, bottom + gy * unit). We also push each corner
+; away from the middle of the square (2, 2) by the same amount as
+; the piece's centroid, so the piece moves without changing shape.
+to piece :color :corners :left :bottom :unit :spread
+  localmake "cx average map "first :corners
+  localmake "cy average map "last :corners
+  localmake "dx :spread * (:cx - 2)
+  localmake "dy :spread * (:cy - 2)
+  localmake "points map [list :left + :unit * (:dx + first ?) :bottom + :unit * (:dy + last ?)] :corners
+  penup setxy first first :points last first :points pendown
+  filled :color [
+    foreach butfirst :points [setxy first ? last ?]
+    setxy first first :points last first :points
+  ]
+end
+
+to tangram :left :bottom :unit :spread
+  foreach :pieces [piece first ? last ? :left :bottom :unit :spread]
+end
+
+clearscreen hideturtle
+setpensize 4
+setpencolor [255 255 255]
+tangram -340 -110 62 0
+tangram 70 -110 62 0.35
+setpencolor [80 80 80]
+penup setxy -310 -200 label [Seven pieces, one square]
+setxy 90 -200 label [The same pieces, pulled apart]

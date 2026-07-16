@@ -1,0 +1,146 @@
+; ============================================================
+; TITLE:    Spinning Platonic Solids
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Advanced
+; TAGS:     3d, rotation, projection, animation, arrays, trigonometry
+; SUMMARY:  Spins wireframe models of all five Platonic solids in 3D, working out every edge from the corners alone.
+; ============================================================
+;
+; WHAT IT DOES
+;   The tetrahedron, cube, octahedron, dodecahedron and icosahedron
+;   turn slowly in space. Edges at the front are drawn thick, edges
+;   at the back thin, which helps your eye see depth. The program
+;   only knows the corners of each solid: it finds the edges itself
+;   by joining corners that are the shortest distance apart.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to end. Change SPEED or the
+;   viewing distance VIEWER to change the look.
+;
+; CONCEPTS YOU WILL LEARN
+;   * points in 3D as [x y z] lists
+;   * rotating a point round an axis with SIN and COS
+;   * perspective: things further away look smaller
+;   * building data once (the edges) and reusing it every frame
+;   * smooth animation: CLEAN, draw, WAIT, repeat
+;
+; THINGS TO TRY
+;   * Draw only the corners, as dots, instead of the edges.
+;   * Make VIEWER 3 for a strong, fish-eye perspective.
+;   * Add a sixth solid: a triangular prism. Do the shortest edges
+;     still find all of its edges? (Hint: not if its sides are long.)
+; ============================================================
+
+make "phi (1 + sqrt 5) / 2
+make "speed 2
+make "viewer 6
+
+; Every arrangement of the signs of a list: [1 2] gives
+; [1 2] [1 -2] [-1 2] [-1 -2]. Zeros are not doubled up.
+to signs :point
+  if emptyp :point [output [[]]]
+  localmake "rest signs butfirst :point
+  if (first :point) = 0 [output map [fput 0 ?] :rest]
+  output sentence map [fput first :point ?] :rest map [fput minus first :point ?] :rest
+end
+
+; The three cyclic turns of a point: [x y z], [y z x], [z x y].
+to cycles :p
+  output (list :p (list item 2 :p item 3 :p item 1 :p) (list item 3 :p item 1 :p item 2 :p))
+end
+
+; signs of all cyclic turns of a point, joined into one list
+to family :p
+  output reduce "sentence map "signs cycles :p
+end
+
+; The corners of each solid. These are the classic coordinates.
+to corners :solid
+  if :solid = "tetrahedron [output [[1 1 1] [1 -1 -1] [-1 1 -1] [-1 -1 1]]]
+  if :solid = "cube [output signs [1 1 1]]
+  if :solid = "octahedron [output family [1 0 0]]
+  if :solid = "icosahedron [output family (list 0 1 :phi)]
+  output sentence signs [1 1 1] family (list 0 1 / :phi :phi)
+end
+
+to sqdist :a :b
+  output reduce "sum (map [(?1 - ?2) * (?1 - ?2)] :a :b)
+end
+
+; Edges: every pair of corners whose distance is the shortest one.
+; We find the shortest distance first, then keep the pairs that match.
+to edges :pts
+  localmake "n count :pts
+  localmake "best 1e9
+  for [i 1 :n - 1] [for [j :i + 1 :n] [
+    make "best min :best sqdist item :i :pts item :j :pts
+  ]]
+  localmake "found []
+  for [i 1 :n - 1] [for [j :i + 1 :n] [
+    if (sqdist item :i :pts item :j :pts) < :best + 0.001 [make "found fput list :i :j :found]
+  ]]
+  output :found
+end
+
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+; Size of a solid: how far its first corner is from the center.
+to radius :pts
+  output sqrt reduce "sum map [? * ?] first :pts
+end
+
+; Turn a point by angle a round the up-down axis and b round the
+; left-right axis, then squash it for perspective. Outputs [sx sy z].
+to project :p :a :b :scale :cx :cy
+  localmake "x1 (first :p) * (cos :a) + (last :p) * (sin :a)
+  localmake "z1 (last :p) * (cos :a) - (first :p) * (sin :a)
+  localmake "y2 (item 2 :p) * (cos :b) - :z1 * (sin :b)
+  localmake "z2 (item 2 :p) * (sin :b) + :z1 * (cos :b)
+  localmake "f :viewer / (:viewer + :z2)
+  output (list :cx + :scale * :x1 * :f  :cy + :scale * :y2 * :f  :z2)
+end
+
+; A model is [name color scale cx cy corners edges].
+to model :name :color :cx :cy
+  localmake "pts corners :name
+  ; shrink or grow every solid so all of them have radius 1
+  localmake "r radius :pts
+  localmake "pts map [map [? / :r] ?] :pts
+  output (list :name :color 75 :cx :cy :pts edges :pts)
+end
+
+to drawmodel :m :a :b
+  localmake "flat listtoarray map [project ? :a :b item 3 :m item 4 :m item 5 :m] item 6 :m
+  setpencolor item 2 :m
+  foreach item 7 :m [
+    localmake "p item first ? :flat
+    localmake "q item last ? :flat
+    ; front edges (z less than 0, nearer to us) are drawn thicker
+    setpensize ifelse ((last :p) + (last :q)) < 0 [3] [1]
+    penup setxy first :p item 2 :p
+    pendown setxy first :q item 2 :q
+  ]
+  penup setxy (item 4 :m) - 45 (item 5 :m) - 105
+  setpensize 1 label first :m
+end
+
+to spin
+  localmake "models (list model "tetrahedron [220 60 60] -250 120 ~
+                          model "cube [240 140 20] 0 120 ~
+                          model "octahedron [40 150 70] 250 120 ~
+                          model "dodecahedron [50 100 210] -130 -150 ~
+                          model "icosahedron [150 60 180] 130 -150)
+  localmake "angle 0
+  forever [
+    clean
+    foreach :models [drawmodel ? :angle :angle * 0.6 + 20]
+    make "angle :angle + :speed
+    wait 2
+  ]
+end
+
+clearscreen hideturtle
+setlabelheight 15
+spin

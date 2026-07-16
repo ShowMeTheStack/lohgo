@@ -1,0 +1,88 @@
+; ============================================================
+; TITLE:    Impossible Triangle
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Advanced
+; TAGS:     optical illusion, penrose, isometric grid, rotation, filled
+; SUMMARY:  Draws a Penrose-style impossible triangle from six shaded strips on a triangular grid.
+; ============================================================
+;
+; WHAT IT DOES
+;   Three beams seem to meet at right angles to make a triangle,
+;   but each beam passes in front of the next one all the way round,
+;   which no real object could do. The picture is only six flat
+;   strips in three colors. Your brain does the rest.
+;
+; HOW TO USE
+;   Press Run. Change SIZE (how many grid steps along each side),
+;   THICK (the width of each face) or the three SHADES.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a triangular grid: points written as (a, b) steps along two
+;     directions 60 degrees apart
+;   * turning a whole shape by 120 degrees with a simple rule
+;     on its grid coordinates
+;   * how shading makes flat shapes look solid
+;
+; THINGS TO TRY
+;   * Make THICK 1.5 or 0.6. When does the illusion stop working?
+;   * Give all six strips the same color. Is it still impossible?
+;   * Swap two of the SHADES and see which way the beams seem to turn.
+; ============================================================
+
+make "size 9
+make "thick 1
+make "unit 50
+make "shades [[245 180 70] [210 90 60] [110 50 70]]
+
+; Grid point (a, b) means: a steps to the right, then b steps along
+; the direction 60 degrees up from that. These two procedures give
+; its place on the screen, with the whole figure centered.
+to gx :p
+  output :unit * ((first :p) + (last :p) / 2 - :size / 2)
+end
+to gy :p
+  output :unit * (last :p) * (sqrt 3) / 2 - :unit * :size * (sqrt 3) / 4
+end
+
+; Turning by 120 degrees round the middle of the big triangle moves
+; corner (0, 0) to (size, 0), (size, 0) to (0, size), and so on.
+; On the grid that turn is just this little formula.
+to turn120 :p
+  output list :size - (first :p) - (last :p) first :p
+end
+
+; Paint a polygon given as a list of grid points.
+to strip :points :color
+  penup setxy gx first :points gy first :points pendown
+  filled :color [
+    foreach butfirst :points [setxy gx ? gy ?]
+    setxy gx first :points gy first :points
+  ]
+end
+
+; One beam is the bottom of the triangle. It has an outer face
+; (the strip next to the edge) and an inner face (the next strip in).
+; Its right end is cut on a slant where the next beam covers it.
+to beam :turns :outercolor :innercolor
+  localmake "n :size
+  localmake "w :thick
+  localmake "outer (list [0 0] (list :n - 2 * :w 0) (list :n - 3 * :w :w) (list 0 :w))
+  localmake "inner (list (list 0 :w) (list :n - 3 * :w :w) (list :n - 4 * :w 2 * :w) (list 0 2 * :w))
+  ; spin both faces round to the side we want
+  repeat :turns [
+    make "outer map "turn120 :outer
+    make "inner map "turn120 :inner
+  ]
+  strip :outer :outercolor
+  strip :inner :innercolor
+end
+
+clearscreen hideturtle
+setbackground [235 240 245]
+setpencolor [40 30 40]
+setpensize 2
+; each beam's inner face has the same shade as the next beam's
+; outer face: that shared shade is what tricks the eye at the corners
+beam 0 item 1 :shades item 2 :shades
+beam 1 item 2 :shades item 3 :shades
+beam 2 item 3 :shades item 1 :shades

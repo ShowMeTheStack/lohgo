@@ -1,0 +1,135 @@
+; ============================================================
+; TITLE:    Shape Morph
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Advanced
+; TAGS:     animation, interpolation, resampling, easing, lists
+; SUMMARY:  Smoothly melts a triangle into a square, a star, a heart and a circle, and round again.
+; ============================================================
+;
+; WHAT IT DOES
+;   One colored shape keeps changing into the next. To make that
+;   possible every shape is first turned into the same number of
+;   points, spread evenly round its edge. Then each point slides
+;   from its place on one shape to its place on the next, and the
+;   color slides too.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to end. Add your own shape to
+;   the list in MAKESHAPES, or change STEPS for a slower morph.
+;
+; CONCEPTS YOU WILL LEARN
+;   * resampling: walking round a polygon and dropping a point
+;     every equal distance
+;   * linear interpolation: a + (b - a) x t goes from a to b as t
+;     goes from 0 to 1
+;   * easing: 3t^2 - 2t^3 starts slowly and stops gently
+;   * MAP with two lists at once to combine them point by point
+;
+; THINGS TO TRY
+;   * Use plain t instead of EASE. Does the motion feel different?
+;   * Add a hexagon and a five-pointed star with fatter points.
+;   * Lower POINTS to 12. What happens to the circle and the heart?
+; ============================================================
+
+make "points 120
+make "steps 40
+
+; Corners of a regular polygon (or a star, when two radii are given
+; and the corners take turns between them). The first corner is at
+; the top and they go round clockwise, so all shapes start together.
+to ringpoint :k :corners :radius
+  localmake "angle 360 * :k / :corners
+  output list :radius * sin :angle :radius * cos :angle
+end
+
+to polygonpoints :corners :r1 :r2
+  output map [ringpoint ? :corners ifelse 0 = remainder ? 2 [:r1] [:r2]] iseq 0 :corners - 1
+end
+
+; A heart from a famous formula, sampled every 4.5 degrees.
+to heartpoints
+  output map [heartpoint ? * 4.5] iseq 0 79
+end
+to heartpoint :t
+  localmake "x 16 * power sin :t 3
+  localmake "y 13 * (cos :t) - 5 * (cos 2 * :t) - 2 * (cos 3 * :t) - cos 4 * :t
+  output list 14 * :x 14 * :y + 30
+end
+
+to dist :a :b
+  output sqrt ((first :a) - (first :b)) * ((first :a) - (first :b)) + ((last :a) - (last :b)) * ((last :a) - (last :b))
+end
+
+; Walk round the closed polygon and put down :n points the same
+; distance apart. We keep a running total of the distance walked; when
+; the next point falls inside the current side we place it there.
+to resample :corners :n
+  localmake "loop lput first :corners :corners
+  localmake "total 0
+  for [i 1 count :corners] [make "total :total + dist item :i :loop item :i + 1 :loop]
+  localmake "spacing :total / :n
+  localmake "out []
+  localmake "walked 0          ; distance up to the start of this side
+  localmake "side 1
+  localmake "len dist item 1 :loop item 2 :loop
+  for [k 0 :n - 1] [
+    localmake "want :k * :spacing
+    while [(:walked + :len) < :want] [
+      make "walked :walked + :len
+      make "side :side + 1
+      make "len dist item :side :loop item :side + 1 :loop
+    ]
+    localmake "t (:want - :walked) / :len
+    localmake "a item :side :loop
+    localmake "b item :side + 1 :loop
+    make "out lput (list (first :a) + :t * ((first :b) - (first :a)) (last :a) + :t * ((last :b) - (last :a))) :out
+  ]
+  output :out
+end
+
+; [name color corners] for each shape, already resampled.
+to makeshapes
+  output (list ~
+    (list "triangle [230 70 60] resample polygonpoints 3 230 230 :points) ~
+    (list "square [240 160 30] resample polygonpoints 4 210 210 :points) ~
+    (list "star [60 160 90] resample polygonpoints 10 240 95 :points) ~
+    (list "heart [220 60 130] resample heartpoints :points) ~
+    (list "circle [60 120 220] resample polygonpoints 60 190 190 :points))
+end
+
+to ease :t
+  output :t * :t * (3 - 2 * :t)
+end
+
+to blend :a :b :t
+  output (map [?1 + :t * (?2 - ?1)] :a :b)
+end
+
+to drawshape :pts :color
+  clean
+  setpencolor map [int ? * 0.6] :color
+  penup setxy first first :pts last first :pts pendown
+  filled :color [foreach butfirst :pts [setxy first ? last ?] setxy first first :pts last first :pts]
+end
+
+to morph :from :next
+  for [s 0 :steps] [
+    localmake "t ease :s / :steps
+    drawshape (map [blend ?1 ?2 :t] item 3 :from item 3 :next) blend item 2 :from item 2 :next :t
+    wait 2
+  ]
+  wait 40
+end
+
+to play
+  localmake "shapes makeshapes
+  ; put the first shape on the end again so the show loops round
+  localmake "tour lput first :shapes :shapes
+  forever [
+    for [i 1 (count :tour) - 1] [morph item :i :tour item :i + 1 :tour]
+  ]
+end
+
+clearscreen hideturtle
+setpensize 3
+play

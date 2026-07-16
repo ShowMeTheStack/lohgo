@@ -1,0 +1,101 @@
+; ============================================================
+; TITLE:    Four-Sided Shapes
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Beginner
+; TAGS:     quadrilateral, angles, rhombus, kite, trapezoid
+; SUMMARY:  Draws the six famous quadrilaterals side by side and labels each one.
+; ============================================================
+;
+; WHAT IT DOES
+;   Square, rectangle, rhombus, parallelogram, trapezoid and kite,
+;   each in its own color with its name below. Every one of them
+;   has four sides, and in every one the turns add up to 360.
+;
+; HOW TO USE
+;   Press Run. Each shape is its own procedure, so you can type
+;   rhombus 100 45  or  kite 60 120  in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * different four-sided shapes come from different angles and lengths
+;   * opposite turns that add to 180 give parallel sides
+;   * procedures with more than one input
+;
+; THINGS TO TRY
+;   * Make a rhombus with a 90 degree angle. Which shape is it now?
+;   * Draw a parallelogram with angle 90. What do you get?
+;   * Add up the four turns in KITE. Do they make 360?
+; ============================================================
+
+to square :side
+  repeat 4 [forward :side right 90]
+end
+
+to rectangle :width :height
+  repeat 2 [forward :height right 90 forward :width right 90]
+end
+
+; A rhombus is a squashed square: all four sides are equal,
+; but the corners are not right angles. The two turns, :angle and
+; 180 - :angle, add up to 180, which keeps opposite sides parallel.
+; We walk along the bottom first and turn LEFT so the shape grows upward.
+to rhombus :side :angle
+  right 90
+  repeat 2 [forward :side left :angle forward :side left 180 - :angle]
+  left 90
+end
+
+; A parallelogram is a squashed rectangle.
+to parallelogram :width :height :angle
+  right 90
+  repeat 2 [forward :width left :angle forward :height left 180 - :angle]
+  left 90
+end
+
+; A trapezoid has one pair of parallel sides, the top and bottom.
+; We walk the long bottom, go up a slanted side, along the short top,
+; then use SETXY to come back down to where we started.
+to trapezoid :bottom :top :height
+  localmake "x xcor localmake "y ycor
+  setheading 90
+  forward :bottom
+  setxy :x + (:bottom + :top) / 2 :y + :height
+  setxy :x + (:bottom - :top) / 2 :y + :height
+  setxy :x :y
+  setheading 0
+end
+
+; A kite: two short sides on top, two long sides below.
+; We find the four corners from the middle line of the kite.
+to kite :short :long
+  localmake "x xcor localmake "y ycor
+  setxy :x - :short * 0.7 :y + :long * 0.7
+  setxy :x :y + :long * 0.7 + :short * 0.7
+  setxy :x + :short * 0.7 :y + :long * 0.7
+  setxy :x :y
+end
+
+to place :x :y :color :name
+  penup setxy :x - 30 :y - 30 setheading 0
+  setpencolor 0 label :name
+  setxy :x :y pendown
+  setpencolor :color
+end
+
+clearscreen
+setpensize 3
+setlabelheight 16
+
+place -320 80 1 "square
+square 100
+place -80 80 4 "rectangle
+rectangle 150 90
+place 170 80 2 "rhombus
+rhombus 100 60
+
+place -330 -200 13 "parallelogram
+parallelogram 150 90 60
+place -50 -200 14 "trapezoid
+trapezoid 160 80 100
+place 250 -200 5 "kite
+kite 70 140
+hideturtle

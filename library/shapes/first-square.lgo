@@ -1,0 +1,85 @@
+; ============================================================
+; TITLE:    Your First Square
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Beginner
+; TAGS:     square, repeat, procedures, first steps
+; SUMMARY:  Draws a square the long way, then the short way with REPEAT, then a row of colored squares.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle draws three squares. The first is made with eight
+;   separate commands, the second with one REPEAT line, and then a
+;   new word, SQUARE, is taught to Logo and used to draw a row of
+;   squares that get bigger and change color.
+;
+; HOW TO USE
+;   Press Run. Then type your own commands in the command center,
+;   for example:  square 120
+;
+; CONCEPTS YOU WILL LEARN
+;   * FORWARD and RIGHT move and turn the turtle
+;   * REPEAT saves you from typing the same thing again and again
+;   * TO ... END teaches Logo a new word (a procedure)
+;   * an input like :size lets one procedure draw many sizes
+;
+; THINGS TO TRY
+;   * Change 90 to 120 and 3 in the REPEAT. What shape do you get?
+;   * Make the squares in the row grow by 20 instead of 15.
+;   * Use SETPENSIZE 5 before drawing to get fat lines.
+; ============================================================
+
+; A square has four equal sides and four corners of 90 degrees.
+; The turtle turns 90 degrees at every corner, 4 x 90 = 360,
+; so it ends up facing the same way it started.
+to square :size
+  repeat 4 [forward :size right 90]
+end
+
+; The long way: every side and every turn written out.
+; Reading it aloud helps: walk, turn, walk, turn ...
+to longwaysquare
+  forward 80 right 90
+  forward 80 right 90
+  forward 80 right 90
+  forward 80 right 90
+end
+
+; Jump to a spot without leaving a line behind.
+to jumpto :x :y
+  penup
+  setxy :x :y
+  pendown
+end
+
+; A row of squares. Each one is 15 steps bigger than the last
+; and uses the next color in the palette (colors 1, 2, 3 ...).
+to squarerow :count
+  repeat :count [
+    setpencolor repcount
+    square 15 + 15 * repcount
+    penup right 90 forward 30 + 15 * repcount left 90 pendown
+  ]
+end
+
+clearscreen
+setpensize 3
+
+; square number one, the long way, in blue
+jumpto -300 100
+setpencolor 1
+longwaysquare
+
+; square number two, the short way, in red
+jumpto -150 100
+setpencolor 4
+repeat 4 [forward 80 right 90]
+
+; square number three, using our new word
+jumpto 0 100
+setpencolor 13
+square 80
+
+; and now a whole row, all built from the same SQUARE
+jumpto -280 -220
+squarerow 6
+hideturtle

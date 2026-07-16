@@ -1,0 +1,105 @@
+; ============================================================
+; TITLE:    Block Letters
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Intermediate
+; TAGS:     letters, property lists, data, coordinates, readlist
+; SUMMARY:  Stores the whole alphabet as straight-line strokes and writes any word you type in big turtle letters.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every capital letter is kept as a list of straight strokes on a
+;   small grid 4 squares wide and 6 tall. The program writes LOGO
+;   on the screen, then asks you for a word or two and writes those
+;   too, shrinking the letters if they would not fit.
+;
+; HOW TO USE
+;   Press Run. When asked, type a word or a short sentence in the
+;   command center and press Enter. Letters it does not know (like
+;   digits) are left as gaps.
+;
+; CONCEPTS YOU WILL LEARN
+;   * PPROP and GPROP keep data under a name, like a tiny dictionary
+;   * describing a picture with numbers instead of with moves
+;   * scaling: the same letter drawn at any size by multiplying
+;   * going through a word one character at a time with FOREACH
+;
+; THINGS TO TRY
+;   * Design the digits 0 to 9 and add them with PPROP.
+;   * Make the letters lean to the right like italics: add a little
+;     of the y value to x when drawing.
+;   * Give every letter its own color.
+; ============================================================
+
+; Each stroke is [x1 y1 x2 y2] on a grid with (0, 0) at the bottom left
+; of the letter and (4, 6) at the top right.
+to defineletters
+  pprop "font "A [[0 0 0 4] [0 4 2 6] [2 6 4 4] [4 4 4 0] [0 3 4 3]]
+  pprop "font "B [[0 0 0 6] [0 6 3 6] [3 6 4 5] [4 5 4 4] [4 4 3 3] [0 3 3 3] [3 3 4 2] [4 2 4 1] [4 1 3 0] [3 0 0 0]]
+  pprop "font "C [[4 5 3 6] [3 6 1 6] [1 6 0 5] [0 5 0 1] [0 1 1 0] [1 0 3 0] [3 0 4 1]]
+  pprop "font "D [[0 0 0 6] [0 6 2 6] [2 6 4 4] [4 4 4 2] [4 2 2 0] [2 0 0 0]]
+  pprop "font "E [[4 6 0 6] [0 6 0 0] [0 0 4 0] [0 3 3 3]]
+  pprop "font "F [[4 6 0 6] [0 6 0 0] [0 3 3 3]]
+  pprop "font "G [[4 5 3 6] [3 6 1 6] [1 6 0 5] [0 5 0 1] [0 1 1 0] [1 0 3 0] [3 0 4 1] [4 1 4 3] [4 3 2 3]]
+  pprop "font "H [[0 0 0 6] [4 0 4 6] [0 3 4 3]]
+  pprop "font "I [[1 6 3 6] [2 6 2 0] [1 0 3 0]]
+  pprop "font "J [[1 6 4 6] [3 6 3 1] [3 1 2 0] [2 0 1 0] [1 0 0 1]]
+  pprop "font "K [[0 0 0 6] [4 6 0 2] [1 3 4 0]]
+  pprop "font "L [[0 6 0 0] [0 0 4 0]]
+  pprop "font "M [[0 0 0 6] [0 6 2 3] [2 3 4 6] [4 6 4 0]]
+  pprop "font "N [[0 0 0 6] [0 6 4 0] [4 0 4 6]]
+  pprop "font "O [[1 0 0 1] [0 1 0 5] [0 5 1 6] [1 6 3 6] [3 6 4 5] [4 5 4 1] [4 1 3 0] [3 0 1 0]]
+  pprop "font "P [[0 0 0 6] [0 6 3 6] [3 6 4 5] [4 5 4 4] [4 4 3 3] [3 3 0 3]]
+  ; Q is an O with a tail, R is a P with a leg: build them from the others
+  pprop "font "Q lput [2 2 4 0] gprop "font "O
+  pprop "font "R lput [2 3 4 0] gprop "font "P
+  pprop "font "S [[4 5 3 6] [3 6 1 6] [1 6 0 5] [0 5 0 4] [0 4 1 3] [1 3 3 3] [3 3 4 2] [4 2 4 1] [4 1 3 0] [3 0 1 0] [1 0 0 1]]
+  pprop "font "T [[0 6 4 6] [2 6 2 0]]
+  pprop "font "U [[0 6 0 1] [0 1 1 0] [1 0 3 0] [3 0 4 1] [4 1 4 6]]
+  pprop "font "V [[0 6 2 0] [2 0 4 6]]
+  pprop "font "W [[0 6 1 0] [1 0 2 3] [2 3 3 0] [3 0 4 6]]
+  pprop "font "X [[0 6 4 0] [0 0 4 6]]
+  pprop "font "Y [[0 6 2 3] [4 6 2 3] [2 3 2 0]]
+  pprop "font "Z [[0 6 4 6] [4 6 0 0] [0 0 4 0]]
+end
+
+; Draw one letter with its bottom left corner at (x, y).
+; :unit is how many turtle steps one grid square is worth.
+to drawletter :char :x :y :unit
+  localmake "strokes gprop "font uppercase :char
+  if emptyp :strokes [stop]     ; unknown character: leave a gap
+  foreach :strokes [
+    penup
+    setxy :x + :unit * item 1 ? :y + :unit * item 2 ?
+    pendown
+    setxy :x + :unit * item 3 ? :y + :unit * item 4 ?
+  ]
+end
+
+; Write a line of text centered on the screen at height y.
+; Each letter takes 6 units of room: 4 for the letter, 2 for the gap.
+to writeline :text :y :unit
+  localmake "chars count :text
+  ; shrink the letters if the line would be wider than the screen
+  if (:chars * 6 * :unit) > 760 [make "unit 760 / (:chars * 6)]
+  localmake "x minus (:chars * 6 - 2) * :unit / 2
+  foreach :text [
+    setpencolor item 1 + remainder # 5 [[220 50 50] [240 140 0] [40 150 70] [40 100 210] [140 60 180]]
+    drawletter ? :x :y :unit
+    make "x :x + 6 * :unit
+  ]
+end
+
+clearscreen hideturtle
+setpensize 6
+defineletters
+writeline "LOGO 80 30
+
+setpensize 4
+print [Type a word or a short sentence to write, then press Enter:]
+make "answer readlist
+; the words of the answer are joined with spaces into one long word
+ifelse emptyp :answer [
+  writeline "TURTLE -180 20
+] [
+  writeline reduce [(word ?1 "| | ?2)] :answer -180 20
+]

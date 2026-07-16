@@ -1,0 +1,85 @@
+; ============================================================
+; TITLE:    Star Shapes
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Beginner
+; TAGS:     star, angles, filled, repeat
+; SUMMARY:  Draws pointy stars with crossing lines, an outline star with no lines inside, and a filled gold star.
+; ============================================================
+;
+; WHAT IT DOES
+;   The top row shows stars where the lines cross in the middle:
+;   5 points, 7 points and 8 points. The bottom row shows a star
+;   drawn round its outside edge only, and the same star painted
+;   gold like a sheriff's badge.
+;
+; HOW TO USE
+;   Press Run. Try  star5 200  in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a 5 point star turns 144 degrees, and goes round the center TWICE
+;   * two turns in a row (a left and a right) can make zigzag edges
+;   * FILLED paints the inside of the path the turtle walks
+;
+; THINGS TO TRY
+;   * In STAR5 change 144 to 150 or 170. What do you see?
+;   * Make OUTLINESTAR with 6 or 9 points instead of 5.
+;   * Change the gold color to [200 0 0] for a red star.
+; ============================================================
+
+; Five lines, each turn 144 degrees. 5 x 144 = 720, which is two
+; full turns: the turtle circles the middle twice before it gets home.
+to star5 :size
+  repeat 5 [forward :size right 144]
+end
+
+; A 7 point star skips over 3 points at a time.
+; The turn is 3 / 7 of a full circle.
+to star7 :size
+  repeat 7 [forward :size right 360 * 3 / 7]
+end
+
+; An 8 point star turns 135 degrees, three eighths of a turn.
+to star8 :size
+  repeat 8 [forward :size right 135]
+end
+
+; An outline star: walk out to a tip, turn sharply, walk back in,
+; turn a little the other way. Out-and-in, five times.
+; Each time round it turns 144 right and 72 left, 72 degrees in all,
+; and 5 x 72 = 360, so the turtle comes home facing the right way.
+to outlinestar :edge
+  repeat 5 [
+    forward :edge
+    right 144
+    forward :edge
+    left 72
+  ]
+end
+
+to jumpto :x :y :heading
+  penup setxy :x :y setheading :heading pendown
+end
+
+clearscreen
+setpensize 3
+
+; top row: stars with crossing lines
+setpencolor 1
+jumpto -330 80 18
+star5 150
+setpencolor 13
+jumpto -70 80 13
+star7 150
+setpencolor 4
+jumpto 210 70 22.5
+star8 150
+
+; bottom row: outline star, then a filled one
+setpencolor 2
+jumpto -220 -170 18
+outlinestar 70
+
+setpencolor [180 120 0]
+jumpto 100 -170 18
+filled [255 210 40] [outlinestar 70]
+hideturtle

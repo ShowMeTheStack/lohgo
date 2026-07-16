@@ -1,0 +1,94 @@
+; ============================================================
+; TITLE:    Isometric Block Pyramid
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Intermediate
+; TAGS:     3d, isometric, cube, filled, shading
+; SUMMARY:  Builds a stepped pyramid of shaded 3D-looking cubes, one layer of color at a time.
+; ============================================================
+;
+; WHAT IT DOES
+;   Cubes are drawn in "isometric" style: each one is three
+;   four-sided faces, a light top, a medium left and a dark right.
+;   Stacked on a 5 by 5 grid they make a stepped pyramid that looks
+;   solid even though it is only flat shapes.
+;
+; HOW TO USE
+;   Press Run. Change the HEIGHTS list to build a different shape,
+;   or the COLORS list to repaint the layers.
+;
+; CONCEPTS YOU WILL LEARN
+;   * isometric drawing: three directions, 30 degrees above level
+;   * shading a face by multiplying the red, green and blue amounts
+;   * drawing order: which cube must come first so the picture is right
+;   * a grid of numbers (a list of lists) that describes a 3D shape
+;
+; THINGS TO TRY
+;   * Make HEIGHTS a staircase: 1 2 3 4 5 along each row.
+;   * Change 0.6 in the right face to 0.4 for deeper shadows.
+;   * Make CUBESIZE 30 and use a 7 by 7 grid.
+; ============================================================
+
+make "cubesize 56
+; how many cubes stand on each square of the floor
+make "heights [[1 1 1 1 1] [1 2 2 2 1] [1 2 4 2 1] [1 2 2 2 1] [1 1 1 1 1]]
+make "colors [[220 80 70] [240 170 50] [90 180 110] [80 140 230]]
+; the floor corner nearest to us sits here on the screen
+make "origin [0 -235]
+
+; Screen position of grid point (i, j, k). Moving along i goes up to
+; the right, along j up to the left, and along k straight up.
+to screenx :i :j
+  output (first :origin) + :cubesize * (cos 30) * (:i - :j)
+end
+to screeny :i :j :k
+  output (last :origin) + :cubesize * ((sin 30) * (:i + :j) + :k)
+end
+
+; Make a color darker (or lighter) by scaling each of its parts.
+to shade :color :factor
+  output map [min 255 int ? * :factor] :color
+end
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+; One face is four grid points. FILLED paints it with the pen UP:
+; FILLED still notices where the turtle goes, but no edge lines are
+; drawn, so the faces meet with just a change of shade between them.
+to face :corners :color
+  penup setxy screenx item 1 first :corners item 2 first :corners ~
+              screeny item 1 first :corners item 2 first :corners item 3 first :corners
+  filled :color [
+    foreach butfirst :corners [setxy screenx item 1 ? item 2 ? screeny item 1 ? item 2 ? item 3 ?]
+    setxy screenx item 1 first :corners item 2 first :corners ~
+          screeny item 1 first :corners item 2 first :corners item 3 first :corners
+  ]
+end
+
+; A cube is three faces: the top, then the two sides. The three faces
+; never overlap on the screen, so their order does not matter.
+to cube :i :j :k
+  localmake "c item 1 + remainder :k count :colors :colors
+  localmake "a :i + 1  localmake "b :j + 1  localmake "t :k + 1
+  face (list (list :i :j :t) (list :a :j :t) (list :a :b :t) (list :i :b :t)) shade :c 1.15
+  face (list (list :i :j :k) (list :i :b :k) (list :i :b :t) (list :i :j :t)) shade :c 0.85
+  face (list (list :i :j :k) (list :a :j :k) (list :a :j :t) (list :i :j :t)) shade :c 0.6
+end
+
+; Painter's order: later drawing covers earlier drawing, so we paint
+; the farthest cubes first and the nearest ones last. The cube nearest
+; to us has the smallest i + j - k, so depth counts down.
+to build
+  localmake "n count :heights
+  for [depth 2 * :n -4 -1] [
+    for [i 0 :n - 1] [
+      for [j 0 :n - 1] [
+        localmake "k :i + :j - :depth
+        if and :k >= 0 :k < item :j + 1 item :i + 1 :heights [cube :i :j :k]
+      ]
+    ]
+  ]
+end
+
+clearscreen hideturtle
+build

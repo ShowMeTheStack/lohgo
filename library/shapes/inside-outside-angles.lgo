@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Inside and Outside Angles
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Intermediate
+; TAGS:     angles, polygon, arc, exterior angle, table
+; SUMMARY:  Marks the turtle's turn and the inside angle at every corner of six polygons and prints a table of them.
+; ============================================================
+;
+; WHAT IT DOES
+;   Six regular polygons, from 3 to 8 sides. At every corner a red
+;   arc shows how far the turtle TURNS, and a blue arc shows the
+;   INSIDE angle of the shape. A dotted line shows where the turtle
+;   would have gone if it had not turned. A table of the numbers is
+;   printed in the command center.
+;
+; HOW TO USE
+;   Press Run, then look at the picture and the printed table.
+;   Try  clearscreen angles 10 100  for a big decagon.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the turtle's turn (outside angle) is 360 / sides
+;   * turn + inside angle = 180, a straight line
+;   * ARC draws part of a circle round the turtle without moving it
+;   * FORM to print numbers neatly in columns
+;
+; THINGS TO TRY
+;   * Add up all the inside angles of a hexagon. Compare with
+;     (sides - 2) x 180.
+;   * What happens to the inside angle as sides gets very big?
+;   * Mark only the red arcs. Do they fit together into a full circle?
+; ============================================================
+
+; A dotted line: little dashes with gaps.
+to dotted :length
+  repeat :length / 6 [pendown forward 3 penup forward 3]
+end
+
+; Draw a polygon and decorate each corner.
+; At a corner the turtle arrives facing heading h. It is about to turn
+; right by t = 360 / sides. ARC starts at the turtle's heading and
+; sweeps clockwise, so:
+;   the turn is the arc from h to h + t (red);
+;   the inside angle is the arc from h + t to h + 180 (blue).
+to angles :sides :size
+  localmake "t 360 / :sides
+  repeat :sides [
+    setpencolor [50 50 50] setpensize 3
+    pendown forward :size
+    ; what the turtle would do with no turn: carry straight on
+    setpensize 1 setpencolor [150 150 150]
+    dotted 30 back 30
+    ; red: the turn
+    setpensize 2 setpencolor [220 40 40] pendown
+    arc :t 22
+    ; blue: the inside angle
+    right :t
+    setpencolor [40 90 220]
+    arc 180 - :t 14
+  ]
+end
+
+; Put a polygon with the given number of sides on the grid and label it.
+to cell :sides :x :y
+  localmake "size 380 / :sides
+  penup setxy :x - :size / 2 :y setheading 90
+  angles :sides :size
+  penup setxy :x - 100 :y - 140 setpencolor 0
+  label (sentence :sides [sides: turn] round 360 / :sides [inside] round 180 - 360 / :sides)
+end
+
+to table
+  ; a word in vertical bars keeps its spaces, so the heading lines up
+  print "|sides   turn   inside   inside sum|
+  for [n 3 8] [
+    print (sentence form :n 5 0 form 360 / :n 6 1 form 180 - 360 / :n 8 1 form 180 * (:n - 2) 12 0)
+  ]
+end
+
+clearscreen hideturtle
+setlabelheight 13
+; heading 90 and right turns: the shapes hang down from their top side,
+; so we start each one at the top
+cell 3 -260 250
+cell 4 0 250
+cell 5 260 250
+cell 6 -260 -20
+cell 7 0 -20
+cell 8 260 -20
+table

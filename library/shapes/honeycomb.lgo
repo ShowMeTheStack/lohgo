@@ -1,0 +1,71 @@
+; ============================================================
+; TITLE:    Honeycomb Tiles
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Intermediate
+; TAGS:     hexagon, tiling, grid, coordinates, random
+; SUMMARY:  Covers the screen with hexagon tiles like a honeycomb, some full of honey and some empty.
+; ============================================================
+;
+; WHAT IT DOES
+;   Hexagons fit together with no gaps, which is why bees use them.
+;   This program lays hexagon tiles in columns, each column shifted
+;   half a tile up, and paints most cells in shades of honey. Cells
+;   near the middle are fuller, the ones at the edge are often empty.
+;
+; HOW TO USE
+;   Press Run. Run it again for a different honeycomb.
+;   Change SIDE to make the cells bigger or smaller.
+;
+; CONCEPTS YOU WILL LEARN
+;   * why hexagons tile: three 120 degree corners meet at each point
+;   * where to put the center of each tile in a staggered grid
+;   * using DISTANCE to make the middle of the picture different
+;   * mixing two colors by a fraction
+;
+; THINGS TO TRY
+;   * Make SIDE 15 for a fine honeycomb.
+;   * Try squares or triangles instead. Do they tile too? Pentagons?
+;   * Paint the cells in rainbow colors by column.
+; ============================================================
+
+make "side 34
+
+; A flat-topped hexagon with its center at (x, y). We start at the
+; left corner and walk round with right turns of 60 degrees.
+to hexagon :x :y :color
+  penup setxy :x - :side :y setheading 30 pendown
+  filled :color [repeat 6 [forward :side right 60]]
+end
+
+; Mix two colors: fraction 0 gives the first, 1 gives the second.
+to mix :a :b :fraction
+  output (map [int ?1 + :fraction * (?2 - ?1)] :a :b)
+end
+
+; Pick a cell's color. The closer it is to the middle of the screen,
+; the more likely it is to be full of honey, and the darker the honey.
+to cellcolor :x :y
+  localmake "far (sqrt :x * :x + :y * :y) / 420
+  if (random 100) < 100 * :far [output [250 240 210]]        ; empty wax
+  output mix [255 215 60] [200 110 10] (1 - :far) * (random 100) / 100
+end
+
+; Columns are 1.5 sides apart. Every other column is pushed up by
+; half a tile so its hexagons slot in between those next to it.
+to honeycomb
+  localmake "h :side * sqrt 3
+  for [col -9 9] [
+    localmake "x 1.5 * :side * :col
+    localmake "shift ifelse 0 = remainder abs :col 2 [0] [:h / 2]
+    for [row -5 5] [
+      localmake "y :h * :row + :shift
+      hexagon :x :y cellcolor :x :y
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [120 80 30]
+setpensize 4
+setpencolor [150 100 30]
+honeycomb

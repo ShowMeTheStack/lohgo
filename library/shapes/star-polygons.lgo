@@ -1,0 +1,86 @@
+; ============================================================
+; TITLE:    Star Polygon Table
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Intermediate
+; TAGS:     star polygon, gcd, recursion, geometry, angles
+; SUMMARY:  Draws the star polygon {n/k} for many n and k, splitting into several shapes when n and k share a factor.
+; ============================================================
+;
+; WHAT IT DOES
+;   Put n dots round a circle and join every k-th dot. The result
+;   is called the star polygon {n/k}. This program draws a table of
+;   them: one row for each n from 5 to 9, one column for each k.
+;   When n and k share a common factor (like {6/2}) the line comes
+;   home too early, so the program draws several smaller shapes,
+;   rotated, to finish the picture.
+;
+; HOW TO USE
+;   Press Run. Then try  starat 0 0 12 5 200  in the command center
+;   (after CLEARSCREEN) to draw a big {12/5}.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a recursive GCD (greatest common divisor), Euclid's way
+;   * the turn for {n/k} is 360 x k / n
+;   * a star made of g separate shapes, each with n / g corners
+;   * placing a shape by its center using SIN and COS
+;
+; THINGS TO TRY
+;   * Add a row for n = 10 and n = 12.
+;   * Which {n/k} is the Star of David? Which is a pentagram?
+;   * Color each separate piece of a split star differently.
+; ============================================================
+
+; Euclid: the gcd of a and b is the gcd of b and the remainder a / b.
+to gcd :a :b
+  if :b = 0 [output :a]
+  output gcd :b remainder :a :b
+end
+
+; Draw {n/k} with its center at (x, y) and corners on a circle of
+; radius r. We jump to a corner, aim at the corner k places further
+; round, and walk the chord. All chords have the same length:
+; 2 r sin(180 k / n).
+to starat :x :y :n :k :r
+  localmake "g gcd :n :k
+  localmake "chord 2 * :r * sin 180 * :k / :n
+  localmake "turn 360 * :k / :n
+  ; g pieces, each one starting at the next corner round the circle
+  for [piece 0 :g - 1] [
+    localmake "a 360 * :piece / :n
+    penup
+    setxy :x + :r * sin :a :y + :r * cos :a
+    ; the first chord points from corner 0 towards corner k
+    setheading :a + 90 + 180 * :k / :n
+    pendown
+    repeat :n / :g [forward :chord right :turn]
+  ]
+end
+
+; One cell of the table: the star, plus its name under it.
+to cell :n :k :col :row
+  localmake "x -290 + 105 * :col
+  localmake "y 210 - 110 * :row
+  setpencolor item 1 + remainder :n 5 [[200 40 40] [230 120 0] [40 140 60] [30 90 200] [150 50 170]]
+  starat :x :y :n :k 42
+  penup setxy :x - 18 :y - 58 setpencolor [90 90 90]
+  label (word :n "/ :k)
+end
+
+to table
+  for [n 5 9] [
+    ; k runs from 1 (the plain polygon) up to just under n / 2;
+    ; bigger k would only draw the same stars again backwards
+    for [k 1 int (:n - 1) / 2] [cell :n :k :k - 1 :n - 5]
+  ]
+  ; Look for {6/2}, {8/2} and {9/3} above: they split into pieces.
+  ; Two more columns show some bigger stars.
+  penup setxy 50 268 setpencolor 0
+  label [Bigger stars, some in pieces]
+  foreach [[10 3] [10 4] [11 3] [11 4] [12 5]] [cell first ? last ? 4 # - 1]
+  foreach [[12 4] [15 4] [16 7] [18 5] [20 8]] [cell first ? last ? 5 # - 1]
+end
+
+clearscreen hideturtle
+setpensize 2
+setlabelheight 13
+table

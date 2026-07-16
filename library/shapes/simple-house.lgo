@@ -1,0 +1,83 @@
+; ============================================================
+; TITLE:    A House on a Hill
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Beginner
+; TAGS:     rectangle, triangle, filled, picture
+; SUMMARY:  Builds a colored house with a roof, door, windows, chimney and a sun out of simple shapes.
+; ============================================================
+;
+; WHAT IT DOES
+;   A whole picture made from rectangles and one triangle: a red
+;   roof, yellow walls, a door, two windows, a chimney, green grass
+;   and a round sun.
+;
+; HOW TO USE
+;   Press Run. Change the numbers in the main part at the bottom
+;   to move things around or paint them other colors.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a RECTANGLE procedure with two inputs: width and height
+;   * FILLED color [ ... ] paints the inside of the shape the turtle walks
+;   * thinking of a picture as a list of simple shapes
+;   * a big DOT with a thick pen makes a round sun
+;
+; THINGS TO TRY
+;   * Paint the door blue: change [120 60 20] in the DOOR line.
+;   * Add a third window.
+;   * Make the house wider by changing 220 in WALLS and in ROOF.
+; ============================================================
+
+; Width first, then height. The turtle starts at the bottom left
+; corner facing up and comes back to the same place.
+to rectangle :width :height
+  repeat 2 [forward :height right 90 forward :width right 90]
+end
+
+; A filled rectangle with a dark outline round it.
+to box :x :y :width :height :color
+  penup setxy :x :y setheading 0 pendown
+  setpencolor [60 40 30]
+  filled :color [rectangle :width :height]
+end
+
+; The roof is a triangle that sits on the top of the walls.
+; We walk to the peak and back down with SETXY.
+to roof :x :y :width :peak
+  penup setxy :x :y pendown
+  setpencolor [60 40 30]
+  filled [190 40 40] [
+    setxy :x + :width / 2 :y + :peak
+    setxy :x + :width :y
+    setxy :x :y
+  ]
+end
+
+to sun :x :y
+  penup setxy :x :y
+  setpencolor [255 200 0]
+  setpensize 70
+  dot pos
+  setpensize 3
+end
+
+; Shapes are painted in order, and each new one covers whatever is
+; already there, like a painter working on a canvas. So the big wall
+; goes first and the door and windows go on top of it. The chimney
+; goes before the roof so the roof hides its bottom end.
+to house
+  box 55 40 30 60 [140 70 50]              ; chimney
+  box -110 -150 220 150 [250 220 120]      ; walls
+  roof -130 0 260 110
+  box -30 -150 50 90 [120 60 20]           ; door
+  box -90 -70 45 45 [150 210 255]          ; left window
+  box 45 -70 45 45 [150 210 255]           ; right window
+end
+
+clearscreen
+setpensize 3
+sun 260 200
+; the grass is one wide rectangle, painted before the house so the
+; house stands on top of it
+box -400 -300 800 150 [110 190 80]
+house
+hideturtle

@@ -1,0 +1,68 @@
+; ============================================================
+; TITLE:    Polygon Parade
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Beginner
+; TAGS:     polygon, total turtle trip, labels, lists
+; SUMMARY:  Draws every regular polygon from 3 to 10 sides, each with its name underneath.
+; ============================================================
+;
+; WHAT IT DOES
+;   Eight shapes march across the screen in two rows: triangle,
+;   square, pentagon, hexagon, heptagon, octagon, nonagon and
+;   decagon. Every shape is drawn by the same little procedure.
+;
+; HOW TO USE
+;   Press Run. Then try  poly 12 30  or  poly 20 15  yourself.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the Total Turtle Trip: the turns of any closed shape add up to 360
+;   * so each turn of a regular polygon is 360 / sides
+;   * keeping names in a list and picking one out with ITEM
+;   * LABEL writes words in the turtle world
+;
+; THINGS TO TRY
+;   * What happens with  poly 36 10 ? And  poly 360 1 ?
+;   * Add "hendecagon to the list and draw 11 sides too.
+;   * Make the side shorter when there are more sides so all
+;     the shapes are about the same width.
+; ============================================================
+
+; One procedure for every regular polygon. The turtle makes
+; :sides equal turns that together add up to one full turn.
+to poly :sides :length
+  repeat :sides [forward :length right 360 / :sides]
+end
+
+; Names for 3 sides, 4 sides, ... 10 sides.
+make "names [triangle square pentagon hexagon heptagon octagon nonagon decagon]
+
+; Draw the polygon with n sides centred over the spot (x, y)
+; and write its name under it. To keep the shapes about the
+; same size, a side gets shorter when there are more sides.
+to showpolygon :n :x :y
+  localmake "side 330 / :n
+  penup
+  setxy :x - :side / 2 :y
+  setheading 90
+  pendown
+  setpencolor item :n - 2 [1 4 2 13 14 5 10 8]
+  ; heading 90 means the first side runs along the bottom,
+  ; and turning LEFT makes the shape go up instead of down
+  repeat :n [forward :side left 360 / :n]
+  penup
+  setxy :x - 30 :y - 30
+  setpencolor 0
+  label item :n - 2 :names
+end
+
+clearscreen setlabelheight 16
+setpensize 3
+
+; top row: 3, 4, 5, 6 sides
+for [n 3 6] [showpolygon :n -270 + 180 * (:n - 3) 60]
+; bottom row: 7, 8, 9, 10 sides
+for [n 7 10] [showpolygon :n -270 + 180 * (:n - 7) -200]
+
+penup setxy -150 250 setpencolor 1 setlabelheight 20
+label [Every shape turns 360 degrees in all]
+hideturtle

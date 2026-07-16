@@ -1,0 +1,96 @@
+; ============================================================
+; TITLE:    Triangle Family
+; CATEGORY: Shapes & Polygons
+; LEVEL:    Beginner
+; TAGS:     triangle, angles, repeat, setxy
+; SUMMARY:  Draws an equilateral triangle, a right triangle, a tall thin triangle and a stack of triangles.
+; ============================================================
+;
+; WHAT IT DOES
+;   Four kinds of triangle appear across the screen. The last one
+;   is a little tower of triangles stacked like a pyramid of cups.
+;
+; HOW TO USE
+;   Press Run. Try typing  tri 150  in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * why the turtle turns 120 degrees, not 60, for an equilateral triangle
+;   * using SETXY to close a shape exactly, without working out the last side
+;   * POS remembers where the turtle is so it can come back
+;
+; THINGS TO TRY
+;   * Turn 60 instead of 120 in TRI. Why does the shape not close?
+;   * Change the height in TALLTRIANGLE to 250.
+;   * Give PYRAMID 5 rows instead of 4.
+; ============================================================
+
+; The inside corner of an equilateral triangle is 60 degrees, but the
+; turtle turns the OUTSIDE angle: it must swing round 180 - 60 = 120
+; degrees to walk along the next side. Three turns of 120 make 360.
+to tri :size
+  repeat 3 [forward :size right 120]
+end
+
+; A right triangle: walk up, turn a square corner, walk across,
+; then SETXY straight back to the start. The computer works out
+; the long slanted side for us.
+to righttriangle :up :across
+  localmake "start pos
+  forward :up
+  right 90
+  forward :across
+  setxy first :start last :start
+  setheading 0
+end
+
+; A tall isosceles triangle. We visit the three corners by
+; their coordinates, measured from the start (the bottom left).
+to talltriangle :width :height
+  localmake "x xcor
+  localmake "y ycor
+  setxy :x + :width / 2 :y + :height
+  setxy :x + :width :y
+  setxy :x :y
+end
+
+; A pyramid of triangles: 1 on top, then 2, then 3 ...
+; Each row starts half a triangle further left and one row lower.
+to pyramid :rows :size
+  localmake "h :size * (sqrt 3) / 2
+  for [row 1 :rows] [
+    for [k 1 :row] [
+      setpencolor 9 + remainder :row + :k 6
+      right 30 tri :size left 30
+      penup right 90 forward :size left 90 pendown
+    ]
+    ; back to the start of this row, then down and left for the next row
+    penup
+    left 90 forward :size * :row right 90
+    back :h
+    left 90 forward :size / 2 right 90
+    pendown
+  ]
+end
+
+to jumpto :x :y
+  penup setxy :x :y setheading 0 pendown
+end
+
+clearscreen
+setpensize 3
+
+jumpto -340 -60
+setpencolor 1
+right 30 tri 150 left 30
+
+jumpto -150 -60
+setpencolor 4
+righttriangle 170 120
+
+jumpto 0 -120
+setpencolor 2
+talltriangle 100 280
+
+jumpto 210 100
+pyramid 4 60
+hideturtle
