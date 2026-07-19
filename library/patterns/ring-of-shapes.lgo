@@ -1,0 +1,59 @@
+; ============================================================
+; TITLE:    Ring of Shapes
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Beginner
+; TAGS:     rotation, penup, polygon, circle placement
+; SUMMARY:  Places hexagons, triangles and stars evenly round circles to make a ring pattern like a necklace.
+; ============================================================
+;
+; WHAT IT DOES
+;   Instead of spinning a shape on the spot, the turtle walks out
+;   from the middle without drawing, draws a shape there, walks back,
+;   and turns. Three rings appear: big hexagons on the outside,
+;   triangles in the middle ring, and small stars near the center.
+;
+; HOW TO USE
+;   Press Run. Change the numbers in the three RING lines at the
+;   bottom: how many shapes, how far out, and which shape.
+;
+; CONCEPTS YOU WILL LEARN
+;   * PENUP to move without drawing
+;   * go out, draw, come back: the turtle ends where it began
+;   * passing the NAME of a procedure as an input and running it with RUN
+;
+; THINGS TO TRY
+;   * Put 24 hexagons in the outer ring. Do they overlap?
+;   * Add a fourth ring of squares.
+;   * Make the shapes in a ring change color one by one.
+; ============================================================
+
+to hexagon
+  repeat 6 [forward 40 right 60]
+end
+
+to triangle
+  repeat 3 [forward 45 right 120]
+end
+
+to star
+  repeat 5 [forward 30 right 144]
+end
+
+; :count copies of a shape, each :distance from the middle.
+; :shape is a word like "hexagon. RUN (list :shape) runs it.
+to ring :count :distance :shape :color
+  setpencolor :color
+  repeat :count [
+    penup forward :distance pendown
+    run (list :shape)
+    penup back :distance pendown
+    right 360 / :count
+  ]
+end
+
+clearscreen hideturtle
+setbackground [255 250 240]
+setpensize 3
+ring 16 210 "hexagon [40 120 200]
+ring 12 130 "triangle [220 80 60]
+ring 8 55 "star [230 160 20]

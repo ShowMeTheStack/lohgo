@@ -1,0 +1,56 @@
+; ============================================================
+; TITLE:    Sunburst
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Beginner
+; TAGS:     lines, rotation, remainder, color
+; SUMMARY:  Shoots rays out from the center in three lengths and warm colors to make a bright sunburst.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle walks out from the middle and back again, turns a
+;   little, and does it again, 90 times. Every third ray is long,
+;   the next is medium, the next short, so the rays make a spiky
+;   pattern. A big round sun covers the middle.
+;
+; HOW TO USE
+;   Press Run. Change the lengths in RAYLENGTH or the number of
+;   rays in the REPEAT.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FORWARD then BACK: go out and come home again
+;   * REMAINDER to take turns between three choices
+;   * using one number (REPCOUNT) to pick both a length and a color
+;
+; THINGS TO TRY
+;   * Make every fourth ray long by using REMAINDER ... 4.
+;   * Use cool colors (blues and greens) for an ice burst.
+;   * Make the rays fatter with SETPENSIZE 6.
+; ============================================================
+
+; Three ray lengths that take turns: remainder 0, 1, 2.
+to raylength :n
+  output item 1 + remainder :n 3 [260 190 120]
+end
+
+to raycolor :n
+  output item 1 + remainder :n 4 [[250 80 40] [255 150 30] [255 210 50] [240 110 60]]
+end
+
+to sunburst :rays
+  repeat :rays [
+    setpencolor raycolor repcount
+    forward raylength repcount
+    back raylength repcount
+    right 360 / :rays
+  ]
+end
+
+clearscreen hideturtle
+setbackground [40 20 60]
+setpensize 4
+sunburst 90
+; the sun: two big dots, a dark ring and a bright middle
+setpensize 130 setpencolor [255 120 30]
+dot [0 0]
+setpensize 110 setpencolor [255 220 80]
+dot [0 0]

@@ -1,0 +1,104 @@
+; ============================================================
+; TITLE:    Flower Bed
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Intermediate
+; TAGS:     random, procedures, depth, sorting, picture
+; SUMMARY:  Plants a bed of daisies, sunflowers, tulips and poppies at random, with the far ones smaller and drawn first.
+; ============================================================
+;
+; WHAT IT DOES
+;   Sixty flowers of four kinds are scattered over a garden bed.
+;   Flowers further back (higher on the screen) are smaller, and
+;   they are planted first so the nearer flowers are drawn over
+;   them. Blades of grass finish the scene.
+;
+; HOW TO USE
+;   Press Run. Every run plants a different bed. Change HOWMANY,
+;   or add a new kind of flower to the KINDS list.
+;
+; CONCEPTS YOU WILL LEARN
+;   * choosing a procedure at random and running it with RUN
+;   * sorting a list of positions so the back is drawn first
+;   * making far things smaller to give a feeling of depth
+;   * petals as thick short lines and round dots
+;
+; THINGS TO TRY
+;   * Plant only one kind of flower in neat rows.
+;   * Add a butterfly that flies over the bed.
+;   * Make it night: dark background, pale flowers.
+; ============================================================
+
+make "howmany 60
+make "kinds [daisy sunflower tulip poppy]
+
+; Every flower stands at the turtle's position, which is the top of
+; its stem, and is drawn :s times its normal size.
+
+to daisy :s
+  setpencolor [255 255 255] setpensize 7 * :s
+  repeat 12 [forward 22 * :s back 22 * :s right 30]
+  setpensize 14 * :s setpencolor [250 200 40] dot pos
+end
+
+to sunflower :s
+  setpencolor [250 190 20] setpensize 9 * :s
+  repeat 16 [forward 32 * :s back 32 * :s right 22.5]
+  setpensize 34 * :s setpencolor [110 70 30] dot pos
+end
+
+; A tulip cup: three fat strokes fanning up from the base.
+to tulip :s
+  localmake "c pick [[220 40 60] [240 120 160] [250 200 50]]
+  setpencolor :c setpensize 14 * :s
+  left 22 forward 26 * :s back 26 * :s
+  right 22 forward 30 * :s back 30 * :s
+  right 22 forward 26 * :s back 26 * :s
+  left 22
+end
+
+to poppy :s
+  setpencolor [230 60 40] setpensize 20 * :s
+  repeat 4 [penup forward 9 * :s dot pos back 9 * :s right 90]
+  setpensize 9 * :s setpencolor [40 30 30] dot pos
+end
+
+; A stem from the ground up to (x, y), then the flower on top.
+to plant :x :y :kind
+  ; y goes from about 60 (far back) to -260 (front): size 0.5 to 1.2
+  localmake "s 0.5 + 0.7 * (60 - :y) / 320
+  penup setxy :x :y - 80 * :s setheading 0
+  setpencolor [60 140 60] setpensize 4 * :s
+  pendown setxy :x :y
+  run (list :kind :s)
+  penup setheading 0
+end
+
+; Insertion into a list kept in order from highest y to lowest.
+to insertbyy :spot :sorted
+  if emptyp :sorted [output (list :spot)]
+  if (last :spot) > (last first :sorted) [output fput :spot :sorted]
+  output fput first :sorted insertbyy :spot butfirst :sorted
+end
+
+to flowerbed
+  localmake "spots []
+  repeat :howmany [make "spots insertbyy (list (random 760) - 380 60 - random 320) :spots]
+  foreach :spots [plant first ? last ? pick :kinds]
+end
+
+to grass
+  setpensize 3
+  repeat 220 [
+    setpencolor (list 40 + random 40 120 + random 60 40)
+    penup setxy (random 800) - 400 -300 setheading (random 40) - 20
+    pendown forward 15 + random 30
+  ]
+end
+
+clearscreen hideturtle
+setbackground [150 205 120]
+; the sky is a big rectangle at the top
+penup setxy -400 120 setheading 0 setpencolor [170 215 245]
+filled [170 215 245] [repeat 2 [forward 180 right 90 forward 800 right 90]]
+flowerbed
+grass

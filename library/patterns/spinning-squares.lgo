@@ -1,0 +1,48 @@
+; ============================================================
+; TITLE:    Spinning Squares
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Beginner
+; TAGS:     repeat, rotation, color, square
+; SUMMARY:  Draws one square, turns a little, draws another, until a ring of colored squares makes a flower.
+; ============================================================
+;
+; WHAT IT DOES
+;   A square is drawn 36 times. Between squares the turtle turns 10
+;   degrees, and the pen color changes. Together the squares make a
+;   round, flower-like pattern. A second, smaller pattern in the
+;   middle is made the same way with fewer squares.
+;
+; HOW TO USE
+;   Press Run. Then try  spin 12 100  or  spin 72 150  yourself.
+;
+; CONCEPTS YOU WILL LEARN
+;   * repeat a shape and turn: the most famous Logo pattern trick
+;   * 36 squares x 10 degrees = 360, a full turn
+;   * REPCOUNT counts the times round the loop; we use it for color
+;
+; THINGS TO TRY
+;   * Use 20 squares. How far must the turtle turn between them?
+;   * Change SQUARE to draw a triangle instead.
+;   * Make each square a little bigger than the last one.
+; ============================================================
+
+to square :size
+  repeat 4 [forward :size right 90]
+end
+
+; Draw :copies squares, turning an equal share of 360 degrees
+; after each one so the last square ends where the first began.
+to spin :copies :size
+  repeat :copies [
+    setpencolor item 1 + remainder repcount 6 [[230 50 50] [240 140 0] [230 200 0] [40 160 70] [40 110 220] [140 60 190]]
+    square :size
+    right 360 / :copies
+  ]
+end
+
+clearscreen hideturtle
+setbackground [20 20 35]
+setpensize 2
+spin 36 180
+setpensize 3
+spin 12 60

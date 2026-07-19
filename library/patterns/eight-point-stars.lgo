@@ -1,0 +1,75 @@
+; ============================================================
+; TITLE:    Eight-Point Star Tiles
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Intermediate
+; TAGS:     tessellation, star, geometric art, grid, filled
+; SUMMARY:  Tiles the screen with eight-pointed stars whose tips touch, leaving cross shapes between them, in the style of Islamic geometric art.
+; ============================================================
+;
+; WHAT IT DOES
+;   An eight-pointed star is two squares, one turned 45 degrees.
+;   Placed on a grid so that the tips of neighbors just touch, the
+;   stars leave cross-shaped spaces between them. Each star gets an
+;   octagon in its heart and each cross a small diamond, the way
+;   tiles are often set in old mosques and palaces.
+;
+; HOW TO USE
+;   Press Run. Change CELL for bigger or smaller tiles, or change the
+;   four colors at the top.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a star outline as 16 points, taking turns between two radii
+;   * working out the inner radius so the star's edges are straight
+;   * a square grid where shapes touch exactly
+;   * points on a circle with SIN and COS
+;
+; THINGS TO TRY
+;   * Shrink the stars a little (RADIUS less than half of CELL). What
+;     shape do the spaces between them become?
+;   * Try a six-pointed star (12 points) on the same grid.
+;   * Swap the star and background colors.
+; ============================================================
+
+make "cell 100
+make "radius :cell / 2              ; tips of neighbors just touch
+make "stargold [230 180 60]
+make "ground [25 50 100]
+make "heart [40 150 150]
+make "jewel [200 60 70]
+
+; Inner corners of an 8-point star made of two squares sit at
+; R x cos 45 / cos 22.5 from the center, which keeps every edge straight.
+make "inner :radius * (cos 45) / (cos 22.5)
+
+; A filled polygon through points on circles round (x, y).
+; :radii takes turns, so [R r] gives a star and [R] a regular polygon.
+to roundshape :x :y :points :radii :turn :color
+  localmake "pts map [cornerpoint :x :y 360 * ? / :points + :turn ~
+                      item 1 + remainder ? count :radii :radii] iseq 0 :points - 1
+  penup setpos first :pts pendown
+  filled :color [foreach butfirst :pts [setpos ?] setpos first :pts]
+end
+
+to cornerpoint :x :y :angle :r
+  output list :x + :r * sin :angle :y + :r * cos :angle
+end
+
+; Later drawing covers earlier drawing, so each star goes down first
+; and the small shapes that sit on top (octagon, diamond) come after.
+to tiling
+  for [row -3 3] [
+    for [col -4 4] [
+      localmake "x :col * :cell
+      localmake "y :row * :cell
+      roundshape :x :y 16 (list :radius :inner) 0 :stargold
+      roundshape :x :y 8 (list :radius * 0.42) 22.5 :heart
+      roundshape :x + :cell / 2 :y + :cell / 2 4 (list :cell * 0.14) 0 :jewel
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground :ground
+setpencolor [250 240 220]
+setpensize 2
+tiling

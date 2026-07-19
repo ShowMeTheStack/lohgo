@@ -1,0 +1,57 @@
+; ============================================================
+; TITLE:    Moire Magic
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Intermediate
+; TAGS:     moire, interference, circles, lines, optical illusion
+; SUMMARY:  Slides two sets of thin rings across each other so that ghostly bands appear and change where they cross.
+; ============================================================
+;
+; WHAT IT DOES
+;   Two sets of thin circles, all the same distance apart, are drawn
+;   with their centers a little way apart. Where the rings cross,
+;   your eye sees dark and light bands that nobody drew. That is a
+;   moire pattern. The centers slowly move apart, and the ghost
+;   bands multiply as they do.
+;
+; HOW TO USE
+;   Press Run and watch. Change MAXSHIFT to move the two centers
+;   further apart, or GAP to space the rings out.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ARC 360 r draws a full circle round the turtle without moving it
+;   * evenly spaced shapes, using a FOR loop with a step
+;   * how two simple regular patterns combine into a complex one
+;   * animation by wiping the screen with CLEAN and drawing again
+;
+; THINGS TO TRY
+;   * Stop at a shift of 0. The magic disappears. Why?
+;   * Make one set of rings red and the other blue.
+;   * Write a FAN procedure: straight lines from one corner, a degree
+;     apart. Draw two fans from nearby corners and see what happens.
+; ============================================================
+
+make "gap 8
+make "maxshift 90
+
+; Rings from radius GAP up to MAXR, all centered on (x, y).
+; ARC draws round the turtle, so we only have to stand in the middle.
+to rings :x :y :maxr
+  penup setxy :x :y pendown
+  for [r :gap :maxr :gap] [arc 360 :r]
+end
+
+; Two sets of rings, :shift steps left and right of the center.
+to picture :shift
+  clean
+  rings minus :shift 0 480
+  rings :shift 0 480
+end
+
+clearscreen hideturtle
+setbackground [250 250 245]
+setpencolor [30 30 70]
+setpensize 2
+for [s 0 :maxshift 1] [
+  picture :s
+  wait 3
+]

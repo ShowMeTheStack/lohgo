@@ -1,0 +1,87 @@
+; ============================================================
+; TITLE:    Checkerboard
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Beginner
+; TAGS:     grid, nested loops, filled, even and odd
+; SUMMARY:  Paints an 8 by 8 checkerboard with a wooden frame and sets out the red and black pieces.
+; ============================================================
+;
+; WHAT IT DOES
+;   Rows and columns of squares are painted light and dark, taking
+;   turns, like a board for checkers or chess. Then round pieces are
+;   placed on the dark squares of the first three rows at each end.
+;
+; HOW TO USE
+;   Press Run. Change SIZE to make the board bigger or smaller, or
+;   change the two square colors at the top.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a loop inside a loop: rows, and squares inside each row
+;   * row + column is even or odd: that decides the color
+;   * REMAINDER tells you if a number is even (remainder 0 when divided by 2)
+;   * placing things on a grid with arithmetic
+;
+; THINGS TO TRY
+;   * Make it a 10 by 10 board for international draughts.
+;   * Use three colors: REMAINDER :row + :col 3.
+;   * Put the pieces on the light squares instead.
+; ============================================================
+
+make "size 60
+make "light [240 220 180]
+make "dark [150 85 45]
+
+; the board's bottom left corner, so that 8 squares are centered
+make "left -4 * :size
+make "bottom -4 * :size
+
+to tile :x :y :color
+  penup setxy :x :y setheading 0 pendown
+  filled :color [repeat 4 [forward :size right 90]]
+end
+
+; Rows and columns are numbered from 0 to 7.
+; When row + column is even the square is dark.
+to board
+  for [row 0 7] [
+    for [col 0 7] [
+      ifelse 0 = remainder :row + :col 2 [
+        tile :left + :col * :size :bottom + :row * :size :dark
+      ] [
+        tile :left + :col * :size :bottom + :row * :size :light
+      ]
+    ]
+  ]
+end
+
+; A piece is a fat round dot with a ring round it.
+to piece :row :col :color
+  penup
+  setxy :left + (:col + 0.5) * :size :bottom + (:row + 0.5) * :size
+  setpensize :size * 0.8 setpencolor [30 30 30]
+  dot pos
+  setpensize :size * 0.7 setpencolor :color
+  dot pos
+end
+
+; Pieces go on the dark squares of rows 0, 1, 2 (red) and 5, 6, 7 (black).
+to pieces
+  for [row 0 7] [
+    for [col 0 7] [
+      if 0 = remainder :row + :col 2 [
+        if :row < 3 [piece :row :col [200 40 40]]
+        if :row > 4 [piece :row :col [60 60 60]]
+      ]
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [60 90 70]
+setpensize 1
+setpencolor [80 50 30]
+; a frame first, so the board drawn after it covers its middle
+penup setxy :left - 15 :bottom - 15 pendown
+filled [55 30 15] [repeat 4 [forward 8 * :size + 30 right 90]]
+board
+pieces

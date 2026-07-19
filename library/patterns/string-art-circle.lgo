@@ -1,0 +1,63 @@
+; ============================================================
+; TITLE:    String Art Circle
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Intermediate
+; TAGS:     string art, envelope, circle, modular arithmetic, lines
+; SUMMARY:  Hammers nails round a circle and winds colored threads from each nail to one further along, layer by layer.
+; ============================================================
+;
+; WHAT IT DOES
+;   72 nails stand round a circle. For each layer, a thread runs from
+;   every nail to the nail SKIP places further round. Although every
+;   thread is straight, together they outline a perfect circle in the
+;   middle (an "envelope"). Each layer has its own skip and color, so
+;   you get rings inside rings.
+;
+; HOW TO USE
+;   Press Run and watch the threads go on. Change the LAYERS list:
+;   each entry is a skip and a color.
+;
+; CONCEPTS YOU WILL LEARN
+;   * placing points evenly round a circle with SIN and COS
+;   * REMAINDER to wrap round from the last nail back to the first
+;   * how straight lines can make a curve
+;   * the inner circle's radius is R x cos(180 x skip / nails)
+;
+; THINGS TO TRY
+;   * Use a skip of 36 (half of 72). What happens and why?
+;   * Use 71 nails instead of 72 and a skip of 30.
+;   * Draw only every other thread for a lacy look.
+; ============================================================
+
+make "nails 72
+make "radius 270
+make "layers [[33 [200 50 70]] [27 [240 120 40]] [21 [245 200 60]] [15 [60 170 150]] [9 [70 110 210]]]
+
+; Where nail number n is (nails count from 0, starting at the top).
+to nail :n
+  localmake "angle 360 * :n / :nails
+  output list :radius * sin :angle :radius * cos :angle
+end
+
+to hammer
+  setpencolor [200 200 210] setpensize 6
+  penup
+  for [n 0 :nails - 1] [dot nail :n]
+end
+
+; One layer: from every nail to the nail SKIP places on.
+to threads :skip :color
+  setpencolor :color setpensize 1
+  for [n 0 :nails - 1] [
+    penup setpos nail :n
+    pendown setpos nail remainder :n + :skip :nails
+    wait 1
+  ]
+end
+
+clearscreen hideturtle
+setbackground [25 25 40]
+hammer
+foreach :layers [threads first ? last ?]
+; hammer again so the nail heads sit on top of the threads
+hammer

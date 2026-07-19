@@ -1,0 +1,63 @@
+; ============================================================
+; TITLE:    Polka Dot Grid
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Beginner
+; TAGS:     grid, dot, nested loops, distance
+; SUMMARY:  Fills the screen with a grid of dots that grow bigger toward the middle, like a comic book print.
+; ============================================================
+;
+; WHAT IT DOES
+;   Dots are placed in rows and columns. Each dot's size depends on
+;   how far it is from the center: big in the middle, tiny at the
+;   edges. From far away it looks like a glowing ball. This is how
+;   old comic books and newspapers printed shades of color.
+;
+; HOW TO USE
+;   Press Run. Change GAP to space the dots out, or the colors.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FOR loops inside FOR loops make a grid
+;   * DOT draws a round spot as wide as the pen
+;   * DISTANCE tells how far the turtle is from a point
+;
+; THINGS TO TRY
+;   * Make the dots big at the edges and small in the middle.
+;   * Move the bright spot away from the center, to [150 100].
+;   * Color the dots by row, like stripes.
+; ============================================================
+
+make "gap 24
+
+to dotgrid
+  for [y -288 288 :gap] [
+    for [x -384 384 :gap] [
+      penup setxy :x :y
+      ; 0 at the center, 1 about 360 steps away
+      localmake "far (distance [0 0]) / 360
+      if :far < 1 [
+        setpensize :gap * (1 - :far)
+        dot pos
+      ]
+    ]
+  ]
+end
+
+; A second grid, half a gap across and up, fills the spaces
+; between the first dots. These dots do the opposite: they are
+; small in the middle and grow toward the edges.
+to betweengrid
+  for [y -276 276 :gap] [
+    for [x -372 372 :gap] [
+      penup setxy :x :y
+      localmake "far (distance [0 0]) / 360
+      if and :far > 0.05 :far < 1 [setpensize 10 * :far dot pos]
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [255 245 230]
+setpencolor [230 60 90]
+dotgrid
+setpencolor [60 120 220]
+betweengrid

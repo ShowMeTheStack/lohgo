@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Guilloche Rosette
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Advanced
+; TAGS:     guilloche, polar coordinates, sine waves, phase, banknote art
+; SUMMARY:  Draws the fine woven line rosettes found on banknotes and certificates, from wavy circles shifted a little at a time.
+; ============================================================
+;
+; WHAT IT DOES
+;   Look closely at a banknote and you will see delicate rosettes of
+;   thin overlapping lines. They are called guilloche patterns and
+;   were first cut by machines with spinning gears. Here each line is
+;   a circle whose radius wobbles up and down like a sine wave. Many
+;   copies, each with its wobble shifted a little, weave a band. Three
+;   bands of different sizes and wobbles make the rosette.
+;
+; HOW TO USE
+;   Press Run. Each line in the BANDS list describes one band:
+;   radius, wobble size, wobbles per turn, a second smaller wobble,
+;   number of lines, and color. Change them and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * polar coordinates: a point from an angle and a distance
+;   * a sine wave wrapped round a circle
+;   * phase: the same wave started a bit later
+;   * adding two waves together for a more complex shape
+;
+; THINGS TO TRY
+;   * Make the number of lines equal to the wobbles per turn.
+;   * Set the second wobble to 0 for a simpler, cleaner band.
+;   * Use a thicker pen and fewer lines for a bold poster look.
+; ============================================================
+
+; [radius wobble waves wobble2 waves2 lines color]
+make "bands [
+  [235 22 24 6 8 14 [30 90 120]]
+  [150 34 12 10 4 16 [150 40 90]]
+  [62 30 6 6 18 18 [200 120 20]]
+]
+
+; One wavy circle. The distance from the center at angle a is
+; radius + wobble x sin(waves x a + phase) + wobble2 x sin(waves2 x a - phase).
+to wavycircle :r :w1 :k1 :w2 :k2 :phase
+  for [a 0 360 2] [
+    localmake "d :r + :w1 * (sin :k1 * :a + :phase) + :w2 * (sin :k2 * :a - :phase)
+    ifelse :a = 0 [penup] [pendown]
+    setxy :d * sin :a :d * cos :a
+  ]
+  penup
+end
+
+; A band: :lines copies, each with its wave shifted by an equal
+; share of one full wave (360 degrees of phase).
+to band :spec
+  localmake "lines item 6 :spec
+  setpencolor item 7 :spec
+  for [i 0 :lines - 1] [
+    wavycircle item 1 :spec item 2 :spec item 3 :spec item 4 :spec item 5 :spec 360 * :i / :lines
+  ]
+end
+
+clearscreen hideturtle
+setbackground [248 244 232]
+setpensize 1
+foreach :bands [band ?]
+; a fine double ring at the edge, like on a certificate
+setpencolor [30 90 120]
+penup home pendown
+arc 360 282
+arc 360 287

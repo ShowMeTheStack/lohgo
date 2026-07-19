@@ -1,0 +1,73 @@
+; ============================================================
+; TITLE:    Turtle Stamps
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Beginner
+; TAGS:     stamp, setshape, rings, rotation
+; SUMMARY:  Uses the turtle itself as a rubber stamp to print rings of turtles, stars, arrows and squares.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle can change its look with SETSHAPE and leave a copy of
+;   itself on the screen with STAMP. This program stamps five rings,
+;   each ring a different shape and color. The turtles in the outer
+;   ring all walk round in a circle, the arrows point outwards, and
+;   the stars spin as they go.
+;
+; HOW TO USE
+;   Press Run. Then try typing  setshape "star stamp  yourself.
+;   The shapes are: turtle triangle arrow circle square star.
+;
+; CONCEPTS YOU WILL LEARN
+;   * SETSHAPE changes what the turtle looks like
+;   * STAMP prints the turtle's picture where it stands
+;   * the turtle's heading turns the stamp, so you can aim each copy
+;
+; THINGS TO TRY
+;   * Make the arrows point inwards.
+;   * Stamp a ring of 36 circles in rainbow colors.
+;   * Make the stars spin twice as fast round the ring.
+; ============================================================
+
+; Stamp :count copies of the current shape on a circle of radius :r.
+; :twist is how much each stamp turns compared with facing outwards.
+to stampring :count :r :twist
+  repeat :count [
+    penup home
+    right 360 * repcount / :count
+    forward :r
+    right :twist
+    stamp
+  ]
+end
+
+clearscreen
+setbackground [245 240 225]
+penup
+
+setshape "turtle
+setpencolor [40 140 70]
+stampring 24 250 90          ; facing along the ring: walking round
+
+setshape "arrow
+setpencolor [220 70 50]
+stampring 20 195 0           ; facing straight out
+
+setshape "star
+setpencolor [240 170 20]
+repeat 16 [
+  ; the stars turn a bit more each time, so they seem to spin
+  home right 360 * repcount / 16 forward 140 right 25 * repcount stamp
+]
+
+setshape "square
+setpencolor [60 110 210]
+stampring 12 90 45
+
+setshape "circle
+setpencolor [150 60 180]
+stampring 6 45 0
+
+; finish with one big turtle-shaped stamp in the middle
+home setshape "turtle setpencolor [40 40 40]
+stamp
+hideturtle

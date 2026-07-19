@@ -1,0 +1,113 @@
+; ============================================================
+; TITLE:    Celtic Plait
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Advanced
+; TAGS:     celtic knot, weaving, over and under, lattice, arc
+; SUMMARY:  Weaves ribbons over and under each other on a diagonal grid to draw Celtic plaitwork borders.
+; ============================================================
+;
+; WHAT IT DOES
+;   Ribbons run diagonally across a band. Wherever two ribbons cross,
+;   one goes over and the other under, and they take turns so the
+;   whole band looks woven. At the edges each ribbon bounces back
+;   in a smooth curve. Two borders are drawn, one wide and one narrow.
+;
+; HOW TO USE
+;   Press Run. Change the inputs to PLAIT at the bottom: position,
+;   width and height in grid squares (both even numbers), grid size,
+;   and colors.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a lattice: crossings at grid points where x + y is odd
+;   * over and under that alternate: decided by whether x is even
+;   * drawing order: everything that goes UNDER is drawn first
+;   * a ribbon as a thick light line with two thin dark edges
+;   * ARC to round off each bounce at the edge of the band
+;
+; THINGS TO TRY
+;   * Make the band square, for example 8 by 8, for a knot panel.
+;   * Swap the over/under rule. Does it still look woven?
+;   * Draw only the light core of the ribbons, no edges. What is lost?
+; ============================================================
+
+make "ribbon 0.36   ; ribbon width, as a fraction of a grid square
+
+; ---- the drawing state for one band -----------------------------------
+; LEFT, BOTTOM: where grid point (0, 0) goes; UNIT: size of a grid square
+make "left 0 make "bottom 0 make "unit 40
+make "core [240 220 160] make "edge [60 40 20]
+
+to sx :x
+  output :left + :unit * :x
+end
+to sy :y
+  output :bottom + :unit * :y
+end
+
+; A straight piece of ribbon from grid point a to grid point b.
+; The core is a fat light line; each edge is a thin dark line pushed
+; sideways by half the ribbon width.
+to piece :a :b
+  localmake "x1 sx first :a localmake "y1 sy last :a
+  localmake "x2 sx first :b localmake "y2 sy last :b
+  localmake "half :unit * :ribbon / 2
+  penup setxy :x1 :y1
+  localmake "dir towards (list :x2 :y2)
+  setpencolor :core setpensize :unit * :ribbon
+  pendown setxy :x2 :y2
+  setpensize 2 setpencolor :edge
+  foreach (list :half minus :half) [
+    penup setxy :x1 :y1 setheading :dir + 90 forward ?
+    setheading :dir pendown forward :unit * sqrt 2
+  ]
+end
+
+; A bounce: a quarter circle round the point (cx, cy) that starts at
+; :heading. ARC draws round the turtle, which stays at the center.
+to bounce :cx :cy :heading
+  localmake "r :unit * (sqrt 2) / 2
+  localmake "half :unit * :ribbon / 2
+  penup setxy sx :cx sy :cy setheading :heading
+  setpencolor :core setpensize :unit * :ribbon
+  pendown arc 90 :r
+  setpensize 2 setpencolor :edge
+  arc 90 :r + :half
+  arc 90 :r - :half
+end
+
+; The two pieces through crossing (x, y), as [from to] pairs.
+to slash :x :y
+  output list (list :x - 0.5 :y - 0.5) (list :x + 0.5 :y + 0.5)
+end
+to backslash :x :y
+  output list (list :x - 0.5 :y + 0.5) (list :x + 0.5 :y - 0.5)
+end
+
+to plait :l :b :w :h :u :corecolor :edgecolor
+  make "left :l make "bottom :b make "unit :u
+  make "core :corecolor make "edge :edgecolor
+  localmake "unders []
+  localmake "overs []
+  ; sort every crossing's two pieces into UNDER and OVER
+  for [x 1 :w - 1] [for [y 1 :h - 1] [
+    if 1 = remainder :x + :y 2 [
+      ifelse 0 = remainder :x 2 [
+        make "overs fput slash :x :y :overs
+        make "unders fput backslash :x :y :unders
+      ] [
+        make "unders fput slash :x :y :unders
+        make "overs fput backslash :x :y :overs
+      ]
+    ]
+  ]]
+  ; bounces on all four edges, at the lattice points that lie there
+  for [x 1 :w - 1 2] [bounce :x 1 135 bounce :x + (remainder :h 2) :h - 1 315]
+  for [y 1 :h - 1 2] [bounce 1 :y 225 bounce :w - 1 :y + (remainder :w 2) 45]
+  foreach :unders [piece first ? last ?]
+  foreach :overs [piece first ? last ?]
+end
+
+clearscreen hideturtle
+setbackground [30 70 60]
+plait -360 30 18 6 40 [240 215 150] [70 40 20]
+plait -350 -250 14 4 50 [180 210 240] [20 40 90]

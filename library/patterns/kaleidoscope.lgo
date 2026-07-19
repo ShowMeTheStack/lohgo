@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Kaleidoscope
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Intermediate
+; TAGS:     symmetry, reflection, rotation, random walk, animation
+; SUMMARY:  A wandering line is copied eight times, turned and mirrored, so it paints an ever-changing kaleidoscope.
+; ============================================================
+;
+; WHAT IT DOES
+;   An invisible bug wanders about at random. Every little step it
+;   takes is drawn eight times: turned by 0, 90, 180 and 270 degrees,
+;   and the mirror image of each of those. That is exactly what the
+;   mirrors in a toy kaleidoscope do. The color drifts slowly round
+;   the rainbow. After a while the picture fades and a new one starts.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to end. Change STEPS for longer
+;   pictures, or MIRRORS to "false for turns only.
+;
+; CONCEPTS YOU WILL LEARN
+;   * rotating a point by 90 degrees: (x, y) becomes (y, -x)
+;   * mirroring a point: (x, y) becomes (-x, y)
+;   * a random walk that is pulled gently back toward the middle
+;   * turning one number into a rainbow color
+;
+; THINGS TO TRY
+;   * Use 6-fold symmetry: rotate by 60 degrees with SIN and COS.
+;   * Make the bug take bigger steps and the lines thicker.
+;   * Leave the old pictures and draw over them instead of cleaning.
+; ============================================================
+
+make "steps 900
+make "mirrors "true
+
+; The 4 turns of a point, and their mirror images if MIRRORS is on.
+to copies :p
+  localmake "x first :p
+  localmake "y last :p
+  localmake "turns (list (list :x :y) (list :y minus :x) (list minus :x minus :y) (list minus :y :x))
+  if not :mirrors [output :turns]
+  output sentence :turns map [list minus first ? last ?] :turns
+end
+
+; Draw the step from a to b in all its copies.
+to mirrorline :a :b
+  localmake "as copies :a
+  localmake "bs copies :b
+  for [i 1 count :as] [
+    penup setpos item :i :as
+    pendown setpos item :i :bs
+  ]
+end
+
+; A rainbow: as :n goes from 0 to 360, red -> yellow -> green ->
+; cyan -> blue -> magenta and back to red.
+to rainbow :n
+  localmake "h remainder :n 360
+  output (list wave :h wave :h - 120 wave :h + 120)
+end
+to wave :angle
+  output int 127 + 127 * cos :angle
+end
+
+to picture
+  localmake "here [0 0]
+  localmake "heading random 360
+  for [k 1 :steps] [
+    ; wander: turn a little at random, but steer home if far away
+    penup setpos :here
+    make "heading :heading + (random 61) - 30
+    if (distance [0 0]) > 260 [make "heading (towards [0 0]) + (random 41) - 20]
+    setheading :heading
+    forward 6
+    localmake "there pos
+    setpencolor rainbow :k / 2
+    mirrorline :here :there
+    make "here :there
+    wait 1
+  ]
+end
+
+clearscreen hideturtle
+setbackground [10 10 20]
+setpensize 2
+forever [
+  picture
+  wait 90
+  clean
+]

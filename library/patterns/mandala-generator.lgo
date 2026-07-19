@@ -1,0 +1,150 @@
+; ============================================================
+; TITLE:    Mandala Generator
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Advanced
+; TAGS:     random, rerandom, seed, generative art, readlist, run
+; SUMMARY:  Turns any name or number you type into its own mandala, and the same name always gives the same mandala.
+; ============================================================
+;
+; WHAT IT DOES
+;   Type your name and the program builds a mandala that belongs to
+;   it: the name is turned into a number, and that number is used as
+;   the "seed" for the random choices. How many rings, which shapes,
+;   how many copies, which colors: all of it comes from the seed. Type
+;   the same name again and you get exactly the same picture.
+;
+; HOW TO USE
+;   Press Run and type a name or a number in the command center.
+;   Keep typing names to make more mandalas. Type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * (RERANDOM seed) makes RANDOM repeat the same "random" numbers
+;   * turning a word into a number with ASCII
+;   * building an instruction list with LIST and running it with RUN
+;   * a library of motif procedures that all start and end the same way
+;
+; THINGS TO TRY
+;   * Find the name that gives your favorite mandala, then show a friend.
+;   * Add a new motif procedure and put its name in MOTIFS.
+;   * Add a new palette of five colors to PALETTES.
+; ============================================================
+
+make "motifs [petal kite loop spike bead triangle]
+make "palettes [
+  [[38 70 83] [42 157 143] [233 196 106] [244 162 97] [231 111 81]]
+  [[255 190 11] [251 86 7] [255 0 110] [131 56 236] [58 134 255]]
+  [[13 59 102] [250 240 202] [238 150 75] [244 211 94] [249 87 56]]
+  [[96 108 56] [40 54 24] [254 250 224] [221 161 94] [188 108 37]]
+  [[205 180 219] [255 200 221] [255 175 204] [189 224 254] [162 210 255]]
+]
+
+; Every motif starts at the point nearest the center, facing outwards,
+; and ends where it began, facing the same way. :s is its length.
+; AHEAD gives the point :dist away from :p in the direction :angle.
+to ahead :p :angle :dist
+  output list (first :p) + :dist * sin :angle (last :p) + :dist * cos :angle
+end
+to petal :s :c
+  filled :c [repeat 2 [repeat 10 [forward :s / 10 right 6] right 120]]
+end
+to kite :s :c
+  localmake "p pos localmake "h heading
+  filled :c [
+    setpos ahead :p :h - 25 :s * 0.45
+    setpos ahead :p :h :s
+    setpos ahead :p :h + 25 :s * 0.45
+    setpos :p
+  ]
+end
+
+; a round blob on a short stalk
+to loop :s :c
+  forward :s / 2
+  filled :c [left 90 repeat 36 [forward :s * 0.044 right 10] right 90]
+  back :s / 2
+end
+
+to spike :s :c
+  localmake "p pos localmake "h heading
+  filled :c [
+    setpos ahead :p :h - 90 :s * 0.07
+    setpos ahead :p :h :s
+    setpos ahead :p :h + 90 :s * 0.07
+    setpos :p
+  ]
+end
+
+; a row of three shrinking beads
+to bead :s :c
+  localmake "p pos
+  localmake "size :s / 2.2
+  penup
+  repeat 3 [
+    forward :size / 2 setpencolor :c setpensize :size dot pos
+    forward :size / 2
+    make "size :size * 0.7
+  ]
+  setpos :p pendown
+  setpensize 1.5 setpencolor [20 20 30]
+end
+
+; a triangle on its point; the turns -30, 120, 120 and 150 make 360
+to triangle :s :c
+  filled :c [left 30 forward :s right 120 forward :s right 120 forward :s right 150]
+end
+
+; A word becomes a number: add up its letter codes, each times its place.
+to seedof :answer
+  if emptyp :answer [output 1 + random 99999]
+  if numberp first :answer [output int abs first :answer]
+  localmake "total 0
+  localmake "text reduce "word :answer
+  for [i 1 count :text] [make "total :total + :i * ascii item :i :text]
+  output :total
+end
+
+to ring :motif :count :r :s :c :offset
+  repeat :count [
+    penup home right :offset + 360 * repcount / :count forward :r pendown
+    run (list :motif :s :c)
+  ]
+end
+
+; Rings are planned from the outside in, each one inside the last.
+to mandala :seed
+  (rerandom :seed)
+  clean
+  localmake "colors pick :palettes
+  setbackground item 1 :colors
+  localmake "layers 5 + random 4
+  localmake "r 250
+  repeat :layers [
+    localmake "count pick [6 8 10 12 16 18 24]
+    localmake "size 25 + random 45
+    if :size > :r [make "size :r]
+    ; every other ring may be turned half a step, so motifs sit between
+    ; the ones of the ring outside
+    ring pick :motifs :count :r - :size :size item 2 + random 4 :colors pick list 0 180 / :count
+    make "r :r - :size * (0.5 + (random 50) / 100)
+    if :r < 20 [stop]
+  ]
+  ; a jewel in the very middle
+  penup home setpencolor item 2 + random 4 :colors setpensize 24 dot [0 0]
+  setpensize 1.5 setpencolor [20 20 30]
+end
+
+to generator
+  forever [
+    print [Type a name or a number for a mandala, or quit to stop:]
+    localmake "answer readlist
+    if equalp :answer [quit] [print [Goodbye!] stop]
+    localmake "seed seedof :answer
+    print (sentence [Seed] :seed)
+    mandala :seed
+  ]
+end
+
+clearscreen hideturtle
+setpensize 1.5
+setpencolor [20 20 30]
+generator

@@ -1,0 +1,103 @@
+; ============================================================
+; TITLE:    Flower Maker
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Beginner
+; TAGS:     input, readword, petals, arcs, garden
+; SUMMARY:  Asks how many petals and which color, then grows that flower in a little garden, one after another.
+; ============================================================
+;
+; WHAT IT DOES
+;   You choose the number of petals and a color. The program draws
+;   a flower with a stem and leaves. Each new flower is planted
+;   further along the garden, until there are six of them.
+;
+; HOW TO USE
+;   Press Run and answer the questions in the command center.
+;   Colors you can type: red orange yellow green blue purple pink,
+;   or a palette number from 1 to 15. Type quit to stop early.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READWORD reads one word that the user types
+;   * MEMBERP checks if an answer is in a list of allowed answers
+;   * a petal made of two curved lines that meet at the tips
+;   * keeping count of how many flowers have been planted
+;
+; THINGS TO TRY
+;   * Add "white and "brown to the color names (and their colors).
+;   * Make the petals longer for flowers with fewer petals.
+;   * Plant the flowers at random heights.
+; ============================================================
+
+make "names [red orange yellow green blue purple pink]
+make "rgbs [[230 50 50] [250 140 30] [245 210 40] [60 170 70] [50 110 220] [140 60 190] [240 120 170]]
+
+; Walk along a curve: :angle degrees in small steps of 3 degrees.
+to curve :angle :size
+  repeat :angle / 3 [forward :size right 3]
+end
+
+; Two curves of 60 degrees, turning 120 at each tip, make a petal
+; shape that starts and ends at the center, pointing the same way.
+to petal :size
+  repeat 2 [curve 60 :size right 120]
+end
+
+; The same petal bending the other way, for a leaf on the left.
+to leftpetal :size
+  repeat 2 [repeat 20 [forward :size left 3] left 120]
+end
+
+to flower :x :petals :color
+  ; the stem and two leaves first
+  penup setxy :x -280 setheading 0 pendown
+  setpencolor [50 130 50] setpensize 6
+  forward 120
+  right 40 petal 2 left 40
+  left 40 leftpetal 2 right 40
+  forward 110
+  ; the petals, turned evenly round the top of the stem
+  setpensize 3 setpencolor :color
+  repeat :petals [petal 3.5 right 360 / :petals]
+  ; a dot in the middle
+  setpensize 22 setpencolor [250 200 40]
+  dot pos
+end
+
+; Keep asking until we get a whole number from 3 to 24, or quit.
+to askpetals
+  print [How many petals? Type a number from 3 to 24.]
+  localmake "answer readword
+  if equalp :answer "quit [output "quit]
+  ; check NUMBERP first: comparing a word like "Sam with 3 is an error
+  if numberp :answer [if and :answer >= 3 :answer <= 24 [output int :answer]]
+  print [That will not grow. Try again.]
+  output askpetals
+end
+
+; Keep asking until we get a color name or a number from 1 to 15.
+to askcolor
+  print (sentence [Which color?] :names [or 1 to 15])
+  localmake "answer readword
+  if equalp :answer "quit [output "quit]
+  if memberp :answer :names [
+    output item (count :names) - (count member :answer :names) + 1 :rgbs
+  ]
+  if numberp :answer [if and :answer >= 1 :answer <= 15 [output int :answer]]
+  print [I do not know that color.]
+  output askcolor
+end
+
+to garden
+  for [n 1 6] [
+    localmake "petals askpetals
+    if equalp :petals "quit [stop]
+    localmake "color askcolor
+    if equalp :color "quit [stop]
+    flower -320 + 128 * (:n - 1) :petals :color
+  ]
+  print [Your garden is full!]
+end
+
+clearscreen hideturtle
+setbackground [220 240 255]
+garden

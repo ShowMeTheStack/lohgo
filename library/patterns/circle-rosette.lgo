@@ -1,0 +1,52 @@
+; ============================================================
+; TITLE:    Circle Rosette
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Beginner
+; TAGS:     circle, rotation, rosette, overlapping
+; SUMMARY:  Walks circle after circle through the center of the screen, turning between them, to make a rosette.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every circle starts at the middle of the screen. After each one
+;   the turtle turns a little and draws the next. Where the circles
+;   cross, petal shapes appear. Three rosettes of different sizes
+;   sit inside each other, in different colors.
+;
+; HOW TO USE
+;   Press Run. Change the numbers in the last three lines, for
+;   example  rosette 8 100 [255 0 0]
+;
+; CONCEPTS YOU WILL LEARN
+;   * a circle drawn by walking: 36 small steps and 10 degree turns
+;   * starting every circle from the same point makes them all touch there
+;   * overlapping shapes create new shapes (the petals) for free
+;
+; THINGS TO TRY
+;   * Draw 6 circles. Count the petals. Now try 7 and 12.
+;   * Use LEFT instead of RIGHT inside CIRCLE. Where do the circles go?
+;   * Give every circle its own color with REPCOUNT.
+; ============================================================
+
+; A circle that starts and ends where the turtle stands, going
+; clockwise. The circle's size depends on the step length:
+; 36 steps of :step make a circle about 36 x :step around.
+to circle :step
+  repeat 36 [forward :step right 10]
+end
+
+; Draw :count circles from the middle, turning between them.
+to rosette :count :step :color
+  setpencolor :color
+  repeat :count [
+    circle :step
+    right 360 / :count
+  ]
+end
+
+clearscreen hideturtle
+setbackground [250 245 235]
+setpensize 2
+rosette 18 23 [40 100 200]
+setpensize 3
+rosette 12 14 [200 60 120]
+rosette 6 7 [240 150 30]

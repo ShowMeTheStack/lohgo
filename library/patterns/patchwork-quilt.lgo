@@ -1,0 +1,113 @@
+; ============================================================
+; TITLE:    Patchwork Quilt
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Intermediate
+; TAGS:     quilt, tiles, rotation, grid, filled, random
+; SUMMARY:  Sews a quilt from three traditional blocks (pinwheel, hourglass and nine-patch) laid out in a grid.
+; ============================================================
+;
+; WHAT IT DOES
+;   Quilters make big patterns from small square blocks. This
+;   program knows three classic blocks. It fills a 6 by 4 grid,
+;   taking turns between the blocks like a checkerboard, and picks
+;   fabric colors at random from a palette. A border and dashed
+;   stitching finish the quilt.
+;
+; HOW TO USE
+;   Press Run. Run it again for new fabric colors. Change the
+;   PALETTE to make a winter quilt or a sunny one.
+;
+; CONCEPTS YOU WILL LEARN
+;   * building a block from triangles and squares
+;   * a block drawn in a quarter, then turned 90 degrees four times
+;   * choosing which block to draw from the row and column numbers
+;   * PICK to choose a random item from a list
+;
+; THINGS TO TRY
+;   * Use only the pinwheel block. Does the quilt look busier?
+;   * Invent a fourth block, for example a big diamond in a square.
+;   * Make the blocks smaller and the quilt 8 by 6.
+; ============================================================
+
+make "block 100
+make "palette [[200 60 70] [240 150 60] [250 220 150] [70 120 170] [110 170 140] [150 90 140] [245 240 230]]
+
+to smallsquare :size :color
+  filled :color [repeat 4 [forward :size right 90]]
+end
+
+; The block's quarters are drawn from the block's center outwards,
+; so turning 90 degrees between quarters makes a pattern that spins.
+
+; Pinwheel: each quarter is cut corner to corner. The half next to
+; the turn is dark, the other half light. Turned four times, the dark
+; halves look like the blades of a spinning toy.
+to pinwheelblock :a :b
+  localmake "h :block / 2
+  repeat 4 [
+    filled :a [forward :h right 90 forward :h right 135 forward :h * sqrt 2 right 135]
+    filled :b [right 45 forward :h * sqrt 2 right 135 forward :h right 90 forward :h right 90]
+    right 90
+  ]
+end
+
+; Hourglass: both diagonals cut the block into four triangles that
+; meet in the middle. Opposite triangles share a color.
+to hourglassblock :a :b
+  localmake "h :block / 2
+  repeat 4 [
+    filled ifelse 0 = remainder repcount 2 [:a] [:b] [
+      left 45 forward :h * sqrt 2 right 135 forward 2 * :h right 135 forward :h * sqrt 2 right 135
+    ]
+    right 90
+  ]
+end
+
+; Nine-patch: a 3 by 3 grid of squares in two colors, like a checkerboard.
+to ninepatchblock :a :b
+  localmake "s :block / 3
+  localmake "x xcor - :block / 2
+  localmake "y ycor - :block / 2
+  for [i 0 2] [for [j 0 2] [
+    penup setxy :x + :i * :s :y + :j * :s setheading 0 pendown
+    smallsquare :s ifelse 0 = remainder :i + :j 2 [:a] [:b]
+  ]]
+end
+
+; Put one block with its center at (x, y), chosen by position.
+to quiltblock :row :col :x :y
+  penup setxy :x :y setheading 0 pendown
+  localmake "a pick :palette
+  localmake "b pick remove :a :palette
+  if 0 = remainder :row + :col 2 [hourglassblock :a :b stop]
+  if 0 = remainder :row 2 [ninepatchblock :a :b stop]
+  pinwheelblock :a :b
+end
+
+to quilt :cols :rows
+  localmake "left minus :cols * :block / 2
+  localmake "bottom minus :rows * :block / 2
+  ; the border first: one big rectangle that the blocks then cover,
+  ; leaving only its edge showing
+  penup setxy :left - 20 :bottom - 20 setheading 0 pendown
+  filled [60 40 50] [repeat 2 [forward :rows * :block + 40 right 90 forward :cols * :block + 40 right 90]]
+  for [r 0 :rows - 1] [for [c 0 :cols - 1] [
+    quiltblock :r :c :left + (:c + 0.5) * :block :bottom + (:r + 0.5) * :block
+  ]]
+  ; dashed stitching round each block, sewn on top
+  setpencolor [255 255 255] setpensize 2
+  for [r 0 :rows] [
+    penup setxy :left :bottom + :r * :block setheading 90
+    repeat :cols * :block / 10 [pendown forward 5 penup forward 5]
+  ]
+  for [c 0 :cols] [
+    penup setxy :left + :c * :block :bottom setheading 0
+    repeat :rows * :block / 10 [pendown forward 5 penup forward 5]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [230 225 215]
+setpensize 1
+setpencolor [60 40 50]
+quilt 7 5

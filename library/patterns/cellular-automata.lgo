@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Cellular Automaton Tapestry
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Advanced
+; TAGS:     cellular automaton, rules, arrays, binary, emergence
+; SUMMARY:  Grows four woven-looking patterns row by row from one black cell, each following a different tiny rule.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each panel is a row of cells, each on or off. The next row is
+;   worked out from the row above: a cell looks at itself and its two
+;   neighbors (8 possible combinations) and a rule number says what
+;   happens in each case. Starting from one cell, rule 90 grows a
+;   Sierpinski triangle, rule 30 grows chaos that looks like a sea
+;   shell, rule 110 grows strange gliding shapes, and rule 150 grows
+;   a lacy carpet.
+;
+; HOW TO USE
+;   Press Run. Change the rule numbers in the last lines to any number
+;   from 0 to 255. Some are dull, many are surprising.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ARRAY, ITEM and SETITEM to keep a row of cells
+;   * a rule number as 8 binary digits, one for each neighborhood
+;   * reading one binary digit with INT, POWER and REMAINDER
+;   * drawing runs of cells as single thick lines to save time
+;
+; THINGS TO TRY
+;   * Start from a random row instead of one cell.
+;   * Try rules 18, 45, 73, 105 and 184.
+;   * Make the row wrap round like a ring: the left neighbor of the
+;     first cell is the last cell.
+; ============================================================
+
+make "cell 3
+make "width 127
+make "height 86
+
+; What does the rule say for this neighborhood?
+; left, middle, right make a binary number from 0 to 7, and we read
+; that binary digit of the rule number.
+to newstate :rule :l :m :r
+  localmake "index 4 * :l + 2 * :m + :r
+  output remainder int :rule / power 2 :index 2
+end
+
+; Draw one row of cells. Runs of live cells next to each other are
+; joined into one thick line, which is much faster than a dot each.
+to drawrow :row :x :y
+  localmake "start 0
+  for [i 1 :width + 1] [
+    localmake "alive ifelse :i > :width [0] [item :i :row]
+    if and :alive = 1 :start = 0 [make "start :i]
+    if and :alive = 0 :start > 0 [
+      penup setxy :x + :cell * :start :y
+      pendown setxy :x + :cell * (:i - 1) :y
+      make "start 0
+    ]
+  ]
+end
+
+; One panel: start with a single live cell in the middle and grow
+; :height rows. Cells beyond the ends of the row count as off.
+to panel :rule :x :y :color
+  localmake "row array :width
+  for [i 1 :width] [setitem :i :row 0]
+  setitem int (:width + 1) / 2 :row 1
+  setpencolor :color setpensize :cell
+  for [g 1 :height] [
+    drawrow :row :x :y - :g * :cell
+    localmake "next array :width
+    for [i 1 :width] [
+      localmake "l ifelse :i = 1 [0] [item :i - 1 :row]
+      localmake "r ifelse :i = :width [0] [item :i + 1 :row]
+      setitem :i :next newstate :rule :l item :i :row :r
+    ]
+    make "row :next
+  ]
+  penup setxy :x + 150 :y + 8 setpencolor [230 230 230]
+  label (sentence "rule :rule)
+end
+
+clearscreen hideturtle
+setbackground [25 25 35]
+setlabelheight 16
+panel 90 -390 272 [240 190 60]
+panel 30 10 272 [230 90 80]
+panel 110 -390 -28 [90 190 230]
+panel 150 10 -28 [150 220 120]

@@ -1,0 +1,67 @@
+; ============================================================
+; TITLE:    Paper Pinwheel
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Beginner
+; TAGS:     triangle, rotation, filled, animation
+; SUMMARY:  Builds a pinwheel from eight colored triangles and then makes it spin in the wind.
+; ============================================================
+;
+; WHAT IT DOES
+;   Eight triangles, each turned 45 degrees from the last, make
+;   the blades of a paper pinwheel on a stick. Then the picture is
+;   wiped and drawn again a little more turned, again and again,
+;   so the pinwheel spins round.
+;
+; HOW TO USE
+;   Press Run and watch it spin. Change BLADES to 4, 6 or 12.
+;
+; CONCEPTS YOU WILL LEARN
+;   * one blade, repeated and turned, makes the whole pattern
+;   * SETHEADING to start every drawing at a chosen angle
+;   * animation: CLEAN, draw, WAIT, and draw again a bit different
+;
+; THINGS TO TRY
+;   * Make it spin the other way.
+;   * Make it spin faster by turning more each time, or with a shorter WAIT.
+;   * Use only two colors that take turns.
+; ============================================================
+
+make "blades 8
+make "colors [[230 60 60] [250 200 40] [60 150 230] [80 190 100]]
+
+; One blade is a right-angled triangle with a corner at the center.
+to blade :size :color
+  filled :color [
+    forward :size
+    right 135
+    forward :size * 0.7
+    setxy 0 60
+  ]
+end
+
+; All the blades, starting at the angle :start.
+; Later drawing covers earlier drawing, so the stick goes first and
+; the blades are painted over its top end.
+to pinwheel :start
+  ; the stick is a long thin rectangle
+  penup setxy -5 -270 setheading 0
+  filled [150 110 70] [repeat 2 [forward 330 right 90 forward 10 right 90]]
+  repeat :blades [
+    penup setxy 0 60 setheading :start + 360 * repcount / :blades pendown
+    blade 130 item 1 + remainder repcount count :colors :colors
+  ]
+  ; the pin in the middle is a dot, which sits on top
+  setpensize 14 setpencolor [80 80 80]
+  dot [0 60]
+  setpensize 2 setpencolor [255 255 255]
+end
+
+clearscreen hideturtle
+setbackground [200 230 250]
+setpensize 2 setpencolor [255 255 255]
+; turn 3 degrees per picture, 360 pictures = three full turns
+for [angle 0 1080 3] [
+  clean
+  pinwheel :angle
+  wait 2
+]

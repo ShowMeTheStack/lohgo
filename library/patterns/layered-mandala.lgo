@@ -1,0 +1,106 @@
+; ============================================================
+; TITLE:    Layered Mandala
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Intermediate
+; TAGS:     mandala, symmetry, procedures as data, run, filled
+; SUMMARY:  Builds a mandala from the inside out, one ring at a time, each ring a different motif repeated round the circle.
+; ============================================================
+;
+; WHAT IT DOES
+;   A mandala is a circle pattern with the same thing repeated all
+;   the way round. Here it is built in layers: a dotted center,
+;   petals, a ring of diamonds, scalloped arches, teardrops and an
+;   outer ring of dots. Each layer is described by one line in the
+;   LAYERS list: which motif, how many, how far out, what color.
+;
+; HOW TO USE
+;   Press Run. Edit the LAYERS list to design your own mandala:
+;   change counts, distances or colors, or remove a layer.
+;
+; CONCEPTS YOU WILL LEARN
+;   * describing a design as data (a list of layers)
+;   * RUN with a list built from a procedure name and its inputs
+;   * motifs that start and end at the same place and heading
+;   * painting in layers, where later shapes cover earlier ones
+;
+; THINGS TO TRY
+;   * Use 8 in every layer for a calm look, or 7 and 11 for a busy one.
+;   * Write a new motif, for example a little star, and add a layer.
+;   * Change the background to white and the colors to black.
+; ============================================================
+
+; Each motif is drawn pointing away from the center, starting at the
+; point nearest the center, and returns there facing the same way.
+
+to petal :size :color
+  filled :color [
+    repeat 2 [
+      repeat 15 [forward :size / 12 right 4]
+      right 120
+    ]
+  ]
+end
+
+to diamond :size :color
+  filled :color [
+    left 30 forward :size right 60 forward :size
+    right 120 forward :size right 60 forward :size
+    right 150
+  ]
+end
+
+; a half circle arch, open side toward the center
+to arch :size :color
+  left 90 penup forward :size / 2 pendown right 90
+  filled :color [repeat 18 [forward :size * 0.087 right 10] right 90 forward :size right 90]
+  left 90 penup back :size / 2 pendown right 90
+end
+
+; a teardrop: a point toward the center and a round top. The two
+; straight sides open 40 degrees apart; the top is an arc that turns
+; 220 degrees, just enough to come back down the other side.
+to teardrop :size :color
+  filled :color [
+    right 20 forward :size
+    repeat 22 [forward :size * 0.0635 left 10]
+    forward :size
+    right 200
+  ]
+end
+
+to spot :size :color
+  penup forward :size / 2
+  setpencolor :color setpensize :size dot pos
+  back :size / 2 pendown
+  setpensize 2 setpencolor [30 20 40]
+end
+
+; Put :count copies of a motif round the center at distance :r.
+to layer :motif :count :r :size :color
+  repeat :count [
+    penup home right 360 * (repcount - 0.5) / :count forward :r pendown
+    run (list :motif :size :color)
+  ]
+end
+
+; [motif count distance size color], drawn in this order. Later drawing
+; covers earlier drawing, so each ring of spots comes after the shapes
+; it touches, and sits on top of them.
+make "layers [
+  [teardrop 16 182 62 [70 160 170]]
+  [spot 36 270 12 [250 210 120]]
+  [arch 24 148 36 [230 120 60]]
+  [diamond 12 72 40 [240 190 60]]
+  [petal 10 16 52 [200 60 100]]
+  [spot 8 10 10 [250 230 180]]
+]
+
+to mandala
+  foreach :layers [layer item 1 ? item 2 ? item 3 ? item 4 ? item 5 ?]
+end
+
+clearscreen hideturtle
+setbackground [30 20 40]
+setpensize 2
+setpencolor [30 20 40]
+mandala

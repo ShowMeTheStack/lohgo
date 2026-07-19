@@ -1,0 +1,108 @@
+; ============================================================
+; TITLE:    Wallpaper Symmetry
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Advanced
+; TAGS:     symmetry, transformations, wallpaper groups, lists, apply
+; SUMMARY:  Repeats one lopsided little flag four different ways (slide, half turn, mirror, quarter turn) to show how wallpaper patterns are made.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every wallpaper pattern is one small picture repeated by moving
+;   it in a few fixed ways. Mathematicians have shown there are only
+;   17 different kinds. This program shows four of them, using a flag
+;   that has no symmetry of its own, so you can see exactly what each
+;   kind does: plain slides, half turns, mirror images, quarter turns.
+;   Copies made by the same move share a color.
+;
+; HOW TO USE
+;   Press Run. Change the points of FLAG to your own shape (keep it
+;   inside the square from 0 to 1), or change UNIT for bigger tiles.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a transformation is a rule that moves every point of a shape
+;   * transformations as procedures, combined with MAP and APPLY
+;   * a "tile" of a few transformed copies, repeated on a grid
+;   * why the flag must be lopsided to show the difference
+;
+; THINGS TO TRY
+;   * Use a symmetric shape, like a square. Can you still tell the
+;     four patterns apart?
+;   * Add a fifth pattern: mirror in x AND in y (four copies per tile).
+;   * Make a "glide": mirror the flag and slide it half a tile up.
+; ============================================================
+
+make "unit 38
+; the flag: a pole and a pennant, inside the square 0..1 by 0..1
+make "flag [[0.15 0.05] [0.3 0.05] [0.3 0.5] [0.85 0.7] [0.3 0.9] [0.15 0.9]]
+make "colors [[220 70 70] [60 120 210] [240 170 40] [70 160 100]]
+
+; ---- transformations: each takes a point [x y] in tile units ----------
+to same :p
+  output :p
+end
+; half turn round the point (1, 0.5): the middle of a 2 by 1 tile
+to halfturn :p
+  output list 2 - first :p 1 - last :p
+end
+; mirror in the line x = 1
+to mirrorx :p
+  output list 2 - first :p last :p
+end
+; quarter turn clockwise round (1, 1), the middle of a 2 by 2 tile
+to quarter :p
+  output list last :p 2 - first :p
+end
+to quarter2 :p
+  output quarter quarter :p
+end
+to quarter3 :p
+  output quarter quarter quarter :p
+end
+
+; Each pattern: its name, tile width and height (in units), and the
+; list of transformations that make one tile.
+make "patterns [
+  [[Slide only] 1 1 [same]]
+  [[Half turn] 2 1 [same halfturn]]
+  [[Mirror] 2 1 [same mirrorx]]
+  [[Quarter turn] 2 2 [same quarter quarter2 quarter3]]
+]
+
+; The panel we are drawing in: [left bottom right top].
+make "panel [0 0 0 0]
+
+to inside :pts
+  output not memberp "false map [(and (first ?) >= item 1 :panel (first ?) <= item 3 :panel (last ?) >= item 2 :panel (last ?) <= item 4 :panel)] :pts
+end
+
+; Draw one copy: transform the flag, move it to tile (col, row) of
+; the given size, and scale to the screen.
+to flagcopy :move :col :row :w :h :color
+  localmake "pts map [list (item 1 :panel) + :unit * (:w * :col + first ?) ~
+                           (item 2 :panel) + :unit * (:h * :row + last ?)] ~
+                     map [invoke :move ?] :flag
+  if not inside :pts [stop]
+  penup setpos first :pts pendown
+  filled :color [foreach butfirst :pts [setpos ?] setpos first :pts]
+end
+
+to pattern :spec :left :bottom
+  make "panel (list :left :bottom :left + 370 :bottom + 245)
+  penup setxy :left :bottom + 252 setpencolor [40 40 40]
+  label first :spec
+  setpencolor [40 40 40]
+  localmake "w item 2 :spec
+  localmake "h item 3 :spec
+  for [row 0 7] [for [col 0 10] [
+    foreach item 4 :spec [flagcopy ? :col :row :w :h item # :colors]
+  ]]
+end
+
+clearscreen hideturtle
+setbackground [250 248 240]
+setpensize 1
+setlabelheight 15
+pattern item 1 :patterns -385 25
+pattern item 2 :patterns 15 25
+pattern item 3 :patterns -385 -285
+pattern item 4 :patterns 15 -285

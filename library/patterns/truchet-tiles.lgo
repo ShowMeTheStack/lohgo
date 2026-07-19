@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Truchet Tiles
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Intermediate
+; TAGS:     tiles, random, arcs, grid, emergence
+; SUMMARY:  Covers the screen with square tiles, each holding two quarter circles turned one of two ways at random.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every tile has the same simple drawing: two quarter circles in
+;   opposite corners. A coin toss decides whether the tile is turned
+;   or not. Because the arcs always meet the edges at the middle of
+;   each side, they join up with their neighbors, and long winding
+;   paths and closed loops appear all over the screen. The color
+;   changes slowly from the bottom row to the top.
+;
+; HOW TO USE
+;   Press Run. Run it again for a different maze of curves.
+;   Change TILE to make the tiles bigger or smaller.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ARC with a heading: the arc starts at the turtle's heading and
+;     sweeps clockwise
+;   * RANDOM 2 as a coin toss
+;   * why matching edges make tiles join up
+;   * a simple rule plus randomness can make a complex picture
+;
+; THINGS TO TRY
+;   * Use (RANDOM 4) = 0 instead of a fair coin. What changes?
+;   * Turn tiles by a rule instead of chance, for example when
+;     row + column is even.
+;   * Use diagonal lines instead of arcs (the original Truchet tile).
+; ============================================================
+
+make "tile 50
+
+; A tile whose bottom left corner is at (x, y).
+; Way 0: arcs round the bottom left and top right corners.
+; Way 1: arcs round the top left and bottom right corners.
+; Each arc is a quarter circle of radius TILE / 2 centered on a corner.
+to truchet :x :y :way
+  ifelse :way = 0 [
+    corner :x :y 0
+    corner :x + :tile :y + :tile 180
+  ] [
+    corner :x :y + :tile 90
+    corner :x + :tile :y 270
+  ]
+end
+
+; Stand on a corner, face along one edge, and sweep 90 degrees.
+to corner :x :y :heading
+  penup setxy :x :y setheading :heading
+  pendown arc 90 :tile / 2
+end
+
+to cover
+  for [row 0 11] [
+    ; mix from teal at the bottom to pink at the top
+    setpencolor (list 80 + 14 * :row 220 - 10 * :row 210 - 2 * :row)
+    for [col 0 15] [
+      truchet -400 + :col * :tile -300 + :row * :tile random 2
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [20 40 60]
+setpensize 6
+cover

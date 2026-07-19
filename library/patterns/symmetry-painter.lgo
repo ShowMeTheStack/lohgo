@@ -1,0 +1,123 @@
+; ============================================================
+; TITLE:    Symmetry Painter
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Advanced
+; TAGS:     mouse, keyboard, events, symmetry, rotation, reflection
+; SUMMARY:  Paint with the mouse and every stroke is repeated round the center with rotation and mirror symmetry.
+; ============================================================
+;
+; WHAT IT DOES
+;   Hold the left mouse button and draw. Whatever you draw is copied
+;   round the center of the screen 6 times (you can change that), and
+;   each copy is mirrored too, so you paint snowflakes and mandalas
+;   without trying. The color shifts slowly through the rainbow as
+;   you draw. Faint guide lines show the slices.
+;
+; HOW TO USE
+;   Press Run, then click once in the turtle world so it can hear
+;   the keyboard.
+;     left button + move   paint
+;     right click          clear the picture
+;     keys 2 to 9          number of slices
+;     M                    mirror on or off
+;     G                    guide lines on or off
+;   Press Stop when you are done.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MOUSEON and KEYBOARDON: the program reacts to events
+;   * rotating a point by any angle with SIN and COS
+;   * mirroring before rotating gives "kaleidoscope" symmetry
+;   * global variables that remember state between events
+;
+; THINGS TO TRY
+;   * Allow 12 slices with the key 0 (code 48).
+;   * Make the pen get thicker the faster you move the mouse.
+;   * Add a key that changes the background color.
+; ============================================================
+
+make "slices 6
+make "mirror "true
+make "guides "true
+make "painting "false
+make "last [0 0]
+make "hue 0
+
+; Rotate point p about the center by :angle degrees (anticlockwise).
+to spin :p :angle
+  localmake "c cos :angle
+  localmake "s sin :angle
+  output list (first :p) * :c - (last :p) * :s (first :p) * :s + (last :p) * :c
+end
+
+; All the copies of a point: one per slice, plus mirror images.
+to copies :p
+  localmake "out []
+  for [k 0 :slices - 1] [
+    localmake "a 360 * :k / :slices
+    make "out fput spin :p :a :out
+    if :mirror [make "out fput spin (list minus first :p last :p) :a :out]
+  ]
+  output :out
+end
+
+to rainbow :n
+  output (list wave :n wave :n - 120 wave :n + 120)
+end
+to wave :angle
+  output int 128 + 120 * cos :angle
+end
+
+to drawguides
+  if not :guides [stop]
+  setpencolor [70 70 90] setpensize 1
+  for [k 0 :slices - 1] [
+    penup home setheading 360 * :k / :slices pendown forward 380
+  ]
+  penup home
+end
+
+to fresh
+  clean
+  drawguides
+  print (sentence [Slices:] :slices [Mirror:] :mirror)
+end
+
+; ---- event handlers ---------------------------------------------------
+
+to startpaint
+  make "painting "true
+  make "last mousepos
+end
+
+; The mouse moved: draw the step from the last point to here,
+; in every copy at once.
+to paintstep
+  if not :painting [stop]
+  localmake "here mousepos
+  localmake "froms copies :last
+  localmake "tos copies :here
+  setpencolor rainbow :hue setpensize 3
+  for [i 1 count :froms] [
+    penup setpos item :i :froms
+    pendown setpos item :i :tos
+  ]
+  penup
+  make "hue :hue + 1
+  make "last :here
+end
+
+to keypressed
+  localmake "k keyboardvalue
+  if and :k >= 50 :k <= 57 [make "slices :k - 48 fresh stop]
+  if :k = 77 [make "mirror not :mirror fresh stop]
+  if :k = 71 [make "guides not :guides fresh stop]
+end
+
+clearscreen hideturtle
+setbackground [15 15 25]
+fresh
+print [Click the turtle world first so it can hear the keys.]
+print [Left button: paint. Right click: clear. Keys 2-9: slices. M: mirror. G: guides.]
+mouseon [startpaint] [make "painting "false] [fresh] [] [paintstep]
+keyboardon [keypressed]
+forever [wait 10]

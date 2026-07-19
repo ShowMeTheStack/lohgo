@@ -1,0 +1,121 @@
+; ============================================================
+; TITLE:    Tessellation Gallery
+; CATEGORY: Patterns & Mandalas
+; LEVEL:    Intermediate
+; TAGS:     tessellation, tiling, polygons, grid, coordinates
+; SUMMARY:  Shows four ways to cover a floor with regular polygons and no gaps: triangles, squares, hexagons, and octagons with squares.
+; ============================================================
+;
+; WHAT IT DOES
+;   Four panels, four tilings. Only three regular polygons can tile
+;   a floor on their own: triangles, squares and hexagons. The fourth
+;   panel mixes octagons and small squares, a tiling you may have
+;   seen on a kitchen or bathroom floor.
+;
+; HOW TO USE
+;   Press Run. Change SIDE to make the tiles bigger or smaller.
+;
+; CONCEPTS YOU WILL LEARN
+;   * why a tiling works: the corners meeting at a point add up to 360
+;     (6 x 60, 4 x 90, 3 x 120, and 135 + 135 + 90)
+;   * one general procedure for any regular polygon, placed by its center
+;   * finding the centers of tiles on a grid, with every other row shifted
+;   * keeping only the tiles that fit completely inside a panel
+;
+; THINGS TO TRY
+;   * Why can't regular pentagons tile? Add up their corners at a point.
+;   * Color the hexagons with three colors so no two neighbors match.
+;   * Add a fifth tiling: hexagons with triangles between them.
+; ============================================================
+
+make "side 36
+
+; The panel currently being filled: [left bottom right top].
+make "panel [0 0 0 0]
+
+to cornerpoint :x :y :angle :r
+  output list :x + :r * sin :angle :y + :r * cos :angle
+end
+
+to inpanel :p
+  output (and (first :p) >= item 1 :panel (first :p) <= item 3 :panel ~
+              (last :p) >= item 2 :panel (last :p) <= item 4 :panel)
+end
+
+; A regular polygon with n sides of length SIDE, centered at (x, y).
+; :turn says where the first corner is (0 = straight up).
+; If any corner would stick out of the panel, the tile is skipped.
+to tile :x :y :n :turn :color
+  localmake "r :side / (2 * sin 180 / :n)
+  localmake "pts map [cornerpoint :x :y :turn + 360 * ? / :n :r] iseq 0 :n - 1
+  if not reduce "and fput "true map "inpanel :pts [stop]
+  penup setpos first :pts pendown
+  filled :color [foreach butfirst :pts [setpos ?] setpos first :pts]
+end
+
+to setpanel :left :bottom :name
+  make "panel (list :left :bottom :left + 380 :bottom + 250)
+  penup setxy :left :bottom + 258 setpencolor [60 60 60]
+  label :name
+  setpencolor [255 255 255]
+end
+
+to triangles
+  localmake "h :side * (sqrt 3) / 2
+  for [row 0 8] [for [col -1 22] [
+    localmake "x (item 1 :panel) + :col * :side / 2
+    localmake "y (item 2 :panel) + :row * :h
+    ifelse 0 = remainder :row + :col 2 [
+      tile :x :y + :h / 3 3 0 [240 120 90]
+    ] [
+      tile :x :y + 2 * :h / 3 3 60 [250 200 120]
+    ]
+  ]]
+end
+
+to squares
+  for [row 0 8] [for [col 0 12] [
+    tile (item 1 :panel) + (:col + 0.5) * :side (item 2 :panel) + (:row + 0.5) * :side 4 45 ~
+         ifelse 0 = remainder :row + :col 2 [[70 130 200]] [[150 200 240]]
+  ]]
+end
+
+; Pointy-topped hexagons: columns sqrt(3) x R apart, rows 1.5 x R
+; apart, and every odd row pushed half a hexagon to the right.
+to hexagons
+  localmake "w :side * sqrt 3
+  for [row 0 7] [for [col 0 9] [
+    localmake "x (item 1 :panel) + (:col + 0.5) * :w + (remainder :row 2) * :w / 2
+    localmake "y (item 2 :panel) + :side + :row * 1.5 * :side
+    tile :x :y 6 0 item 1 + remainder :row 3 [[90 170 110] [150 210 150] [60 130 90]]
+  ]]
+end
+
+; Octagons on a square grid; a small diamond-turned square fills each
+; gap where four octagons meet.
+to octagons
+  localmake "a :side * 0.75
+  localmake "w :a * (1 + sqrt 2)
+  localmake "keep :side
+  make "side :a
+  for [row 0 5] [for [col 0 8] [
+    localmake "x (item 1 :panel) + (:col + 0.5) * :w
+    localmake "y (item 2 :panel) + (:row + 0.5) * :w
+    tile :x :y 8 22.5 [170 110 190]
+    tile :x + :w / 2 :y + :w / 2 4 0 [240 200 90]
+  ]]
+  make "side :keep
+end
+
+clearscreen hideturtle
+setbackground [245 242 235]
+setpensize 2
+setlabelheight 15
+setpanel -390 20 [Triangles: 6 corners of 60]
+triangles
+setpanel 10 20 [Squares: 4 corners of 90]
+squares
+setpanel -390 -290 [Hexagons: 3 corners of 120]
+hexagons
+setpanel 10 -290 [Octagons and squares: 135 + 135 + 90]
+octagons
