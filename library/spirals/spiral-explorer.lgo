@@ -1,0 +1,74 @@
+; ============================================================
+; TITLE:    Spiral Explorer
+; CATEGORY: Spirals & Curves
+; LEVEL:    Beginner
+; TAGS:     input, readlist, polyspi, angles, experiment
+; SUMMARY:  Asks you for an angle and draws the spiral that angle makes, so you can hunt for beautiful angles.
+; ============================================================
+;
+; WHAT IT DOES
+;   You type an angle. The turtle draws a spiral by walking, turning
+;   that angle, and walking a little further each time. Then it asks
+;   for another angle. Some angles give squares, some stars, some
+;   flowers, and some angles just a little different from those give
+;   twisting spirals.
+;
+; HOW TO USE
+;   Press Run. Type an angle from 1 to 359 in the command center and
+;   press Enter. Type quit to stop. Good ones to try: 90, 89, 121,
+;   144, 145, 170, 59, 72, 100, 135.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READLIST and checking the answer before using it
+;   * an angle close to 360 / n gives a twisting n-sided spiral
+;   * the same small procedure can draw hundreds of different pictures
+;
+; THINGS TO TRY
+;   * Find an angle that makes a spiral with 5 arms.
+;   * Ask for the step growth as well as the angle.
+;   * Keep a list of the angles the user liked, and print it at the end.
+; ============================================================
+
+; One spiral: walk, turn, walk a bit further. Stop when the steps
+; would carry the turtle off the screen.
+to spiral :angle
+  localmake "step 2
+  localmake "hue 0
+  while [:step < 300] [
+    setpencolor (list 128 + 120 * sin :hue 128 + 120 * sin :hue + 120 128 + 120 * sin :hue + 240)
+    forward :step
+    right :angle
+    make "step :step + 1.5
+    make "hue :hue + 3
+  ]
+end
+
+; Ask for an angle until we get a sensible one. Outputs the angle,
+; or the word quit.
+to askangle
+  print [Type an angle from 1 to 359, or quit:]
+  localmake "answer readlist
+  if emptyp :answer [output askangle]
+  localmake "a first :answer
+  if equalp lowercase :a "quit [output "quit]
+  if not numberp :a [print [That is not a number.] output askangle]
+  if or :a < 1 :a > 359 [print [Please choose between 1 and 359.] output askangle]
+  output :a
+end
+
+to explore
+  forever [
+    localmake "angle askangle
+    if equalp :angle "quit [print [Happy spiraling!] stop]
+    clean
+    penup home pendown
+    spiral :angle
+    penup setxy -390 -290 setpencolor [200 200 200]
+    label (sentence [angle] :angle)
+  ]
+end
+
+clearscreen hideturtle
+setbackground [20 20 30]
+setpensize 2
+explore

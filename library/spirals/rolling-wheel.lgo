@@ -1,0 +1,91 @@
+; ============================================================
+; TITLE:    Rolling Wheel Cycloids
+; CATEGORY: Spirals & Curves
+; LEVEL:    Intermediate
+; TAGS:     cycloid, trochoid, animation, parametric curves, radians
+; SUMMARY:  Rolls a wheel along the ground and traces the curves drawn by a point on its rim, a point inside, and a point outside.
+; ============================================================
+;
+; WHAT IT DOES
+;   A wheel rolls from left to right. Three points are fixed to it:
+;   red on the rim, blue halfway to the center, and green on a stick
+;   poking out past the rim. As the wheel turns, each point leaves a
+;   trail. The red one makes a row of arches called a cycloid, the
+;   blue one a gentle wave, and the green one makes little loops,
+;   because it actually moves backwards for a moment at the bottom.
+;
+; HOW TO USE
+;   Press Run and watch. Change RADIUS or the three distances in
+;   MARKERS. The animation runs once and stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * rolling without slipping: distance moved = radius x angle turned
+;   * the cycloid x = r(a - sin a), y = r(1 - cos a), with a in radians
+;   * keeping a growing list of points and redrawing it every frame
+;   * ARC 360 to draw the wheel round its center
+;
+; THINGS TO TRY
+;   * Put a marker at distance 0 (the center). What does it draw?
+;   * Make the stick longer, 2 x radius. Do the loops get bigger?
+;   * Roll the wheel round the outside of another circle instead.
+; ============================================================
+
+make "radius 55
+make "ground -40
+; [distance from center, color] for each marker
+make "markers [[1 [220 50 50]] [0.5 [40 110 210]] [1.5 [40 160 80]]]
+make "x0 -340
+
+; Where a marker is when the wheel has turned by :turn degrees.
+; The center has rolled forward by the arc length radius x angle.
+to markerpos :turn :d
+  localmake "cx :x0 + :radius * :turn * pi / 180
+  localmake "cy :ground + :radius
+  output list :cx - :d * :radius * sin :turn :cy - :d * :radius * cos :turn
+end
+
+to drawtrail :points :color
+  if (count :points) < 2 [stop]
+  setpencolor :color setpensize 2
+  penup setpos first :points pendown
+  foreach butfirst :points [setpos ?]
+  penup
+end
+
+to drawwheel :turn
+  localmake "center list :x0 + :radius * :turn * pi / 180 :ground + :radius
+  setpencolor [60 60 70] setpensize 3
+  penup setpos :center setheading 0 pendown arc 360 :radius
+  ; four spokes, turning with the wheel
+  setpensize 1
+  for [k 0 3] [
+    penup setpos :center setheading 180 + :turn + 90 * :k pendown forward :radius
+  ]
+  ; the markers and their sticks
+  foreach :markers [
+    localmake "p markerpos :turn first ?
+    setpencolor [60 60 70] setpensize 1
+    penup setpos :center pendown setpos :p
+    setpencolor last ? setpensize 12 penup dot :p
+  ]
+end
+
+to roll :turns
+  ; one empty trail for each marker
+  localmake "trails []
+  repeat count :markers [make "trails fput [] :trails]
+  for [turn 0 360 * :turns 4] [
+    ; add the new position of every marker to its trail
+    make "trails (map [lput markerpos :turn first ?1 ?2] :markers :trails)
+    clean
+    setpencolor [120 100 80] setpensize 3
+    penup setxy -400 :ground pendown setxy 400 :ground
+    (foreach :trails :markers [drawtrail ?1 last ?2])
+    drawwheel :turn
+    wait 1
+  ]
+end
+
+clearscreen hideturtle
+setbackground [245 245 240]
+roll 2

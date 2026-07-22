@@ -1,0 +1,113 @@
+; ============================================================
+; TITLE:    Euler Spiral and Smooth Roads
+; CATEGORY: Spirals & Curves
+; LEVEL:    Advanced
+; TAGS:     clothoid, curvature, euler spiral, engineering, graphs
+; SUMMARY:  Draws the Euler spiral, whose bend grows steadily with distance, and shows why road and railway builders use it.
+; ============================================================
+;
+; WHAT IT DOES
+;   At the top, the turtle walks equal steps and turns a tiny bit
+;   more at every step: 0, then 0.02, then 0.04 degrees, and so on.
+;   The bend (the "curvature") grows steadily, so the path winds
+;   into a tighter and tighter curl. Doing the same backwards from
+;   the start gives the second curl. This is the Euler spiral.
+;
+;   At the bottom are two roads that both turn 90 degrees. The left
+;   one goes straight into a circle, so the steering wheel must jump
+;   suddenly. The right one eases in and out along pieces of Euler
+;   spiral, so the steering changes smoothly. Under each road a graph
+;   shows how hard the road bends at each point.
+;
+; HOW TO USE
+;   Press Run. Change GROWTH for a looser or tighter spiral.
+;
+; CONCEPTS YOU WILL LEARN
+;   * curvature: how many degrees the path turns per step
+;   * the Euler spiral (or clothoid): curvature grows in a straight line
+;   * recording values as you draw, then plotting them as a graph
+;   * real engineering: railways and highway ramps use this curve
+;
+; THINGS TO TRY
+;   * Make the turns grow faster (0.05) or slower (0.01).
+;   * Make the easing pieces in SMOOTHROAD longer. When does the
+;     middle circle disappear completely?
+;   * Grow the turn by the SQUARE of the step number. What curve now?
+; ============================================================
+
+make "growth 0.02
+make "turns []
+
+; One half of the spiral: :steps steps, the turn growing every step.
+; :side is 1 for right turns and -1 for left turns.
+to curl :steps :side
+  for [i 0 :steps] [
+    forward 2
+    right :side * :growth * :i
+  ]
+end
+
+; ---- roads ---------------------------------------------------------------
+; Every step of a road is 2 long. We remember each step's turn in the
+; list TURNS so the graph can be drawn afterwards.
+
+to roadstep :turn
+  forward 2
+  left :turn
+  make "turns lput :turn :turns
+end
+
+; Straight, then a quarter circle (1.4 degrees every step), then straight.
+to suddenroad
+  repeat 50 [roadstep 0]
+  repeat 64 [roadstep 90 / 64]
+  repeat 50 [roadstep 0]
+end
+
+; Straight, then the turn grows steadily from 0 to 1.4 (an Euler
+; spiral), a short circle, the turn shrinks steadily back to 0, straight.
+; Each easing piece turns 1.4 x (1 + 2 + ... + 30) / 30 = 21.7 degrees,
+; and the circle in the middle makes up the rest of the 90.
+to smoothroad
+  repeat 50 [roadstep 0]
+  for [i 1 30] [roadstep 1.4 * :i / 30]
+  repeat int (90 - 2 * 21.7) / 1.4 [roadstep 1.4]
+  for [i 30 1] [roadstep 1.4 * :i / 30]
+  repeat 50 [roadstep 0]
+end
+
+; Draw a road, wide and grey, starting at (x, y) heading right.
+; RUN calls the road procedure whose name we were given.
+to drawroad :x :y :road
+  penup setxy :x :y setheading 90
+  setpencolor [90 90 100] setpensize 16 pendown
+  make "turns []
+  run (list :road)
+end
+
+; A bar graph of the recorded turns, left edge at (x, y).
+to graph :x :y :label
+  setpencolor [180 180 180] setpensize 1
+  penup setxy :x :y pendown setxy :x + (count :turns) :y
+  setpencolor [210 80 60] setpensize 2
+  penup setxy :x :y
+  foreach :turns [
+    pendown setxy :x + # :y + 30 * ?
+  ]
+  penup setxy :x :y - 20 setpencolor [80 80 80]
+  label :label
+end
+
+clearscreen hideturtle
+setbackground [240 244 236]
+; the Euler spiral, both halves from the same starting point
+setpencolor [50 90 180] setpensize 2
+penup setxy 0 95 setheading 90 pendown
+curl 520 1
+penup setxy 0 95 setheading 270 pendown
+curl 520 1
+setlabelheight 14
+drawroad -360 -200 "suddenroad
+graph -360 -280 [sudden: the bend jumps]
+drawroad 60 -200 "smoothroad
+graph 60 -280 [smooth: the bend grows and shrinks]

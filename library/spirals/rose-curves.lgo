@@ -1,0 +1,69 @@
+; ============================================================
+; TITLE:    Rose Curves
+; CATEGORY: Spirals & Curves
+; LEVEL:    Intermediate
+; TAGS:     rose, polar coordinates, cosine, fractions, petals
+; SUMMARY:  Plots the mathematical roses r = cos(k x angle) for eight values of k and shows how k decides the number of petals.
+; ============================================================
+;
+; WHAT IT DOES
+;   A rose curve is drawn by letting the distance from the center be
+;   cos(k x angle). As the angle goes round, the distance swells and
+;   shrinks, tracing petals. When k is a whole number, odd k gives k
+;   petals and even k gives 2k petals. When k is a fraction n/d, the
+;   curve takes longer to close and makes overlapping petals.
+;
+; HOW TO USE
+;   Press Run. Edit the ROSES list: each entry is [n d] for k = n/d.
+;
+; CONCEPTS YOU WILL LEARN
+;   * polar coordinates with a changing distance
+;   * negative distances: cos can be below 0, and the point flips to
+;     the opposite side, which is why even k gives double petals
+;   * a fraction n/d closes after d turns (or 2d turns), found with GCD
+;
+; THINGS TO TRY
+;   * Predict the petals for k = 6 and k = 7, then add them.
+;   * Try [1 3], [5 4] and [8 5].
+;   * Use SIN instead of COS. What changes?
+; ============================================================
+
+make "roses [[2 1] [3 1] [4 1] [5 1] [3 2] [7 3] [5 4] [8 5]]
+make "size 80
+
+to gcd :a :b
+  if :b = 0 [output :a]
+  output gcd :b remainder :a :b
+end
+
+; How many degrees until the rose with k = n/d closes up.
+; With n/d in lowest terms: d turns if n x d is odd, else 2d turns.
+to closeangle :n :d
+  localmake "g gcd :n :d
+  localmake "n :n / :g
+  localmake "d :d / :g
+  output ifelse 1 = remainder :n * :d 2 [180 * :d] [360 * :d]
+end
+
+to rose :n :d :cx :cy :color
+  setpencolor :color
+  penup
+  for [a 0 closeangle :n :d 2] [
+    localmake "r :size * cos :a * :n / :d
+    setxy :cx + :r * sin :a :cy + :r * cos :a
+    pendown
+  ]
+  penup setxy :cx - 20 :cy - :size - 22 setpencolor [90 90 90]
+  label ifelse :d = 1 [word "|k = | :n] [(word "|k = | :n "/ :d)]
+end
+
+clearscreen hideturtle
+setbackground [252 250 246]
+setpensize 2
+setlabelheight 14
+foreach :roses [
+  make "col remainder # - 1 4
+  make "row int (# - 1) / 4
+  rose first ? last ? -300 + 200 * :col 150 - 285 * :row ~
+       item # [[200 50 80] [230 120 30] [40 150 90] [50 110 210] [150 60 180] [210 70 140] [30 140 160] [120 90 60]]
+]

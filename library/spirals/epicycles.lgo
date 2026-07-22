@@ -1,0 +1,101 @@
+; ============================================================
+; TITLE:    Epicycles and Square Waves
+; CATEGORY: Spirals & Curves
+; LEVEL:    Advanced
+; TAGS:     fourier series, epicycles, circles, waves, animation
+; SUMMARY:  Stacks spinning circles on top of each other so the tip of the last one draws a wave that gets closer and closer to a square.
+; ============================================================
+;
+; WHAT IT DOES
+;   A circle spins, and on its edge sits the center of a smaller
+;   circle spinning three times as fast, and on that one a smaller
+;   one five times as fast, and so on. The height of the last tip is
+;   drawn on the right as a wave moving along. With one circle the
+;   wave is a smooth sine wave. Every time round, one more circle is
+;   added, and the wave gets squarer. This is the idea behind the
+;   Fourier series, which builds any repeating shape out of circles,
+;   and behind the "epicycles" ancient astronomers used for planets.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to end. Change MOST for the largest
+;   number of circles, or SPEED.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a point on a spinning circle: radius x cos, radius x sin
+;   * adding circles end to end: each center is the last tip
+;   * the square wave recipe: speeds 1, 3, 5, 7 ... and sizes 1, 1/3,
+;     1/5, 1/7 ...
+;   * keeping a history list of the last few hundred values
+;
+; THINGS TO TRY
+;   * Use speeds 1, 2, 3, 4 ... with sizes 1, 1/2, 1/3 ... (and a minus
+;     sign on every other one) for a sawtooth wave.
+;   * Draw the path of the last tip too, not only its height.
+;   * Use 20 circles. Do the little "ears" at the corners go away?
+; ============================================================
+
+make "most 8
+make "speed 2
+make "big 90            ; radius of the first circle
+make "center [-220 0]
+make "wavestart -40     ; where the wave begins on the screen
+
+; Draw the chain of :n circles at angle :a, and output the last tip.
+to chain :n :a
+  localmake "here :center
+  for [k 1 :n] [
+    localmake "odd 2 * :k - 1
+    localmake "r :big * 4 / (pi * :odd)
+    ; the circle itself, faint
+    setpencolor [190 190 210] setpensize 1
+    penup setpos :here setheading 0 pendown arc 360 :r
+    ; its spoke, from the center to the next center
+    localmake "next list (first :here) + :r * cos :odd * :a (last :here) + :r * sin :odd * :a
+    setpencolor [70 80 140] setpensize 2
+    penup setpos :here pendown setpos :next
+    make "here :next
+  ]
+  output :here
+end
+
+; The wave: newest value at the left, older values further right.
+to drawwave :history
+  setpencolor [220 60 80] setpensize 3
+  penup
+  foreach :history [
+    setxy :wavestart + # - 1 ?
+    pendown
+  ]
+  penup
+end
+
+to play
+  localmake "n 1
+  localmake "history []
+  localmake "a 0
+  forever [
+    clean
+    localmake "tip chain :n :a
+    make "history fput last :tip :history
+    if (count :history) > 420 [make "history butlast :history]
+    ; a line from the tip across to the start of the wave
+    setpencolor [150 150 150] setpensize 1
+    penup setpos :tip pendown setxy :wavestart last :tip
+    setpencolor [220 60 80] setpensize 9 penup dot :tip
+    drawwave :history
+    penup setxy -380 -270 setpencolor [90 90 90]
+    label (sentence :n ifelse :n = 1 ["circle] ["circles])
+    make "a :a + :speed
+    ; after each full turn add another circle, up to MOST
+    if :a >= 360 [
+      make "a :a - 360
+      make "n ifelse :n < :most [:n + 1] [1]
+    ]
+    wait 1
+  ]
+end
+
+clearscreen hideturtle
+setbackground [250 250 246]
+setlabelheight 16
+play

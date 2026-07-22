@@ -1,0 +1,71 @@
+; ============================================================
+; TITLE:    Sunflower Seeds
+; CATEGORY: Spirals & Curves
+; LEVEL:    Intermediate
+; TAGS:     phyllotaxis, golden angle, spirals, dot, square root
+; SUMMARY:  Places seeds one by one, each turned by the golden angle, and the spirals of a sunflower head appear.
+; ============================================================
+;
+; WHAT IT DOES
+;   A sunflower grows its seeds from the middle. Each new seed is
+;   turned about 137.5 degrees from the last one (the "golden
+;   angle") and pushed out a little. The seeds pack together with no
+;   gaps, and your eye sees spirals curving both ways. Two small
+;   heads on the right use angles only slightly different, and the
+;   neat packing falls apart into straight spokes.
+;
+; HOW TO USE
+;   Press Run. Change the angles in the last lines and compare.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the golden angle: 360 x (1 - 1 / 1.618...) = 137.5 degrees
+;   * placing seed n at distance c x sqrt(n) keeps the seeds evenly
+;     spread, because the area of a circle grows like r x r
+;   * DOT with a thick pen for round seeds
+;
+; THINGS TO TRY
+;   * Count the spirals going clockwise and anticlockwise. You will
+;     find Fibonacci numbers like 21, 34 and 55.
+;   * Try 137.3 and 137.7. How sensitive is the pattern?
+;   * Use 90 degrees or 120 degrees. What do the seeds do?
+; ============================================================
+
+make "golden 360 * (1 - 1 / ((1 + sqrt 5) / 2))
+
+; :count seeds round (cx, cy), :spread steps apart, turned :angle each.
+to seedhead :cx :cy :count :spread :angle :seedsize
+  for [n 1 :count] [
+    localmake "r :spread * sqrt :n
+    localmake "a :n * :angle
+    ; inner seeds dark brown, outer seeds lighter and more golden
+    localmake "t :n / :count
+    setpencolor (list 90 + 120 * :t 50 + 90 * :t 20 + 10 * :t)
+    setpensize :seedsize * (0.6 + 0.6 * :t)
+    dot list :cx + :r * sin :a :cy + :r * cos :a
+  ]
+end
+
+to petals :cx :cy :r :count
+  setpencolor [250 200 40] setpensize 22
+  repeat :count [
+    penup setxy :cx :cy setheading 360 * repcount / :count + 5
+    forward :r pendown forward 45
+  ]
+end
+
+to caption :x :y :text
+  penup setxy :x :y setpencolor [70 90 60] label :text
+end
+
+clearscreen hideturtle
+setbackground [180 215 245]
+setlabelheight 15
+; the big flower: petals first, seeds on top
+petals -120 10 212 34
+seedhead -120 10 620 8.6 :golden 13
+caption -230 -290 [137.5 degrees: the golden angle]
+; two small heads with angles that are slightly wrong
+seedhead 275 150 230 7 137 10
+caption 230 20 [137 degrees]
+seedhead 275 -130 230 7 140 10
+caption 230 -260 [140 degrees]

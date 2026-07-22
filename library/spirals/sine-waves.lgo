@@ -1,0 +1,76 @@
+; ============================================================
+; TITLE:    Sine Waves
+; CATEGORY: Spirals & Curves
+; LEVEL:    Beginner
+; TAGS:     sine, graph, setxy, waves, axes
+; SUMMARY:  Plots a sine wave across the screen, then a faster one and a smaller one, and finally adds two waves together.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle moves from left to right. At each step its height is
+;   worked out with SIN, so it rises and falls in a smooth wave.
+;   Four waves are drawn on a pair of axes: a plain wave, one that
+;   wiggles three times as fast, a small one, and the sum of the
+;   first two, which looks like a wave with a bumpy back.
+;
+; HOW TO USE
+;   Press Run. Change the inputs to WAVE: how tall it is, how many
+;   times it wiggles across the screen, and its color.
+;
+; CONCEPTS YOU WILL LEARN
+;   * SIN gives a number between -1 and 1 that goes up and down
+;   * SETXY to plot a graph point by point
+;   * FOR with a step size to move along the x axis
+;   * adding two waves together, point by point
+;
+; THINGS TO TRY
+;   * Use COS instead of SIN. What changes?
+;   * Make a wave whose height shrinks as x grows.
+;   * Add three waves together. Can you make something like a square wave?
+; ============================================================
+
+; Axes: a line across and a line up the middle, with a little label.
+to axes
+  setpencolor [180 180 190] setpensize 1
+  penup setxy -380 0 pendown setxy 380 0
+  penup setxy 0 -280 pendown setxy 0 280
+  penup setxy 345 -18 label "x
+end
+
+; x runs from -360 to 360. :waves full wiggles fit across that width,
+; so the angle we give SIN is x times :waves / 2.
+to wave :height :waves :color
+  setpencolor :color setpensize 3
+  penup
+  for [x -360 360 3] [
+    setxy :x :height * sin :x * :waves / 2
+    pendown
+  ]
+end
+
+; Two waves added together: the height is the sum of both heights.
+to sumwave :h1 :w1 :h2 :w2 :color
+  setpencolor :color setpensize 3
+  penup
+  for [x -360 360 3] [
+    setxy :x (:h1 * sin :x * :w1 / 2) + (:h2 * sin :x * :w2 / 2)
+    pendown
+  ]
+end
+
+to key :y :color :text
+  penup setxy -370 :y setpencolor :color label :text
+end
+
+clearscreen hideturtle
+setbackground [252 252 248]
+axes
+wave 150 2 [40 110 220]
+wave 60 6 [230 120 30]
+wave 40 2 [60 170 90]
+sumwave 150 2 60 6 [200 40 80]
+setlabelheight 15
+key 270 [40 110 220] [blue: a tall, slow wave]
+key 250 [230 120 30] [orange: three times as fast]
+key 230 [60 170 90] [green: small and slow]
+key 210 [200 40 80] [red: blue + orange]

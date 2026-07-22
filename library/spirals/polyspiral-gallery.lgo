@@ -1,0 +1,58 @@
+; ============================================================
+; TITLE:    Polyspiral Gallery
+; CATEGORY: Spirals & Curves
+; LEVEL:    Beginner
+; TAGS:     polyspi, spiral, recursion, angles, rainbow
+; SUMMARY:  Draws six polyspirals side by side, the same procedure with six different turning angles.
+; ============================================================
+;
+; WHAT IT DOES
+;   POLYSPI is one of the oldest Logo programs: go forward, turn,
+;   and go forward a little further next time. With only the angle
+;   changed, it makes six very different pictures, from square
+;   spirals to spiky stars. Each one is drawn in rainbow colors.
+;
+; HOW TO USE
+;   Press Run. Then try  clearscreen polyspi 2 145 2 200  for a big one.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a procedure that calls itself (recursion), with a stop rule
+;   * how the angle decides the shape: 90 square, 120 triangle,
+;     144 star, and angles near them twist
+;   * colors chosen from a list with REMAINDER
+;
+; THINGS TO TRY
+;   * Find an angle that makes a spiral of hexagons.
+;   * Use 89, 91, 119 and 121. Which way do they twist?
+;   * Make the step grow by 3 instead of 2.
+; ============================================================
+
+make "rainbow [[230 40 40] [245 140 20] [240 210 30] [60 170 60] [40 120 220] [130 60 200]]
+
+; Walk :side, turn :angle, then do it again with a longer side.
+; Stop when the side gets longer than :limit.
+to polyspi :side :angle :grow :limit
+  if :side > :limit [stop]
+  setpencolor item 1 + remainder int :side / 6 6 :rainbow
+  forward :side
+  right :angle
+  polyspi :side + :grow :angle :grow :limit
+end
+
+; Draw one polyspiral starting at (x, y) and write its angle under it.
+to exhibit :x :y :angle
+  penup setxy :x :y setheading 0 pendown
+  polyspi 1 :angle 2 150
+  penup setxy :x - 30 :y - 135 setpencolor [80 80 80]
+  label (word :angle "| degrees|)
+end
+
+clearscreen hideturtle
+setbackground [252 250 245]
+setpensize 2
+exhibit -270 140 90
+exhibit 0 140 120
+exhibit 270 140 144
+exhibit -270 -150 91
+exhibit 0 -150 125
+exhibit 270 -150 160

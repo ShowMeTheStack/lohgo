@@ -1,0 +1,97 @@
+; ============================================================
+; TITLE:    Spirograph
+; CATEGORY: Spirals & Curves
+; LEVEL:    Advanced
+; TAGS:     hypotrochoid, gears, gcd, parametric curves, several turtles
+; SUMMARY:  Simulates the toy with a toothed wheel rolling inside a ring, drawing layer after layer of looping patterns.
+; ============================================================
+;
+; WHAT IT DOES
+;   In the Spirograph toy a small gear rolls round the inside of a
+;   big ring, and a pen pushed through a hole in the gear draws the
+;   pattern. Here turtle 1 rides on the center of the gear and
+;   turtle 0 is the pen. Five designs are drawn on top of each other
+;   with different gears, holes and colors, making one picture.
+;
+; HOW TO USE
+;   Press Run and watch the pen work. Change the DESIGNS list: each
+;   entry is [gear teeth, hole distance, color]. The ring has 96 teeth.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the hypotrochoid: the curve of a point on a circle rolling
+;     inside another circle
+;   * the gear turns backwards as it rolls forwards, and faster:
+;     by (R - r) / r times the angle round the ring
+;   * GCD tells when the pattern closes: after r / gcd(R, r) trips round
+;   * two turtles working together with ASK
+;
+; THINGS TO TRY
+;   * Use a gear of 48 teeth (half of 96). How many loops? Why?
+;   * Make the hole distance bigger than the gear. What happens?
+;   * Roll the gear round the OUTSIDE of the ring: use R + r and a
+;     plus sign in the gear angle (an epitrochoid).
+; ============================================================
+
+make "ring 96
+make "scale 2.8
+make "designs [
+  [84 70 [60 120 210]]
+  [52 44 [240 150 40]]
+  [60 50 [220 60 80]]
+  [36 30 [150 70 180]]
+  [72 20 [40 160 120]]
+]
+
+to gcd :a :b
+  if :b = 0 [output :a]
+  output gcd :b remainder :a :b
+end
+
+; Where the gear's center is after rolling :t degrees round the ring,
+; and where the pen hole is. R and r are the ring and gear radii,
+; d is how far the hole is from the gear's center.
+to gearcenter :t :r
+  localmake "big :scale * (:ring - :r)
+  output list :big * sin :t :big * cos :t
+end
+
+to penpoint :t :r :d
+  localmake "c gearcenter :t :r
+  ; the gear spins the other way, (R - r) / r times as fast
+  localmake "spin :t - :t * (:ring - :r) / :r
+  output list (first :c) + :scale * :d * sin :spin (last :c) + :scale * :d * cos :spin
+end
+
+to design :r :d :color
+  localmake "laps :r / gcd :ring :r
+  ; jump the pen and the gear marker to their starting places
+  ask 1 [penup setpos gearcenter 0 :r]
+  penup setpos penpoint 0 :r :d
+  setpencolor :color pendown
+  for [t 0 360 * :laps 3] [
+    setpos penpoint :t :r :d
+    ask 1 [setpos gearcenter :t :r]
+    if 0 = remainder :t 24 [wait 1]
+  ]
+  penup
+end
+
+to ringoutline
+  setpencolor [200 200 210] setpensize 2
+  penup home pendown
+  arc 360 :scale * :ring
+  penup
+end
+
+clearscreen
+setbackground [252 250 245]
+; turtle 1 marks the gear center: it never draws
+ask 1 [penup setshape "circle setpencolor [150 150 160] showturtle]
+setturtle 0
+setshape "circle
+showturtle
+ringoutline
+setpensize 1.5
+foreach :designs [design item 1 ? item 2 ? item 3 ?]
+ask 1 [hideturtle]
+hideturtle

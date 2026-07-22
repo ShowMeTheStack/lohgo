@@ -1,0 +1,59 @@
+; ============================================================
+; TITLE:    Twisting Polygons
+; CATEGORY: Spirals & Curves
+; LEVEL:    Beginner
+; TAGS:     polygon, rotation, color, spiral, nested
+; SUMMARY:  Draws hexagons that grow and turn a little each time, so their corners trace colored spiral arms.
+; ============================================================
+;
+; WHAT IT DOES
+;   Forty hexagons share the same center. Each one is a little
+;   bigger than the one before and turned 4 degrees further. No
+;   spiral is drawn on purpose, yet the corners line up into six
+;   curving arms. The colors run through the rainbow from the
+;   middle outwards.
+;
+; HOW TO USE
+;   Press Run. Change SIDES, the turn (4) or the growth (6) in the
+;   last line.
+;
+; CONCEPTS YOU WILL LEARN
+;   * drawing a polygon around a center point
+;   * a hidden spiral appears from small steady changes
+;   * mixing a rainbow color from a number with SIN
+;
+; THINGS TO TRY
+;   * Use squares (4 sides) or triangles (3 sides).
+;   * Turn -4 degrees instead. Which way do the arms curl now?
+;   * Use a turn of 0. Where did the spiral go?
+; ============================================================
+
+; A regular polygon centered on (0, 0). :r is the distance from the
+; center to each corner. We jump to the first corner, then visit the
+; others in turn.
+to centeredpoly :sides :r :turn
+  penup
+  setxy :r * sin :turn :r * cos :turn
+  pendown
+  for [k 1 :sides] [
+    localmake "a :turn + 360 * :k / :sides
+    setxy :r * sin :a :r * cos :a
+  ]
+end
+
+; A rainbow color for any number: three waves, a third of a turn apart.
+to rainbow :n
+  output (list 128 + 127 * sin :n 128 + 127 * sin :n + 120 128 + 127 * sin :n + 240)
+end
+
+to twist :sides :count :turn :grow
+  for [i 1 :count] [
+    setpencolor rainbow :i * 9
+    centeredpoly :sides :grow * :i :turn * :i
+  ]
+end
+
+clearscreen hideturtle
+setbackground [15 15 25]
+setpensize 2
+twist 6 45 4 6.2

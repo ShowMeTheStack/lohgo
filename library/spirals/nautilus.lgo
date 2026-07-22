@@ -1,0 +1,87 @@
+; ============================================================
+; TITLE:    Nautilus Shell
+; CATEGORY: Spirals & Curves
+; LEVEL:    Intermediate
+; TAGS:     logarithmic spiral, exponential, polar coordinates, filled
+; SUMMARY:  Draws a logarithmic spiral and divides it into growing chambers, like the shell of a nautilus.
+; ============================================================
+;
+; WHAT IT DOES
+;   In a logarithmic spiral the distance from the center is
+;   MULTIPLIED by the same amount for every degree turned, instead of
+;   having the same amount added. That makes every part of the spiral
+;   a scaled-up copy of the part before, which is how a nautilus
+;   grows its shell. The program paints the shell turn by turn, then
+;   draws the walls between its chambers.
+;
+; HOW TO USE
+;   Press Run. Change GROWTH to open the shell up or wind it tighter.
+;   Change CHAMBER for more or fewer chamber walls.
+;
+; CONCEPTS YOU WILL LEARN
+;   * POWER and EXP for growth that multiplies
+;   * the formula r = a x growth ^ angle
+;   * "self-similar": zoom in on the middle and it looks the same
+;   * filling the space between two curves
+;
+; THINGS TO TRY
+;   * Make GROWTH 1.002. Does it still look like a shell?
+;   * Find the GROWTH where each turn is exactly twice the last
+;     (growth ^ 360 = 2).
+;   * Draw two spirals going opposite ways, like the seeds in a pine cone.
+; ============================================================
+
+make "growth 1.0036        ; r is multiplied by this for each degree
+make "start 4.5           ; r at angle 0
+make "chamber 24          ; degrees between chamber walls
+make "turns 3.1
+make "center [0 -50]
+
+to radius :angle
+  output :start * power :growth :angle
+end
+
+; The point on the spiral at :angle (turtle style: 0 is up, clockwise).
+to spot :angle
+  localmake "r radius :angle
+  output list (first :center) + :r * sin :angle (last :center) + :r * cos :angle
+end
+
+; Paint the band between angle a1 and a2 on this turn and the same
+; angles one turn further in. Its outline: out along the outer curve,
+; back along the inner curve.
+to band :a1 :a2 :color
+  penup setpos spot :a1
+  filled :color [
+    for [a :a1 :a2 2] [setpos spot :a]
+    for [a :a2 :a1 -2] [setpos spot :a - 360]
+  ]
+end
+
+; A chamber wall: from a point on the outer turn straight to the
+; point at the same angle one turn in.
+to wall :a
+  penup setpos spot :a
+  pendown setpos spot :a - 360
+end
+
+to nautilus
+  localmake "final 360 * :turns
+  ; paint the chambers from the outside in, then draw the walls and
+  ; the outline on top of the paint
+  for [a :final 360 + :chamber minus :chamber] [
+    localmake "t :a / :final
+    band :a - :chamber :a (list 250 - 40 * :t 220 - 110 * :t 190 - 150 * :t)
+  ]
+  setpencolor [120 60 30] setpensize 2
+  for [a 360 :final :chamber] [wall :a]
+  ; the outline: the whole spiral, thick
+  setpensize 4
+  penup setpos spot 0
+  pendown
+  for [a 0 :final 2] [setpos spot :a]
+end
+
+clearscreen hideturtle
+setbackground [225 240 245]
+nautilus

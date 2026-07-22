@@ -1,0 +1,47 @@
+; ============================================================
+; TITLE:    Bubble Spiral
+; CATEGORY: Spirals & Curves
+; LEVEL:    Beginner
+; TAGS:     spiral, arc, circles, color
+; SUMMARY:  Blows a string of bubbles that grow bigger as they curl outward along a spiral path.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle walks a spiral path without drawing it. At every stop
+;   it blows a bubble: a circle drawn with ARC. The steps get longer
+;   and the bubbles get bigger as it goes, so the bubbles stay just
+;   touching all the way out.
+;
+; HOW TO USE
+;   Press Run. Change the turn (28) in BUBBLES to make the spiral
+;   tighter or looser.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ARC 360 radius draws a whole circle round the turtle
+;   * the turtle can walk with the pen up and only draw at the stops
+;   * making two things grow together (step length and bubble size)
+;
+; THINGS TO TRY
+;   * Fill each bubble with a big DOT instead of a circle.
+;   * Turn left instead of right.
+;   * Make the bubbles shrink as they go out.
+; ============================================================
+
+make "colors [[80 170 230] [120 210 240] [170 140 230] [240 140 200] [120 220 190]]
+
+to bubbles :count :turn
+  localmake "step 4
+  repeat :count [
+    ; a bubble about as wide as the step, so neighbors just touch
+    setpencolor item 1 + remainder repcount 5 :colors
+    pendown arc 360 :step * 0.5
+    penup forward :step right :turn
+    make "step :step * 1.045
+  ]
+end
+
+clearscreen hideturtle
+setbackground [20 30 60]
+setpensize 3
+penup
+bubbles 78 28

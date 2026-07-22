@@ -1,0 +1,44 @@
+; ============================================================
+; TITLE:    Square Spiral
+; CATEGORY: Spirals & Curves
+; LEVEL:    Beginner
+; TAGS:     spiral, repeat, repcount, square
+; SUMMARY:  Walks a little further after every right-angle turn, making a square spiral with a color for each direction.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle walks, turns 90 degrees, and walks again, but every
+;   side is a bit longer than the one before. Instead of closing into
+;   a square, the path winds outwards into a square spiral. Every
+;   side going up is red, right is yellow, down is green and left is
+;   blue, so you can see the four directions.
+;
+; HOW TO USE
+;   Press Run. Change GROW in the last line to space the spiral out.
+;
+; CONCEPTS YOU WILL LEARN
+;   * REPCOUNT counts 1, 2, 3 ... as REPEAT goes round
+;   * using REPCOUNT to make each side longer than the last
+;   * REMAINDER to cycle through four colors
+;
+; THINGS TO TRY
+;   * Change 90 to 120. What shape is the spiral now? Try 60 too.
+;   * Count down instead: sides that get SHORTER, from the outside in.
+;   * Make every side 3 longer instead of the same as its number.
+; ============================================================
+
+; Four colors, one for each direction the turtle can face.
+make "colors [[220 50 50] [240 190 30] [50 160 80] [40 100 220]]
+
+to squarespiral :sides :grow
+  repeat :sides [
+    setpencolor item 1 + remainder repcount - 1 4 :colors
+    forward :grow * repcount
+    right 90
+  ]
+end
+
+clearscreen hideturtle
+setbackground [250 248 240]
+setpensize 4
+squarespiral 66 8

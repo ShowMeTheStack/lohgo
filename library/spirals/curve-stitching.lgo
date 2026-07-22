@@ -1,0 +1,57 @@
+; ============================================================
+; TITLE:    Curve Stitching
+; CATEGORY: Spirals & Curves
+; LEVEL:    Beginner
+; TAGS:     string art, parabola, straight lines, for loop
+; SUMMARY:  Joins evenly spaced marks on two straight lines to sew a smooth curve out of nothing but straight threads.
+; ============================================================
+;
+; WHAT IT DOES
+;   Take two lines that meet at a corner. Mark 20 equal steps on
+;   each. Join mark 1 on the first line to mark 20 on the second,
+;   mark 2 to mark 19, and so on. Every thread is straight, yet a
+;   smooth curve (a parabola) appears where they cross. Four such
+;   corners round a cross make a four-pointed star.
+;
+; HOW TO USE
+;   Press Run. Change MARKS for more or fewer threads.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FOR counts through the marks
+;   * finding the k-th mark on a line by moving k equal steps
+;   * how many straight lines can outline a curve (an "envelope")
+;
+; THINGS TO TRY
+;   * Use 40 marks. Is the curve smoother?
+;   * Open the corner wider: draw the lines at 120 degrees.
+;   * Draw it with yarn and a needle on card, like children did 100 years ago.
+; ============================================================
+
+make "marks 20
+
+; Stitch between two arms that start at the same corner point.
+; Arm A goes from the corner to point a, arm B from the corner to point b.
+; Mark k on arm A is k / marks of the way along it.
+to stitch :corner :a :b :color
+  setpencolor :color
+  for [k 0 :marks] [
+    localmake "t :k / :marks
+    penup setpos between :corner :a :t
+    pendown setpos between :corner :b 1 - :t
+  ]
+end
+
+; The point a fraction :t of the way from p to q.
+to between :p :q :t
+  output list (first :p) + :t * ((first :q) - (first :p)) (last :p) + :t * ((last :q) - (last :p))
+end
+
+clearscreen hideturtle
+setbackground [250 246 236]
+setpensize 1.5
+; four corners, each made of half of the horizontal and half of the
+; vertical line of a big cross
+stitch [0 0] [0 270] [270 0] [200 50 80]
+stitch [0 0] [270 0] [0 -270] [230 140 30]
+stitch [0 0] [0 -270] [-270 0] [40 140 120]
+stitch [0 0] [-270 0] [0 270] [60 90 200]

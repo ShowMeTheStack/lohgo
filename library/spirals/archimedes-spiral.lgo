@@ -1,0 +1,75 @@
+; ============================================================
+; TITLE:    Archimedes' Spiral
+; CATEGORY: Spirals & Curves
+; LEVEL:    Intermediate
+; TAGS:     archimedean spiral, polar coordinates, setxy, measurement
+; SUMMARY:  Plots the spiral where the distance from the center grows evenly with the angle, and measures its equal gaps.
+; ============================================================
+;
+; WHAT IT DOES
+;   In Archimedes' spiral, every time the angle grows by one degree
+;   the distance from the center grows by the same small amount. So
+;   the gap between one turn and the next is always the same, like
+;   the groove on a record or a rolled-up carpet. The program draws
+;   two interleaved arms in two colors, then a ruler line from the
+;   center with a dot wherever it crosses the spiral, so you can
+;   see the dots are evenly spaced.
+;
+; HOW TO USE
+;   Press Run. Change GROWTH (steps per degree) or TURNS.
+;
+; CONCEPTS YOU WILL LEARN
+;   * polar coordinates: an angle and a distance give a point
+;   * x = r sin(angle) and y = r cos(angle) in turtle directions
+;   * the formula r = growth x angle
+;   * checking a property of a curve by measuring it
+;
+; THINGS TO TRY
+;   * Use three arms, 120 degrees apart.
+;   * Change the formula to r = growth x angle x angle / 1000. Are the
+;     gaps still equal?
+;   * Make r shrink instead, so the spiral winds inwards.
+; ============================================================
+
+make "growth 0.12
+make "turns 6
+
+; Plot the spiral, starting at angle :start.
+to archimedes :start :color
+  setpencolor :color
+  penup
+  for [a 0 360 * :turns 3] [
+    localmake "r :growth * :a
+    setxy :r * sin :a + :start :r * cos :a + :start
+    pendown
+  ]
+end
+
+; A ruler from the center along heading :h, with a black dot where
+; each arm crosses it. The first arm crosses at angles h, h + 360, ...
+; so at distances growth x h, growth x (h + 360), ... The second arm
+; is 180 degrees behind.
+to ruler :h
+  setpencolor [40 40 40] setpensize 2
+  penup home setheading :h pendown
+  forward :growth * 360 * :turns
+  setpensize 10
+  for [k 0 :turns - 1] [
+    foreach [0 180] [
+      localmake "r :growth * (:h - ? + 360 * :k)
+      if :r > 0 [
+        penup home setheading :h forward :r
+        dot pos
+      ]
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [250 248 242]
+setpensize 3
+archimedes 0 [220 60 60]
+archimedes 180 [40 110 200]
+ruler 300
+penup setxy -390 -285 setpencolor [90 90 90]
+label [Every gap between the arms is the same: 180 x growth steps]

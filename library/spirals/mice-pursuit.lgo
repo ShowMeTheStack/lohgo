@@ -1,0 +1,98 @@
+; ============================================================
+; TITLE:    Mice Pursuit
+; CATEGORY: Spirals & Curves
+; LEVEL:    Advanced
+; TAGS:     pursuit curve, several turtles, towards, ask, simulation
+; SUMMARY:  Puts a turtle on each corner of a polygon, each chasing the next one, and their paths spiral into the middle.
+; ============================================================
+;
+; WHAT IT DOES
+;   This is the old "mice problem". Some mice sit on the corners of a
+;   square. At the same moment each one starts running straight at
+;   the next mouse round. But that mouse is moving too, so every mouse
+;   keeps changing direction, and all of them spiral into the center
+;   where they meet. Each mouse is a real turtle, leaving a colored
+;   trail. Every few steps the program also joins the mice with thin
+;   lines, which makes a whirl of shrinking, turning polygons.
+;   It plays the chase for 3, 4, 5 and 6 mice, again and again.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to end. Change STEP to make the
+;   mice faster, or EVERY to draw the joining lines more or less often.
+;
+; CONCEPTS YOU WILL LEARN
+;   * several turtles: TELL, ASK and SETTURTLE
+;   * TOWARDS gives the heading that points at a place
+;   * updating all at once: first read every position, then move
+;   * a pursuit curve: a path that keeps aiming at a moving target
+;
+; THINGS TO TRY
+;   * Make one mouse slower than the others. Do they still meet?
+;   * Start the mice at random places instead of on a polygon.
+;   * For a square of side s, each mouse runs exactly s before they
+;     meet. Measure it: count the steps.
+; ============================================================
+
+make "step 3
+make "every 6
+make "colors [[230 60 60] [240 170 30] [60 160 80] [50 110 220] [160 70 190] [30 170 180]]
+
+; Put mice 0 .. n-1 on the corners of a polygon, all facing the middle.
+to setup :n
+  clean
+  for [i 0 :n - 1] [
+    ask :i [
+      penup
+      setxy 260 * sin 360 * :i / :n 260 * cos 360 * :i / :n
+      setpencolor item :i + 1 :colors setpensize 2
+      setshape "circle showturtle
+      pendown
+    ]
+  ]
+end
+
+; Draw thin lines joining the mice, using a spare turtle that is
+; never seen. Its number is n, one more than the last mouse.
+to joinmice :n :spots
+  ask :n [
+    hideturtle penup setpencolor [170 170 190] setpensize 1
+    setpos last :spots pendown
+    foreach :spots [setpos ?]
+    penup
+  ]
+end
+
+to chase :n
+  setup :n
+  localmake "count 0
+  forever [
+    ; everybody's position first, so nobody moves before we have looked
+    localmake "spots map [ask ? [pos]] iseq 0 :n - 1
+    if (distancebetween first :spots item 2 :spots) < :step [
+      ; they have met: hide the mice and stop
+      for [i 0 :n] [ask :i [hideturtle]]
+      stop
+    ]
+    if 0 = remainder :count :every [joinmice :n :spots]
+    for [i 0 :n - 1] [
+      ; mouse i runs toward the position of mouse i + 1 (the last chases the first)
+      localmake "target item 1 + remainder :i + 1 :n :spots
+      ask :i [setheading towards :target forward :step]
+    ]
+    make "count :count + 1
+    wait 1
+  ]
+end
+
+to distancebetween :a :b
+  output sqrt ((first :a) - (first :b)) * ((first :a) - (first :b)) + ((last :a) - (last :b)) * ((last :a) - (last :b))
+end
+
+clearscreen hideturtle
+setbackground [250 250 245]
+forever [
+  foreach [3 4 5 6] [
+    chase ?
+    wait 60
+  ]
+]

@@ -1,0 +1,71 @@
+; ============================================================
+; TITLE:    Lissajous Figures
+; CATEGORY: Spirals & Curves
+; LEVEL:    Intermediate
+; TAGS:     lissajous, sine, parametric curves, animation, oscilloscope
+; SUMMARY:  Draws a table of Lissajous figures, the curves made by two sine waves at right angles, and slowly turns them like an oscilloscope.
+; ============================================================
+;
+; WHAT IT DOES
+;   Move a point left and right with one sine wave and up and down
+;   with another. If the two waves have different speeds you get a
+;   Lissajous figure. The table shows every pair of speeds from 1 to
+;   4 across and 1 to 3 down. The second wave keeps sliding a little
+;   ahead of the first (its "phase" changes), so all the figures
+;   seem to spin in 3D, the way they did on old oscilloscope screens.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to end. Look at the row and
+;   column: the figure crosses itself in a way that tells you both
+;   speeds.
+;
+; CONCEPTS YOU WILL LEARN
+;   * parametric curves: x and y both worked out from a third number t
+;   * x = sin(a x t + phase), y = sin(b x t)
+;   * equal speeds give an ellipse; speeds 1 and 2 give a figure eight
+;   * animation by redrawing everything with a slightly changed phase
+;
+; THINGS TO TRY
+;   * Stop the phase at 90 and look at each figure carefully.
+;   * Add a column for speed 5.
+;   * Draw only the 3 by 2 figure, very big, with a thick pen.
+; ============================================================
+
+make "cellsize 150
+make "half 58
+
+; One figure centered at (cx, cy).
+to figure :a :b :phase :cx :cy
+  penup
+  for [t 0 360 4] [
+    setxy :cx + :half * sin :a * :t + :phase :cy + :half * sin :b * :t
+    pendown
+  ]
+end
+
+; Labels for the speeds along the top and down the side.
+to labels
+  setpencolor [90 160 90]
+  for [a 1 4] [penup setxy -230 + :cellsize * (:a - 1) 225 label :a]
+  for [b 1 3] [penup setxy -340 145 - :cellsize * (:b - 1) label :b]
+end
+
+to frame :phase
+  clean
+  labels
+  setpencolor [120 255 140]
+  for [b 1 3] [for [a 1 4] [
+    figure :a :b :phase -225 + :cellsize * (:a - 1) 150 - :cellsize * (:b - 1)
+  ]]
+end
+
+clearscreen hideturtle
+setbackground [10 25 15]
+setpensize 2
+setlabelheight 16
+make "phase 0
+forever [
+  frame :phase
+  make "phase remainder :phase + 2 360
+  wait 2
+]

@@ -1,0 +1,75 @@
+; ============================================================
+; TITLE:    Cardioid from Lines
+; CATEGORY: Spirals & Curves
+; LEVEL:    Intermediate
+; TAGS:     cardioid, times table, envelope, modular arithmetic, animation
+; SUMMARY:  Joins point k to point 2k round a circle and a heart-shaped cardioid appears; then the multiplier slowly grows.
+; ============================================================
+;
+; WHAT IT DOES
+;   Put 200 points round a circle and number them 0 to 199. Join
+;   every point k to the point 2 x k (going round again past 199).
+;   The straight lines crowd together along a heart-shaped curve
+;   called a cardioid. With 3 x k you get a nephroid (two lobes),
+;   with 4 x k three lobes, and so on. The program starts at 2 and
+;   slowly raises the multiplier, pausing at each whole number.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to end. Change POINTS for more or
+;   fewer lines, or TOP for the largest multiplier.
+;
+; CONCEPTS YOU WILL LEARN
+;   * modular arithmetic: counting past the last point wraps round
+;   * a curve that appears as the "envelope" of straight lines
+;   * the multiplier does not have to be a whole number
+;   * animation that slows down at interesting moments
+;
+; THINGS TO TRY
+;   * Freeze the picture at 2 and count how many points you need for
+;     the heart to look smooth.
+;   * Try a multiplier of 34 or 51 with 100 points. Can you explain it?
+;   * Color each line by its length instead of by k.
+; ============================================================
+
+make "points 200
+make "radius 270
+make "top 10
+
+; Where point number p (any real number) sits on the circle.
+; Point 0 is at the left, like the usual times-table circle drawings.
+to place :p
+  localmake "angle 270 + 360 * :p / :points
+  output list :radius * sin :angle :radius * cos :angle
+end
+
+to timestable :m
+  clean
+  setpencolor [70 70 90] setpensize 2
+  penup setxy minus :radius 0 setheading 0 pendown
+  repeat 120 [forward 2 * pi * :radius / 120 right 3]
+  setpensize 1
+  for [k 0 :points - 1] [
+    ; colors run round the rainbow as k goes round the circle
+    localmake "h 360 * :k / :points
+    setpencolor (list 128 + 120 * sin :h 128 + 120 * sin :h + 120 128 + 120 * sin :h + 240)
+    penup setpos place :k
+    ; k x m may be bigger than the last point number, or a fraction.
+    ; PLACE uses SIN and COS, which repeat every full turn, so point
+    ; 250 lands where point 50 is: the wrapping round happens by itself.
+    pendown setpos place :k * :m
+  ]
+  penup setxy -390 -290 setpencolor [200 200 200]
+  label (sentence [multiplier] (round :m * 100) / 100)
+end
+
+clearscreen hideturtle
+setbackground [15 15 25]
+setlabelheight 16
+make "m 2
+forever [
+  timestable :m
+  ; linger on whole numbers, glide between them
+  ifelse (abs :m - round :m) < 0.001 [wait 90] [wait 1]
+  make "m :m + 0.02
+  if :m > :top + 0.001 [make "m 2]
+]

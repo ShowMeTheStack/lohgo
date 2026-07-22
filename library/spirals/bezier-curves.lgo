@@ -1,0 +1,115 @@
+; ============================================================
+; TITLE:    Bezier Curves
+; CATEGORY: Spirals & Curves
+; LEVEL:    Advanced
+; TAGS:     bezier, de casteljau, interpolation, mouse, recursion, animation
+; SUMMARY:  Builds a smooth curve from four control points by repeatedly cutting lines in the same ratio, and lets you drag the points.
+; ============================================================
+;
+; WHAT IT DOES
+;   Bezier curves are used in every drawing program and font. Four
+;   control points are joined by three grey lines. Pick a fraction t,
+;   say 0.3, and mark the point 0.3 of the way along each line. Join
+;   those marks and do it again, and again, until one point is left:
+;   that point is on the curve. The program shows this construction
+;   with t sweeping from 0 to 1 and back, and the red dot traces the
+;   curve. Drag any of the four big dots with the mouse to reshape it.
+;
+; HOW TO USE
+;   Press Run. Hold the left mouse button on a big dot and move the
+;   mouse to drag it. Press Stop to end.
+;
+; CONCEPTS YOU WILL LEARN
+;   * linear interpolation: the point t of the way from a to b
+;   * de Casteljau's method: a recursive procedure on a list of points
+;   * a curve as many points joined by short straight lines
+;   * mouse events changing data that an animation loop draws
+;
+; THINGS TO TRY
+;   * Add a fifth control point. Does the method still work?
+;   * Draw the curve thicker where t is near 0.5.
+;   * Put the four points on the corners of a square. What shape is it?
+; ============================================================
+
+make "points [[-300 -200] [-150 220] [180 230] [300 -180]]
+make "dragging 0
+make "levelcolors [[160 160 170] [80 160 220] [90 190 120] [240 150 40]]
+
+; The point a fraction t of the way from a to b.
+to lerp :a :b :t
+  output list (first :a) + :t * ((first :b) - (first :a)) (last :a) + :t * ((last :b) - (last :a))
+end
+
+; One round of cutting: n points become n - 1 points.
+to cutonce :pts :t
+  if emptyp butfirst :pts [output []]
+  output fput lerp first :pts first butfirst :pts :t cutonce butfirst :pts :t
+end
+
+; Keep cutting until one point is left. That point is on the curve.
+to casteljau :pts :t
+  if emptyp butfirst :pts [output first :pts]
+  output casteljau cutonce :pts :t :t
+end
+
+to polyline :pts
+  penup setpos first :pts pendown
+  foreach butfirst :pts [setpos ?]
+  penup
+end
+
+; Draw the construction for one value of t: each level of cut points
+; joined by lines in its own color.
+to construction :pts :t :level
+  if emptyp butfirst :pts [
+    setpencolor [220 40 40] setpensize 14 dot first :pts
+    stop
+  ]
+  setpencolor item :level :levelcolors setpensize 2
+  polyline :pts
+  setpensize 8
+  foreach :pts [dot ?]
+  construction cutonce :pts :t :t :level + 1
+end
+
+to frame :t
+  clean
+  ; the whole curve, 60 little pieces
+  setpencolor [200 50 70] setpensize 4
+  polyline map [casteljau :points ? / 60] iseq 0 60
+  construction :points :t 1
+  ; the four control points, big and dark so they are easy to grab
+  setpencolor [40 40 60] setpensize 18
+  foreach :points [dot ?]
+end
+
+; ---- mouse: grab the nearest control point and move it ----------------
+to grab
+  localmake "m mousepos
+  make "dragging 0
+  foreach :points [
+    if (distanceto ? :m) < 25 [make "dragging #]
+  ]
+end
+
+to drag
+  if :dragging = 0 [stop]
+  make "points (map [ifelse # = :dragging [mousepos] [?]] :points)
+end
+
+to distanceto :a :b
+  output sqrt ((first :a) - (first :b)) * ((first :a) - (first :b)) + ((last :a) - (last :b)) * ((last :a) - (last :b))
+end
+
+clearscreen hideturtle
+setbackground [250 250 246]
+print [Drag the big dark dots with the mouse to change the curve.]
+mouseon [grab] [make "dragging 0] [] [] [drag]
+make "t 0
+make "dt 0.01
+forever [
+  frame :t
+  make "t :t + :dt
+  if or :t > 1 :t < 0 [make "dt minus :dt make "t :t + 2 * :dt]
+  wait 2
+]

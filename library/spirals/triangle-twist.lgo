@@ -1,0 +1,46 @@
+; ============================================================
+; TITLE:    Triangle Twist
+; CATEGORY: Spirals & Curves
+; LEVEL:    Beginner
+; TAGS:     spiral, triangle, angles, color fade
+; SUMMARY:  Turns a little more than 120 degrees at each corner so a growing triangle twists into a vortex.
+; ============================================================
+;
+; WHAT IT DOES
+;   A triangle turns 120 degrees at each corner. This program turns
+;   122 instead, and makes every side a little longer. The extra 2
+;   degrees add up, so the triangles slowly rotate as they grow and
+;   form a twisting vortex. The color fades from deep purple to
+;   bright orange along the way.
+;
+; HOW TO USE
+;   Press Run. Try other angles in the last line: 118, 121, 125, 61.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a small change in angle makes a big change in the picture
+;   * mixing two colors little by little with arithmetic
+;   * a procedure with three inputs to explore with
+;
+; THINGS TO TRY
+;   * Use 118: does it twist the other way?
+;   * Use 92 for a twisting square, or 74 for a twisting pentagon.
+;   * Swap the two colors so it fades from orange to purple.
+; ============================================================
+
+; Mix purple [90 30 140] into orange [250 150 30]. :t goes from 0 to 1.
+to fade :t
+  output (list 90 + 160 * :t 30 + 120 * :t 140 - 110 * :t)
+end
+
+to twist :angle :steps :grow
+  repeat :steps [
+    setpencolor fade repcount / :steps
+    forward :grow * repcount
+    right :angle
+  ]
+end
+
+clearscreen hideturtle
+setbackground [20 15 30]
+setpensize 2
+twist 122 140 3.3

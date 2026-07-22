@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Inspirals
+; CATEGORY: Spirals & Curves
+; LEVEL:    Intermediate
+; TAGS:     inspi, turtle geometry, angles, gcd, closed curves
+; SUMMARY:  Keeps the step the same but turns a little MORE each time, which winds the turtle into knots that close up on themselves.
+; ============================================================
+;
+; WHAT IT DOES
+;   A polyspiral grows its steps. An inspiral does the opposite trick:
+;   the steps stay the same and the turning angle grows: 2 degrees,
+;   then 9, then 16, and so on. The turtle curls tighter and tighter,
+;   unwinds, and comes back to where it started, drawing a tangled
+;   but symmetric knot. Four inspirals with different increases are
+;   shown, each centered in its own quarter of the screen.
+;
+; HOW TO USE
+;   Press Run. Then try  clearscreen inspi 6 0 11 100  and other
+;   increases in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the INSPI procedure from the classic book "Turtle Geometry"
+;   * the angles repeat after 360 / gcd(increase, 360) steps, and
+;     a little more arithmetic tells when the turtle gets home
+;   * finding the middle of a drawing by recording every point
+;
+; THINGS TO TRY
+;   * Increases of 1, 2, 3, 4: which ones give the most arms?
+;   * An increase of 90 or 120. Can you predict the picture?
+;   * Start with a different first angle, like 40, and the same increase.
+; ============================================================
+
+to gcd :a :b
+  if :b = 0 [output :a]
+  output gcd :b remainder :a :b
+end
+
+; Walk the inspiral once with the pen up, remembering every point,
+; so we can work out its middle. Then draw it for real, shifted so
+; that its middle lands on (cx, cy).
+to inspi :side :angle :inc :cx :cy
+  ; The turns repeat after N = 360 / gcd(inc, 360) steps. During those
+  ; N steps the turtle turns through some total angle; if that is not a
+  ; whole number of circles, the next N steps are the same drawing
+  ; turned round, so we keep going until the turning adds up to whole
+  ; circles. Then the turtle is home, facing the way it started.
+  localmake "n 360 / gcd :inc 360
+  localmake "total remainder :n * :angle + :inc * :n * (:n - 1) / 2 360
+  localmake "steps :n * ifelse :total = 0 [1] [360 / gcd :total 360]
+  localmake "xs [] localmake "ys []
+  penup home
+  repeat :steps [
+    forward :side right :angle + :inc * (repcount - 1)
+    make "xs fput xcor :xs make "ys fput ycor :ys
+  ]
+  ; the middle of the box round all the points
+  localmake "mx ((reduce "max2 :xs) + (reduce "min2 :xs)) / 2
+  localmake "my ((reduce "max2 :ys) + (reduce "min2 :ys)) / 2
+  penup setxy :cx - :mx :cy - :my setheading 0 pendown
+  repeat :steps [
+    setpencolor (list 128 + 120 * sin 3 * repcount 90 + 80 * cos 2 * repcount 200)
+    forward :side
+    right :angle + :inc * (repcount - 1)
+  ]
+end
+
+to max2 :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+to min2 :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+to caption :x :y :text
+  penup setxy :x :y setpencolor [200 200 210] label :text
+end
+
+clearscreen hideturtle
+setbackground [20 20 35]
+setpensize 1.5
+setlabelheight 14
+inspi 9 0 7 -200 150
+caption -260 15 [increase 7]
+inspi 15 2 20 200 150
+caption 140 15 [increase 20]
+inspi 8 0 11 -200 -140
+caption -260 -285 [increase 11]
+inspi 16 40 30 200 -140
+caption 140 -285 [increase 30]

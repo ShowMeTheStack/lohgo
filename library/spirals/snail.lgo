@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Snail Shell
+; CATEGORY: Spirals & Curves
+; LEVEL:    Beginner
+; TAGS:     spiral, curve, growing step, picture
+; SUMMARY:  Draws a snail whose shell is a smooth spiral made by turning the same amount while the steps keep growing.
+; ============================================================
+;
+; WHAT IT DOES
+;   If the turtle always turns 10 degrees but takes a slightly
+;   longer step each time, it curls outwards in a smooth spiral,
+;   just like a snail's shell. The program draws the shell with a
+;   thick pen, then gives the snail a body, two eye stalks, and a
+;   shiny trail.
+;
+; HOW TO USE
+;   Press Run. Change the 3 in the SPIRALSHELL line to wind the shell more
+;   or less, or the 0.04 in SPIRALSHELL to make it open faster.
+;
+; CONCEPTS YOU WILL LEARN
+;   * same turn + growing step = spiral
+;   * the step grows by multiplying, so the shell keeps its shape
+;     as it gets bigger (like real shells)
+;   * combining a curve with simple shapes to make a picture
+;
+; THINGS TO TRY
+;   * Make the shell wind the other way with LEFT.
+;   * Add 0.5 to the step each time instead of multiplying. Is it
+;     still shell-shaped?
+;   * Draw a family of snails of different sizes.
+; ============================================================
+
+; Spiral out from the middle. The step starts tiny and gets 3.2 percent
+; longer every time, while the turn stays 10 degrees.
+to spiralshell :turns
+  localmake "step 0.7
+  repeat int :turns * 36 [
+    forward :step
+    left 10
+    make "step :step * 1.032
+  ]
+end
+
+; The body: a long flat shape with a round head at the right and a
+; pointed tail at the left. The head is half a circle walked in steps.
+to body
+  penup setxy -230 -150 setheading 90 pendown
+  setpencolor [120 80 50] setpensize 4
+  filled [200 160 115] [
+    forward 400
+    repeat 18 [forward 5.6 left 10]
+    forward 290
+    setxy -230 -150
+  ]
+end
+
+to stalks
+  setpencolor [120 80 50] setpensize 5
+  foreach [[205 -30] [240 -40]] [
+    penup setxy 185 -95 pendown setpos ?
+    setpensize 14 dot ? setpensize 5
+  ]
+end
+
+clearscreen hideturtle
+setbackground [215 240 200]
+; the body first, then the shell on top of it
+body
+; the shell: two spirals, a fat light one and a thin dark one on top,
+; so it looks like a striped shell
+penup setxy 10 25 setheading 110 pendown
+setpencolor [235 190 120] setpensize 18
+spiralshell 3
+penup setxy 10 25 setheading 110 pendown
+setpencolor [150 70 40] setpensize 5
+spiralshell 3
+stalks
+; a silvery trail behind the snail
+penup setxy -390 -150 setheading 90 setpencolor [200 210 230] setpensize 6
+pendown forward 160

@@ -1,0 +1,95 @@
+; ============================================================
+; TITLE:    Golden Spiral
+; CATEGORY: Spirals & Curves
+; LEVEL:    Intermediate
+; TAGS:     fibonacci, golden ratio, squares, arc, recursion
+; SUMMARY:  Lays Fibonacci-sized squares around each other and joins them with quarter circles to make the golden spiral.
+; ============================================================
+;
+; WHAT IT DOES
+;   The Fibonacci numbers 1, 1, 2, 3, 5, 8, 13 ... each come from
+;   adding the two before. Squares of those sizes fit together
+;   perfectly, each new one along the long side of all the ones
+;   before. A quarter circle in each square joins up into a spiral
+;   that is very close to the "golden spiral". Each square shows its
+;   number, and the ratio of the last two numbers is printed: it gets
+;   closer and closer to the golden ratio, 1.618...
+;
+; HOW TO USE
+;   Press Run. Change HOWMANY (number of squares) and UNIT (the size
+;   of a 1 by 1 square). If it no longer fits, lower UNIT.
+;
+; CONCEPTS YOU WILL LEARN
+;   * building the Fibonacci sequence with a list
+;   * the turtle turning LEFT after each square to go round
+;   * ARC with a negative angle sweeps anticlockwise
+;   * a dry run with the pen up to find the size of a drawing
+;
+; THINGS TO TRY
+;   * Start the sequence from 2 and 2. Does it still fit together?
+;   * Draw the spiral only, without squares.
+;   * Use ARC with 90 instead of -90. What goes wrong, and why?
+; ============================================================
+
+make "howmany 10
+make "unit 6.4
+
+; The first n Fibonacci numbers as a list: [1 1 2 3 5 ...].
+to fibonacci :n
+  localmake "fibs [1 1]
+  repeat :n - 2 [make "fibs lput (last :fibs) + (last butlast :fibs) :fibs]
+  output :fibs
+end
+
+; One square, drawn with left turns from the corner the turtle is on,
+; plus its quarter circle. The circle's center is the corner of the
+; square to the turtle's left; the arc goes from where the turtle
+; stands to the opposite corner. Then the turtle walks to that corner
+; and turns left, ready for the next, bigger square.
+to fibsquare :n :draw
+  localmake "s :n * :unit
+  localmake "h heading
+  localmake "here pos
+  if :draw [
+    setpencolor [90 70 60] setpensize 2
+    filled item 1 + remainder :n 5 [[250 225 180] [240 200 200] [210 225 245] [215 240 210] [240 230 250]] ~
+           [repeat 4 [forward :s left 90]]
+    if :s > 20 [
+      penup forward :s / 2 left 90 forward :s / 2 right 90
+      setpencolor [120 100 90] label :n
+      setpos :here setheading :h
+    ]
+    ; the quarter circle, round the corner on our left
+    penup left 90 forward :s right 90
+    setheading :h + 90
+    setpencolor [210 50 50] setpensize 4 pendown
+    arc -90 :s
+    penup setpos :here setheading :h
+  ]
+  ; walk to the opposite corner and turn for the next square
+  penup forward :s left 90 forward :s
+  pendown
+end
+
+; Walk all the squares, without or with drawing.
+to spiral :draw
+  foreach fibonacci :howmany [fibsquare ? :draw]
+end
+
+clearscreen hideturtle
+setbackground [250 250 245]
+setlabelheight 18
+; dry run: where do the corners go? Keep the smallest and biggest x and y.
+make "xs [] make "ys []
+penup home
+foreach fibonacci :howmany [
+  fibsquare ? "false
+  make "xs fput xcor :xs make "ys fput ycor :ys
+]
+make "midx ((reduce [ifelse ?1 > ?2 [?1] [?2]] :xs) + (reduce [ifelse ?1 < ?2 [?1] [?2]] fput 0 :xs)) / 2
+make "midy ((reduce [ifelse ?1 > ?2 [?1] [?2]] :ys) + (reduce [ifelse ?1 < ?2 [?1] [?2]] fput 0 :ys)) / 2
+; now the real drawing, shifted so the middle of the picture is centered
+penup setxy minus :midx minus :midy setheading 0
+spiral "true
+make "fibs fibonacci :howmany
+print (sentence [Last two numbers:] last butlast :fibs last :fibs [ratio] (last :fibs) / (last butlast :fibs))
