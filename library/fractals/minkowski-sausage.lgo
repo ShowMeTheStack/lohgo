@@ -1,0 +1,61 @@
+; ============================================================
+; TITLE:    Minkowski Sausage
+; CATEGORY: Fractals
+; LEVEL:    Intermediate
+; TAGS:     recursion, Minkowski, square wave, island
+; SUMMARY:  Turns every side of a square into a zigzag of eight pieces, three times over.
+; ============================================================
+;
+; WHAT IT DOES
+;   The Minkowski rule swaps a straight line for eight lines a
+;   quarter as long, stepping up and down like a castle wall. Put the
+;   rule on the four sides of a square and repeat it, and you get an
+;   island whose coast is twice as long at every level, while the
+;   area stays the same.
+;
+; HOW TO USE
+;   Press Run. The island at the right is level 3, the small ones on
+;   the left show levels 0, 1 and 2.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a recursion with eight calls written as a word of turns
+;   * running a list of commands in order with FOREACH
+;   * drawing the same island several times at different sizes
+;
+; THINGS TO TRY
+;   * Change the list of turns in WALL to make a new rule. Keep as
+;     many L as R so the wall still ends up going straight.
+;   * Draw only one side to see the "sausage" on its own.
+;   * Fill the islands with FILLED.
+; ============================================================
+
+; WALL draws one Minkowski curve. The eight pieces are joined by the
+; turns in the list: L means left 90, R means right 90, and S means
+; carry straight on.
+to wall :len :level
+  if :level = 0 [forward :len stop]
+  ; Seven turns join the eight pieces. FOREACH draws a piece and
+  ; then makes the turn; the eighth piece comes after the loop.
+  foreach [L R R S L L R] [
+    wall :len / 4 :level - 1
+    if ? = "L [left 90]
+    if ? = "R [right 90]
+  ]
+  wall :len / 4 :level - 1
+end
+
+; ISLAND draws a square of Minkowski walls centered on (x, y).
+to island :x :y :side :level :color
+  penup setxy :x - :side / 2 :y - :side / 2 setheading 0 pendown
+  setpencolor :color
+  repeat 4 [wall :side :level right 90]
+end
+
+clearscreen hideturtle
+setbackground [250 245 235]
+setpensize 2
+island -280 170 80 0 [200 80 60]
+island -280 0 80 1 [220 140 40]
+island -280 -170 80 2 [60 150 90]
+setpensize 1.5
+island 110 0 300 3 [40 90 180]

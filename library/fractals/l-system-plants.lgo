@@ -1,0 +1,119 @@
+; ============================================================
+; TITLE:    L-System Garden
+; CATEGORY: Fractals
+; LEVEL:    Advanced
+; TAGS:     L-system, lists, property lists, MAP.SE, recursion, plants
+; SUMMARY:  A small L-system interpreter that grows plants from rewriting rules kept in property lists.
+; ============================================================
+;
+; WHAT IT DOES
+;   An L-system is a word that grows by rewriting: every letter is
+;   replaced by its rule, again and again. Then a turtle reads the
+;   result as instructions. This interpreter keeps each plant's rules
+;   in a property list. A branch is simply a sublist, so the turtle
+;   remembers where it was, draws the branch, and jumps back. Two
+;   plants grow in the garden, one bush and one tall weed.
+;
+; HOW TO USE
+;   Press Run. To invent a plant, copy one of the PPROP blocks in
+;   SETUP.PLANTS, change the rule, and call GROW with its name.
+;
+; CONCEPTS YOU WILL LEARN
+;   * rewriting lists with MAP.SE and SENTENCE
+;   * sublists as branches: recursion handles the nesting for free
+;   * property lists (PPROP and GPROP) as a little database of rules
+;   * a symbol table: F draws, + turns left, - turns right
+;
+; THINGS TO TRY
+;   * Change the bush angle from 22 to 30.
+;   * Grow the weed one more generation (watch the time).
+;   * Add a new letter G that moves without drawing.
+; ============================================================
+
+; ---- the plants -----------------------------------------------------
+to setup.plants
+  ; A bush: one rule for F. Each branch is written as a sublist.
+  pprop "bush "start [F]
+  pprop "bush "F [F F - [- F + F + F] + [+ F - F - F]]
+  pprop "bush "angle 22
+  pprop "bush "step 9
+  pprop "bush "generations 4
+  ; A weed: X is a growing tip that is never drawn, F just doubles.
+  pprop "weed "start [X]
+  pprop "weed "X [F - [[X] + X] + F [+ F X] - X]
+  pprop "weed "F [F F]
+  pprop "weed "angle 25
+  pprop "weed "step 2.6
+  pprop "weed "generations 6
+end
+
+; ---- rewriting -----------------------------------------------------
+; REWRITE.ONE outputs what one symbol turns into, ready for MAP.SE.
+; MAP.SE glues the outputs together with SENTENCE, which removes one
+; layer of brackets; so a symbol with a rule outputs its rule, a
+; plain symbol is wrapped in a list, and a branch is wrapped twice
+; so that it stays a sublist.
+to rewrite.one :plant :symbol
+  if listp :symbol [output (list rewrite :plant :symbol)]
+  localmake "rule gprop :plant :symbol
+  if emptyp :rule [output (list :symbol)]
+  output :rule
+end
+
+to rewrite :plant :symbols
+  output map.se [rewrite.one :plant ?] :symbols
+end
+
+; GENERATIONS rewrites the start word :n times.
+to generations :plant :symbols :n
+  if :n = 0 [output :symbols]
+  output generations :plant rewrite :plant :symbols :n - 1
+end
+
+; ---- drawing -------------------------------------------------------
+; INTERPRET walks through the symbols. :depth counts how deep in the
+; branches we are; deep twigs are thin and green, the stem is brown.
+to interpret :symbols :depth
+  foreach :symbols [
+    if listp ? [branch ? :depth + 1]
+    if ? = "F [
+      setpensize max 1 5 - :depth
+      setpencolor ifelse :depth < 2 [[110 80 50]] [(list 40 80 + 30 * :depth 40)]
+      forward :step
+    ]
+    if ? = "+ [left :angle]
+    if ? = "- [right :angle]
+  ]
+end
+
+; BRANCH remembers the turtle's place, draws the sublist and returns.
+to branch :symbols :depth
+  localmake "where pos
+  localmake "facing heading
+  interpret :symbols :depth
+  penup setpos :where setheading :facing pendown
+end
+
+; MAX outputs the larger of two numbers.
+to max :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+; GROW plants one L-system with its base at (x, y).
+to grow :plant :x :y
+  localmake "angle gprop :plant "angle
+  localmake "step gprop :plant "step
+  localmake "word generations :plant gprop :plant "start gprop :plant "generations
+  penup setxy :x :y setheading 0 pendown
+  interpret :word 0
+end
+
+clearscreen hideturtle
+setbackground [225 238 250]
+; the ground
+penup setxy -400 -265 setheading 90 pendown
+setpensize 30 setpencolor [120 170 90]
+forward 800
+setup.plants
+grow "bush -200 -250
+grow "weed 170 -250

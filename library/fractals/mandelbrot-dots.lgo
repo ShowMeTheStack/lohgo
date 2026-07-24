@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Mandelbrot in Dots
+; CATEGORY: Fractals
+; LEVEL:    Advanced
+; TAGS:     Mandelbrot set, complex numbers, WHILE, DOT, symmetry
+; SUMMARY:  Draws a chunky, retro Mandelbrot set one dot at a time, using its mirror symmetry to save work.
+; ============================================================
+;
+; WHAT IT DOES
+;   For every dot on a grid the program asks: if I start at zero and
+;   keep squaring and adding this point, does the number stay small
+;   or fly away? Points that stay small are in the Mandelbrot set
+;   and are painted black. The others get a color that says how
+;   quickly they escaped. Since the set is the same above and below
+;   the middle line, each answer paints two dots.
+;
+; HOW TO USE
+;   Press Run and wait a few seconds. Make :grid smaller for a finer
+;   picture (it gets slower), or bigger for an even chunkier one.
+;
+; CONCEPTS YOU WILL LEARN
+;   * complex numbers as a pair of ordinary numbers
+;   * WHILE with two conditions joined by AND
+;   * mapping screen coordinates to math coordinates
+;   * using symmetry to halve the work
+;
+; THINGS TO TRY
+;   * Raise :limit to 60. The edge gets sharper but it is slower.
+;   * Change the palette list to your own colors.
+;   * Zoom in: change :zoom to 600 and :centerx to -0.75, then look
+;     at the "seahorse valley" near x = -0.75, y = 0.1.
+; ============================================================
+
+; ESCAPE outputs how many rounds it takes for z = z * z + c to leave
+; the circle of radius 2, or :limit if it never does.
+; c is (cx, cy). z is (x, y); squaring it gives (x*x - y*y, 2*x*y).
+to escape :cx :cy
+  localmake "x 0
+  localmake "y 0
+  localmake "n 0
+  while [and :n < :limit (:x * :x + :y * :y) < 4] [
+    localmake "newx :x * :x - :y * :y + :cx
+    make "y 2 * :x * :y + :cy
+    make "x :newx
+    make "n :n + 1
+  ]
+  output :n
+end
+
+; SHADE picks a color for a count: black inside the set, and a color
+; that cycles through the palette for points outside.
+to shade :n
+  if :n = :limit [output [0 0 0]]
+  output item 1 + remainder :n count :palette :palette
+end
+
+; PLOT works through the top half of the screen, one row at a time.
+; The screen point (px, py) is the complex number
+;   (px / zoom + centerx, py / zoom).
+to plot
+  for [py 0 300 :grid] [
+    for [px -400 400 :grid] [
+      setpencolor shade escape :px / :zoom + :centerx :py / :zoom
+      dot list :px :py
+      dot list :px minus :py
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground 0
+make "grid 5
+make "limit 30
+make "zoom 210
+make "centerx -0.6
+make "palette [[20 30 110] [40 70 180] [70 130 230] [130 190 250]
+               [240 240 200] [250 200 90] [230 130 40] [170 60 40]]
+; A pen a little wider than the grid leaves no gaps between dots.
+setpensize :grid + 1
+plot

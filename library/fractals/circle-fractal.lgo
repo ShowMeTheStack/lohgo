@@ -1,0 +1,53 @@
+; ============================================================
+; TITLE:    Circles of Circles
+; CATEGORY: Fractals
+; LEVEL:    Beginner
+; TAGS:     recursion, circles, ARC, fractal
+; SUMMARY:  Draws a circle with four half sized circles around it, and so on down.
+; ============================================================
+;
+; WHAT IT DOES
+;   A big circle sits in the middle. Touching it on the left, right,
+;   top and bottom are circles half as big. Each of those has its
+;   own smaller circles, making a pattern like a flower or a snowflake.
+;
+; HOW TO USE
+;   Press Run. Change the depth or radius on the last line.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ARC to draw a circle around the turtle
+;   * recursion with a list of directions
+;   * using FOREACH to visit each direction
+;   * stepping out and coming back so the turtle ends where it began
+;
+; THINGS TO TRY
+;   * Use only the left and right directions: [90 270].
+;   * Use six directions, every 60 degrees.
+;   * Change the shrink ratio from 0.5 to 0.45 so the circles separate.
+; ============================================================
+
+; BUBBLE draws a circle of radius :r centered on the turtle, then a
+; smaller circle in every direction in :ways.
+to bubble :r :depth :ways
+  if :depth = 0 [stop]
+  setpencolor item :depth [12 3 5 1 13]
+  setpensize :depth
+  ; ARC 360 draws a full circle around the turtle without moving it.
+  arc 360 :r
+  foreach :ways [
+    ; Point one way and step out to the center of the small circle:
+    ; the big radius plus the small radius, so the circles just touch.
+    setheading ?
+    penup forward :r * 1.5 pendown
+    ; A child never sends a circle straight back toward its parent,
+    ; so the opposite direction is left out of its list.
+    bubble :r / 2 :depth - 1 remove remainder ? + 180 360 :ways
+    ; Come home again, facing the same way, for the next direction.
+    setheading ?
+    penup back :r * 1.5 pendown
+  ]
+end
+
+clearscreen hideturtle
+setbackground [255 250 235]
+bubble 100 5 [0 90 180 270]

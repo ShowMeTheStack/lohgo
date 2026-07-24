@@ -1,0 +1,73 @@
+; ============================================================
+; TITLE:    Hilbert Curve
+; CATEGORY: Fractals
+; LEVEL:    Intermediate
+; TAGS:     recursion, space filling curve, parity, color
+; SUMMARY:  Draws a Hilbert curve that visits every cell of a 64 by 64 grid without crossing itself.
+; ============================================================
+;
+; WHAT IT DOES
+;   The Hilbert curve is one unbroken line that snakes through a
+;   square, visiting every small cell exactly once and never
+;   crossing itself. Each level is made of four copies of the level
+;   below, two of them turned on their side. The color changes as
+;   the line goes, so you can see the four quarters.
+;
+; HOW TO USE
+;   Press Run. Change the level on the last line (1 to 7). The step
+;   size is worked out for you so the curve always fills the same
+;   square.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a :parity input of 1 or -1 that mirrors the drawing
+;   * MINUS to flip the parity for the side copies
+;   * POWER to compute the grid size from the level
+;   * coloring by how far along the path you are
+;
+; THINGS TO TRY
+;   * Draw levels 1, 2 and 3 to see the U shape being reused.
+;   * Use a thick pen and a small level for a maze-like look.
+;   * Start with parity 1 at the bottom right corner instead.
+; ============================================================
+
+; HILBERT draws one Hilbert curve. Between the four smaller curves
+; the turtle takes three single steps that join them up.
+to hilbert :level :parity
+  if :level = 0 [stop]
+  left 90 * :parity
+  hilbert :level - 1 minus :parity
+  join.step
+  right 90 * :parity
+  hilbert :level - 1 :parity
+  join.step
+  hilbert :level - 1 :parity
+  right 90 * :parity
+  join.step
+  hilbert :level - 1 minus :parity
+  left 90 * :parity
+end
+
+; JOIN.STEP takes one step and picks the next color of the rainbow.
+to join.step
+  make "steps :steps + 1
+  localmake "t :steps / :total
+  setpencolor (list 255 * :t 120 + 100 * sin (180 * :t) 255 * (1 - :t))
+  forward :size
+end
+
+; DRAW.HILBERT works out the step so the curve fills a 500 square.
+to draw.hilbert :level
+  ; At level n the curve has 2^n cells along a side and 4^n - 1 steps.
+  make "size 500 / ((power 2 :level) - 1)
+  make "total (power 4 :level) - 1
+  make "steps 0
+  penup setxy -250 -250 setheading 0 pendown
+  ; Parity -1 makes the first turn a right turn, so the curve heads
+  ; into the square instead of off the left edge.
+  hilbert :level -1
+end
+
+clearscreen hideturtle
+setbackground [20 20 30]
+setpensize 3
+draw.hilbert 6

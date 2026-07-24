@@ -1,0 +1,54 @@
+; ============================================================
+; TITLE:    H-Tree
+; CATEGORY: Fractals
+; LEVEL:    Beginner
+; TAGS:     recursion, fractal, letter H, geometry
+; SUMMARY:  Builds a fractal out of the letter H, with a smaller H at every tip.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws a big letter H. At each of its four ends a smaller H is
+;   drawn, and at their ends smaller ones still. Engineers use this
+;   pattern to send the same clock signal to every part of a chip.
+;
+; HOW TO USE
+;   Press Run. The last line sets the size and the number of levels.
+;
+; CONCEPTS YOU WILL LEARN
+;   * recursion with four calls
+;   * placing each copy with SETXY instead of turning
+;   * shrinking by a fixed ratio each level
+;
+; THINGS TO TRY
+;   * Use 7 levels instead of 6 and see the H shapes touch.
+;   * Change the shrink ratio 0.5 to 0.6.
+;   * Make every level a different color with SETPENCOLOR :level.
+; ============================================================
+
+; LINE.FROM.TO draws a straight line between two points.
+to line.from.to :x1 :y1 :x2 :y2
+  penup setxy :x1 :y1 pendown
+  setxy :x2 :y2
+end
+
+; HTREE draws an H centered on (x, y). :size is the width of the H.
+to htree :x :y :size :level
+  if :level = 0 [stop]
+  localmake "h :size / 2
+  ; Pens get thinner as the shapes get smaller.
+  setpensize :level
+  setpencolor (list 40 * :level 60 255 - 30 * :level)
+  ; The crossbar, then the two uprights.
+  line.from.to :x - :h :y :x + :h :y
+  line.from.to :x - :h :y - :h :x - :h :y + :h
+  line.from.to :x + :h :y - :h :x + :h :y + :h
+  ; Four smaller H shapes, one at each tip of the uprights.
+  htree :x - :h :y + :h :size / 2 :level - 1
+  htree :x - :h :y - :h :size / 2 :level - 1
+  htree :x + :h :y + :h :size / 2 :level - 1
+  htree :x + :h :y - :h :size / 2 :level - 1
+end
+
+clearscreen hideturtle
+setbackground [250 248 240]
+htree 0 0 280 6

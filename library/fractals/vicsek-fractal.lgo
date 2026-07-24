@@ -1,0 +1,62 @@
+; ============================================================
+; TITLE:    Vicsek Fractals
+; CATEGORY: Fractals
+; LEVEL:    Intermediate
+; TAGS:     recursion, squares, crosses, FILLED, lists of positions
+; SUMMARY:  Builds a plus-shaped and an X-shaped Vicsek fractal from five smaller copies each.
+; ============================================================
+;
+; WHAT IT DOES
+;   Split a square into a 3 by 3 grid and keep only five of the nine
+;   pieces. Keep the middle and the four edges and you get a cross
+;   that turns into a snowflake. Keep the middle and the four
+;   corners and you get a cloud of X shapes. Both are drawn side by
+;   side from the same procedure.
+;
+; HOW TO USE
+;   Press Run. Edit the lists of cells to invent your own fractals.
+;
+; CONCEPTS YOU WILL LEARN
+;   * describing a pattern with a list of [column row] pairs
+;   * FOREACH with FIRST and LAST to unpack each pair
+;   * passing a list down through the recursion
+;
+; THINGS TO TRY
+;   * Use [[0 0] [2 2] [1 1]] for a diagonal line of squares.
+;   * Keep six cells and see a new pattern.
+;   * Give each level its own color.
+; ============================================================
+
+; BLOCK paints a square with its bottom left corner at (x, y).
+to block :x :y :size :color
+  penup setxy :x :y setheading 0
+  filled :color [repeat 4 [forward :size right 90]]
+end
+
+; VICSEK splits the square into thirds and recurses into the cells
+; listed in :cells. Each cell is a list [column row] from 0 to 2.
+to vicsek :x :y :size :depth :cells :color
+  if :depth = 0 [block :x :y :size :color stop]
+  localmake "third :size / 3
+  foreach :cells [
+    vicsek :x + :third * first ? :y + :third * last ? ~
+      :third :depth - 1 :cells :color
+  ]
+end
+
+; CAPTION writes text under a fractal.
+to caption :x :text
+  penup setxy :x - 4 * count :text -230 pendown
+  setpencolor [60 60 60]
+  label :text
+end
+
+clearscreen hideturtle
+setbackground [250 250 250]
+make "plus [[1 1] [0 1] [2 1] [1 0] [1 2]]
+make "cross [[1 1] [0 0] [2 0] [0 2] [2 2]]
+vicsek -370 -162 324 4 :plus [20 110 200]
+vicsek 46 -162 324 4 :cross [210 70 90]
+setlabelheight 16
+caption -208 "cross
+caption 208 "saltire

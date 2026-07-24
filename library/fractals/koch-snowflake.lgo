@@ -1,0 +1,78 @@
+; ============================================================
+; TITLE:    Koch Snowflake and Anti-Snowflake
+; CATEGORY: Fractals
+; LEVEL:    Intermediate
+; TAGS:     recursion, Koch curve, snowflake, FILLED, island
+; SUMMARY:  Paints two Koch islands: a snowflake with bumps out and an anti-snowflake with bumps in.
+; ============================================================
+;
+; WHAT IT DOES
+;   Walks around a triangle three times with a Koch curve on every
+;   side. On the left the bumps point outward and make the famous
+;   snowflake. On the right the very same curve is walked the other
+;   way round, so the bumps point inward and bite holes into it.
+;
+; HOW TO USE
+;   Press Run. Change LEVEL near the bottom to 2, 3 or 5.
+;
+; CONCEPTS YOU WILL LEARN
+;   * one recursive procedure used in two different ways
+;   * how the direction you walk around a shape decides where the
+;     bumps go
+;   * FILLED painting the inside of a long, wiggly outline
+;   * using variables so two drawings stay the same size
+;
+; THINGS TO TRY
+;   * Use level 1 for both. Can you see a Star of David on the left?
+;   * Make the snowflake twice as wide.
+;   * Count the edges: level n has 3 times 4 to the power n of them.
+; ============================================================
+
+; SIDE is a Koch curve. The bump always goes to the LEFT of the way
+; the turtle is walking.
+to side :len :level
+  if :level = 0 [forward :len stop]
+  side :len / 3 :level - 1
+  left 60
+  side :len / 3 :level - 1
+  right 120
+  side :len / 3 :level - 1
+  left 60
+  side :len / 3 :level - 1
+end
+
+; ISLAND walks a triangle of Koch curves centered on (x, y).
+; :turn is 120 to walk clockwise or -120 to walk counterclockwise.
+; Walking clockwise, the inside is on the right, so left bumps poke
+; out. Walking counterclockwise, the inside is on the left, so the
+; same bumps poke in.
+to island :x :y :len :level :turn :color
+  ; The triangle's top edge sits a third of its height above the
+  ; middle, which is what keeps the whole island centered.
+  localmake "h :len * 0.866
+  penup setxy :x - :len / 2 :y + :h / 3
+  ifelse :turn > 0 [setheading 90] [
+    ; going the other way round, start at the right hand corner
+    setx :x + :len / 2
+    setheading 270
+  ]
+  pendown
+  filled :color [repeat 3 [side :len :level right :turn]]
+end
+
+; CAPTION writes a line of text roughly centered at (x, y).
+to caption :x :y :text
+  penup setxy :x - 4 * count :text :y pendown
+  label :text
+end
+
+clearscreen hideturtle
+setbackground [15 30 60]
+make "level 4
+setpensize 1.5
+setpencolor 7
+island -190 10 260 :level 120 [140 200 255]
+island 190 10 260 :level -120 [255 190 120]
+setlabelheight 16
+caption -190 -200 "snowflake
+caption 190 -200 "anti-snowflake

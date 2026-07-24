@@ -1,0 +1,68 @@
+; ============================================================
+; TITLE:    The Chaos Game
+; CATEGORY: Fractals
+; LEVEL:    Intermediate
+; TAGS:     random, DOT, chaos game, Sierpinski, probability
+; SUMMARY:  Plays the chaos game: random jumps halfway to a corner draw a perfect Sierpinski triangle.
+; ============================================================
+;
+; WHAT IT DOES
+;   Mark three corners. Start anywhere. Again and again, pick a
+;   corner at random and jump halfway toward it, leaving a dot. You
+;   would expect a mess, but a Sierpinski triangle appears. Each dot
+;   gets the color of the corner it jumped toward.
+;
+; HOW TO USE
+;   Press Run and watch for a few seconds. Change :jumps or the
+;   corners at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * DOT to place a single point without moving the turtle
+;   * PICK to choose a random item from a list
+;   * keeping the current point in two variables
+;   * how a random process can still make an exact pattern
+;
+; THINGS TO TRY
+;   * Use four corners of a square. Is there a pattern now?
+;   * Jump 2/3 of the way instead of halfway (multiply by 0.667).
+;   * Use five corners and jump 0.618 of the way for a pentagon.
+; ============================================================
+
+; CORNER makes a corner: a list of the point and its color.
+to corner :x :y :color
+  output (list :x :y :color)
+end
+
+; CHAOS plays the game. :ratio is how far each jump goes, 0.5 is half.
+to chaos :corners :jumps :ratio
+  ; Start at a random point; the first few dots may fall outside the
+  ; triangle, but after a dozen jumps the point is always inside.
+  localmake "x random 200
+  localmake "y random 200
+  repeat :jumps [
+    localmake "c pick :corners
+    ; The brackets around ITEM matter: without them Logo would read
+    ; item 1 (:c - :x), because - grabs its neighbors first.
+    make "x :x + :ratio * ((item 1 :c) - :x)
+    make "y :y + :ratio * ((item 2 :c) - :y)
+    if repcount > 12 [
+      setpencolor item 3 :c
+      dot list :x :y
+    ]
+  ]
+end
+
+; MARK draws a big dot on each corner so you can see the targets.
+to mark :corners
+  setpensize 12
+  foreach :corners [setpencolor item 3 ? dot list item 1 ? item 2 ?]
+  setpensize 2
+end
+
+clearscreen hideturtle
+setbackground [20 22 30]
+make "corners (list corner 0 280 [255 90 90] ~
+                    corner -320 -270 [90 200 255] ~
+                    corner 320 -270 [255 220 90])
+mark :corners
+chaos :corners 15000 0.5

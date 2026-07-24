@@ -1,0 +1,81 @@
+; ============================================================
+; TITLE:    Peano Curve
+; CATEGORY: Fractals
+; LEVEL:    Advanced
+; TAGS:     recursion, space filling curve, mutual recursion, L-system
+; SUMMARY:  Draws Peano's 1890 space filling curve with two procedures that call each other.
+; ============================================================
+;
+; WHAT IT DOES
+;   Giuseppe Peano found the first curve that passes through every
+;   point of a square. This program draws the turtle version: a
+;   single path that zigzags through a 81 by 81 grid, built from nine
+;   smaller copies of itself, each a mirror image of its neighbors.
+;   The color fades from teal to purple along the path.
+;
+; HOW TO USE
+;   Press Run. Change the level on the last line (1 to 4). Level 5
+;   has 59049 steps and is slow.
+;
+; CONCEPTS YOU WILL LEARN
+;   * mutual recursion: PEANO.X calls PEANO.Y and the other way round
+;   * turning an L-system rule into Logo, symbol by symbol
+;   * working out the step length from the level with POWER
+;   * coloring by progress with a global counter
+;
+; THINGS TO TRY
+;   * Draw level 1 with a thick pen and trace the S shapes.
+;   * Swap LEFT and RIGHT in PEANO.X only. Does it still fill?
+;   * Use SETPENSIZE equal to the step to fill the square solid.
+; ============================================================
+
+; The L-system for the Peano curve, with angle 90:
+;   X -> XFYFX+F+YFXFY-F-XFYFX
+;   Y -> YFXFY-F-XFYFX+F+YFXFY
+; X and Y are never drawn; they only say where the smaller curves go.
+; F is a step, + is a left turn and - is a right turn.
+
+to peano.x :level
+  if :level = 0 [stop]
+  localmake "n :level - 1
+  peano.x :n f peano.y :n f peano.x :n
+  left 90 f left 90
+  peano.y :n f peano.x :n f peano.y :n
+  right 90 f right 90
+  peano.x :n f peano.y :n f peano.x :n
+end
+
+to peano.y :level
+  if :level = 0 [stop]
+  localmake "n :level - 1
+  peano.y :n f peano.x :n f peano.y :n
+  right 90 f right 90
+  peano.x :n f peano.y :n f peano.x :n
+  left 90 f left 90
+  peano.y :n f peano.x :n f peano.y :n
+end
+
+; F takes one step, shading the pen by how far along the path we are.
+to f
+  make "done :done + 1
+  localmake "t :done / :steps
+  setpencolor (list 40 + 140 * :t 190 - 150 * :t 180 + 40 * :t)
+  forward :unit
+end
+
+; PEANO sets up the step length so the curve fills a 480 square.
+to peano :level
+  localmake "cells power 3 :level
+  make "unit 480 / (:cells - 1)
+  make "steps :cells * :cells - 1
+  make "done 0
+  ; The curve climbs first and its first turn is a left turn, so it
+  ; starts at the bottom right corner and works its way leftward.
+  penup setxy 240 -240 setheading 0 pendown
+  peano.x :level
+end
+
+clearscreen hideturtle
+setbackground [248 248 244]
+setpensize 2
+peano 4

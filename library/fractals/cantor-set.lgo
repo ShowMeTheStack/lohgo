@@ -1,0 +1,56 @@
+; ============================================================
+; TITLE:    Cantor Set
+; CATEGORY: Fractals
+; LEVEL:    Beginner
+; TAGS:     recursion, fractal, lines, levels
+; SUMMARY:  Draws the Cantor set by removing the middle third of each line again and again.
+; ============================================================
+;
+; WHAT IT DOES
+;   Starts with one long bar. Underneath it, the middle third is
+;   taken away, leaving two bars. Under each of those the middle
+;   third goes again, and so on. Seven rows show the set taking shape.
+;
+; HOW TO USE
+;   Press Run. Change the last line to draw more or fewer rows.
+;
+; CONCEPTS YOU WILL LEARN
+;   * recursion with two calls
+;   * passing a level number down and counting it toward zero
+;   * using SETXY to place each piece exactly
+;   * painting rectangles with FILLED
+;
+; THINGS TO TRY
+;   * Draw 9 rows. Why do the bars almost vanish?
+;   * Keep the outer quarters instead of the outer thirds.
+;   * Give every row its own color using the level number.
+; ============================================================
+
+; CANTOR draws a bar from x to x + len at height y, then the two
+; outer thirds of it one row lower.
+to cantor :x :y :len :level
+  if :level = 0 [stop]
+  ; The color depends on the level (:level + 8 picks from colors 9
+  ; to 15) so each row is easy to tell apart.
+  ; FILLED walks a thin rectangle with the pen up and paints it in.
+  ; A rectangle keeps its square corners, even when it is tiny.
+  penup setxy :x :y setheading 90
+  filled :level + 8 [repeat 2 [forward :len right 90 forward 16 right 90]]
+  ; The left third starts where this bar starts.
+  cantor :x :y - 40 :len / 3 :level - 1
+  ; The right third starts two thirds of the way along.
+  cantor :x + 2 * :len / 3 :y - 40 :len / 3 :level - 1
+end
+
+; ROWS draws the set with a heading label on top.
+to rows :count
+  cantor -360 150 720 :count
+  setpencolor 0
+  penup setxy -90 200 pendown
+  setlabelheight 22
+  label [The Cantor Set]
+end
+
+clearscreen hideturtle
+setbackground 7
+rows 7

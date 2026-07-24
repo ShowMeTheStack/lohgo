@@ -1,0 +1,58 @@
+; ============================================================
+; TITLE:    Sierpinski Triangle
+; CATEGORY: Fractals
+; LEVEL:    Beginner
+; TAGS:     recursion, triangle, fractal, FILLED
+; SUMMARY:  Paints the Sierpinski triangle from three half sized copies of itself.
+; ============================================================
+;
+; WHAT IT DOES
+;   A triangle is made of three smaller triangles, one in each
+;   corner, with a hole in the middle. Each of those is made the same
+;   way. At the bottom of the recursion the turtle paints a solid
+;   little triangle, colored by where it sits on the screen.
+;
+; HOW TO USE
+;   Press Run. Change the depth on the last line (0 to 7).
+;
+; CONCEPTS YOU WILL LEARN
+;   * recursion with three calls
+;   * FILLED to paint a shape the turtle walks around
+;   * moving with the pen up between the corners
+;   * using XCOR to choose a color
+;
+; THINGS TO TRY
+;   * Try depth 0, 1, 2 and 3 to see how the pattern is built.
+;   * Make the small triangles all one color.
+;   * Leave out the third recursive call. What is left?
+; ============================================================
+
+; SOLID paints one triangle of side :size. The turtle starts at the
+; bottom left corner facing right, and ends there too.
+to solid :size
+  ; The further right the triangle, the more red; the further left,
+  ; the more blue. XCOR runs from about -300 to 300.
+  localmake "red 128 + xcor * 0.4
+  filled (list :red 90 255 - :red) [
+    repeat 3 [forward :size left 120]
+  ]
+end
+
+; SIERPINSKI walks the same path as SOLID, but at each corner it
+; draws a half sized Sierpinski triangle instead of painting.
+to sierpinski :size :depth
+  if :depth = 0 [solid :size stop]
+  repeat 3 [
+    sierpinski :size / 2 :depth - 1
+    ; Slide along the edge to the next corner, without drawing.
+    penup forward :size left 120 pendown
+  ]
+end
+
+clearscreen hideturtle
+setbackground [250 250 245]
+; The bottom left corner, facing right (heading 90). A triangle with
+; side 560 is about 485 tall, so starting at y = -250 centers it.
+penup setxy -280 -250 setheading 90 pendown
+setpencolor [40 40 60]
+sierpinski 560 6

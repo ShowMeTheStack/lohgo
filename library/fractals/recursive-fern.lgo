@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Recursive Fern
+; CATEGORY: Fractals
+; LEVEL:    Advanced
+; TAGS:     recursion, fern, three recursive calls, nature
+; SUMMARY:  Grows a curling fern frond with a procedure that calls itself three times.
+; ============================================================
+;
+; WHAT IT DOES
+;   A fern frond is a stem with leaflets on both sides, and each
+;   leaflet looks like a smaller frond. This program says exactly
+;   that in Logo. The stem itself is a slightly shorter fern that
+;   bends a little, which is why the whole frond curls over at the
+;   top. Two fronds grow from one clump.
+;
+; HOW TO USE
+;   Press Run. Try changing :bend, the 70 degree leaflet angle or
+;   the sizes in the last lines.
+;
+; CONCEPTS YOU WILL LEARN
+;   * three recursive calls with different sizes and turns
+;   * a :side input of 1 or -1 that flips the curl
+;   * a recursion that shrinks by subtracting, not just by dividing
+;   * keeping every call balanced so the turtle returns home
+;
+; THINGS TO TRY
+;   * Set :bend to 0 for a straight frond, or 10 for a tight curl.
+;   * Change :scale to grow the same fern bigger or smaller.
+;   * Change 0.5 to 0.6 for bushier leaflets.
+;   * Make the youngest leaflets yellow-green.
+; ============================================================
+
+; FERN draws a frond of length :size. :side says which way it curls.
+to fern :size :side
+  if :size < 1 [stop]
+  ; Color: darker on the big stems, brighter on the tiny tips.
+  setpencolor (list 40 90 + 100 / :size 40)
+  setpensize :size / 7
+  ; :size counts "segments"; :scale turns that into turtle steps, so
+  ; the shape of the fern and its size on screen are kept apart.
+  forward :size * :scale
+  ; Leaflet on one side, curling the opposite way
+  right 70 * :side
+  fern :size * 0.5 minus :side
+  left 70 * :side
+  forward :size * :scale
+  ; Leaflet on the other side
+  left 70 * :side
+  fern :size * 0.5 :side
+  right 70 * :side
+  ; The rest of the stem is itself a fern, a bit shorter and bent.
+  right :bend * :side
+  fern :size - 1 :side
+  left :bend * :side
+  ; Walk back down so the caller finds the turtle where it left it.
+  back 2 * :size * :scale
+end
+
+; FROND grows one fern from (x, y) leaning toward :heading.
+to frond :x :y :heading :size :side
+  penup setxy :x :y setheading :heading pendown
+  fern :size :side
+end
+
+clearscreen hideturtle
+setbackground [245 240 225]
+make "bend 6
+make "scale 1.7
+frond -20 -285 -20 16 1
+frond 20 -285 25 14 -1

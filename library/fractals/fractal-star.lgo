@@ -1,0 +1,52 @@
+; ============================================================
+; TITLE:    Fractal Star
+; CATEGORY: Fractals
+; LEVEL:    Beginner
+; TAGS:     recursion, star, fractal, repeat
+; SUMMARY:  Draws a star with a smaller star at every point, and smaller stars on those.
+; ============================================================
+;
+; WHAT IT DOES
+;   A five pointed star is drawn by turning 144 degrees at each tip.
+;   At every tip a star one third as big is added, then smaller ones
+;   on those, so the star sparkles all the way down.
+;
+; HOW TO USE
+;   Press Run. Try different sizes and depths on the last line.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the 144 degree turn that makes a star
+;   * calling a procedure from inside REPEAT
+;   * recursion with a depth counter
+;
+; THINGS TO TRY
+;   * Change 0.35 to 0.5 and watch the stars crowd together.
+;   * Use depth 4. How many little stars are drawn now?
+;   * Draw a fractal hexagon by turning 60 six times instead.
+; ============================================================
+
+; STAR draws a five pointed star. After each edge, before turning,
+; the turtle sits on a tip, which is where the smaller star goes.
+to star :size :depth
+  if :depth = 0 [stop]
+  repeat 5 [
+    ; Set the color before every edge: the little stars change the pen
+    ; color, and we want this edge in the color of its own depth.
+    setpencolor item :depth [4 14 6 3]
+    forward :size
+    ; The small star is drawn here, then the turtle comes back to this
+    ; same spot and heading, so the big star carries on unharmed.
+    star :size * 0.35 :depth - 1
+    right 144
+  ]
+end
+
+clearscreen hideturtle
+setbackground [20 20 50]
+setpensize 2
+; A star with edges of 280 fits in a circle of radius 280 / 1.902.
+; Start a little below the middle of the screen (the small stars need
+; room at the top), walk up to the top tip, then face the tip that is
+; two points along (heading 162), so the star ends up centered.
+penup setxy 0 -25 setheading 0 forward 280 / 1.902 setheading 162 pendown
+star 280 4

@@ -1,0 +1,53 @@
+; ============================================================
+; TITLE:    Dragon Pinwheel
+; CATEGORY: Fractals
+; LEVEL:    Intermediate
+; TAGS:     recursion, dragon curve, paper folding, color
+; SUMMARY:  Draws four dragon curves from the center that fit together like a pinwheel.
+; ============================================================
+;
+; WHAT IT DOES
+;   Fold a strip of paper in half again and again, open it out so
+;   every fold is a right angle, and you get the dragon curve. This
+;   program draws four dragons starting at the middle of the screen,
+;   each turned a quarter turn from the last. They never cross, they
+;   just fit snugly into each other's gaps.
+;
+; HOW TO USE
+;   Press Run. Change the level and size at the bottom. Keep
+;   size times 2 to the power (level / 2) about the same.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a single procedure with a :sign input instead of two procedures
+;   * how folding doubles the number of segments at every level
+;   * running the same drawing at four headings with FOR
+;
+; THINGS TO TRY
+;   * Draw only two dragons, at heading 0 and 180.
+;   * Change the 90 degree turn to 80. The dragon starts to curl.
+;   * Use level 14 with size 2. Be patient.
+; ============================================================
+
+; DRAGON draws one dragon curve. :sign is 1 or -1 and says which way
+; the middle fold turns. The second half is always folded the
+; opposite way, which is why the second call passes -1.
+to dragon :size :level :sign
+  if :level = 0 [forward :size stop]
+  dragon :size :level - 1 1
+  right 90 * :sign
+  dragon :size :level - 1 -1
+end
+
+; WING draws one dragon from the center pointing toward :heading.
+to wing :heading :color
+  penup home pendown
+  setheading :heading
+  setpencolor :color
+  dragon 6 11 1
+end
+
+clearscreen hideturtle
+setbackground [25 25 35]
+setpensize 2
+make "colors [[240 80 70] [250 190 60] [80 200 120] [80 150 250]]
+for [k 1 4] [wing 90 * :k item :k :colors]

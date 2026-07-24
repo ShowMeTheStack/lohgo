@@ -1,0 +1,59 @@
+; ============================================================
+; TITLE:    Cesaro Torn Square
+; CATEGORY: Fractals
+; LEVEL:    Intermediate
+; TAGS:     recursion, Cesaro fractal, Koch variant, trigonometry
+; SUMMARY:  Tears thin cracks into the sides of a square with Cesaro's sharp version of the Koch curve.
+; ============================================================
+;
+; WHAT IT DOES
+;   The Cesaro curve is a Koch curve whose tent is almost closed:
+;   the turtle turns 85 degrees instead of 60. Four of these curves
+;   make a square whose sides are full of sharp cracks that branch
+;   like frost on a window.
+;
+; HOW TO USE
+;   Press Run. Change :angle near the bottom. 60 gives the ordinary
+;   Koch curve, numbers near 90 give deeper and thinner cracks.
+;
+; CONCEPTS YOU WILL LEARN
+;   * computing the shrink factor with COS so the curve fits exactly
+;   * using one global variable (:angle) inside a recursive procedure
+;   * why the bumps point inward when walking clockwise with RIGHT
+;     turns on the outside
+;
+; THINGS TO TRY
+;   * Set :angle to 60, 70, 80 and 89 and compare.
+;   * Walk the square counterclockwise so the cracks point outward.
+;   * Fill the square with FILLED, using a light color.
+; ============================================================
+
+; CRACK draws one Cesaro curve. The four pieces are equal; the middle
+; two lean in to form the narrow crack.
+to crack :len :level
+  if :level = 0 [forward :len stop]
+  ; With legs of length s and a tent angle A, the whole curve is
+  ; s + 2 s cos A + s long. So s = len / (2 + 2 cos A).
+  localmake "s :len / (2 + 2 * cos :angle)
+  crack :s :level - 1
+  right :angle
+  crack :s :level - 1
+  left 2 * :angle
+  crack :s :level - 1
+  right :angle
+  crack :s :level - 1
+end
+
+; TORN.SQUARE walks clockwise around a square. The cracks bend to the
+; right of the turtle, which is the inside of the square.
+to torn.square :side :level
+  penup setxy minus :side / 2 minus :side / 2 setheading 0 pendown
+  repeat 4 [crack :side :level right 90]
+end
+
+clearscreen hideturtle
+setbackground [235 242 250]
+make "angle 85
+setpencolor [30 70 140]
+setpensize 1.2
+torn.square 480 5

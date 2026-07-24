@@ -1,0 +1,105 @@
+; ============================================================
+; TITLE:    Gosper Flowsnake
+; CATEGORY: Fractals
+; LEVEL:    Advanced
+; TAGS:     recursion, Gosper curve, L-system, measuring, centering
+; SUMMARY:  Draws the Gosper flowsnake, first measuring where it goes so it can be centered exactly.
+; ============================================================
+;
+; WHAT IT DOES
+;   Bill Gosper's curve fills a wobbly hexagon with one line, made
+;   of seven smaller copies of itself. It twists a little more at
+;   every level, so it is hard to know where it will end up. The
+;   program solves that by drawing it twice: first with the pen up
+;   while it records the furthest points reached, then for real,
+;   moved so that the middle of the drawing is the middle of the
+;   screen.
+;
+; HOW TO USE
+;   Press Run. Change :level at the bottom (1 to 5).
+;
+; CONCEPTS YOU WILL LEARN
+;   * mutual recursion from an L-system with two symbols
+;   * a "dry run" with the pen up to measure a drawing
+;   * keeping a bounding box with MAX-style IF tests
+;   * scaling a drawing to fit a target size
+;
+; THINGS TO TRY
+;   * Draw levels 1, 2 and 3 to see the seven copies in each.
+;   * Remove the dry run and see where level 5 lands.
+;   * Color the A and B pieces in two different colors.
+; ============================================================
+
+; The L-system, with angle 60:
+;   A -> A-B--B+A++AA+B-
+;   B -> +A-BB--B-A++A+B
+; Both A and B are drawn as a step. + is left 60, - is right 60.
+
+to gosper.a :level
+  if :level = 0 [walk stop]
+  localmake "n :level - 1
+  gosper.a :n right 60 gosper.b :n right 120 gosper.b :n left 60
+  gosper.a :n left 120 gosper.a :n gosper.a :n left 60 gosper.b :n right 60
+end
+
+to gosper.b :level
+  if :level = 0 [walk stop]
+  localmake "n :level - 1
+  left 60 gosper.a :n right 60 gosper.b :n gosper.b :n right 120
+  gosper.b :n right 60 gosper.a :n left 120 gosper.a :n left 60 gosper.b :n
+end
+
+; WALK takes one step and stretches the bounding box if needed.
+to walk
+  ; PENDOWNP is "true only during the real drawing; the dry run
+  ; does not need colors.
+  if pendownp [
+    localmake "t :done / :total
+    setpencolor (list 30 + 200 * :t 150 + 60 * sin (180 * :t) 230 - 180 * :t)
+  ]
+  forward :unit
+  if xcor < :minx [make "minx xcor]
+  if xcor > :maxx [make "maxx xcor]
+  if ycor < :miny [make "miny ycor]
+  if ycor > :maxy [make "maxy ycor]
+  make "done :done + 1
+end
+
+; RUN.CURVE draws (or, with the pen up, measures) the whole curve
+; from wherever the turtle is now.
+to run.curve :level
+  make "minx xcor make "maxx xcor make "miny ycor make "maxy ycor
+  make "done 0
+  setheading 90
+  gosper.a :level
+end
+
+to flowsnake :level
+  ; Every level is sqrt 7 times longer, so shrink the step to match.
+  make "unit 300 / power sqrt 7 :level
+  make "total power 7 :level
+  ; Dry run from the origin with the pen up, just to measure.
+  penup home
+  run.curve :level
+  ; Grow the step so the larger side of the box becomes 520 steps.
+  localmake "grow 520 / max2 :maxx - :minx :maxy - :miny
+  make "unit :unit * :grow
+  ; The box middle, scaled the same way, tells us where to start.
+  localmake "midx (:minx + :maxx) / 2 * :grow
+  localmake "midy (:miny + :maxy) / 2 * :grow
+  ; Jump to the new start with the pen still up, then draw for real.
+  setxy minus :midx minus :midy
+  pendown
+  run.curve :level
+end
+
+; MAX2 outputs the larger of two numbers.
+to max2 :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+clearscreen hideturtle
+setbackground [20 25 40]
+setpensize 1.5
+make "level 4
+flowsnake :level

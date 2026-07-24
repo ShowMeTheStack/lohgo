@@ -1,0 +1,60 @@
+; ============================================================
+; TITLE:    Binary Tree
+; CATEGORY: Fractals
+; LEVEL:    Beginner
+; TAGS:     recursion, tree, fractal, color
+; SUMMARY:  Grows a tree in which every branch splits into two smaller branches.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws a brown trunk that splits in two. Each half splits in two
+;   again, and again, until the twigs are tiny and turn green like
+;   leaves. The whole tree comes from one short procedure.
+;
+; HOW TO USE
+;   Press Run. Change the numbers on the last line to grow a taller
+;   tree or to open the branches wider.
+;
+; CONCEPTS YOU WILL LEARN
+;   * recursion: a procedure that calls itself
+;   * a stopping rule so the recursion ends
+;   * returning the turtle to where it started (state saving)
+;   * choosing a pen color and pen size from an input
+;
+; THINGS TO TRY
+;   * Change the angle 25 to 15 or 40 and watch the shape change.
+;   * Change 0.7 to 0.6 or 0.78 in BRANCH. What happens to the tree?
+;   * Make the leaves pink for a cherry tree in spring.
+; ============================================================
+
+; BRANCH draws one branch and the two smaller trees that sit on it.
+; :len is how long this branch is, :angle how far the two children lean.
+to branch :len :angle
+  ; The stopping rule. Without it the turtle would draw smaller and
+  ; smaller branches forever.
+  if :len < 5 [stop]
+  ; Thick, brown wood near the ground; thin, green twigs at the tips.
+  setpensize :len / 10
+  ifelse :len < 15 [setpencolor [60 170 60]] [setpencolor [120 75 40]]
+  forward :len
+  ; The left child
+  left :angle
+  branch :len * 0.7 :angle
+  ; The right child: turn twice as far to swing past the middle
+  right 2 * :angle
+  branch :len * 0.7 :angle
+  ; Undo the turns and walk back down. Because every BRANCH puts the
+  ; turtle back exactly where it found it, the parent can carry on.
+  left :angle
+  back :len
+end
+
+; TREE moves the turtle to the bottom of the screen and starts growing.
+to tree :size :angle
+  penup setxy 0 -270 setheading 0 pendown
+  branch :size :angle
+end
+
+clearscreen hideturtle
+setbackground [235 245 255]
+tree 130 25

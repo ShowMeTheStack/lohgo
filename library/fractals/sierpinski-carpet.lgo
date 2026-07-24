@@ -1,0 +1,62 @@
+; ============================================================
+; TITLE:    Sierpinski Carpet
+; CATEGORY: Fractals
+; LEVEL:    Intermediate
+; TAGS:     recursion, squares, FILLED, color gradient
+; SUMMARY:  Weaves the Sierpinski carpet out of eight smaller carpets around an empty middle.
+; ============================================================
+;
+; WHAT IT DOES
+;   Cut a square into a 3 by 3 grid and throw away the middle. Do
+;   the same to each of the eight squares that are left, and again,
+;   and again. Only the tiniest squares are actually painted, and
+;   their color slides from blue at the bottom left to orange at the
+;   top right.
+;
+; HOW TO USE
+;   Press Run. Change the depth (last line) to 1, 2, 3 or 5.
+;
+; CONCEPTS YOU WILL LEARN
+;   * recursion with two FOR loops inside it
+;   * skipping one case with IF
+;   * computing an RGB color from the turtle's position
+;   * why painting only the smallest pieces avoids overlaps
+;
+; THINGS TO TRY
+;   * Also skip the four corners. Which fractal do you get?
+;   * Paint every tiny square a random color with RANDOM 256.
+;   * Depth 5 makes 32768 squares. How long does it take?
+; ============================================================
+
+; TILE paints one solid square with its bottom left corner at (x, y).
+to tile :x :y :size
+  ; Mix the color from the position: x and y run from -243 to 243,
+  ; so (x + 243) / 486 goes from 0 to 1 across the carpet.
+  localmake "a (:x + 243) / 486
+  localmake "b (:y + 243) / 486
+  localmake "mix (:a + :b) / 2
+  penup setxy :x :y setheading 0
+  filled (list 40 + 210 * :mix 80 + 60 * :a 230 - 200 * :mix) [
+    repeat 4 [forward :size right 90]
+  ]
+end
+
+; CARPET splits the square into nine and recurses into eight of them.
+to carpet :x :y :size :depth
+  if :depth = 0 [tile :x :y :size stop]
+  localmake "third :size / 3
+  for [row 0 2] [
+    for [col 0 2] [
+      ; The middle square, row 1 column 1, is the hole.
+      if not and :row = 1 :col = 1 [
+        carpet :x + :col * :third :y + :row * :third :third :depth - 1
+      ]
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [250 246 236]
+; 486 is 2 times 3 to the power 5, so every tiny square is a whole
+; number of steps wide at depth 4 and 5.
+carpet -243 -243 486 4

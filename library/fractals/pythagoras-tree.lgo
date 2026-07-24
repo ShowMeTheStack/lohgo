@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Pythagoras Tree
+; CATEGORY: Fractals
+; LEVEL:    Intermediate
+; TAGS:     recursion, squares, Pythagoras, FILLED, tree
+; SUMMARY:  Builds a tree out of squares, with two smaller squares on top of every square.
+; ============================================================
+;
+; WHAT IT DOES
+;   On top of a square sits a right angled triangle, and on its two
+;   short sides sit two smaller squares. By Pythagoras, their areas
+;   add up to the area of the big one. Repeat on every square and a
+;   tree appears, brown at the trunk and green at the leaves.
+;
+; HOW TO USE
+;   Press Run. Change :lean near the bottom to make a lopsided tree.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the Pythagorean theorem in a picture
+;   * SIN and COS to size the two children for any angle
+;   * FILLED squares that the turtle walks around
+;   * blending two colors by the depth of the recursion
+;
+; THINGS TO TRY
+;   * Set :lean to 30 or 60 for a tree blowing in the wind.
+;   * Raise the depth to 12. How many squares is that?
+;   * Put the pen down (and leave out FILLED) to see only outlines.
+; ============================================================
+
+; BLEND gives a color between brown (depth = max) and leaf green
+; (depth = 1). :t goes from 0 to 1 as the squares get smaller.
+to blend :depth
+  localmake "t 1 - :depth / :maxdepth
+  output (list 110 - 60 * :t 70 + 150 * :t 40 + 20 * :t)
+end
+
+; BOX paints one square to the right of the turtle and comes back.
+to box :size :depth
+  filled blend :depth [repeat 4 [forward :size right 90]]
+end
+
+; PTREE starts at the bottom left corner of a square, facing up the
+; left edge, and finishes in the same place.
+to ptree :size :depth
+  if :depth = 0 [stop]
+  box :size :depth
+  ; Climb to the top left corner and lean left for the first child.
+  forward :size
+  left :lean
+  ptree :size * cos :lean :depth - 1
+  ; Walk across the first child's base to the tip of the triangle,
+  ; then face along the base of the second child.
+  right 90
+  forward :size * cos :lean
+  ptree :size * sin :lean :depth - 1
+  ; Retrace the steps exactly, in reverse.
+  back :size * cos :lean
+  left 90
+  right :lean
+  back :size
+end
+
+clearscreen hideturtle
+setbackground [230 240 250]
+make "lean 45
+make "maxdepth 11
+; The pen stays up: FILLED still paints each square, and without
+; outlines the leaves blend into soft clumps of green.
+penup setxy -45 -270 setheading 0
+ptree 90 :maxdepth

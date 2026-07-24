@@ -1,0 +1,83 @@
+; ============================================================
+; TITLE:    Barnsley Fern
+; CATEGORY: Fractals
+; LEVEL:    Advanced
+; TAGS:     IFS, random, probability, DOT, affine maps, data tables
+; SUMMARY:  Paints Michael Barnsley's fern with 20000 dots placed by four random rules.
+; ============================================================
+;
+; WHAT IT DOES
+;   Four simple rules each move a point: one makes the stem, one
+;   makes the next smaller copy of the whole fern, and two make the
+;   lowest left and right leaflets. Picking one rule at random again
+;   and again (some more often than others) and putting a dot at
+;   every new point paints a fern that looks almost real.
+;
+; HOW TO USE
+;   Press Run and watch the fern appear. The rules are a table in
+;   SETUP.RULES; change a number and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * an iterated function system (IFS)
+;   * rules as data: each rule is a list of seven numbers
+;   * choosing with given chances: RANDOM 100 and running totals
+;   * scaling math coordinates to screen coordinates
+;
+; THINGS TO TRY
+;   * Change the 85 in the main rule to 75. The fern gets shorter.
+;   * Change the 0.04 in the main rule to -0.04 so it bends the
+;     other way.
+;   * Color the dots by which rule made them.
+; ============================================================
+
+; Each rule is [a b c d e f chance]. It moves the point (x, y) to
+;   new x = a x + b y + e
+;   new y = c x + d y + f
+; and is used chance times out of 100.
+to setup.rules
+  make "rules [
+    [0     0     0     0.16  0  0     1]
+    [0.85  0.04 -0.04  0.85  0  1.6   85]
+    [0.2  -0.26  0.23  0.22  0  1.6   7]
+    [-0.15 0.28  0.26  0.24  0  0.44  7]
+  ]
+end
+
+; CHOOSE.RULE throws a 100 sided die and walks the table, adding up
+; the chances until the total passes the throw.
+to choose.rule
+  localmake "throw random 100
+  localmake "total 0
+  foreach :rules [
+    make "total :total + item 7 ?
+    if :throw < :total [output ?]
+  ]
+  output last :rules
+end
+
+; APPLY.RULE changes the global point :x :y using one rule.
+to apply.rule :r
+  localmake "nx (item 1 :r) * :x + (item 2 :r) * :y + item 5 :r
+  make "y (item 3 :r) * :x + (item 4 :r) * :y + item 6 :r
+  make "x :nx
+end
+
+; PAINT plays the game :n times. The fern lives between x = -2.2
+; and 2.7 and between y = 0 and 10, so it is scaled by 56 and moved
+; down to fit the screen.
+to paint :n
+  make "x 0
+  make "y 0
+  repeat :n [
+    apply.rule choose.rule
+    ; Higher dots are a little lighter, like new growth.
+    setpencolor (list 20 + 6 * :y 110 + 12 * :y 40)
+    dot list 56 * :x 56 * :y - 285
+  ]
+end
+
+clearscreen hideturtle
+setbackground [12 20 16]
+setpensize 1.5
+setup.rules
+paint 20000

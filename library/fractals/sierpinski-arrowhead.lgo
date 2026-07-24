@@ -1,0 +1,67 @@
+; ============================================================
+; TITLE:    Sierpinski Arrowhead
+; CATEGORY: Fractals
+; LEVEL:    Advanced
+; TAGS:     recursion, arrowhead curve, parity, single path
+; SUMMARY:  Draws the Sierpinski triangle as one unbroken wiggly path, the arrowhead curve.
+; ============================================================
+;
+; WHAT IT DOES
+;   The usual Sierpinski triangle is drawn as many separate
+;   triangles. The arrowhead curve traces the same shape in a single
+;   stroke that never crosses itself. Each level is three half sized
+;   copies, the outer two mirrored. The program shows levels 2, 4
+;   and 6 small on the left, then level 8 big.
+;
+; HOW TO USE
+;   Press Run. Read ARROWHEAD to see how one :turn input does the
+;   work of two mirror image procedures.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a :turn input whose sign flips a whole sub-curve
+;   * turning at the start and undoing it at the end, so a sub-curve
+;     behaves like one straight step from corner to corner
+;   * reusing one procedure to draw at several sizes and places
+;
+; THINGS TO TRY
+;   * Draw levels 1, 3 and 5. What shape is level 1?
+;   * Remove the first and last turn in ARROWHEAD and see it break.
+;   * Change the 60 degree turns to 90. What curve appears?
+;   * Color the three sub-curves of the top level differently.
+; ============================================================
+
+; ARROWHEAD draws the curve between two corners :len apart, starting
+; and finishing with the turtle facing from the first corner to the
+; second. :turn is 60 or -60; the two outer copies get the opposite
+; turn, which mirrors them. (As an L-system: A -> B-A-B, B -> A+B+A.)
+to arrowhead :len :level :turn
+  if :level = 0 [forward :len stop]
+  left :turn
+  arrowhead :len / 2 :level - 1 minus :turn
+  right :turn
+  arrowhead :len / 2 :level - 1 :turn
+  right :turn
+  arrowhead :len / 2 :level - 1 minus :turn
+  left :turn
+end
+
+; TRIANGLE.AT draws a level :level arrowhead with its base from
+; (x, y) to (x + len, y). Because ARROWHEAD turns back at the end by
+; as much as it turned at the start, the turtle always finishes
+; facing east again, at the right hand corner.
+to triangle.at :x :y :len :level :color
+  penup setxy :x :y setheading 90 pendown
+  setpencolor :color
+  arrowhead :len :level 60
+end
+
+clearscreen hideturtle
+setbackground [252 250 245]
+setpensize 2
+; Three small ones down the left side show how the curve grows...
+triangle.at -380 160 130 2 [200 80 60]
+triangle.at -380 10 130 4 [220 150 40]
+triangle.at -380 -140 130 6 [60 150 90]
+; ...and one big one fills the rest of the screen.
+setpensize 1.2
+triangle.at -170 -230 540 8 [40 80 170]

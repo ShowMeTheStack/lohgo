@@ -1,0 +1,61 @@
+; ============================================================
+; TITLE:    Levy C Curve
+; CATEGORY: Fractals
+; LEVEL:    Intermediate
+; TAGS:     recursion, Levy curve, color gradient, global counter
+; SUMMARY:  Draws the Levy C curve with a rainbow of colors that follows the turtle's path.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every straight line is replaced by two shorter lines that meet
+;   at a right angle, like the two sides of a tent. Repeat that
+;   fourteen times and the line grows into a lacy letter C. The pen
+;   color changes slowly as the turtle walks, so you can follow the
+;   order in which the curve was drawn.
+;
+; HOW TO USE
+;   Press Run. Change the level (last line) between 1 and 14.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the square root of 2 as a shrink factor
+;   * a global counter that recursion keeps adding to
+;   * turning a number into a color with SIN
+;
+; THINGS TO TRY
+;   * Use 60 degrees instead of 45 (and shrink by 0.577 instead).
+;   * Walk the curve twice, the second time with heading + 180.
+;   * Color by the level instead of by the counter.
+; ============================================================
+
+; SHADE turns the number of segments drawn so far into a color.
+; Three sine waves a third of a turn apart make a smooth rainbow.
+to shade :n
+  localmake "a :n / 30
+  setpencolor (list 128 + 127 * sin :a 128 + 127 * sin :a + 120 128 + 127 * sin :a + 240)
+end
+
+; LEVY draws the curve. At level 0 it is one segment of the rainbow.
+to levy :len :level
+  if :level = 0 [
+    shade :drawn
+    make "drawn :drawn + 1
+    forward :len
+    stop
+  ]
+  ; Two legs at right angles: each leg is the full length divided by
+  ; the square root of 2, by Pythagoras.
+  left 45
+  levy :len / sqrt 2 :level - 1
+  right 90
+  levy :len / sqrt 2 :level - 1
+  left 45
+end
+
+clearscreen hideturtle
+setbackground [245 245 240]
+setpensize 1.5
+make "drawn 0
+; The C bulges upward and the base line goes left to right, so
+; start low and to the left.
+penup setxy -150 -114 setheading 90 pendown
+levy 300 14

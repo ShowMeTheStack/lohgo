@@ -1,0 +1,58 @@
+; ============================================================
+; TITLE:    Koch Curve, Step by Step
+; CATEGORY: Fractals
+; LEVEL:    Beginner
+; TAGS:     recursion, Koch curve, fractal, levels
+; SUMMARY:  Draws the Koch curve at levels 0 to 4, one under the other, to show how it grows.
+; ============================================================
+;
+; WHAT IT DOES
+;   The top row is a plain line. On the next row its middle third
+;   is replaced by a little tent. On every row after that, each
+;   straight piece gets its own tent. Five rows show the rule
+;   working, from simple to fancy.
+;
+; HOW TO USE
+;   Press Run. Try changing the colors or the row spacing.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the Koch rule: forward, left 60, right 120, left 60
+;   * recursion where level 0 is just FORWARD
+;   * FOR with a counter that is used as an input
+;
+; THINGS TO TRY
+;   * Make the tent point down by swapping LEFT and RIGHT.
+;   * Turn 85 instead of 60 (and 170 instead of 120). What happens?
+;   * Add a sixth row. Can you still see the difference?
+; ============================================================
+
+; KOCH draws one Koch curve of length :len.
+to koch :len :level
+  ; At level 0 there is nothing clever to do: just a straight line.
+  if :level = 0 [forward :len stop]
+  ; Otherwise the line is four lines a third as long, with a bump.
+  koch :len / 3 :level - 1
+  left 60
+  koch :len / 3 :level - 1
+  right 120
+  koch :len / 3 :level - 1
+  left 60
+  koch :len / 3 :level - 1
+end
+
+; ROW draws one curve at the given level and height, with a caption.
+to row :level :y
+  penup setxy -330 :y + 5 pendown
+  setpencolor 0
+  label word "level| | :level
+  penup setxy -180 :y setheading 90 pendown
+  setpencolor item :level + 1 [1 10 13 4 14]
+  ; A curve 360 long has a tent about 104 high, so rows 112 apart
+  ; never bump into each other.
+  koch 360 :level
+end
+
+clearscreen hideturtle
+setbackground 7
+setpensize 2
+for [level 0 4] [row :level 230 - :level * 112]
