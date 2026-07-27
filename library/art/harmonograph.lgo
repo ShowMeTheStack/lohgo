@@ -1,0 +1,73 @@
+; ============================================================
+; TITLE:    Harmonograph
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Advanced
+; TAGS:     pendulum, sine waves, damping, EXP, Lissajous, generative
+; SUMMARY:  Imitates a Victorian harmonograph: swinging pendulums with friction draw a slowly shrinking pattern.
+; ============================================================
+;
+; WHAT IT DOES
+;   A harmonograph has pendulums that move a pen and a table. As they
+;   swing, friction makes each swing a little smaller, so the drawing
+;   spirals inward in delicate loops. This program adds two damped
+;   sine waves for x and two for y. Frequencies close to simple
+;   ratios like 2 : 3 make the most beautiful figures. The pen color
+;   fades as the swing dies down.
+;
+; HOW TO USE
+;   Press Run; each run picks slightly different frequencies and
+;   phases. Edit the list in DESIGN to choose them yourself.
+;
+; CONCEPTS YOU WILL LEARN
+;   * damped oscillation: amplitude times EXP of minus time
+;   * adding waves together (superposition)
+;   * how tiny frequency differences make the figure rotate
+;   * blending colors over time
+;
+; THINGS TO TRY
+;   * Set every frequency to exactly 2 and 3. What changes?
+;   * Make :damping 0 for a pattern that never shrinks.
+;   * Draw three harmonographs on top of each other.
+; ============================================================
+
+; WAVE is one damped pendulum: amplitude, frequency, phase, at time t.
+to wave :amp :freq :phase :t
+  output :amp * (sin :freq * :t + :phase) * exp minus :damping * :t
+end
+
+; DESIGN picks the frequencies: near 2 for x and near 3 for y, with a
+; small random detune that makes the figure slowly turn.
+to design
+  make "fx1 2 + (random -10 10) / 1000
+  make "fx2 3 + (random -10 10) / 1000
+  make "fy1 3 + (random -10 10) / 1000
+  make "fy2 2 + (random -10 10) / 1000
+  make "px1 random 360
+  make "px2 random 360
+  make "py1 random 360
+  make "py2 random 360
+end
+
+; SWING draws the figure from time 0 to :stop, in steps of :dt.
+to swing :stop :dt
+  penup
+  for [t 0 :stop :dt] [
+    localmake "x (wave 150 :fx1 :px1 :t) + (wave 110 :fx2 :px2 :t)
+    localmake "y (wave 150 :fy1 :py1 :t) + (wave 110 :fy2 :py2 :t)
+    ; Gold at the start, fading to violet as the swing dies.
+    localmake "fade :t / :stop
+    setpencolor (list 250 - 110 * :fade 200 - 140 * :fade 90 + 130 * :fade)
+    setxy :x :y
+    pendown
+  ]
+end
+
+clearscreen hideturtle
+setbackground [18 14 30]
+; :damping is how quickly friction steals the swing. Time t counts
+; in degrees, so a pendulum with frequency 2 swings once every 180
+; and 18000 gives it 100 swings.
+make "damping 0.00012
+design
+setpensize 1
+swing 18000 3

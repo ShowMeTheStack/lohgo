@@ -1,0 +1,55 @@
+; ============================================================
+; TITLE:    String Art
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Beginner
+; TAGS:     straight lines, curves, FOR, SETXY, color
+; SUMMARY:  Makes curves from nothing but straight lines, like string stretched between nails.
+; ============================================================
+;
+; WHAT IT DOES
+;   Imagine nails along two sides of a board. Stretch a string from
+;   the first nail on one side to the last on the other, then the
+;   second to the second last, and so on. The strings are straight,
+;   yet together they make a smooth curve. This program does that in
+;   all four corners of a square, each in its own color.
+;
+; HOW TO USE
+;   Press Run. Change :nails at the bottom for more or fewer strings.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FOR loops that count nails
+;   * SETXY to draw a line between two exact points
+;   * how many straight lines can look like a curve
+;
+; THINGS TO TRY
+;   * Use 10 nails, then 40. Which looks smoother?
+;   * Only draw two opposite corners.
+;   * Use black strings on a white background.
+; ============================================================
+
+; STRING stretches one string from (x1, y1) to (x2, y2).
+to string :x1 :y1 :x2 :y2
+  penup setxy :x1 :y1 pendown
+  setxy :x2 :y2
+end
+
+; CORNER fills the corner between two sides that meet at (cx, cy).
+; The nails run along the x side and the y side of the corner.
+; :dx and :dy say which way the sides go: 1 or -1.
+to corner :cx :cy :dx :dy :color
+  setpencolor :color
+  for [k 0 :nails] [
+    localmake "gap :k * :size / :nails
+    string :cx + :dx * :gap :cy :cx :cy + :dy * (:size - :gap)
+  ]
+end
+
+clearscreen hideturtle
+setbackground [20 20 40]
+setpensize 1.5
+make "nails 30
+make "size 260
+corner 0 0 1 1 [255 100 120]
+corner 0 0 -1 1 [255 200 80]
+corner 0 0 -1 -1 [90 200 255]
+corner 0 0 1 -1 [140 230 120]

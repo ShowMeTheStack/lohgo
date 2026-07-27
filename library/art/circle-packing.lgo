@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Circle Packing
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Advanced
+; TAGS:     geometry, lists, search, DOT, random, packing
+; SUMMARY:  Packs a frame with circles that grow as big as they can without touching each other or the edge.
+; ============================================================
+;
+; WHAT IT DOES
+;   The program tries random spots. For each spot it measures how
+;   far it is to the nearest circle already placed and to the edge
+;   of the frame. If there is room, it puts the biggest circle that
+;   fits there. Early circles are big; later ones squeeze into the
+;   gaps, so the frame fills up like a jar of pebbles. Every circle
+;   is a single DOT with a thick pen.
+;
+; HOW TO USE
+;   Press Run and watch the frame fill. Change :tries or :largest.
+;
+; CONCEPTS YOU WILL LEARN
+;   * storing circles as [x y radius] lists in a list
+;   * finding a minimum by scanning a list with FOREACH
+;   * a search that gives up after many failed tries
+;   * DOT with SETPENSIZE equal to a diameter to paint a disk
+;
+; THINGS TO TRY
+;   * Pack a round frame instead of a rectangle.
+;   * Make :gap 0 so the circles touch.
+;   * Color the circles by size: big ones blue, small ones orange.
+; ============================================================
+
+make "colors [[240 100 90] [250 180 70] [90 190 160] [70 140 220] [150 110 210] [240 130 170]]
+
+; ROOM outputs the radius of the biggest circle that fits at (x, y):
+; the distance to the frame or to the nearest circle, minus a gap.
+to room :x :y
+  ; distance to the four sides of the frame (360 by 260 from center)
+  localmake "best min.of (list 360 - abs :x 260 - abs :y :largest)
+  foreach :circles [
+    localmake "d (distance.between :x :y item 1 ? item 2 ?) - item 3 ?
+    if :d < :best [make "best :d]
+    ; Inside another circle already? No room at all.
+    if :best < 0 [output 0]
+  ]
+  output :best - :gap
+end
+
+; DISTANCE.BETWEEN works out the distance between two points.
+to distance.between :x1 :y1 :x2 :y2
+  output sqrt ((:x1 - :x2) * (:x1 - :x2) + (:y1 - :y2) * (:y1 - :y2))
+end
+
+; MIN.OF outputs the smallest number in a list.
+to min.of :numbers
+  output reduce [ifelse ?1 < ?2 [?1] [?2]] :numbers
+end
+
+; PLACE tries one random spot and adds a circle if it is big enough.
+to place
+  localmake "x (random -360 360)
+  localmake "y (random -260 260)
+  localmake "r room :x :y
+  if :r < 3 [stop]
+  make "circles fput (list :x :y :r) :circles
+  setpencolor pick :colors
+  setpensize 2 * :r
+  dot list :x :y
+  ; a small light spot makes each circle look like a shiny bead
+  setpencolor [255 255 255]
+  setpensize :r / 3
+  dot list :x - :r / 3 :y + :r / 3
+end
+
+; FRAME draws the border that the circles must stay inside.
+to frame
+  setpencolor [60 60 70] setpensize 4
+  penup setxy -362 -262 setheading 0 pendown
+  repeat 2 [forward 524 right 90 forward 724 right 90]
+end
+
+clearscreen hideturtle
+setbackground [30 30 40]
+make "circles []
+make "largest 90
+make "gap 2
+make "tries 1000
+frame
+repeat :tries [place]
+print (sentence [Placed] count :circles [circles in] :tries [tries.])

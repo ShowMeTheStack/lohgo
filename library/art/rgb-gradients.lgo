@@ -1,0 +1,71 @@
+; ============================================================
+; TITLE:    RGB Gradients
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Intermediate
+; TAGS:     color, RGB, gradient, MAP, lists, interpolation
+; SUMMARY:  Paints color gradients between any number of RGB colors, using MAP to blend lists.
+; ============================================================
+;
+; WHAT IT DOES
+;   A gradient is a smooth slide from one color to another. This
+;   program blends two RGB lists with one MAP, then builds gradients
+;   that pass through several color stops: a sunrise, an ocean, a
+;   fire, a rainbow and a grey scale. Each is painted as a stack of
+;   thin vertical lines with its name underneath.
+;
+; HOW TO USE
+;   Press Run. Add your own gradient at the bottom with a name and a
+;   list of colors.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MAP with two lists at once: (MAP [...] :a :b)
+;   * linear interpolation: a + t * (b - a)
+;   * choosing which pair of color stops a point falls between
+;   * ROUND to keep color values whole
+;
+; THINGS TO TRY
+;   * Make a gradient with only two colors that are opposite on the
+;     color wheel, like blue and orange. What appears in the middle?
+;   * Paint the gradients in rings instead of bars.
+;   * Add a gradient with 8 stops.
+; ============================================================
+
+; BLEND mixes two colors. :t = 0 gives :a and :t = 1 gives :b.
+; MAP walks through both lists together: ?1 is from :a, ?2 from :b.
+to blend :a :b :t
+  output (map [round ?1 + :t * (?2 - ?1)] :a :b)
+end
+
+; COLOR.AT finds the color a fraction :t of the way along a list of
+; stops. With 3 stops, 0 to 0.5 blends stops 1 and 2, and 0.5 to 1
+; blends stops 2 and 3.
+to color.at :stops :t
+  localmake "gaps (count :stops) - 1
+  localmake "where :t * :gaps
+  localmake "k int :where
+  ; The very last point sits exactly on the last stop.
+  if :k >= :gaps [output last :stops]
+  output blend item :k + 1 :stops item :k + 2 :stops :where - :k
+end
+
+; BAR paints a gradient 640 wide and 70 tall with its name below.
+to bar :y :name :stops
+  setpensize 2
+  for [x 0 640 2] [
+    setpencolor color.at :stops :x / 640
+    penup setxy :x - 320 :y pendown
+    setheading 0 forward 70
+  ]
+  setpencolor [70 70 70]
+  penup setxy -320 :y - 18 pendown
+  label :name
+end
+
+clearscreen hideturtle
+setbackground [250 250 250]
+setlabelheight 14
+bar 190 "sunrise [[40 30 90] [230 80 90] [255 200 90]]
+bar 85 "ocean [[0 30 60] [0 120 160] [120 220 220] [240 250 240]]
+bar -20 "fire [[30 0 0] [200 30 0] [255 150 0] [255 255 180]]
+bar -125 "rainbow [[255 0 0] [255 160 0] [255 255 0] [0 200 0] [0 120 255] [130 0 200]]
+bar -230 "greys [[0 0 0] [255 255 255]]

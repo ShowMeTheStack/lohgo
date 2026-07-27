@@ -1,0 +1,86 @@
+; ============================================================
+; TITLE:    Stained Glass Rose Window
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Intermediate
+; TAGS:     FILLED, polar coordinates, SIN, COS, symmetry, color
+; SUMMARY:  Designs a round stained glass window of jewel colored panes with dark lead lines.
+; ============================================================
+;
+; WHAT IT DOES
+;   A rose window is a circle divided into rings, and each ring into
+;   panes. Every pane is a curved tile painted in a jewel color.
+;   The colors are chosen at random but repeat around the circle in
+;   a pattern, so the window looks planned. Thick dark lead lines
+;   are drawn over the joins, just like real glass.
+;
+; HOW TO USE
+;   Press Run for a new window. Change :sectors (try 6, 8, 16).
+;
+; CONCEPTS YOU WILL LEARN
+;   * polar coordinates: a radius and an angle turned into x and y
+;   * FILLED shapes that the turtle walks with SETXY
+;   * symmetry by reusing a pattern list with MODULO
+;   * drawing the lead on top after the glass
+;
+; THINGS TO TRY
+;   * Make the outer ring have twice as many panes as the inner one.
+;   * Use only blues and purples for a cool window.
+;   * Change the repeat length of the pattern from 3 to 2 or 4.
+; ============================================================
+
+make "jewels [[180 20 40] [20 60 160] [30 130 70] [220 160 20]
+              [120 30 140] [20 140 170] [200 80 20]]
+
+; POLAR moves the turtle to radius :r and angle :a around the middle.
+to polar :r :a
+  setxy :r * sin :a :r * cos :a
+end
+
+; PANE paints the piece of ring between radius r1 and r2, from angle
+; a1 to angle a2. It walks out along one side, round the outer arc,
+; back in along the other side and round the inner arc.
+to pane :r1 :r2 :a1 :a2 :color
+  penup polar :r1 :a1
+  filled :color [
+    for [a :a1 :a2 2] [polar :r2 :a]
+    for [a :a2 :a1 -2] [polar :r1 :a]
+  ]
+end
+
+; RING paints one ring. Each ring picks :repeat random jewels and
+; uses them over and over around the circle.
+to ring :r1 :r2 :repeat
+  localmake "pattern []
+  repeat :repeat [make "pattern lput pick :jewels :pattern]
+  localmake "width 360 / :sectors
+  for [k 0 :sectors - 1] [
+    pane :r1 :r2 :k * :width (:k + 1) * :width ~
+         item 1 + modulo :k :repeat :pattern
+  ]
+end
+
+; LEAD draws the dark lines: the circles between the rings and the
+; spokes between the panes.
+to lead :radii
+  setpencolor [35 30 30]
+  setpensize 6
+  foreach :radii [
+    penup home pendown
+    arc 360 ?
+  ]
+  for [k 0 :sectors - 1] [
+    penup polar first :radii :k * 360 / :sectors pendown
+    polar last :radii :k * 360 / :sectors
+  ]
+end
+
+clearscreen hideturtle
+setbackground [60 55 60]
+make "sectors 12
+make "radii [50 120 190 260]
+; the round center, then three rings of panes
+penup home setpencolor pick :jewels setpensize 100 dot [0 0]
+ring 50 120 2
+ring 120 190 3
+ring 190 260 4
+lead :radii

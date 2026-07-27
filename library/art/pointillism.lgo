@@ -1,0 +1,73 @@
+; ============================================================
+; TITLE:    Pointillist Landscape
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Intermediate
+; TAGS:     DOT, random, color jitter, functions, landscape
+; SUMMARY:  Paints a summer landscape out of thousands of colored dots, like Georges Seurat.
+; ============================================================
+;
+; WHAT IT DOES
+;   Seurat painted with tiny dabs of pure color instead of brush
+;   strokes. This program throws dots at random places. For every
+;   dot it asks "what is here in the scene: sky, sun, hill, field or
+;   tree?" and picks that color, then nudges it a little at random so
+;   neighboring dots never quite match. Up close it is just dots;
+;   from a distance it is a landscape.
+;
+; HOW TO USE
+;   Press Run and lean back from the screen. Change :dots for a
+;   denser or sparser painting.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a procedure that OUTPUTs a color for any point
+;   * describing shapes with tests: inside a circle, below a curve
+;   * jitter: adding a small random amount to each color part
+;   * many small random steps building a big picture
+;
+; THINGS TO TRY
+;   * Move the sun, or make it a moon in a night sky.
+;   * Make :spread 0 for flat colors, or 70 for a wild painting.
+;   * Add a lake: a flat ellipse of blue near the bottom.
+; ============================================================
+
+; SCENE outputs the base color of the landscape at (x, y). The tests
+; go from front to back: the first one that matches wins.
+to scene :x :y
+  ; tree crown: a circle centered at (-220, -20) with radius 75
+  if (distance.to :x :y -220 -20) < 75 [output [40 110 50]]
+  ; tree trunk: a thin rectangle under the crown
+  if and (abs :x + 220) < 10 :y < -60 [output [100 70 40]]
+  ; the field: below a gentle wave
+  if :y < -110 + 25 * sin :x [output [200 180 70]]
+  ; the hill: a big bump in the middle
+  if :y < 40 - (:x * :x) / 900 [output [90 160 80]]
+  ; the sun
+  if (distance.to :x :y 180 150) < 55 [output [255 220 90]]
+  ; the sky, lighter near the horizon
+  output (list 110 + :y / -4 170 + :y / -6 240)
+end
+
+; DISTANCE.TO measures between two points, by Pythagoras.
+to distance.to :x1 :y1 :x2 :y2
+  output sqrt ((:x1 - :x2) * (:x1 - :x2) + (:y1 - :y2) * (:y1 - :y2))
+end
+
+; JITTER moves each part of a color up or down by a random amount.
+to jitter :color
+  output map [? + (random minus :spread :spread)] :color
+end
+
+; DAB paints one dot at a random place.
+to dab
+  localmake "x (random -400 400)
+  localmake "y (random -300 300)
+  setpencolor jitter scene :x :y
+  dot list :x :y
+end
+
+clearscreen hideturtle
+setbackground [235 230 215]
+make "spread 35
+make "dots 12000
+setpensize 9
+repeat :dots [dab]

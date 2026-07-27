@@ -1,0 +1,106 @@
+; ============================================================
+; TITLE:    Color Mixer
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Advanced
+; TAGS:     READLIST, input checking, RGB, hexadecimal, interactive
+; SUMMARY:  Asks for red, green and blue amounts, checks the answers, and paints a swatch with its hex code and opposite color.
+; ============================================================
+;
+; WHAT IT DOES
+;   You type how much red, green and blue light to mix, each from 0
+;   to 255. The program paints a big swatch of your color, writes its
+;   web color code (like #FF8800) underneath, and paints the
+;   complementary color beside it. Every color you mix is added to a
+;   palette strip along the bottom.
+;
+; HOW TO USE
+;   Press Run, then type answers in the command center and press
+;   Enter. Type quit at any question to stop. Answers that are not
+;   whole numbers from 0 to 255 are politely refused.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READLIST and checking input before trusting it
+;   * NUMBERP, INTEGER tests and range tests
+;   * converting a number to hexadecimal with QUOTIENT, INT and
+;     REMAINDER
+;   * THROW and CATCH to leave nested loops when the user quits
+;   * keeping a growing list (the palette) between rounds
+;
+; THINGS TO TRY
+;   * Mix pure yellow: 255, 255, 0. Is that what you expected?
+;   * Add a question for a "brightness" that scales all three.
+;   * Show the grey with the same brightness next to the color.
+; ============================================================
+
+; ASK.AMOUNT keeps asking until it gets a whole number 0 to 255.
+to ask.amount :name
+  forever [
+    print (sentence [How much] :name [\(0 to 255\)?])
+    localmake "answer readlist
+    if emptyp :answer [print [Please type a number.]]
+    if not emptyp :answer [
+      localmake "a first :answer
+      if equalp lowercase :a "quit [throw "quit]
+      if valid? :a [output :a]
+      print (sentence :a [is not a whole number from 0 to 255.])
+    ]
+  ]
+end
+
+; VALID? says whether a word is a whole number from 0 to 255.
+to valid? :a
+  if not numberp :a [output "false]
+  if not equalp :a int :a [output "false]
+  output and :a >= 0 :a <= 255
+end
+
+; HEX2 turns 0 to 255 into two hex digits, like 255 -> FF.
+to hex2 :n
+  localmake "digits "0123456789ABCDEF
+  ; QUOTIENT 200 16 is 12.5, so INT keeps just the whole sixteens.
+  output word item 1 + int quotient :n 16 :digits item 1 + remainder :n 16 :digits
+end
+
+; SWATCH paints a square of a color with its bottom left at (x, y).
+to swatch :x :y :size :color
+  penup setxy :x :y setheading 0
+  filled :color [repeat 4 [forward :size right 90]]
+end
+
+; SHOW.MIX paints the color, its code, its opposite and the palette.
+to show.mix :color
+  clean
+  swatch -300 -60 260 :color
+  ; The complement is what is left of each channel: 255 - value.
+  localmake "opposite map [255 - ?] :color
+  swatch 80 40 160 :opposite
+  setpencolor [40 40 40]
+  penup setxy -300 -90 pendown
+  label word "# (word hex2 item 1 :color hex2 item 2 :color hex2 item 3 :color)
+  penup setxy 80 15 pendown
+  label [opposite color]
+  make "palette lput :color :palette
+  ; Keep only the last ten swatches on the strip.
+  if (count :palette) > 10 [make "palette butfirst :palette]
+  foreach :palette [swatch -380 + 76 * (# - 1) -270 60 ?]
+end
+
+; MIXER asks for colors until the user types quit.
+to mixer
+  forever [
+    localmake "r ask.amount "red
+    localmake "g ask.amount "green
+    localmake "b ask.amount "blue
+    show.mix (list :r :g :b)
+    print [Here is your color. Let's mix another!]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [235 235 230]
+setlabelheight 20
+make "palette []
+print [Color Mixer: type an amount for each color and press Enter.]
+print [Type quit at any time to stop.]
+catch "quit [mixer]
+print [Goodbye! Your palette is at the bottom of the turtle world.]

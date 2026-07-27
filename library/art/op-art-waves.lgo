@@ -1,0 +1,55 @@
+; ============================================================
+; TITLE:    Op Art Waves
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Intermediate
+; TAGS:     op art, sine waves, FILLED, stripes, illusion
+; SUMMARY:  Paints black and white stripes that bulge and ripple, an optical illusion in the style of Bridget Riley.
+; ============================================================
+;
+; WHAT IT DOES
+;   Thirty stripes cross the screen. Each stripe's edges follow a
+;   sine wave, and the waves get taller near the middle of the
+;   screen and flatter at the edges. Every other stripe is painted
+;   black. Stare at it and the picture seems to move.
+;
+; HOW TO USE
+;   Press Run. Change :waves or :height near the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a function of x that gives the edge of a stripe
+;   * FILLED shapes whose outline comes from a formula
+;   * walking along one edge and back along the other
+;   * stripes that touch but never overlap
+;
+; THINGS TO TRY
+;   * Set :height to 0. The illusion vanishes.
+;   * Use two colors that are close, like navy and teal.
+;   * Make the stripes vertical by swapping x and y in EDGE.Y.
+; ============================================================
+
+; EDGE.Y gives the height of the line between stripes number :k at
+; position :x. Stripes are 20 apart, and the wave is tallest at
+; x = 0 and dies away toward both sides.
+to edge.y :k :x
+  localmake "swell :height * (1 - (:x / 400) * (:x / 400))
+  output :k * 20 - 300 + :swell * sin (:x * :waves + :k * 12)
+end
+
+; STRIPE paints the strip between edge :k and edge :k + 1.
+to stripe :k :color
+  penup setxy -400 edge.y :k -400
+  filled :color [
+    ; along the lower edge, left to right...
+    for [x -400 400 10] [setxy :x edge.y :k :x]
+    ; ...and back along the upper edge, right to left.
+    for [x 400 -400 -10] [setxy :x edge.y :k + 1 :x]
+  ]
+end
+
+clearscreen hideturtle
+setbackground 7
+make "waves 1.4
+make "height 40
+; Only the black stripes need painting; white is the background.
+; Edges -1 to 31 cover the whole screen even where the waves dip.
+for [k -1 31 2] [stripe :k [10 10 10]]

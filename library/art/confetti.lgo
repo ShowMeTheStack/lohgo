@@ -1,0 +1,59 @@
+; ============================================================
+; TITLE:    Confetti Party
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Beginner
+; TAGS:     random, color, DOT, rectangles, party
+; SUMMARY:  Throws hundreds of colorful dots and paper strips across the screen at random.
+; ============================================================
+;
+; WHAT IT DOES
+;   Scatters round dots and little twisted paper strips everywhere,
+;   in bright party colors. Every run is different because the
+;   positions, sizes, colors and angles are all chosen at random.
+;
+; HOW TO USE
+;   Press Run again and again. Each time you get a new party.
+;
+; CONCEPTS YOU WILL LEARN
+;   * RANDOM to pick numbers, and (RANDOM low high) for a range
+;   * PICK to choose a random item from a list
+;   * DOT with a thick pen for round shapes
+;   * FILLED for small rotated rectangles
+;
+; THINGS TO TRY
+;   * Use only gold and silver colors for a fancy party.
+;   * Make 1000 dots instead of 300.
+;   * Use a black background. Do the colors look brighter?
+; ============================================================
+
+; The party colors, as [red green blue] lists.
+make "party [[255 70 90] [255 200 40] [60 200 120] [60 150 255]
+             [180 90 230] [255 130 40] [240 90 200] [40 210 220]]
+
+; JUMP lifts the pen and goes to a random place on the screen.
+to jump
+  penup
+  setxy (random -390 390) (random -290 290)
+end
+
+; ROUND.ONE drops one round piece of confetti.
+to round.one
+  jump
+  setpencolor pick :party
+  setpensize (random 4 14)
+  dot pos
+end
+
+; STRIP drops one paper strip, turned at a random angle.
+to strip
+  jump
+  setheading random 360
+  filled pick :party [
+    repeat 2 [forward 16 right 90 forward 6 right 90]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [255 250 240]
+repeat 300 [round.one]
+repeat 150 [strip]

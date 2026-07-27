@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    Misty Mountain Ranges
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Advanced
+; TAGS:     midpoint displacement, arrays, recursion, landscape, color
+; SUMMARY:  Grows random mountain ridges by midpoint displacement and paints them in misty layers.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each ridge starts as a straight line. The middle point is pushed
+;   up or down by a random amount, then the middles of the two halves
+;   are pushed by half as much, and so on, until the line is rough
+;   like a real mountain skyline. Five ridges are painted from the
+;   back to the front, each darker and nearer, over a sky that fades
+;   from peach to pale blue.
+;
+; HOW TO USE
+;   Press Run for a new landscape. Change :rough (0.4 to 0.7) to
+;   make gentle hills or jagged peaks.
+;
+; CONCEPTS YOU WILL LEARN
+;   * midpoint displacement, a classic way to make fractal terrain
+;   * arrays: ARRAY, ITEM and SETITEM to store 129 heights
+;   * recursion over halves of an array
+;   * painting with vertical strokes so nearer ridges cover farther
+;     ones
+;   * blending a color toward the sky color for distance haze
+;
+; THINGS TO TRY
+;   * Make 8 ridges instead of 5.
+;   * Add a sun between the sky and the back ridge.
+;   * Make the front ridge black for a silhouette at dusk.
+; ============================================================
+
+; DISPLACE fills the heights between positions :lo and :hi of the
+; array. The middle gets the average of the ends plus a random push
+; of up to :push steps; then each half is done with a smaller push.
+to displace :lo :hi :push
+  if :hi - :lo < 2 [stop]
+  localmake "mid (:lo + :hi) / 2
+  localmake "avg ((item :lo :ridge) + (item :hi :ridge)) / 2
+  setitem :mid :ridge :avg + (random minus :push :push)
+  displace :lo :mid int :push * :rough
+  displace :mid :hi int :push * :rough
+end
+
+; MAKE.RIDGE builds a ridge around height :base and outputs it as an
+; array of 129 heights (128 gaps of 6.25 steps cover 800 steps).
+to make.ridge :base :push
+  make "ridge array 129
+  setitem 1 :ridge :base + (random minus :push :push)
+  setitem 129 :ridge :base + (random minus :push :push)
+  displace 1 129 :push
+  output :ridge
+end
+
+; FADE mixes a color toward the sky color by :t (0 = no haze).
+to fade :color :t
+  output (map [?1 + :t * (?2 - ?1)] :color [200 210 230])
+end
+
+; PAINT.RIDGE paints the ground below a ridge with vertical strokes,
+; one per array entry. A later ridge simply paints over it.
+to paint.ridge :ridge :color
+  setpencolor :color
+  setpensize 7
+  for [i 1 129] [
+    penup setxy -400 + (:i - 1) * 6.25 -300 pendown
+    setheading 0
+    forward (item :i :ridge) + 300
+  ]
+end
+
+; SKY paints horizontal bands from peach at the bottom to pale blue.
+to sky
+  setpensize 6
+  for [y -300 300 5] [
+    localmake "t (:y + 300) / 600
+    setpencolor (list 250 - 70 * :t 200 + 20 * :t 170 + 80 * :t)
+    penup setxy -400 :y setheading 90 pendown
+    forward 800
+  ]
+end
+
+clearscreen hideturtle
+make "rough 0.6
+sky
+; five ridges, from far and high to near and low
+for [k 1 5] [
+  localmake "near :k / 5
+  paint.ridge make.ridge 150 - 70 * :k 190 - 25 * :k ~
+              fade [40 45 80] 0.85 - 0.8 * :near
+]

@@ -1,0 +1,64 @@
+; ============================================================
+; TITLE:    Truchet Tiles
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Intermediate
+; TAGS:     tiles, ARC, random, grid, patterns
+; SUMMARY:  Covers the screen with randomly turned tiles of quarter circles that join into winding paths.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every square tile has two quarter circles on it, in opposite
+;   corners. A tile can sit one of two ways. Choosing at random for
+;   each tile still gives smooth paths, because every quarter circle
+;   meets its neighbor in the middle of an edge. The pen color shifts
+;   across the screen so the paths glow from teal to pink.
+;
+; HOW TO USE
+;   Press Run for a new maze of curves. Change :tile for bigger or
+;   smaller tiles.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ARC: a curve drawn around the turtle without moving it
+;   * nested FOR loops for a grid
+;   * a coin toss with RANDOM 2
+;   * why local rules can make a pattern that looks planned
+;
+; THINGS TO TRY
+;   * Make every tile the same way round. What do you get?
+;   * Use (random 4) and four kinds of tiles, some with straight lines.
+;   * Make the pen as wide as half a tile.
+; ============================================================
+
+; QUARTER draws a quarter circle centered on the corner (x, y),
+; sweeping clockwise from :heading. Its radius is half a tile, so it
+; touches the middles of the two edges that meet at that corner.
+to quarter :x :y :heading
+  penup setxy :x :y setheading :heading pendown
+  arc 90 :tile / 2
+end
+
+; TILE draws the two quarter circles of the tile whose bottom left
+; corner is (x, y), one way round or the other.
+to tile :x :y
+  localmake "t :tile
+  ; Color from teal on the left to pink on the right.
+  localmake "mix (:x + 400) / 800
+  setpencolor (list 40 + 210 * :mix 200 - 90 * :mix 190)
+  ifelse 0 = random 2 [
+    ; bottom left and top right corners
+    quarter :x :y 0
+    quarter :x + :t :y + :t 180
+  ] [
+    ; top left and bottom right corners
+    quarter :x :y + :t 90
+    quarter :x + :t :y 270
+  ]
+end
+
+clearscreen hideturtle
+setbackground [20 20 35]
+make "tile 40
+setpensize 6
+for [y -300 260 :tile] [
+  for [x -400 360 :tile] [tile :x :y]
+]

@@ -1,0 +1,81 @@
+; ============================================================
+; TITLE:    Petal Mandala
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Intermediate
+; TAGS:     symmetry, petals, FILLED, REPEAT, rings, color
+; SUMMARY:  Draws a mandala of three rings of painted petals, each ring turned to fit between the last.
+; ============================================================
+;
+; WHAT IT DOES
+;   A petal is made of two curved lines that meet at both ends. The
+;   program paints rings of petals around the middle: 8 small ones,
+;   then 12, then 24. Between the rings it adds circles of dots, and
+;   a golden center finishes the flower.
+;
+; HOW TO USE
+;   Press Run. Change the numbers of petals or the colors in the
+;   calls at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * making a curve from many small FORWARD and RIGHT steps
+;   * the petal: two 90 degree curves with a 90 degree turn between
+;   * placing shapes evenly around a circle: 360 / count
+;   * offsetting a ring by half a step so petals fall in the gaps
+;
+; THINGS TO TRY
+;   * Use 6, 12 and 18 petals for a calmer flower.
+;   * Make the petals fatter with 120 degree curves (repeat 24).
+;   * Pick your own color pairs for each ring.
+; ============================================================
+
+; PETAL paints one petal :len long, pointing the way the turtle
+; faces, and leaves the turtle where it started.
+to petal :len :color
+  ; 18 steps of 5 degrees make a quarter circle. Its chord is the
+  ; petal length, so each step is len / 18 times about 1.11.
+  localmake "step :len * 1.11 / 18
+  left 45
+  filled :color [
+    repeat 2 [
+      repeat 18 [forward :step right 5]
+      right 90
+    ]
+  ]
+  right 45
+end
+
+; PETAL.RING puts :count petals around the middle, starting :inner
+; steps out, each :len long, in two alternating colors.
+to petal.ring :count :inner :len :colors :offset
+  ; a thin cream outline around every petal
+  setpencolor [250 240 230]
+  setpensize 1.5
+  for [k 1 :count] [
+    penup home
+    setheading :offset + :k * 360 / :count
+    forward :inner
+    pendown
+    petal :len item 1 + remainder :k 2 :colors
+  ]
+end
+
+; DOT.RING puts :count dots on a circle of radius :r.
+to dot.ring :count :r :size :color
+  setpencolor :color
+  setpensize :size
+  for [k 1 :count] [
+    penup home setheading :k * 360 / :count forward :r
+    dot pos
+  ]
+end
+
+clearscreen hideturtle
+setbackground [30 20 45]
+petal.ring 8 25 70 [[230 80 120] [250 150 90]] 0
+dot.ring 16 105 6 [250 220 120]
+petal.ring 12 115 75 [[90 160 230] [140 110 220]] 15
+dot.ring 24 200 7 [250 220 120]
+petal.ring 24 210 70 [[80 200 160] [60 150 200]] 7.5
+; the golden center
+setpencolor [250 200 80] setpensize 36 dot [0 0]
+setpencolor [255 240 170] setpensize 14 dot [0 0]

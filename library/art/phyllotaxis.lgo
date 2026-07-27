@@ -1,0 +1,69 @@
+; ============================================================
+; TITLE:    Sunflower Spirals
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Advanced
+; TAGS:     golden angle, phyllotaxis, spirals, SQRT, DOT, comparison
+; SUMMARY:  Shows why sunflowers use the golden angle by growing four seed heads with slightly different angles.
+; ============================================================
+;
+; WHAT IT DOES
+;   A sunflower adds seeds one at a time, each turned by the same
+;   angle from the last and pushed a little further out. With the
+;   golden angle, about 137.5 degrees, the seeds pack perfectly
+;   with no gaps. The program grows four small seed heads with
+;   angles of 137.5, 137, 90 and 222.5 so you can compare, with a
+;   label under each one. (222.5 is the golden angle measured the
+;   other way round, 360 - 137.5, so it packs just as well.)
+;
+; HOW TO USE
+;   Press Run. Change the angles in the HEAD lines to explore.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the golden angle: 360 divided by the golden ratio squared
+;   * radius from SQRT so every seed gets the same amount of room
+;   * polar coordinates around a chosen center
+;   * the same procedure drawing four experiments
+;
+; THINGS TO TRY
+;   * Try 137.6 and 137.4. How sensitive is the pattern?
+;   * Try 360 / 7 or 360 / 3. Why do you get straight arms?
+;   * Count the spirals in the golden head. You may find 8, 13, 21
+;     or 34: Fibonacci numbers.
+; ============================================================
+
+; GOLDEN.ANGLE works out 360 divided by phi squared, where phi is
+; (1 + sqrt 5) / 2. It comes to about 137.508 degrees.
+to golden.angle
+  localmake "phi (1 + sqrt 5) / 2
+  output 360 - 360 / :phi
+end
+
+; SEED places seed number :n of a head centered at (cx, cy).
+to seed :cx :cy :n :angle :spacing :count
+  ; The area of a disk grows with the square of its radius, so a
+  ; radius of spacing * sqrt n gives each seed the same area.
+  localmake "r :spacing * sqrt :n
+  localmake "a :n * :angle
+  ; Young seeds in the middle are dark, the outer ones golden.
+  localmake "t :n / :count
+  setpencolor (list 90 + 160 * :t 50 + 140 * :t 20 + 20 * :t)
+  setpensize 3 + 4 * :t
+  dot list :cx + :r * sin :a :cy + :r * cos :a
+end
+
+; HEAD grows one seed head and writes its angle underneath.
+to head :cx :cy :angle
+  for [n 1 400] [seed :cx :cy :n :angle 5.6 400]
+  penup setxy :cx - 40 :cy - 135 pendown
+  setpencolor [230 230 230]
+  ; Round to one decimal place: times 10, round, divide by 10.
+  label word (round :angle * 10) / 10 "| degrees|
+end
+
+clearscreen hideturtle
+setbackground [25 40 30]
+setlabelheight 14
+head -200 140 golden.angle
+head 200 140 137
+head -200 -150 90
+head 200 -150 222.5

@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Kaleidoscope
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Intermediate
+; TAGS:     symmetry, mirrors, random, polar coordinates, lists
+; SUMMARY:  Draws random squiggles in one slice and mirrors them twelve times, like a kaleidoscope.
+; ============================================================
+;
+; WHAT IT DOES
+;   A kaleidoscope has mirrors that copy one small slice of colored
+;   beads all the way around. This program invents a few random
+;   squiggles and dots in a 30 degree slice, then draws each of them
+;   twelve times: turned by 60 degrees six times, and each of those
+;   flipped over as in a mirror.
+;
+; HOW TO USE
+;   Press Run. Every run shows a new pattern.
+;
+; CONCEPTS YOU WILL LEARN
+;   * points stored as [radius angle] pairs
+;   * rotation: add to the angle; reflection: make the angle negative
+;   * drawing the same list of points many times with FOREACH
+;   * building random lists with a loop
+;
+; THINGS TO TRY
+;   * Use 8 copies by turning 90 degrees instead of 60.
+;   * Leave out the mirror copies. Does it still look like a
+;     kaleidoscope?
+;   * Make the squiggles longer by adding more points.
+; ============================================================
+
+make "beads [[255 80 80] [255 200 60] [80 210 120] [70 160 255]
+             [200 100 255] [255 130 200] [250 250 250]]
+
+; POLAR moves to radius :r and angle :a from the middle.
+to polar :r :a
+  setxy :r * sin :a :r * cos :a
+end
+
+; RANDOM.POINT makes a point somewhere inside the 30 degree slice.
+to random.point
+  output list (random 10 280) (random 0 30)
+end
+
+; SQUIGGLE makes a list of four random points.
+to squiggle
+  output (list random.point random.point random.point random.point)
+end
+
+; WALK.POINTS draws a list of points turned by :turn degrees. :flip is 1
+; for the slice itself and -1 for its mirror image.
+to walk.points :points :turn :flip
+  penup
+  foreach :points [
+    polar first ? :turn + :flip * last ?
+    pendown
+  ]
+end
+
+; COPIES draws a squiggle in all twelve places.
+to copies :points
+  for [k 0 5] [
+    walk.points :points :k * 60 1
+    walk.points :points :k * 60 -1
+  ]
+end
+
+; BEAD.COPIES places a round bead in all twelve places.
+to bead.copies :point
+  for [k 0 5] [
+    foreach [1 -1] [
+      penup polar first :point :k * 60 + ? * last :point
+      dot pos
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [15 10 30]
+repeat 10 [
+  setpencolor pick :beads
+  setpensize (random 2 6)
+  copies squiggle
+]
+repeat 12 [
+  setpencolor pick :beads
+  setpensize (random 6 18)
+  bead.copies random.point
+]

@@ -1,0 +1,86 @@
+; ============================================================
+; TITLE:    Sunset over the Sea
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Beginner
+; TAGS:     gradient, color, FOR, DOT, landscape
+; SUMMARY:  Paints a glowing sunset: a smooth sky gradient, a setting sun, and its reflection on the sea.
+; ============================================================
+;
+; WHAT IT DOES
+;   The sky is painted with thick horizontal lines whose color
+;   slides from deep purple at the top to orange at the horizon.
+;   A big sun sits on the horizon and the sea below has wavy
+;   golden streaks where the sun is reflected.
+;
+; HOW TO USE
+;   Press Run. Change the two sky colors in SKY to paint a
+;   different time of day.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FOR loops that count in steps
+;   * mixing two colors to make a gradient
+;   * drawing in layers: sky, then sun, then sea
+;
+; THINGS TO TRY
+;   * Make a daytime sky, light blue at the top and white below.
+;   * Move the sun higher up.
+;   * Add a little boat in black on the horizon.
+; ============================================================
+
+; MIX gives a color part way from :a to :b. :t = 0 gives :a,
+; :t = 1 gives :b.
+to mix :a :b :t
+  output (list (first :a) + :t * ((first :b) - (first :a)) ~
+               (item 2 :a) + :t * ((item 2 :b) - (item 2 :a)) ~
+               (last :a) + :t * ((last :b) - (last :a)))
+end
+
+; BAND draws one wide horizontal line at height y.
+to band :y :color
+  setpencolor :color
+  penup setxy -400 :y pendown
+  setheading 90 forward 800
+end
+
+; SKY paints from the top of the screen down to the horizon.
+to sky
+  setpensize 6
+  for [y 300 -20 -5] [
+    band :y mix [60 20 90] [255 150 60] (300 - :y) / 320
+  ]
+end
+
+; SEA paints from the horizon down to the bottom, dark blue.
+to sea
+  setpensize 6
+  for [y -25 -300 -5] [
+    band :y mix [70 40 100] [20 20 50] (-25 - :y) / 275
+  ]
+end
+
+; SUN puts a big glowing disk on the horizon.
+to sun
+  setpencolor [255 200 80] setpensize 170
+  dot [0 -20]
+  setpencolor [255 230 140] setpensize 130
+  dot [0 -20]
+end
+
+; SPARKLES draws the sun's broken reflection on the water: short
+; golden streaks that get narrower further down.
+to sparkles
+  setpensize 3
+  for [y -35 -280 -12] [
+    ; RANDOM needs whole numbers, so INT drops the fraction.
+    localmake "w int (90 + :y / 4)
+    setpencolor [255 190 90]
+    penup setxy (random minus :w :w) - 20 :y pendown
+    setheading 90 forward (random 10 40)
+  ]
+end
+
+clearscreen hideturtle
+sky
+sun
+sea
+sparkles

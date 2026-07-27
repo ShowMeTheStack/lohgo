@@ -1,0 +1,65 @@
+; ============================================================
+; TITLE:    Starry Night Sky
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Beginner
+; TAGS:     random, DOT, stars, moon, night
+; SUMMARY:  Fills a dark sky with random stars, a few bright twinkles and a crescent moon.
+; ============================================================
+;
+; WHAT IT DOES
+;   Sprinkles hundreds of tiny stars of different brightness over a
+;   deep blue sky. A few big stars get four little rays. Two dots,
+;   one bright and one the color of the sky, make a crescent moon.
+;
+; HOW TO USE
+;   Press Run. Every run makes a new sky.
+;
+; CONCEPTS YOU WILL LEARN
+;   * DOT and SETPENSIZE for points of any size
+;   * using one random number for all three colors to get greys
+;   * painting over something with the background color
+;
+; THINGS TO TRY
+;   * Make a few stars slightly yellow or blue.
+;   * Move the dark dot to change the shape of the moon.
+;   * Add a dark hill along the bottom with a thick line.
+; ============================================================
+
+; TINY.STAR puts a small star anywhere. Using the same number for
+; red, green and blue gives a grey, from dim to bright white.
+to tiny.star
+  localmake "light (random 90 255)
+  setpencolor (list :light :light :light)
+  setpensize (random 1 3)
+  dot list (random -400 400) (random -300 300)
+end
+
+; TWINKLE draws a bright star with four rays at (x, y).
+to twinkle :x :y
+  setpencolor [255 255 220]
+  setpensize 5
+  dot list :x :y
+  setpensize 1
+  repeat 4 [
+    penup setxy :x :y pendown
+    setheading 90 * repcount
+    forward 12
+  ]
+end
+
+; MOON makes a crescent: a bright disk, then a disk of sky color
+; slightly to one side that covers most of it.
+to moon :x :y
+  setpencolor [250 240 200]
+  setpensize 110
+  dot list :x :y
+  setpencolor background
+  setpensize 100
+  dot list :x - 30 :y + 15
+end
+
+clearscreen hideturtle
+setbackground [10 15 45]
+repeat 500 [tiny.star]
+repeat 12 [twinkle (random -380 380) (random -280 280)]
+moon 250 170

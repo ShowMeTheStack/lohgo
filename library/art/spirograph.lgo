@@ -1,0 +1,66 @@
+; ============================================================
+; TITLE:    Spirograph
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Intermediate
+; TAGS:     spirograph, hypotrochoid, SIN, COS, GCD, recursion
+; SUMMARY:  Draws spirograph patterns from the formula for a wheel rolling inside a ring.
+; ============================================================
+;
+; WHAT IT DOES
+;   A spirograph toy has a small toothed wheel that rolls round
+;   inside a big ring, with a pen in a hole of the wheel. This
+;   program uses the math of that toy. Three different wheels draw
+;   three looping patterns, laid on top of each other in different
+;   colors.
+;
+; HOW TO USE
+;   Press Run. Change the three numbers in each SPIRO line: the
+;   teeth on the ring, the teeth on the wheel, and how far from the
+;   middle of the wheel the pen hole is.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the hypotrochoid formula with SIN and COS
+;   * the greatest common divisor, found by Euclid's recursion
+;   * knowing when a pattern closes: after wheel / gcd trips round
+;   * scaling any design to fit the screen
+;
+; THINGS TO TRY
+;   * Try 100 25 25. Why is it so simple?
+;   * Try 100 99 80. The wheel barely fits; the pattern is huge.
+;   * Make the pen hole bigger than the wheel (like 100 30 60).
+; ============================================================
+
+; GCD finds the greatest common divisor of two whole numbers. If b
+; divides a exactly, b is the answer; otherwise ask again with b and
+; the remainder. Euclid knew this over two thousand years ago.
+to gcd :a :b
+  if :b = 0 [output :a]
+  output gcd :b remainder :a :b
+end
+
+; SPIRO draws one pattern. :ring and :wheel are teeth counts, :hole
+; is how far the pen is from the wheel's middle.
+to spiro :ring :wheel :hole :color
+  localmake "k (:ring - :wheel) / :wheel
+  ; Grow or shrink so the farthest point is 270 from the middle.
+  localmake "scale 270 / (:ring - :wheel + :hole)
+  ; The wheel must go round the ring this many times to come home.
+  localmake "laps :wheel / gcd :ring :wheel
+  setpencolor :color
+  penup
+  for [t 0 360 * :laps 2] [
+    ; The brackets around (cos :t) matter: without them COS would
+    ; swallow everything after it, because + and * are worked out
+    ; before COS gets its input.
+    setxy :scale * ((:ring - :wheel) * (cos :t) + :hole * (cos :k * :t)) ~
+          :scale * ((:ring - :wheel) * (sin :t) - :hole * (sin :k * :t))
+    pendown
+  ]
+end
+
+clearscreen hideturtle
+setbackground [250 248 240]
+setpensize 1.2
+spiro 96 60 50 [220 60 90]
+spiro 105 40 30 [40 110 200]
+spiro 120 45 80 [40 160 110]

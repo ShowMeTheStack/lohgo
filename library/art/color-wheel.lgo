@@ -1,0 +1,65 @@
+; ============================================================
+; TITLE:    Color Wheel
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Beginner
+; TAGS:     color, RGB, FILLED, wedges, primary colors
+; SUMMARY:  Paints a twelve part artist's color wheel from a list of RGB colors.
+; ============================================================
+;
+; WHAT IT DOES
+;   Paints twelve slices like a pie, going round from red through
+;   yellow, green, blue and purple and back to red. The three
+;   primary colors of light (red, green and blue) are four slices
+;   apart. A white circle in the middle turns the pie into a ring.
+;
+; HOW TO USE
+;   Press Run. Change the colors in the list at the bottom, or the
+;   radius in SLICE.
+;
+; CONCEPTS YOU WILL LEARN
+;   * colors as [red green blue] lists from 0 to 255
+;   * FILLED to paint the inside of a shape
+;   * FOREACH to visit every color in a list
+;   * a big DOT to paint a circle
+;
+; THINGS TO TRY
+;   * Swap the order of the colors. Does the wheel still look smooth?
+;   * Make the white hole in the middle bigger or smaller.
+;   * Make a wheel of 6 slices of 60 degrees.
+; ============================================================
+
+; SLICE paints one 30 degree slice in a color. The turtle starts in
+; the middle facing the slice's left edge, and comes back to the
+; middle afterward.
+to slice :color
+  filled :color [
+    forward 220
+    right 90
+    ; 30 small steps and 1 degree turns walk along the rim. The step
+    ; is the circle's length (2 x 3.14 x 220) shared out over 360.
+    repeat 30 [forward 3.84 right 1]
+    right 90
+    forward 220
+  ]
+end
+
+; WHEEL paints one slice for each color, turning 30 degrees each time.
+to wheel :colors
+  penup home
+  ; A white pen draws thin white lines between the slices.
+  pendown setpencolor 7 setpensize 3
+  foreach :colors [
+    setheading 30 * (# - 1)
+    slice ?
+  ]
+end
+
+clearscreen hideturtle
+setbackground [235 235 235]
+wheel [[255 0 0] [255 128 0] [255 255 0] [128 255 0]
+       [0 255 0] [0 255 128] [0 255 255] [0 128 255]
+       [0 0 255] [128 0 255] [255 0 255] [255 0 128]]
+; The hole in the middle: one big white dot.
+setpencolor 7
+setpensize 180
+dot [0 0]

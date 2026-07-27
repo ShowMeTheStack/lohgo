@@ -1,0 +1,51 @@
+; ============================================================
+; TITLE:    Rainbow Random Walk
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Beginner
+; TAGS:     random, walk, color, distance, towards
+; SUMMARY:  A turtle wanders at random, changing color as it goes, and turns home when it strays too far.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle takes thousands of little steps, turning a random
+;   amount before each one. Its pen color slowly changes through
+;   the rainbow, so the scribble shows where it went first and last.
+;   When it gets too far from the middle it turns back toward home.
+;
+; HOW TO USE
+;   Press Run. Every walk is different.
+;
+; CONCEPTS YOU WILL LEARN
+;   * RANDOM to choose a turn
+;   * DISTANCE and TOWARDS to steer back to a point
+;   * REPCOUNT to know which step we are on
+;   * a rainbow made with SIN
+;
+; THINGS TO TRY
+;   * Only allow turns of 90 degrees: right 90 * random 4.
+;   * Make the steps longer and the walk shorter.
+;   * Let two turtles walk, each with its own color.
+; ============================================================
+
+; RAINBOW sets a pen color from a number. Three waves, one for red,
+; one for green, one for blue, rise and fall at different times.
+to rainbow :n
+  setpencolor (list 128 + 127 * sin :n 128 + 127 * sin :n + 120 128 + 127 * sin :n + 240)
+end
+
+; WANDER takes :steps random steps.
+to wander :steps
+  repeat :steps [
+    rainbow repcount / 4
+    ; A turn between 40 left and 40 right
+    right (random -40 40)
+    forward 6
+    ; Too far away? Face home again.
+    if (distance [0 0]) > 270 [setheading towards [0 0]]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [20 20 25]
+setpensize 3
+wander 3000

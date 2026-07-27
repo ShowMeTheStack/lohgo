@@ -1,0 +1,125 @@
+; ============================================================
+; TITLE:    Hitomezashi Stitching
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Advanced
+; TAGS:     Japanese stitching, arrays, MDARRAY, parity, two coloring
+; SUMMARY:  Sews a Japanese hitomezashi pattern from random coin tosses and colors its regions with two colors.
+; ============================================================
+;
+; WHAT IT DOES
+;   Hitomezashi is a Japanese stitching style. Every row and every
+;   column of the grid gets a coin toss that says whether its dashes
+;   start "on" or "off"; after that the dashes simply alternate. The
+;   stitches join up into a maze of shapes. Amazingly, the shapes
+;   can always be colored with just two colors so that no two
+;   neighbors match, and the program works out those colors cell by
+;   cell before it sews the stitches on top.
+;
+; HOW TO USE
+;   Press Run for a new pattern. Change :cell for a finer or coarser
+;   grid.
+;
+; CONCEPTS YOU WILL LEARN
+;   * arrays (ARRAY, ITEM, SETITEM) and a 2D array (MDARRAY, MDITEM)
+;   * parity: odd or even with REMAINDER
+;   * two-coloring: crossing a stitch flips the color, crossing a
+;     gap keeps it
+;   * painting in two passes, colors first and stitches on top
+;
+; THINGS TO TRY
+;   * Make every coin toss 0. What regular pattern appears?
+;   * Use the digits of a number, or the letters of your name
+;     (vowel = 1), instead of coin tosses.
+;   * Choose your own two colors in PAINT.CELLS.
+; ============================================================
+
+; ---- the grid ------------------------------------------------------
+; Columns go from 1 to :cols and rows from 1 to :rows. :across holds
+; a coin toss for each horizontal line and :down one for each
+; vertical line.
+to setup.grid
+  make "cols int 760 / :cell
+  make "rows int 560 / :cell
+  make "left minus :cols * :cell / 2
+  make "bottom minus :rows * :cell / 2
+  make "across array :rows + 1
+  make "down array :cols + 1
+  for [i 1 :rows + 1] [setitem :i :across random 2]
+  for [i 1 :cols + 1] [setitem :i :down random 2]
+end
+
+; A horizontal line number :row (1 = the bottom edge) has a stitch
+; above cell column :col when the column and the toss have the same
+; parity. Vertical lines work the same way with rows.
+to stitch.across? :row :col
+  output (remainder :col + item :row :across 2) = 1
+end
+
+to stitch.down? :col :row
+  output (remainder :row + item :col :down 2) = 1
+end
+
+; ---- two coloring --------------------------------------------------
+; Start the bottom left cell at 0. Moving right, crossing a vertical
+; stitch flips the color; moving up, crossing a horizontal stitch
+; flips it. Gaps leave the color the same.
+to color.cells
+  make "shade (mdarray (list :rows :cols))
+  for [r 1 :rows] [
+    for [c 1 :cols] [
+      localmake "v 0
+      if :c > 1 [
+        localmake "v mditem (list :r :c - 1) :shade
+        if stitch.down? :c :r [make "v 1 - :v]
+      ]
+      if and :c = 1 :r > 1 [
+        localmake "v mditem (list :r - 1 :c) :shade
+        if stitch.across? :r :c [make "v 1 - :v]
+      ]
+      mdsetitem (list :r :c) :shade :v
+    ]
+  ]
+end
+
+; ---- drawing -------------------------------------------------------
+to paint.cells
+  for [r 1 :rows] [
+    for [c 1 :cols] [
+      penup setxy :left + (:c - 1) * :cell :bottom + (:r - 1) * :cell
+      setheading 0
+      filled item 1 + mditem (list :r :c) :shade [[245 235 215] [40 70 120]] [
+        repeat 4 [forward :cell right 90]
+      ]
+    ]
+  ]
+end
+
+; SEW draws every stitch as a short thick line.
+to sew
+  setpencolor [210 60 60]
+  setpensize 3
+  for [r 1 :rows + 1] [
+    for [c 1 :cols] [
+      if stitch.across? :r :c [
+        penup setxy :left + (:c - 1) * :cell :bottom + (:r - 1) * :cell
+        setheading 90 pendown forward :cell
+      ]
+    ]
+  ]
+  for [c 1 :cols + 1] [
+    for [r 1 :rows] [
+      if stitch.down? :c :r [
+        penup setxy :left + (:c - 1) * :cell :bottom + (:r - 1) * :cell
+        setheading 0 pendown forward :cell
+      ]
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [30 30 30]
+make "cell 20
+setup.grid
+color.cells
+paint.cells
+sew

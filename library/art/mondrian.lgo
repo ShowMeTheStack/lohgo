@@ -1,0 +1,77 @@
+; ============================================================
+; TITLE:    Mondrian Generator
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Intermediate
+; TAGS:     recursion, random, rectangles, FILLED, abstract art
+; SUMMARY:  Makes a new painting in the style of Piet Mondrian every time, by splitting rectangles at random.
+; ============================================================
+;
+; WHAT IT DOES
+;   Piet Mondrian painted white canvases cut by thick black lines,
+;   with a few rectangles in red, yellow and blue. This program
+;   starts with one big rectangle and keeps cutting pieces in two,
+;   across or down, at random places. Small pieces stop being cut.
+;   Each finished piece is painted, mostly white, then the black
+;   lines go on top.
+;
+; HOW TO USE
+;   Press Run as many times as you like; no two paintings match.
+;
+; CONCEPTS YOU WILL LEARN
+;   * recursion that stops at random as well as by size
+;   * passing a rectangle around as x, y, width and height
+;   * a weighted choice: more white entries in the list means more
+;     white rectangles
+;   * painting in two passes so the lines stay on top
+;
+; THINGS TO TRY
+;   * Add more [255 255 255] entries for a calmer painting.
+;   * Change the stopping size 100 to 60 for a busier one.
+;   * Use your own three colors instead of red, yellow and blue.
+; ============================================================
+
+make "paints [[255 255 255] [255 255 255] [255 255 255] [255 255 255]
+              [255 255 255] [220 30 30] [250 210 30] [30 60 160]
+              [240 240 235]]
+
+; BOX paints a rectangle and remembers it so its edges can be drawn
+; later.
+to box :x :y :w :h
+  penup setxy :x :y setheading 0
+  filled pick :paints [repeat 2 [forward :h right 90 forward :w right 90]]
+  make "boxes fput (list :x :y :w :h) :boxes
+end
+
+; SPLIT cuts a rectangle in two, or paints it if it is small enough
+; (or, now and then, just because it feels like it).
+to split :x :y :w :h
+  if and :w < 100 :h < 100 [box :x :y :w :h stop]
+  ; Medium sized pieces are sometimes left whole, which gives the
+  ; painting a few big calm areas.
+  if and (:w * :h) < 40000 (random 3) = 0 [box :x :y :w :h stop]
+  ; Cut across the longer side, so the pieces do not get too thin.
+  ifelse :w > :h [
+    localmake "cut :w * (random 25 75) / 100
+    split :x :y :cut :h
+    split :x + :cut :y :w - :cut :h
+  ] [
+    localmake "cut :h * (random 25 75) / 100
+    split :x :y :w :cut
+    split :x :y + :cut :w :h - :cut
+  ]
+end
+
+; OUTLINE draws the black frame of one remembered rectangle.
+to outline :r
+  penup setxy item 1 :r item 2 :r setheading 0 pendown
+  repeat 2 [forward item 4 :r right 90 forward item 3 :r right 90]
+end
+
+clearscreen hideturtle
+setbackground [235 230 220]
+make "boxes []
+split -300 -260 600 520
+; Second pass: thick black lines over all the edges.
+setpencolor 0
+setpensize 8
+foreach :boxes [outline ?]

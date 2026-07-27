@@ -1,0 +1,69 @@
+; ============================================================
+; TITLE:    Flow Field
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Advanced
+; TAGS:     flow field, vector field, SIN, COS, particles, generative
+; SUMMARY:  Releases hundreds of particles that drift along an invisible field of directions, leaving silky trails.
+; ============================================================
+;
+; WHAT IT DOES
+;   Imagine every point on the screen has an arrow telling you which
+;   way to go, like wind or water currents. The arrows here come from
+;   a formula mixing sine waves, so nearby arrows point almost the
+;   same way. Particles start at random spots and follow the arrows
+;   for a while, drawing a thin line. Hundreds of lines together
+;   show the shape of the invisible currents.
+;
+; HOW TO USE
+;   Press Run. Each run picks new starting points and a new random
+;   twist for the field. Change :particles and :life for denser or
+;   longer trails.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a vector field: a heading computed from x and y
+;   * combining several SIN and COS waves to make smooth patterns
+;   * random seeds for the field's "personality"
+;   * stopping a particle when it leaves the screen
+;
+; THINGS TO TRY
+;   * Change the numbers 0.9 and 1.3 in FIELD.HEADING.
+;   * Color trails by their starting height instead of by x.
+;   * Make the particles start in a circle around the middle.
+; ============================================================
+
+; FIELD.HEADING outputs the direction of the current at (x, y).
+; Small multipliers like 0.9 make big, slow swirls; larger ones make
+; small, tight swirls. :twist changes from run to run.
+to field.heading :x :y
+  output :twist + 120 * (sin (:x * 0.9 + :y * 0.3)) ~
+               + 90 * (cos (:y * 1.3 - :x * 0.4 + :twist))
+end
+
+; ON.SCREEN? is true while the point is inside the turtle world.
+to on.screen? :x :y
+  output and (abs :x) < 400 (abs :y) < 300
+end
+
+; DRIFT lets one particle follow the field from a random point.
+to drift
+  penup
+  setxy (random -400 400) (random -300 300)
+  ; Color depends on where it starts: warm on the left, cool on the
+  ; right, so the picture has a gentle color sweep.
+  localmake "mix (xcor + 400) / 800
+  setpencolor (list 250 - 170 * :mix 120 + 60 * :mix 90 + 160 * :mix)
+  pendown
+  repeat :life [
+    if not on.screen? xcor ycor [stop]
+    setheading field.heading xcor ycor
+    forward 3
+  ]
+end
+
+clearscreen hideturtle
+setbackground [14 16 26]
+make "twist random 360
+make "particles 350
+make "life 60
+setpensize 1.2
+repeat :particles [drift]

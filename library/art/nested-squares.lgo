@@ -1,0 +1,59 @@
+; ============================================================
+; TITLE:    Twisting Squares
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Beginner
+; TAGS:     squares, REPEAT, rotation, color gradient
+; SUMMARY:  Draws a tunnel of squares, each a little smaller and a little more turned than the last.
+; ============================================================
+;
+; WHAT IT DOES
+;   Starting with a big square, the turtle draws smaller and smaller
+;   squares around the same middle point, turning each one a few
+;   degrees. The corners trace out spiral arms, and the color fades
+;   from blue on the outside to pink in the middle.
+;
+; HOW TO USE
+;   Press Run. Change :twist or :shrink near the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * drawing a square around its middle instead of from a corner
+;   * a variable that changes each time round a REPEAT
+;   * blending colors with REPCOUNT
+;
+; THINGS TO TRY
+;   * Set :twist to 0. What do you see?
+;   * Use triangles instead of squares.
+;   * Make :shrink 0.98 and repeat 150 times.
+; ============================================================
+
+; SQUARE.AROUND draws a square of side :side centered on the turtle.
+; The turtle walks out to a corner first, draws, and walks back to
+; the middle, facing the way it started.
+to square.around :side
+  ; to the middle of the top edge, then left to the corner
+  penup forward :side / 2 left 90 forward :side / 2
+  ; turn round to face along the top edge, and draw
+  left 180 pendown
+  repeat 4 [forward :side right 90]
+  ; back to the middle of the top edge, then down to the center
+  penup forward :side / 2 right 90 forward :side / 2 right 180 pendown
+end
+
+; TUNNEL draws :count squares, each smaller and more turned.
+to tunnel :count
+  localmake "side 500
+  repeat :count [
+    localmake "t repcount / :count
+    setpencolor (list 60 + 190 * :t 120 - 40 * :t 230 - 50 * :t)
+    square.around :side
+    right :twist
+    make "side :side * :shrink
+  ]
+end
+
+clearscreen hideturtle
+setbackground [15 15 30]
+setpensize 2
+make "twist 4
+make "shrink 0.95
+tunnel 70

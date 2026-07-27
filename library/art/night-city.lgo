@@ -1,0 +1,102 @@
+; ============================================================
+; TITLE:    City at Night
+; CATEGORY: Generative Art & Colour
+; LEVEL:    Intermediate
+; TAGS:     random, skyline, FILLED, windows, stars, layers
+; SUMMARY:  Builds a random city skyline at night with lit windows, stars and a full moon.
+; ============================================================
+;
+; WHAT IT DOES
+;   Buildings of random width and height stand shoulder to shoulder
+;   across the screen. Each has a grid of windows, and each window
+;   is lit (yellow) or dark at random. Behind the city, stars and a
+;   big moon shine in a deep blue sky.
+;
+; HOW TO USE
+;   Press Run for a new city every time.
+;
+; CONCEPTS YOU WILL LEARN
+;   * WHILE to keep adding buildings until the street is full
+;   * nested FOR loops for rows and columns of windows
+;   * keeping shapes side by side so they never overlap
+;   * a chance with RANDOM: lit if (random 10) < 6
+;   * remembering roofs in a list so stars only appear in the sky
+;
+; THINGS TO TRY
+;   * Make more windows dark, as if it is very late.
+;   * Give some buildings a pointed roof or an antenna.
+;   * Draw a second row of shorter, darker buildings in front.
+; ============================================================
+
+; BUILDING paints one building from x to x + w, h tall, standing on
+; the street at y = -260, then fills it with windows.
+to building :x :w :h
+  penup setxy :x -260 setheading 0
+  filled pick [[30 30 50] [40 35 60] [25 40 55] [45 45 65]] [
+    repeat 2 [forward :h right 90 forward :w right 90]
+  ]
+  windows :x :w :h
+end
+
+; WINDOWS draws rows and columns of small square windows. A window
+; is a short thick line, so it is painted on top of the building.
+to windows :x :w :h
+  setpensize 7
+  for [wy -240 -270 + :h 20] [
+    for [wx :x + 10 :x + :w - 10 14] [
+      ifelse (random 10) < 6 [setpencolor [255 220 120]] [setpencolor [55 55 80]]
+      penup setxy :wx :wy pendown
+      setheading 0 forward 4
+    ]
+  ]
+end
+
+; SKYLINE keeps adding buildings left to right until it reaches the
+; right side of the screen. It remembers each roof as [left right top]
+; so the stars can stay out of the buildings later.
+to skyline
+  localmake "x -400
+  while [:x < 400] [
+    localmake "w (random 50 110)
+    localmake "h (random 90 360)
+    building :x :w :h
+    make "roofs fput (list :x :x + :w -260 + :h) :roofs
+    make "x :x + :w + (random 0 6)
+  ]
+end
+
+; ROOF.AT outputs the height of the roof above x, or the street level
+; if x falls in a gap between buildings.
+to roof.at :x
+  foreach :roofs [
+    if and :x >= item 1 ? :x <= item 2 ? [output item 3 ?]
+  ]
+  output -260
+end
+
+; NIGHT.SKY scatters stars, but only where there is sky, then hangs
+; up a moon high above the tallest building.
+to night.sky
+  repeat 300 [
+    localmake "x (random -400 400)
+    localmake "y (random -150 300)
+    if :y > 6 + roof.at :x [
+      setpencolor pick [[255 255 255] [200 200 255] [255 240 200]]
+      setpensize (random 1 3)
+      dot list :x :y
+    ]
+  ]
+  setpencolor [250 245 220]
+  setpensize 90
+  dot [270 210]
+end
+
+clearscreen hideturtle
+setbackground [12 18 50]
+make "roofs []
+skyline
+night.sky
+; the street
+penup setxy -400 -280 setheading 90 pendown
+setpencolor [20 20 25] setpensize 40
+forward 800
