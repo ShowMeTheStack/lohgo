@@ -1,0 +1,106 @@
+; ============================================================
+; TITLE:    Turtle Race
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Intermediate
+; TAGS:     many turtles, ASK, random, race, lists, winner
+; SUMMARY:  Five turtles race across the screen at random speeds; the first to cross the finish line wins.
+; ============================================================
+;
+; WHAT IT DOES
+;   Five colored turtles line up in their lanes. On every tick each
+;   turtle shuffles forward a random distance. Nobody knows who will
+;   win! The first turtle to reach the checkered finish line is
+;   announced in the command center and with a label on the screen.
+;   Then a new race starts.
+;
+; HOW TO USE
+;   Press Run and cheer for your favorite color. Press Stop to end.
+;
+; CONCEPTS YOU WILL LEARN
+;   * five turtles, each with its own color and lane
+;   * ASK to move one turtle and to read its XCOR
+;   * a race loop that ends with THROW and CATCH
+;   * ITEM to look up a turtle's name from its number
+;
+; THINGS TO TRY
+;   * Give one turtle a head start, or a bigger random step.
+;   * Add a sixth runner.
+;   * Keep a score of wins across many races.
+; ============================================================
+
+make "names [Red Blue Green Orange Purple]
+make "colors [[220 50 50] [50 100 220] [40 160 70] [240 140 30] [140 70 200]]
+
+; LANE.Y gives the height of lane :k (1 to 5).
+to lane.y :k
+  output 200 - 90 * :k
+end
+
+; TRACK draws the lanes and a checkered finish line.
+to track
+  setpencolor [200 200 190]
+  setpensize 2
+  for [k 0 5] [
+    penup setxy -380 (lane.y :k) - 45 setheading 90 pendown
+    forward 760
+  ]
+  ; The finish line: two columns of 10 by 10 squares that swap
+  ; between black and white, like a checkerboard.
+  for [row 0 44] [
+    localmake "y -250 + 10 * :row
+    square.at 320 :y ifelse 0 = remainder :row 2 [0] [7]
+    square.at 330 :y ifelse 0 = remainder :row 2 [7] [0]
+  ]
+end
+
+; SQUARE.AT paints a 10 by 10 square with its bottom left at (x, y).
+to square.at :x :y :color
+  penup setxy :x :y setheading 0
+  filled :color [repeat 4 [forward 10 right 90]]
+end
+
+; LINE.UP puts every runner on the start line, facing right.
+to line.up
+  for [k 1 5] [
+    ask :k [
+      penup
+      setshape "turtle
+      setpencolor item :k :colors
+      setxy -350 lane.y :k
+      setheading 90
+      showturtle
+    ]
+  ]
+end
+
+; TICK moves every runner once and stops the race if one has won.
+to tick
+  for [k 1 5] [
+    ask :k [forward random 7]
+    if (ask :k [xcor]) > 315 [throw "finished :k]
+  ]
+end
+
+; RACE runs one race and outputs the winner's number.
+to race
+  line.up
+  output catch "finished [forever [tick wait 2]]
+end
+
+to announce :winner
+  localmake "name item :winner :names
+  print (sentence :name [wins the race!])
+  setpencolor item :winner :colors
+  setlabelheight 30
+  penup setxy -120 240 pendown
+  label (sentence :name [wins!])
+end
+
+clearscreen hideturtle
+setbackground [235 225 200]
+forever [
+  clean
+  track
+  announce race
+  wait 150
+]

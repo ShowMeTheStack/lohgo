@@ -1,0 +1,100 @@
+; ============================================================
+; TITLE:    Windmill in the Breeze
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Intermediate
+; TAGS:     animation, rotation, FILLED, CLEAN, scenery
+; SUMMARY:  A Dutch windmill turns its four sails while clouds drift across the sky.
+; ============================================================
+;
+; WHAT IT DOES
+;   A windmill stands in a field of tulips. Its four sails turn
+;   slowly round the hub, and two clouds float from left to right,
+;   wrapping round when they leave the screen. Everything is redrawn
+;   in every frame, so the sails can be drawn at a new angle each
+;   time.
+;
+; HOW TO USE
+;   Press Run. Press Stop to end it. Change :wind to spin the sails
+;   faster.
+;
+; CONCEPTS YOU WILL LEARN
+;   * drawing a shape rotated by any angle with SETHEADING
+;   * four sails from one SAIL procedure, 90 degrees apart
+;   * MODULO to wrap the clouds around the screen
+;   * the order of drawing: building first, sails on top
+;   * thick pen lines as quick rectangles with rounded ends
+;
+; THINGS TO TRY
+;   * Make the windmill turn the other way.
+;   * Give it five or six sails.
+;   * Add a second, smaller windmill in the distance.
+; ============================================================
+
+; SAIL draws one sail pointing along :angle from the hub at (0, 80):
+; a thin arm with a cloth panel on one side. The cloth is one very
+; thick line, so it is always painted on top of the tower.
+to sail :angle
+  penup setxy 0 80 setheading :angle
+  setpencolor [90 60 40] setpensize 6
+  pendown forward 170 penup
+  ; the cloth panel beside the arm
+  setxy 0 80 forward 48 right 90 forward 17 left 90
+  setpencolor [240 235 220] setpensize 28
+  pendown forward 110 penup
+  ; three lines across the panel, like the wooden frame
+  setpencolor [150 120 90] setpensize 2
+  for [d 70 160 30] [
+    penup setxy 0 80 setheading :angle forward :d right 90 pendown forward 32
+  ]
+end
+
+; MILL draws the tower and the roof.
+to mill
+  penup setxy -70 -190 setheading 0
+  filled [150 90 60] [setxy -50 60 setxy 50 60 setxy 70 -190 setxy -70 -190]
+  penup setxy -60 60
+  filled [80 60 50] [setxy 0 130 setxy 60 60 setxy -60 60]
+  ; the door: a short, very thick line with a round top
+  penup setxy 0 -172 setheading 0
+  setpencolor [70 45 30] setpensize 36
+  pendown forward 30 penup
+end
+
+; CLOUD draws a fluffy cloud centered at (x, y).
+to cloud :x :y
+  setpencolor 7
+  setpensize 60 dot list :x :y
+  setpensize 45 dot list :x - 40 :y - 8 dot list :x + 40 :y - 8
+end
+
+; FIELD draws the grass and a row of tulips.
+to field
+  setpencolor [90 170 80] setpensize 140
+  penup setxy -400 -260 setheading 90 pendown forward 800
+  ; Tulip number k gets color 1, 2, 3, 1, 2, 3, ... from REMAINDER.
+  for [k 0 19] [
+    setpencolor item 1 + remainder :k 3 [[230 60 80] [250 200 50] [240 120 180]]
+    setpensize 14 dot list -380 + 40 * :k -250
+  ]
+end
+
+; FRAME draws one picture with the sails at :angle.
+to frame :t
+  clean
+  field
+  cloud -400 + modulo :t * 1.2 900 200
+  cloud -400 + modulo :t * 0.7 + 450 900 240
+  mill
+  for [k 0 3] [sail :t * :wind + 90 * :k]
+  setpencolor [60 40 30] setpensize 22 dot [0 80]
+  wait 1
+end
+
+clearscreen hideturtle
+setbackground [150 200 240]
+make "wind 1.5
+make "t 0
+forever [
+  frame :t
+  make "t :t + 1
+]

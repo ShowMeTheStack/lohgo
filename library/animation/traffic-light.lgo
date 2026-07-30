@@ -1,0 +1,79 @@
+; ============================================================
+; TITLE:    Traffic Light
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Beginner
+; TAGS:     animation, WAIT, procedures with inputs, timing, colors
+; SUMMARY:  Runs a traffic light through red, green and yellow, with a walking sign that changes too.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws a traffic light on a pole. One lamp at a time is lit
+;   brightly while the others are dim. The light stays red for a
+;   while, then green, then a short yellow, and starts again. A sign
+;   beside it says WALK or WAIT.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to end. Change the numbers given
+;   to WAIT in CYCLE to make each color last longer.
+;
+; CONCEPTS YOU WILL LEARN
+;   * WAIT n pauses for n sixtieths of a second
+;   * one LAMP procedure used for all three lamps
+;   * drawing a lamp bright or dim with a true/false input
+;   * a cycle that repeats forever
+;
+; THINGS TO TRY
+;   * Add a flashing yellow at night (on, off, on, off).
+;   * Make the green last twice as long as the red.
+;   * Draw a second light that shows the opposite colors.
+; ============================================================
+
+; LAMP draws one round lamp at height :y. If :on is "true it uses the
+; bright color, otherwise the dim one.
+to lamp :y :bright :dim :on
+  ifelse :on [setpencolor :bright] [setpencolor :dim]
+  setpensize 70
+  dot list 0 :y
+end
+
+; HOUSING draws the black box and the pole.
+to housing
+  setpencolor [40 40 40]
+  setpensize 20
+  penup setxy 0 -270 setheading 0 pendown
+  forward 160
+  penup setxy -55 -110 pendown
+  filled [30 30 30] [repeat 2 [forward 280 right 90 forward 110 right 90]]
+end
+
+; SIGN writes WALK or WAIT next to the light.
+to sign :text :color
+  setpencolor :color
+  setlabelheight 40
+  penup setxy 100 0 pendown
+  label :text
+end
+
+; SHOW.LIGHT redraws everything with one lamp lit.
+to show.light :which
+  clean
+  housing
+  lamp 100 [255 40 40] [80 20 20] :which = "red
+  lamp 30 [255 210 40] [80 70 20] :which = "yellow
+  lamp -40 [40 220 80] [20 70 30] :which = "green
+  ifelse :which = "red [sign "WALK [40 180 80]] [sign "WAIT [220 60 60]]
+end
+
+; CYCLE goes once through the colors. WAIT 60 is one second.
+to cycle
+  show.light "red
+  wait 180
+  show.light "green
+  wait 180
+  show.light "yellow
+  wait 60
+end
+
+clearscreen hideturtle
+setbackground [200 225 240]
+forever [cycle]

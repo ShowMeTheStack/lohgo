@@ -1,0 +1,104 @@
+; ============================================================
+; TITLE:    Fireworks Night
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Intermediate
+; TAGS:     animation, lists of particles, gravity, random, color
+; SUMMARY:  Launches rockets that burst into falling, fading sparks over a dark town.
+; ============================================================
+;
+; WHAT IT DOES
+;   A rocket climbs from the ground, leaving a trail. At the top it
+;   bursts into thirty sparks that fly outward in a ring, then
+;   droop as gravity pulls them down. The sparks fade into the night
+;   and the next rocket goes up.
+;
+; HOW TO USE
+;   Press Run and enjoy the show. Press Stop to end it.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a list of sparks, each spark a list [x y dx dy]
+;   * MAP to update every spark at once
+;   * gravity: add a little to the downward speed every frame
+;   * fading by blending the spark color toward the sky color
+;
+; THINGS TO TRY
+;   * Make 60 sparks instead of 30.
+;   * Give every spark the same speed. What shape do you see?
+;   * Launch two rockets at the same time.
+; ============================================================
+
+make "sky [10 10 35]
+
+; TOWN draws a row of dark buildings along the bottom. The heights
+; come from a list, so the town looks the same in every frame.
+to town
+  localmake "x -400
+  foreach [60 95 45 130 70 50 105 80 40 115 65 90 55 100] [
+    penup setxy :x -300 setheading 0
+    filled [25 25 40] [repeat 2 [forward ? + 20 right 90 forward 56 right 90]]
+    make "x :x + 58
+  ]
+end
+
+; FADE blends :color toward the sky. :t = 0 is bright, 1 is gone.
+to fade :color :t
+  output (map [?1 + :t * (?2 - ?1)] :color :sky)
+end
+
+; LAUNCH sends a rocket up from (x, -260) to height :top.
+to launch :x :top
+  setpencolor [255 230 180]
+  setpensize 3
+  for [y -260 :top 12] [
+    clean town
+    penup setxy :x :y - 30 pendown setxy :x :y
+    wait 1
+  ]
+end
+
+; SPARKS makes a ring of :n sparks at (x, y), as [x y dx dy] lists.
+; Each spark gets its own speed, so the burst looks full, not hollow.
+to sparks :x :y :n
+  output map [spark :x :y ? * 360 / :n (random 20 70) / 10] iseq 1 :n
+end
+
+; SPARK makes one spark heading out at :angle with speed :speed.
+to spark :x :y :angle :speed
+  output (list :x :y :speed * sin :angle :speed * cos :angle)
+end
+
+; MOVE.SPARK moves one spark and lets gravity pull it down.
+to move.spark :s
+  output (list (item 1 :s) + item 3 :s  (item 2 :s) + item 4 :s ~
+               (item 3 :s) * 0.97  (item 4 :s) * 0.97 - 0.15)
+end
+
+; BURST animates a whole explosion for 50 frames.
+to burst :x :y :color
+  localmake "flying sparks :x :y 30
+  for [frame 1 50] [
+    clean town
+    setpencolor fade :color :frame / 50
+    setpensize 3
+    ; Each spark is a short streak pointing back the way it came.
+    foreach :flying [
+      penup setxy item 1 ? item 2 ? pendown
+      setxy (item 1 ?) - 3 * item 3 ? (item 2 ?) - 3 * item 4 ?
+    ]
+    make "flying map [move.spark ?] :flying
+    wait 1
+  ]
+end
+
+; SHOW launches one firework somewhere in the sky.
+to show.one
+  localmake "x (random -300 300)
+  localmake "top (random 50 220)
+  launch :x :top
+  burst :x :top pick [[255 80 80] [255 210 70] [90 220 120]
+                      [90 170 255] [230 110 255] [255 255 255]]
+end
+
+clearscreen hideturtle
+setbackground :sky
+forever [show.one wait 20]

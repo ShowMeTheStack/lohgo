@@ -1,0 +1,74 @@
+; ============================================================
+; TITLE:    Sunrise
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Beginner
+; TAGS:     animation, SETBACKGROUND, color blending, SIN, COS
+; SUMMARY:  The sun climbs over the hills while the sky turns from night blue to bright morning.
+; ============================================================
+;
+; WHAT IT DOES
+;   It starts dark, with stars. The sun rises along a curved path
+;   from behind the hills. As it climbs, the sky color slides from
+;   deep blue to light blue, the stars fade away and the sun turns
+;   from orange to yellow. The animation stops when it is morning.
+;
+; HOW TO USE
+;   Press Run and watch. It takes about ten seconds.
+;
+; CONCEPTS YOU WILL LEARN
+;   * SETBACKGROUND changes the sky without redrawing it
+;   * a variable :t that runs from 0 to 1 over the whole animation
+;   * mixing two colors with :t
+;   * moving along a curve with SIN and COS
+;
+; THINGS TO TRY
+;   * Turn it into a sunset by running :t from 1 down to 0.
+;   * Add a rooster that appears when :t passes 0.8.
+;   * Make the sun rise twice as fast.
+; ============================================================
+
+; MIX blends two colors: :t = 0 gives :a, :t = 1 gives :b.
+to mix :a :b :t
+  output (list (item 1 :a) + :t * ((item 1 :b) - (item 1 :a)) ~
+               (item 2 :a) + :t * ((item 2 :b) - (item 2 :a)) ~
+               (item 3 :a) + :t * ((item 3 :b) - (item 3 :a)))
+end
+
+; STARS are drawn only while it is still darkish; they get dimmer.
+to stars :t
+  if :t > 0.5 [stop]
+  setpencolor mix [255 255 255] mix [10 20 60] [120 190 240] :t :t * 2
+  setpensize 3
+  foreach [[-300 250] [-150 200] [-40 270] [90 230]
+           [220 260] [330 190] [-260 150] [150 150]] [dot ?]
+end
+
+; SUN draws the sun on its path. At :t = 0 it is below the hills, at
+; :t = 1 it is high on the right.
+to sun :t
+  localmake "angle 300 + 70 * :t
+  setpencolor mix [255 120 40] [255 230 90] :t
+  setpensize 110
+  dot list 420 * sin :angle -260 + 460 * cos :angle - 230 + 230 * :t
+end
+
+; HILLS are drawn last so they hide the sun while it is low.
+to hills :t
+  setpencolor mix [20 40 30] [70 150 70] :t
+  setpensize 300
+  dot [-250 -330]
+  dot [200 -360]
+  setpensize 200
+  dot [0 -320]
+end
+
+clearscreen hideturtle
+for [step 0 300] [
+  localmake "t :step / 300
+  setbackground mix [10 20 60] [120 190 240] :t
+  clean
+  stars :t
+  sun :t
+  hills :t
+  wait 2
+]

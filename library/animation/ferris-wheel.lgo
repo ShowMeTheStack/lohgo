@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Ferris Wheel
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Intermediate
+; TAGS:     animation, rotation, SIN, COS, gondolas, CLEAN
+; SUMMARY:  A fairground Ferris wheel turns slowly, and its gondolas always hang straight down.
+; ============================================================
+;
+; WHAT IT DOES
+;   A big wheel with spokes stands on two legs at an evening fair.
+;   Eight colored gondolas hang from the rim. As the wheel turns,
+;   the gondolas travel round with it but stay upright, because
+;   they hang from a pin and gravity keeps them level. Lights on the
+;   rim twinkle as they go.
+;
+; HOW TO USE
+;   Press Run. Press Stop to end it. Change :speed at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * points on a circle with SIN and COS
+;   * the difference between turning a shape and moving it round:
+;     the spokes turn, the gondolas only move
+;   * a frame counter driving the whole animation
+;
+; THINGS TO TRY
+;   * Make the gondolas swing a little with SIN of the time.
+;   * Add more gondolas: 12 instead of 8.
+;   * Make the lights change color as the wheel turns.
+; ============================================================
+
+make "colors [[230 70 70] [250 170 40] [240 220 60] [80 190 100]
+              [60 160 230] [120 100 220] [220 90 200] [250 130 130]]
+
+; RIM.POINT outputs the point on the rim at :angle around (0, 40).
+to rim.point :angle :r
+  output list :r * sin :angle 40 + :r * cos :angle
+end
+
+; FRAMEWORK draws the legs, the rim and the spokes at angle :turn.
+to framework :turn
+  setpencolor [90 90 110] setpensize 8
+  penup setxy 0 40 pendown setxy -150 -260
+  penup setxy 0 40 pendown setxy 150 -260
+  setpencolor [180 180 200] setpensize 4
+  ; ARC draws a circle around the turtle, so stand on the hub
+  penup setxy 0 40 pendown arc 360 200
+  setpensize 2
+  for [k 0 7] [
+    penup setxy 0 40 pendown
+    setpos rim.point :turn + 45 * :k 200
+  ]
+  setpencolor [90 90 110] setpensize 24 dot [0 40]
+end
+
+; GONDOLA hangs one gondola from the rim point at :angle. It hangs
+; straight down whatever the angle is: we only move it, never turn it.
+to gondola :angle :color
+  localmake "pin rim.point :angle 200
+  localmake "x first :pin
+  localmake "y last :pin
+  setpencolor [60 60 70] setpensize 2
+  penup setpos :pin pendown setxy :x :y - 18
+  ; the cabin is a thick short line with round ends
+  setpencolor :color setpensize 26
+  penup setxy :x - 8 :y - 32 pendown setxy :x + 8 :y - 32
+  ; the rim light at the pin
+  setpencolor pick [[255 240 150] [255 255 255]]
+  setpensize 8 dot :pin
+end
+
+; FRAME draws everything with the wheel turned :turn degrees.
+to frame :turn
+  clean
+  framework :turn
+  for [k 0 7] [gondola :turn + 45 * :k item :k + 1 :colors]
+  ; the ground
+  setpencolor [40 50 40] setpensize 60
+  penup setxy -400 -280 setheading 90 pendown forward 800
+end
+
+clearscreen hideturtle
+setbackground [40 50 90]
+make "speed 0.6
+make "turn 0
+forever [
+  frame :turn
+  make "turn :turn + :speed
+  wait 1
+]

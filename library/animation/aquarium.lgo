@@ -1,0 +1,150 @@
+; ============================================================
+; TITLE:    Aquarium
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Advanced
+; TAGS:     mouse events, MOUSEON, CLICKPOS, lists, steering, animation
+; SUMMARY:  Fish swim about a tank; click to drop food and watch them race to eat it.
+; ============================================================
+;
+; WHAT IT DOES
+;   Six fish drift around a tank with swaying seaweed and bubbles.
+;   Click in the water to drop a food pellet. It sinks slowly, and
+;   fish that notice it race to gobble it up. A small feeder also
+;   drops a pellet now and then, in case you forget.
+;
+; HOW TO USE
+;   Press Run, then click in the turtle world (the tank) to feed the
+;   fish. Press Stop to end.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MOUSEON to run instructions when the mouse button goes down
+;   * CLICKPOS to find where the click happened
+;   * a list of pellets that grows and shrinks, using FPUT and REMOVE
+;   * steering: turning a little toward a target each frame
+;   * fish stored as lists [x y heading color] and updated with MAP
+;
+; THINGS TO TRY
+;   * Make the fish faster when they chase food.
+;   * Add a fish that is bigger and only eats every other pellet.
+;   * Make the right mouse button scare the fish away.
+; ============================================================
+
+; NEW.FISH makes a fish: a list [x y heading color].
+to new.fish :color
+  output (list (random -300 300) (random -200 200) random 360 :color)
+end
+
+; DRAW.FISH draws a fish facing its heading: a forked tail, a fat
+; body and one eye near the front.
+to draw.fish :f
+  localmake "h item 3 :f
+  penup setxy item 1 :f item 2 :f setheading :h
+  setpencolor item 4 :f
+  ; the tail: two short lines spreading backward from the tail joint
+  back 12 setpensize 6
+  setheading :h + 150 pendown forward 13 penup back 13
+  setheading :h + 210 pendown forward 13 penup back 13
+  ; the body: a thick line with round ends
+  setheading :h forward 4
+  setpensize 20 pendown forward 16 penup
+  ; the eye
+  left 90 forward 4
+  setpencolor 7 setpensize 6 dot pos
+  setpencolor 0 setpensize 3 dot pos
+end
+
+; NEAREST.FOOD outputs the closest pellet within 250 steps, or [].
+to nearest.food :x :y
+  localmake "best []
+  localmake "range 250
+  foreach :food [
+    ; Brackets round (FIRST ?) so the minus sign does not grab ?
+    localmake "dx (first ?) - :x
+    localmake "dy (last ?) - :y
+    localmake "d sqrt (:dx * :dx + :dy * :dy)
+    if :d < :range [make "best ? make "range :d]
+  ]
+  output :best
+end
+
+; SWIM outputs fish :f one frame later. It steers toward food if
+; there is some nearby, otherwise it wanders.
+to swim :f
+  localmake "x item 1 :f
+  localmake "y item 2 :f
+  localmake "h item 3 :f
+  localmake "target nearest.food :x :y
+  ifelse emptyp :target [
+    make "h :h + (random -6 6)
+  ] [
+    ; Turn up to 8 degrees toward the pellet.
+    localmake "want towards.from :x :y :target
+    localmake "turn (modulo :want - :h + 180 360) - 180
+    make "h :h + ifelse (abs :turn) < 8 [:turn] [8 * :turn / abs :turn]
+    ; Close enough? Eat it.
+    if (abs (first :target) - :x) + (abs (last :target) - :y) < 14 [
+      make "food remove :target :food
+    ]
+  ]
+  ; Near the glass? Turn to face the middle of the tank.
+  if or (abs :x) > 360 (abs :y) > 230 [make "h towards.from :x :y [0 0]]
+  output (list :x + 2.5 * sin :h :y + 2.5 * cos :h :h item 4 :f)
+end
+
+; TOWARDS.FROM is like TOWARDS, but from any point (x, y) to :p.
+; (ARCTAN dx dy) gives the angle counterclockwise from east; turtle
+; headings start at north and go clockwise, hence 90 minus it.
+to towards.from :x :y :p
+  localmake "dx (first :p) - :x
+  localmake "dy (last :p) - :y
+  if and :dx = 0 :dy = 0 [output 0]
+  output 90 - (arctan :dx :dy)
+end
+
+; TANK draws the sand, the swaying seaweed and the bubbles.
+to tank :t
+  setpencolor [220 200 140] setpensize 50
+  penup setxy -400 -275 setheading 90 pendown forward 800
+  ; seaweed that sways with time
+  setpencolor [40 140 70] setpensize 6
+  foreach [-320 -250 150 290 330] [
+    penup setxy ? -255 setheading 0 pendown
+    repeat 8 [right 6 * sin (:t * 3 + 40 * repcount + ?) forward 18]
+  ]
+  ; bubbles rising and wrapping round
+  setpencolor [220 240 255] setpensize 8
+  for [k 1 6] [
+    dot list -330 + 7 * sin (:t * 4 + :k * 50) -240 + modulo :t * 2 + :k * 80 480
+  ]
+end
+
+; DROP adds a pellet where the mouse was clicked.
+to drop :where
+  make "food fput :where :food
+end
+
+; SINK moves every pellet down a little, stopping on the sand.
+to sink
+  make "food map [ifelse (last ?) > -240 [list first ? (last ?) - 0.6] [?]] :food
+end
+
+clearscreen hideturtle
+setbackground [40 110 170]
+print [Click in the tank to drop food for the fish.]
+make "food []
+make "fishes map [new.fish ?] [[250 150 40] [240 90 90] [250 220 70]
+                               [150 220 250] [230 130 200] [250 250 250]]
+mouseon [drop clickpos] [] [] [] []
+make "t 0
+forever [
+  clean tank :t
+  setpencolor [150 90 40] setpensize 7
+  foreach :food [dot ?]
+  foreach :fishes [draw.fish ?]
+  make "fishes map [swim ?] :fishes
+  sink
+  ; the automatic feeder, once every 400 frames
+  if 0 = remainder :t 400 [drop list (random -300 300) 250]
+  make "t :t + 1
+  wait 1
+]

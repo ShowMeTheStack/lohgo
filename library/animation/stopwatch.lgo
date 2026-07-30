@@ -1,0 +1,86 @@
+; ============================================================
+; TITLE:    Stopwatch
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Intermediate
+; TAGS:     TIMEMILLI, timing, clock hands, LABEL, REMAINDER
+; SUMMARY:  An analog stopwatch with a sweeping second hand, a minute dial and a digital readout.
+; ============================================================
+;
+; WHAT IT DOES
+;   A stopwatch starts running from zero. The long red hand sweeps
+;   round once a minute, the small dial counts minutes, and the
+;   numbers underneath show minutes, seconds and tenths. It reads the
+;   computer's clock with TIMEMILLI each frame, so it keeps correct
+;   time even if a frame is late.
+;
+; HOW TO USE
+;   Press Run to start the watch. Press Stop to stop it.
+;
+; CONCEPTS YOU WILL LEARN
+;   * TIMEMILLI: the computer clock in thousandths of a second
+;   * measuring time since the start, instead of counting frames
+;   * turning seconds into a hand angle (6 degrees per second)
+;   * INT and REMAINDER to split a time into minutes, seconds and
+;     tenths
+;
+; THINGS TO TRY
+;   * Make the second hand tick once a second instead of sweeping.
+;   * Add a lap counter that beeps with TONE every 10 seconds.
+;   * Change the dial to count to 30 seconds instead of 60.
+; ============================================================
+
+; HAND draws a line from (x, y) at an angle, :len long.
+to hand :x :y :angle :len :size :color
+  penup setxy :x :y setheading :angle pendown
+  setpensize :size setpencolor :color
+  forward :len
+end
+
+; DIAL draws a round face with :marks tick marks at (x, y).
+to dial :x :y :r :marks
+  setpencolor [250 250 245] setpensize 2 * :r dot list :x :y
+  setpencolor [60 60 70] setpensize 3
+  penup setxy :x :y pendown
+  arc 360 :r
+  for [k 1 :marks] [
+    penup setxy :x :y setheading :k * 360 / :marks forward :r - 12 pendown
+    forward 8
+  ]
+end
+
+; TWO.DIGITS writes a number with a leading zero, like 07.
+to two.digits :n
+  if :n < 10 [output word 0 :n]
+  output :n
+end
+
+; FACE.AT draws everything for :ms thousandths of a second.
+to face.at :ms
+  localmake "secs :ms / 1000
+  localmake "mins int :secs / 60
+  clean
+  ; the crown button and the big dial
+  setpencolor [90 90 100] setpensize 30 dot [0 245]
+  dial 0 0 220 60
+  ; the small minute dial, counting up to 30 minutes
+  dial 0 90 50 30
+  hand 0 90 :mins * 12 40 3 [40 40 120]
+  ; the sweeping second hand
+  hand 0 0 :secs * 6 200 3 [220 40 40]
+  setpencolor [220 40 40] setpensize 14 dot [0 0]
+  ; the digital readout. The tenths digit is the hundreds of the
+  ; thousandths: 2734 ms -> 734 -> 7.
+  setpencolor [30 30 30]
+  setlabelheight 30
+  penup setxy -60 -110 pendown
+  label (word two.digits :mins ": two.digits int remainder :secs 60 ". ~
+              int (remainder :ms 1000) / 100)
+end
+
+clearscreen hideturtle
+setbackground [60 80 100]
+make "start timemilli
+forever [
+  face.at timemilli - :start
+  wait 3
+]

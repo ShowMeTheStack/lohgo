@@ -1,0 +1,132 @@
+; ============================================================
+; TITLE:    Game of Life
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Advanced
+; TAGS:     cellular automaton, MDARRAY, rules, generations, DOT
+; SUMMARY:  Runs John Conway's Game of Life on a wrap-around grid, starting with gliders and a random soup.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every square of a grid is a cell that is alive or dead. Each
+;   generation, every cell counts its eight neighbors:
+;     * a live cell with 2 or 3 live neighbors survives,
+;     * a dead cell with exactly 3 live neighbors is born,
+;     * every other cell is dead in the next generation.
+;   From these rules come blinking oscillators, still lifes and
+;   gliders that walk across the grid. The edges wrap around, so a
+;   glider leaving on the right comes back on the left.
+;
+; HOW TO USE
+;   Press Run and watch the generations go by. The generation count
+;   and population are shown at the top. Change :fill for a thicker
+;   or thinner random start.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a 2D grid stored in MDARRAY, read with MDITEM
+;   * building the next generation in a second grid, then swapping
+;   * wrap-around neighbors with MODULO
+;   * placing known patterns (gliders) from a list of cells
+;
+; THINGS TO TRY
+;   * Start with only the gliders (set :fill to 0).
+;   * Change the rules: born with 3 or 6 neighbors (HighLife).
+;   * Color new-born cells differently from old ones.
+; ============================================================
+
+; NEW.GRID makes an all-dead grid.
+to new.grid
+  localmake "g (mdarray (list :rows :cols))
+  for [r 1 :rows] [for [c 1 :cols] [mdsetitem (list :r :c) :g 0]]
+  output :g
+end
+
+; ALIVE outputs 1 or 0 for the cell at (r, c), wrapping round the
+; edges: row 0 is the last row, row :rows + 1 is the first.
+to alive :g :r :c
+  output mditem (list 1 + modulo :r - 1 :rows 1 + modulo :c - 1 :cols) :g
+end
+
+; NEIGHBORS counts the live cells around (r, c).
+to neighbors :g :r :c
+  localmake "n 0
+  foreach [[-1 -1] [-1 0] [-1 1] [0 -1] [0 1] [1 -1] [1 0] [1 1]] [
+    make "n :n + alive :g :r + first ? :c + last ?
+  ]
+  output :n
+end
+
+; NEXT.GEN builds the next generation into a fresh grid.
+to next.gen
+  localmake "next new.grid
+  for [r 1 :rows] [
+    for [c 1 :cols] [
+      localmake "n neighbors :grid :r :c
+      localmake "now mditem (list :r :c) :grid
+      if or :n = 3 (and :now = 1 :n = 2) [mdsetitem (list :r :c) :next 1]
+    ]
+  ]
+  make "grid :next
+end
+
+; SHOW.GRID draws the live cells as round dots and counts them.
+to show.grid
+  clean
+  setpencolor [90 220 140]
+  setpensize :size - 2
+  localmake "population 0
+  for [r 1 :rows] [
+    for [c 1 :cols] [
+      if 1 = mditem (list :r :c) :grid [
+        dot list :left + :c * :size :top - :r * :size
+        make "population :population + 1
+      ]
+    ]
+  ]
+  setpencolor [200 200 200]
+  penup setxy -380 275 pendown
+  label (sentence [generation] :generation [population] :population)
+end
+
+; GLIDER puts a glider with its corner at (r, c).
+to glider :r :c
+  foreach [[0 1] [1 2] [2 0] [2 1] [2 2]] [
+    mdsetitem (list :r + first ? :c + last ?) :grid 1
+  ]
+end
+
+; SEED fills about :fill percent of the middle with random cells.
+to seed
+  for [r 6 :rows - 5] [
+    for [c 6 :cols - 5] [
+      if (random 100) < :fill [mdsetitem (list :r :c) :grid 1]
+    ]
+  ]
+end
+
+; START makes a fresh grid with two gliders and a random soup.
+to start
+  make "grid new.grid
+  glider 2 2
+  glider 2 30
+  seed
+  make "generation 0
+end
+
+clearscreen hideturtle
+setbackground [15 20 30]
+make "rows 28
+make "cols 38
+make "size 20
+make "left -390
+make "top 280
+make "fill 30
+
+start
+forever [
+  show.grid
+  next.gen
+  make "generation :generation + 1
+  ; After a while most soups settle down, so begin a new one.
+  if :generation > 400 [start]
+  wait 4
+]

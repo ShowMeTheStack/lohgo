@@ -1,0 +1,105 @@
+; ============================================================
+; TITLE:    Flocking Birds
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Advanced
+; TAGS:     boids, emergent behavior, many turtles, vectors, WRAP
+; SUMMARY:  Fifteen turtle birds follow three simple rules and start flying together as a flock.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each bird looks only at the birds near it and obeys three rules,
+;   first written down by Craig Reynolds in 1986:
+;     1. separation: do not crowd your neighbors,
+;     2. alignment: fly the same way as your neighbors,
+;     3. cohesion: steer toward the middle of your neighbors.
+;   Nobody is in charge, yet after a few seconds the birds swirl
+;   about in groups, just like starlings or a school of fish.
+;
+; HOW TO USE
+;   Press Run and wait a few seconds for the flock to form. Press
+;   Stop to end. Change the three weights at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * emergent behavior: simple local rules, complex group motion
+;   * working with directions as x and y parts (vectors)
+;   * reading other turtles with ASK and averaging their headings
+;   * WRAP mode so birds leaving one side come back on the other
+;
+; THINGS TO TRY
+;   * Set :separate to 0. What happens to the flock?
+;   * Set :align to 0, then :cohere to 0.
+;   * Make one bird a hawk (turtle 0) that the others flee from.
+; ============================================================
+
+; SETUP scatters the birds with random headings.
+to setup
+  for [k 1 :birds] [
+    ask :k [
+      penup setshape "arrow
+      setpencolor (list 40 + 10 * :k 80 + 8 * :k 200)
+      setxy (random -380 380) (random -280 280)
+      setheading random 360
+      showturtle
+    ]
+  ]
+end
+
+; NEIGHBORS outputs the numbers of the birds within :range of bird
+; :k, not counting itself.
+to neighbors :k :range
+  localmake "here ask :k [pos]
+  output filter [and not equalp ? :k (ask ? [distance :here]) < :range] iseq 1 :birds
+end
+
+; STEER works out the new heading for bird :k from the three rules.
+; Each rule gives a pull as an x part and a y part; adding the pulls
+; and using TOWARDS on the total gives the new direction.
+to steer :k
+  localmake "near neighbors :k 90
+  localmake "me ask :k [pos]
+  localmake "h ask :k [heading]
+  ; Start with the bird's own direction, so it keeps flying.
+  localmake "px sin :h
+  localmake "py cos :h
+  if not emptyp :near [
+    foreach :near [
+      localmake "other ask ? [pos]
+      localmake "oh ask ? [heading]
+      localmake "dx (first :other) - first :me
+      localmake "dy (last :other) - last :me
+      localmake "d sqrt (:dx * :dx + :dy * :dy) + 0.1
+      ; alignment: lean toward its heading
+      make "px :px + :align * sin :oh
+      make "py :py + :align * cos :oh
+      ; cohesion: lean toward its position
+      make "px :px + :cohere * :dx / 90
+      make "py :py + :cohere * :dy / 90
+      ; separation: push away, harder when very close
+      if :d < 30 [
+        make "px :px - :separate * :dx / :d
+        make "py :py - :separate * :dy / :d
+      ]
+    ]
+  ]
+  ; TOWARDS measures from the turtle that runs it, so ASK the bird.
+  localmake "want ask :k [towards list (first :me) + :px (last :me) + :py]
+  ; Turn at most 15 degrees per frame, so birds bank smoothly.
+  localmake "turn modulo :want - :h + 180 360
+  make "turn :turn - 180
+  if :turn > 15 [make "turn 15]
+  if :turn < -15 [make "turn -15]
+  ask :k [right :turn forward 6]
+end
+
+clearscreen hideturtle
+setbackground [200 225 245]
+wrap
+make "birds 15
+make "align 0.3
+make "cohere 0.4
+make "separate 1.5
+setup
+forever [
+  for [k 1 :birds] [steer :k]
+  wait 1
+]

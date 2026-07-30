@@ -1,0 +1,74 @@
+; ============================================================
+; TITLE:    Falling Snow
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Beginner
+; TAGS:     many turtles, TELL, EACH, SETSHAPE, animation, random
+; SUMMARY:  Twenty star shaped turtles drift down like snowflakes and slowly build a snowdrift.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every snowflake is its own turtle, wearing the star shape. Each
+;   one falls at its own speed and wobbles a little from side to
+;   side. When a flake reaches the ground it leaves a white dot
+;   there, so the snow slowly piles up, and then it starts again
+;   from the top of the sky.
+;
+; HOW TO USE
+;   Press Run and watch the snow fall. Press Stop to end it.
+;
+; CONCEPTS YOU WILL LEARN
+;   * many turtles at once: TELL a list of turtle numbers
+;   * EACH runs instructions for every turtle in turn
+;   * SETSHAPE to make a turtle look like a star
+;   * moving with SETXY instead of FORWARD
+;
+; THINGS TO TRY
+;   * Use 40 flakes instead of 20.
+;   * Make the snow blow sideways by adding 2 to every x move.
+;   * Give the ground a hill so the snow lands on a slope.
+; ============================================================
+
+; SCENERY draws a dark sky's ground and a little house.
+to scenery
+  setpencolor [60 70 90]
+  setpensize 60
+  penup setxy -400 -280 setheading 90 pendown forward 800
+  ; the house
+  penup setxy 150 -250 setheading 0
+  filled [120 70 60] [repeat 2 [forward 90 right 90 forward 120 right 90]]
+  penup setxy 140 -160
+  filled [80 50 50] [setxy 270 -160 setxy 205 -110 setxy 140 -160]
+  setpencolor [255 220 120] setpensize 26
+  dot [210 -200]
+end
+
+; START.FLAKES puts every flake turtle somewhere in the sky.
+to start.flakes
+  tell :flakes
+  setshape "star
+  setpencolor 7
+  penup
+  each [setxy (random -390 390) (random 0 300)]
+  showturtle
+end
+
+; FALL moves one flake a little way down. At the ground it drops a
+; dot on the pile and goes back up to the top.
+to fall
+  setxy xcor + (random -2 2) ycor - (random 2 5)
+  if ycor < -245 [
+    setpensize 6
+    dot pos
+    setxy (random -390 390) 300
+  ]
+end
+
+clearscreen hideturtle
+setbackground [20 30 60]
+scenery
+make "flakes iseq 1 20
+start.flakes
+forever [
+  each [fall]
+  wait 2
+]

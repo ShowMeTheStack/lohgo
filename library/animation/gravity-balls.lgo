@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    Gravity Balls
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Intermediate
+; TAGS:     many turtles, gravity, arrays, physics, SETSHAPE
+; SUMMARY:  Six ball turtles are thrown into the air, fall, bounce lower each time, and are thrown again.
+; ============================================================
+;
+; WHAT IT DOES
+;   Six turtles wearing the circle shape are tossed up with random
+;   speeds. Gravity pulls them down, and every bounce on the floor
+;   loses some energy, so the bounces get smaller. They also bounce
+;   off the side walls. When all of them have nearly stopped, they
+;   are thrown up again. Each ball leaves a faint trail of where it
+;   has been.
+;
+; HOW TO USE
+;   Press Run. Press Stop to end it. Change :gravity or :bounciness.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ARRAYS to keep a speed for each turtle: ITEM and SETITEM
+;   * gravity: the downward speed grows a little every frame
+;   * losing energy: multiply the speed by :bounciness at each bounce
+;   * ASK to move each turtle in turn
+;
+; THINGS TO TRY
+;   * Set :bounciness to 1. Do they ever stop?
+;   * Set :gravity to 0.1, like on the Moon.
+;   * Make the balls bounce off each other (that is harder!).
+; ============================================================
+
+; THROW.ALL gives every ball a place at the bottom and an upward
+; push, and wipes the old trails.
+to throw.all
+  clean
+  floor
+  for [k 1 6] [
+    setitem :k :vx (random -60 60) / 10
+    setitem :k :vy (random 100 160) / 10
+    ask :k [
+      penup setxy -250 + 100 * (:k - 1) -240
+      setpencolor item :k :colors
+      setshape "circle showturtle
+      setpensize 1 pendown
+    ]
+  ]
+end
+
+; FLOOR draws the ground line.
+to floor
+  setpencolor [80 80 80] setpensize 6
+  penup setxy -400 -255 setheading 90 pendown forward 800
+end
+
+; MOVE.BALL moves ball :k one frame and outputs its speed, so we can
+; tell when everything has settled. The local names are :dx and :dy,
+; not :vx and :vy: a local with the same name would hide the arrays.
+to move.ball :k
+  localmake "dx item :k :vx
+  localmake "dy (item :k :vy) - :gravity
+  localmake "here ask :k [pos]
+  localmake "x (first :here) + :dx
+  localmake "y (last :here) + :dy
+  ; the floor: put the ball back on it and bounce up, losing energy
+  if :y < -240 [make "y -240 make "dy minus :dy * :bounciness make "dx :dx * 0.9]
+  ; the walls
+  if (abs :x) > 390 [make "dx minus :dx make "x 390 * sign :x]
+  setitem :k :vx :dx
+  setitem :k :vy :dy
+  ask :k [setxy :x :y]
+  output (abs :dx) + abs :dy
+end
+
+; SIGN outputs 1 for positive numbers and -1 for negative ones.
+to sign :n
+  output ifelse :n < 0 [-1] [1]
+end
+
+clearscreen hideturtle
+setbackground [245 245 250]
+make "colors [[230 70 70] [240 160 40] [220 200 40] [70 180 90] [60 140 230] [150 90 220]]
+make "vx array 6
+make "vy array 6
+make "gravity 0.4
+make "bounciness 0.75
+throw.all
+forever [
+  make "energy 0
+  for [k 1 6] [make "energy :energy + move.ball :k]
+  ; When the balls hardly move any more, throw them again.
+  if :energy < 6 [wait 30 throw.all]
+  wait 1
+]

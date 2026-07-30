@@ -1,0 +1,131 @@
+; ============================================================
+; TITLE:    Robot Pong
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Advanced
+; TAGS:     game simulation, prediction, reflection, AI, scoring
+; SUMMARY:  Two computer players play Pong against each other, each predicting where the ball will arrive.
+; ============================================================
+;
+; WHAT IT DOES
+;   A ball bounces between two paddles. Each paddle is steered by a
+;   little robot brain: when the ball comes its way, it works out
+;   where the ball will cross its side, bounces included, and moves
+;   there at a limited speed. Each robot also makes a small random
+;   aiming error, so sometimes it misses and the other side scores.
+;   The ball speeds up with every hit. First to 5 wins the match.
+;
+; HOW TO USE
+;   Press Run and watch the match. Press Stop to end it. Change
+;   :error to make the robots sloppier or sharper.
+;
+; CONCEPTS YOU WILL LEARN
+;   * predicting a bounce by "unfolding" the walls with MODULO
+;   * a speed limit: move toward the target, but only so far per frame
+;   * changing the ball's angle by where it hits the paddle
+;   * keeping score and restarting rounds
+;
+; THINGS TO TRY
+;   * Set :error to 0. Can anyone ever score?
+;   * Make the left robot faster than the right one.
+;   * Replace the left robot with the keyboard: up and down arrows.
+; ============================================================
+
+; PREDICT outputs the y where the ball will cross x = :goal. Without
+; walls the ball would just keep going in a straight line. Walls at
+; y = 260 and y = -260 fold that line back, like a mirror: so we work
+; out the straight-line answer and fold it into the court.
+to predict :goal
+  if :vx = 0 [output :by]
+  localmake "frames (:goal - :bx) / :vx
+  localmake "y :by + :vy * :frames
+  ; Unfold: positions repeat every 2 x 520 = 1040.
+  localmake "m modulo :y + 260 1040
+  if :m > 520 [make "m 1040 - :m]
+  output :m - 260
+end
+
+; ROBOT moves paddle :side ("left or "right) toward its target.
+to robot :side
+  localmake "y thing word :side ".y
+  localmake "coming ifelse :side = "left [:vx < 0] [:vx > 0]
+  localmake "goal ifelse :side = "left [-360] [360]
+  ; When the ball is coming, aim at the predicted point (plus the
+  ; robot's own aiming error); otherwise drift back to the middle.
+  localmake "target ifelse :coming [(predict :goal) + thing word :side ".miss] [0]
+  localmake "move :target - :y
+  if :move > :speed [make "move :speed]
+  if :move < minus :speed [make "move minus :speed]
+  make word :side ".y :y + :move
+end
+
+; SERVE puts the ball in the middle and sends it toward :dir (1 or -1).
+to serve :dir
+  make "bx 0 make "by 0
+  make "vx 6 * :dir
+  make "vy (random -40 40) / 10
+  make "left.miss (random minus :error :error)
+  make "right.miss (random minus :error :error)
+end
+
+; HIT bounces the ball off a paddle at height :py. Hitting near the
+; end of the paddle sends the ball off at a steeper angle.
+to hit :py
+  make "vx minus :vx * 1.05
+  make "vy (:by - :py) / 6
+  make "left.miss (random minus :error :error)
+  make "right.miss (random minus :error :error)
+end
+
+; MOVE.BALL moves the ball and handles walls, paddles and goals.
+to move.ball
+  make "bx :bx + :vx
+  make "by :by + :vy
+  if (abs :by) > 260 [make "vy minus :vy make "by 260 * :by / abs :by]
+  if and :vx < 0 :bx < -350 [
+    ifelse (abs :by - :left.y) < 45 [make "bx -350 hit :left.y] [
+      if :bx < -400 [make "right.score :right.score + 1 serve 1]
+    ]
+  ]
+  if and :vx > 0 :bx > 350 [
+    ifelse (abs :by - :right.y) < 45 [make "bx 350 hit :right.y] [
+      if :bx > 400 [make "left.score :left.score + 1 serve -1]
+    ]
+  ]
+end
+
+; COURT draws the whole picture for this frame.
+to court
+  clean
+  setpencolor [90 90 110] setpensize 4
+  for [y -270 270 30] [penup setxy 0 :y setheading 0 pendown forward 15]
+  setpencolor 7
+  setlabelheight 40
+  penup setxy -80 220 pendown label :left.score
+  penup setxy 60 220 pendown label :right.score
+  setpensize 14
+  penup setxy -360 :left.y - 40 pendown setheading 0 forward 80
+  penup setxy 360 :right.y - 40 pendown forward 80
+  setpensize 16 dot list :bx :by
+end
+
+; MATCH plays until someone has 5 points, then announces the winner.
+to match
+  make "left.score 0 make "right.score 0
+  make "left.y 0 make "right.y 0
+  serve 1
+  while [and :left.score < 5 :right.score < 5] [
+    robot "left
+    robot "right
+    move.ball
+    court
+    wait 1
+  ]
+  print ifelse :left.score = 5 [[Left robot wins the match!]] [[Right robot wins the match!]]
+  wait 120
+end
+
+clearscreen hideturtle
+setbackground [20 25 40]
+make "speed 7
+make "error 70
+forever [match]

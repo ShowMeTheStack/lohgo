@@ -1,0 +1,75 @@
+; ============================================================
+; TITLE:    Bouncing Ball
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Beginner
+; TAGS:     animation, CLEAN, WAIT, variables, bouncing
+; SUMMARY:  A ball bounces around a box forever, changing color every time it hits a wall.
+; ============================================================
+;
+; WHAT IT DOES
+;   A red ball flies around inside a box. When it reaches a wall it
+;   bounces off and picks a new color. Every picture (frame) is drawn
+;   from scratch: wipe the screen, draw the box, draw the ball in its
+;   new place, wait a moment. Do that fast enough and it moves.
+;
+; HOW TO USE
+;   Press Run. Press Stop when you have seen enough. Change :dx and
+;   :dy at the bottom to change the speed and direction.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the animation loop: CLEAN, draw, WAIT, repeat
+;   * position and speed kept in variables
+;   * bouncing by turning a speed negative
+;   * FOREVER for a program that runs until you stop it
+;
+; THINGS TO TRY
+;   * Make the ball bigger. Do you need to change the wall tests?
+;   * Make the box smaller.
+;   * Leave out CLEAN. What does the ball draw now?
+; ============================================================
+
+; BOX draws the walls. The ball stays inside x = -300..300 and
+; y = -200..200.
+to box
+  setpencolor [60 60 80]
+  setpensize 4
+  penup setxy -320 -220 setheading 0 pendown
+  repeat 2 [forward 440 right 90 forward 640 right 90]
+end
+
+; BALL paints the ball at (x, y) with a little shine.
+to ball
+  setpencolor :color
+  setpensize 40
+  dot list :x :y
+  setpencolor 7
+  setpensize 10
+  dot list :x - 8 :y + 8
+end
+
+; BOUNCE turns the ball around at the walls and picks a new color.
+to bounce
+  if or :x > 300 :x < -300 [make "dx minus :dx make "color pick :colors]
+  if or :y > 200 :y < -200 [make "dy minus :dy make "color pick :colors]
+end
+
+; FRAME is one picture of the movie.
+to frame
+  clean
+  box
+  ball
+  make "x :x + :dx
+  make "y :y + :dy
+  bounce
+  wait 1
+end
+
+clearscreen hideturtle
+setbackground [235 240 245]
+make "colors [[230 60 60] [60 140 230] [60 180 90] [240 170 30] [160 80 200]]
+make "color first :colors
+make "x 0
+make "y 0
+make "dx 7
+make "dy 5
+forever [frame]

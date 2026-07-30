@@ -1,0 +1,106 @@
+; ============================================================
+; TITLE:    Clockwork Gears
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Advanced
+; TAGS:     gears, ratios, polar coordinates, FILLED, phase, animation
+; SUMMARY:  Three toothed gears turn together, each at the speed its number of teeth demands, with teeth that mesh.
+; ============================================================
+;
+; WHAT IT DOES
+;   A big gear with 24 teeth drives a small one with 12 teeth, which
+;   drives a middle sized one with 18. Gears that touch turn in
+;   opposite directions, and a gear with half as many teeth turns
+;   twice as fast. The program also works out how to start each gear
+;   so a tooth always slides into a gap and never into another tooth.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to end. Change the tooth counts
+;   (keep the radius 5 times the teeth) and the gears will still mesh.
+;
+; CONCEPTS YOU WILL LEARN
+;   * gear ratios: speed times teeth is the same for meshing gears
+;   * drawing a gear outline with polar coordinates and FILLED
+;   * phase: lining up teeth and gaps where two gears touch
+;   * placing a gear at any angle around another with SIN and COS
+;
+; THINGS TO TRY
+;   * Add a fourth gear with 8 teeth. How fast does it spin?
+;   * Change the angle 135 where gear C sits.
+;   * Set a wrong offset on purpose and watch the teeth clash.
+; ============================================================
+
+; A gear is described by a list: [x y teeth offset color].
+; Its pitch radius (where the teeth meet) is 5 times its teeth.
+
+; POLAR.FROM moves to radius :r at angle :a around (cx, cy).
+to polar.from :cx :cy :r :a
+  setxy :cx + :r * sin :a :cy + :r * cos :a
+end
+
+; DRAW.GEAR draws a gear turned by :turn degrees. Each tooth takes
+; one pitch (360 / teeth): up the slope, across the top, down the
+; slope, and along the bottom of the gap.
+to draw.gear :g :turn
+  localmake "cx item 1 :g
+  localmake "cy item 2 :g
+  localmake "n item 3 :g
+  localmake "p 360 / :n
+  localmake "r 5 * :n
+  localmake "base :turn + item 4 :g
+  penup polar.from :cx :cy :r - 8 :base
+  filled item 5 :g [
+    for [k 0 :n - 1] [
+      localmake "a :base + :k * :p
+      polar.from :cx :cy :r + 8 :a + 0.15 * :p
+      polar.from :cx :cy :r + 8 :a + 0.45 * :p
+      polar.from :cx :cy :r - 8 :a + 0.6 * :p
+      polar.from :cx :cy :r - 8 :a + :p
+    ]
+  ]
+  ; Spokes make the turning easy to see.
+  setpencolor [60 50 40] setpensize 6
+  for [k 0 3] [
+    penup setxy :cx :cy pendown
+    polar.from :cx :cy :r - 22 :base + 90 * :k
+  ]
+  setpensize 20 dot list :cx :cy
+end
+
+; MESH.OFFSET works out the offset for a gear with :teeth teeth that
+; touches gear :g at heading :dir from :g's center. A tooth of one
+; gear must meet a gap of the other: tooth centers are 0.3 of a pitch
+; along, gap centers 0.8, so the two fractions must add up to 1.1.
+to mesh.offset :g :teeth :dir
+  localmake "p1 360 / item 3 :g
+  localmake "p2 360 / :teeth
+  localmake "f1 (modulo :dir - item 4 :g :p1) / :p1
+  output modulo :dir + 180 - :p2 * (1.1 - :f1) :p2
+end
+
+; PLACE.NEXT makes the gear that sits at heading :dir from gear :g.
+to place.next :g :teeth :dir :color
+  localmake "d 5 * (item 3 :g) + 5 * :teeth
+  output (list (item 1 :g) + :d * sin :dir (item 2 :g) + :d * cos :dir ~
+               :teeth mesh.offset :g :teeth :dir :color)
+end
+
+; SPIN draws all three gears for a turn :t of the big gear. The
+; others turn by the ratio of teeth, and every second gear backward.
+to spin :t
+  clean
+  draw.gear :a :t
+  draw.gear :b minus :t * 24 / 12
+  draw.gear :c :t * 24 / 18
+end
+
+clearscreen hideturtle
+setbackground [235 225 205]
+make "a (list -130 50 24 0 [180 140 60])
+make "b place.next :a 12 90 [160 160 170]
+make "c place.next :b 18 135 [190 110 70]
+make "t 0
+forever [
+  spin :t
+  make "t :t + 0.8
+  wait 1
+]

@@ -1,0 +1,88 @@
+; ============================================================
+; TITLE:    Gravity Orbits
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Advanced
+; TAGS:     physics, Newton, gravity, simulation, velocity, trails
+; SUMMARY:  Simulates Newton's law of gravity: planets launched at different speeds trace circles, ellipses and an escaping path.
+; ============================================================
+;
+; WHAT IT DOES
+;   A heavy star sits in the middle. Four planet turtles start at the
+;   same distance on its left, each launched upward at a different
+;   speed. The program does not draw circles on purpose: it only
+;   applies Newton's law (the pull gets four times weaker when the
+;   distance doubles) over and over. Out come a near circle, two
+;   ellipses and one planet so fast it escapes into space.
+;
+; HOW TO USE
+;   Press Run and watch the trails. Press Stop to end. Change the
+;   speeds in the list :launch.
+;
+; CONCEPTS YOU WILL LEARN
+;   * position and velocity as pairs of numbers
+;   * the inverse square law: pull = strength / distance squared
+;   * Euler steps: update velocity from the pull, then position
+;   * arrays of positions and velocities, one entry per planet
+;
+; THINGS TO TRY
+;   * Find the speed that gives a perfect circle (about 5).
+;   * Launch a planet downward with a negative speed.
+;   * Halve :strength. Which planets escape now?
+;   * The red orbit slowly turns. Real orbits (almost) do not; that
+;     is the error from taking whole steps. Smaller steps shrink it.
+; ============================================================
+
+; STEP.PLANET moves planet :k by one small step of time.
+to step.planet :k
+  localmake "x item :k :xs
+  localmake "y item :k :ys
+  localmake "r2 :x * :x + :y * :y
+  ; Too close to the star? The planet has crashed; leave it alone.
+  if :r2 < 400 [stop]
+  localmake "r sqrt :r2
+  ; The pull points at the star (at 0, 0), so its x and y parts
+  ; are -x / r and -y / r, times the size strength / r^2.
+  localmake "pull :strength / :r2
+  setitem :k :vxs (item :k :vxs) - :pull * :x / :r
+  setitem :k :vys (item :k :vys) - :pull * :y / :r
+  setitem :k :xs :x + item :k :vxs
+  setitem :k :ys :y + item :k :vys
+  ; Only move the turtle if the planet is still on screen.
+  if and (abs item :k :xs) < 400 (abs item :k :ys) < 300 [
+    ask :k [setxy item :k :xs item :k :ys]
+  ]
+end
+
+; LAUNCH.ALL puts the planets at x = -200 and sets them moving.
+to launch.all
+  localmake "n count :launch
+  make "xs array :n
+  make "ys array :n
+  make "vxs array :n
+  make "vys array :n
+  for [k 1 :n] [
+    setitem :k :xs -200
+    setitem :k :ys 0
+    setitem :k :vxs 0
+    setitem :k :vys item :k :launch
+    ask :k [
+      penup setxy -200 0 setshape "circle
+      setpencolor item :k :colors setpensize 2
+      showturtle pendown
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [5 5 20]
+; the star
+setpencolor [255 210 90] setpensize 40 dot [0 0]
+make "strength 5000
+make "launch [3 4 5 7.5]
+make "colors [[240 90 80] [250 180 60] [90 200 120] [110 160 255]]
+launch.all
+forever [
+  ; several physics steps per frame keep the orbits accurate
+  repeat 4 [for [k 1 count :launch] [step.planet :k]]
+  wait 1
+]

@@ -1,0 +1,105 @@
+; ============================================================
+; TITLE:    Spinning Prize Wheel
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Intermediate
+; TAGS:     animation, rotation, friction, READLIST, FILLED, random
+; SUMMARY:  Spins a colorful prize wheel that slows down by friction and stops on a random prize.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws a wheel of eight colored slices, each with a prize name.
+;   The wheel gets a random push, spins quickly, and slows down a
+;   little every frame until it stops. A pointer at the top shows
+;   which prize you won, and the command center tells you too.
+;
+; HOW TO USE
+;   Press Run. After each spin, press Enter in the command center to
+;   spin again, or type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * rotating a whole drawing by adding a :turn angle to everything
+;   * friction: multiply the speed by a number a bit less than 1
+;   * working out which slice is under the pointer with INT and
+;     MODULO
+;   * READLIST to wait for the player between spins
+;
+; THINGS TO TRY
+;   * Change the friction 0.985 to 0.95 or 0.995.
+;   * Put your own prizes in the list.
+;   * Make one slice twice as wide (and twice as likely).
+; ============================================================
+
+make "prizes [Pear Kite Book Ball Hat Star Car Cake]
+make "colors [[230 70 70] [250 160 40] [250 220 60] [80 190 90]
+              [60 170 220] [80 100 220] [160 90 210] [230 100 170]]
+
+; SLICE paints slice number :k (1 to 8) with the wheel turned :turn
+; degrees. Each slice is 45 degrees wide.
+to slice :k :turn
+  localmake "start :turn + 45 * (:k - 1)
+  penup home
+  filled item :k :colors [
+    setheading :start forward 220
+    right 90
+    repeat 15 [forward 11.5 right 3]
+    home
+  ]
+  ; the prize name, halfway out along the middle of the slice
+  ; A label starts at the turtle, so step back by about half the
+  ; width of the word to center it.
+  penup home setheading :start + 22.5 forward 140
+  setx xcor - 4.5 * count item :k :prizes
+  setpencolor [40 40 40]
+  label item :k :prizes
+end
+
+; WHEEL draws the whole wheel, turned :turn degrees, and the pointer.
+to wheel :turn
+  clean
+  setlabelheight 16
+  for [k 1 8] [slice :k :turn]
+  setpencolor [60 60 60] setpensize 30 dot [0 0]
+  ; the pointer at the top
+  penup setxy -15 250
+  filled [40 40 40] [setxy 15 250 setxy 0 215 setxy -15 250]
+end
+
+; WINNER works out which slice is at the top (heading 0). The slice
+; that started at heading 0 has been carried round by :turn degrees,
+; so we look :turn degrees back from the top.
+to winner :turn
+  localmake "back modulo 360 - :turn 360
+  output 1 + int :back / 45
+end
+
+; SPIN gives the wheel a random push and lets it run down.
+to spin
+  localmake "speed (random 20 35)
+  while [:speed > 0.2] [
+    make "turn :turn + :speed
+    make "speed :speed * 0.985
+    wheel :turn
+    wait 1
+  ]
+  print (sentence [You won a] word item winner :turn :prizes "!)
+end
+
+; PLAY spins once, then keeps asking until the player types quit.
+to play
+  print [Spinning the wheel...]
+  spin
+  forever [
+    print [Press Enter to spin again, or type quit to stop.]
+    localmake "answer readlist
+    if not emptyp :answer [
+      if equalp lowercase first :answer "quit [print [Thanks for playing!] stop]
+    ]
+    spin
+  ]
+end
+
+clearscreen hideturtle
+setbackground [245 240 230]
+make "turn 0
+wheel :turn
+play

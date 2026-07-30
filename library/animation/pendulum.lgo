@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Swinging Pendulum
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Intermediate
+; TAGS:     physics, simulation, SIN, animation, CLEAN
+; SUMMARY:  Simulates a real pendulum with gravity, so it slows at the ends and speeds up through the middle.
+; ============================================================
+;
+; WHAT IT DOES
+;   A heavy bob hangs on a rod from a pin. It starts pulled to one
+;   side. Each frame, gravity pulls it back toward the middle a
+;   little more strongly the further out it is. The result is the
+;   natural swing of a clock pendulum. A faint arc shows its path.
+;
+; HOW TO USE
+;   Press Run and watch it swing. Change :angle (the starting angle)
+;   and :length at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a simulation: angle, speed and acceleration updated every step
+;   * the pendulum rule: acceleration = - (g / length) * sin angle
+;   * a tiny bit of friction (:drag) so the swing slowly dies down
+;   * placing the bob by pointing the rod with SETHEADING and FORWARD
+;
+; THINGS TO TRY
+;   * Start at 170 degrees. Does it still swing evenly?
+;   * Make the rod shorter. Does it swing faster or slower?
+;   * Set :drag to 1 for a pendulum that never stops.
+; ============================================================
+
+; DRAW.PENDULUM draws the frame, rod and bob for the current angle.
+to draw.pendulum
+  clean
+  ; the support
+  setpencolor [90 70 50] setpensize 12
+  penup setxy -120 250 setheading 90 pendown forward 240
+  ; the path of the bob
+  setpencolor [210 210 220] setpensize 1
+  penup setxy 0 250 setheading 180 - 60 pendown
+  arc 120 :length
+  ; the rod: from the pin, heading 180 is straight down
+  setpencolor [60 60 60] setpensize 4
+  penup setxy 0 250 setheading 180 - :angle pendown
+  forward :length
+  ; the bob at the end of the rod
+  setpencolor [200 160 40] setpensize 50 dot pos
+  setpencolor [250 220 120] setpensize 16 dot list xcor - 8 ycor + 8
+  setpencolor [60 60 60] setpensize 12 dot [0 250]
+end
+
+; STEP.PHYSICS moves the pendulum on by one small slice of time.
+to step.physics
+  ; Gravity's pull along the swing depends on SIN of the angle.
+  localmake "accel minus :gravity / :length * sin :angle
+  make "speed (:speed + :accel) * :drag
+  make "angle :angle + :speed
+end
+
+clearscreen hideturtle
+setbackground [240 240 245]
+make "length 360
+make "angle 50
+make "speed 0
+make "gravity 260
+make "drag 0.999
+forever [
+  draw.pendulum
+  step.physics
+  wait 1
+]

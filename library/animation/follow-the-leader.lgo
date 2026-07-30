@@ -1,0 +1,79 @@
+; ============================================================
+; TITLE:    Follow the Leader
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Intermediate
+; TAGS:     many turtles, TOWARDS, ASK, chasing, trails
+; SUMMARY:  A leader turtle wanders about and a line of turtles follows, each one chasing the turtle ahead.
+; ============================================================
+;
+; WHAT IT DOES
+;   Turtle 0 is the leader. It wanders around, turning a little at
+;   random. Turtle 1 always turns to face the leader and steps
+;   toward it. Turtle 2 chases turtle 1, turtle 3 chases turtle 2,
+;   and so on. Each follower draws a faint colored trail, so you
+;   see the curves they make as they cut corners.
+;
+; HOW TO USE
+;   Press Run and watch the chase. Press Stop to end it.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ASK to read another turtle's position: ASK 2 [POS]
+;   * TOWARDS to face a point
+;   * keeping followers from bunching up with a distance test
+;   * a chain of turtles, each one following the next
+;
+; THINGS TO TRY
+;   * Make all the followers chase the leader directly.
+;   * Make the followers faster than the leader. What happens?
+;   * Let the leader follow the mouse with MOUSEPOS.
+; ============================================================
+
+make "colors [[220 60 60] [240 150 40] [230 210 50] [70 180 90] [60 140 230] [150 90 220]]
+
+; SETUP places all the turtles in a row and gives them colors.
+to setup
+  ask 0 [penup setxy 0 0 setshape "turtle setpencolor [40 40 40] showturtle]
+  for [k 1 6] [
+    ask :k [
+      penup setxy -40 * :k 0 setheading 90
+      setshape "arrow
+      setpencolor item :k :colors
+      setpensize 2
+      showturtle
+      pendown
+    ]
+  ]
+end
+
+; LEAD moves the leader: a random wiggle, and a turn back toward the
+; middle if it wanders too close to an edge.
+to lead
+  ask 0 [
+    right (random -15 15)
+    if (distance [0 0]) > 250 [setheading towards [0 0]]
+    forward 5
+  ]
+end
+
+; FOLLOW moves turtle :k toward the turtle in front of it, but only
+; while it is more than 30 steps behind, so they do not pile up.
+to follow :k
+  localmake "target ask :k - 1 [pos]
+  ask :k [
+    setheading towards :target
+    if (distance :target) > 30 [forward 4.5]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [250 248 240]
+setup
+make "frame 0
+forever [
+  lead
+  for [k 1 6] [follow :k]
+  ; Wipe the old trails now and then so the picture stays tidy.
+  make "frame :frame + 1
+  if 0 = remainder :frame 900 [clean]
+  wait 1
+]

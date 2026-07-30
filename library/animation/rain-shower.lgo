@@ -1,0 +1,73 @@
+; ============================================================
+; TITLE:    Rain Shower
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Beginner
+; TAGS:     animation, CLEAN, REMAINDER, loops, weather
+; SUMMARY:  Animates slanting rain falling from a grey cloud onto a puddle, frame by frame.
+; ============================================================
+;
+; WHAT IT DOES
+;   A heavy cloud hangs over a green field. Sixty raindrops slant
+;   down out of it and splash into a puddle. When a drop reaches the
+;   ground it wraps around to the top again, so the rain never
+;   stops.
+;
+; HOW TO USE
+;   Press Run. Press Stop to end it. Change :wind to blow the rain.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a frame counter that grows by one each picture
+;   * REMAINDER to wrap a number around (like a clock)
+;   * giving each drop its own place from its number, no lists needed
+;   * CLEAN and redraw for smooth animation
+;
+; THINGS TO TRY
+;   * Make :wind 0 for rain that falls straight down.
+;   * Make the drops fall faster by changing 9 in DROP.
+;   * Add a flash of lightning now and then with SETBACKGROUND.
+; ============================================================
+
+; SCENE draws the field, the puddle and the cloud.
+to scene
+  setpencolor [70 130 70] setpensize 100
+  penup setxy -400 -260 setheading 90 pendown forward 800
+  ; A very thick line has round ends, which makes a nice puddle.
+  setpencolor [90 110 150] setpensize 30
+  penup setxy -120 -250 pendown forward 240
+  ; The cloud is a bunch of overlapping grey dots.
+  setpencolor [110 110 120] setpensize 120
+  foreach [-160 -60 40 140] [dot list ? 200]
+  setpensize 90
+  foreach [-110 -10 90] [dot list ? 240]
+end
+
+; DROP draws raindrop number :k at frame :t. Its x is spread out by
+; multiplying its number, and it falls 9 steps every frame. REMAINDER
+; keeps the height between 0 and 400, so the drop loops forever.
+to drop :k :t
+  localmake "x remainder :k * 137 600
+  localmake "fall remainder :t * 9 + :k * 53 400
+  localmake "y 180 - :fall
+  penup setxy :x - 300 + :wind * :fall / 10 :y pendown
+  setheading 180 + :wind
+  forward 14
+end
+
+; FRAME draws one picture of the rain.
+to frame :t
+  clean
+  scene
+  setpencolor [170 200 255]
+  setpensize 2
+  for [k 1 60] [drop :k :t]
+  wait 2
+end
+
+clearscreen hideturtle
+setbackground [160 170 185]
+make "wind 15
+make "t 0
+forever [
+  frame :t
+  make "t :t + 1
+]

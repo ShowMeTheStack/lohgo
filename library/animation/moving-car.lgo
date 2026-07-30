@@ -1,0 +1,78 @@
+; ============================================================
+; TITLE:    Car on the Road
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Beginner
+; TAGS:     animation, procedures, wheels, rotation, loops
+; SUMMARY:  A little car drives across the screen with turning wheels, then comes round again.
+; ============================================================
+;
+; WHAT IT DOES
+;   A red car with windows and two wheels drives along a road past
+;   a tree. The spokes in the wheels turn as the car moves, which
+;   makes the driving look real. When the car leaves on the right,
+;   it comes back in from the left.
+;
+; HOW TO USE
+;   Press Run. Press Stop to end it. Change :speed to drive faster.
+;
+; CONCEPTS YOU WILL LEARN
+;   * drawing a whole object at any position with one procedure
+;   * wheels that turn by an angle that grows with the distance
+;   * FOR loops that move something across the screen
+;   * redrawing the scene every frame
+;
+; THINGS TO TRY
+;   * Change the car color, or give it a roof rack.
+;   * Make the car drive from right to left.
+;   * Add a second car on another lane.
+; ============================================================
+
+; WHEEL draws a wheel centered at (x, y) with spokes turned :angle.
+to wheel :x :y :angle
+  setpencolor [30 30 30] setpensize 36 dot list :x :y
+  setpencolor [180 180 190] setpensize 3
+  repeat 3 [
+    penup setxy :x :y setheading :angle + 60 * repcount pendown
+    forward 14
+    back 28
+  ]
+end
+
+; CAR draws the car with its back bumper at x.
+to car :x
+  penup setxy :x -150 setheading 0
+  filled [210 40 40] [setxy :x + 160 -150 setxy :x + 160 -110 setxy :x + 120 -110
+                      setxy :x + 95 -75 setxy :x + 35 -75 setxy :x + 15 -110
+                      setxy :x -110]
+  penup setxy :x + 40 -105
+  filled [190 230 250] [setxy :x + 70 -105 setxy :x + 70 -82 setxy :x + 48 -82]
+  penup setxy :x + 78 -105
+  filled [190 230 250] [setxy :x + 112 -105 setxy :x + 92 -82 setxy :x + 78 -82]
+  ; The wheels turn 4 degrees for every step the car moves.
+  wheel :x + 35 -152 :x * 4
+  wheel :x + 125 -152 :x * 4
+end
+
+; SCENE draws the road, a tree and the sun.
+to scene
+  setpencolor [90 90 95] setpensize 80
+  penup setxy -400 -190 setheading 90 pendown forward 800
+  setpencolor [240 240 240] setpensize 4
+  for [x -400 400 60] [penup setxy :x -190 pendown forward 30]
+  setpencolor [110 75 45] setpensize 16
+  penup setxy -200 -150 setheading 0 pendown forward 120
+  setpencolor [60 150 70] setpensize 110 dot [-200 0]
+  setpencolor [255 210 60] setpensize 80 dot [280 210]
+end
+
+clearscreen hideturtle
+setbackground [170 215 245]
+make "speed 4
+forever [
+  for [x -560 400 :speed] [
+    clean
+    scene
+    car :x
+    wait 1
+  ]
+]

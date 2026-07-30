@@ -1,0 +1,126 @@
+; ============================================================
+; TITLE:    Double Pendulum
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Advanced
+; TAGS:     chaos, physics, simulation, equations of motion, trails
+; SUMMARY:  Animates a chaotic double pendulum and traces the wild path of its lower bob.
+; ============================================================
+;
+; WHAT IT DOES
+;   One pendulum hangs from another. A single pendulum swings back
+;   and forth politely; a double pendulum flips, loops and tumbles in
+;   a way that never quite repeats. That is chaos: a tiny change in
+;   the start gives a completely different dance. The lower bob
+;   leaves a colored tail of its last 200 positions that fades away
+;   behind it.
+;
+; HOW TO USE
+;   Press Run and watch. Change :a1 and :a2 (starting angles in
+;   degrees) and run again. Even 0.1 of a degree makes a difference
+;   after a while.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the full equations of motion of a double pendulum
+;   * radians versus degrees (RADSIN and RADCOS use radians)
+;   * QUEUE and DEQUEUE to keep a tail of the most recent points
+;   * redrawing everything each frame with CLEAN
+;
+; THINGS TO TRY
+;   * Start with :a1 = 10 and :a2 = 10. Is it still chaotic?
+;   * Make the lower bob much heavier than the upper one.
+;   * Run two pendulums whose starts differ by 0.01 and compare.
+; ============================================================
+
+; ACCELERATIONS works out how fast each angle's speed is changing,
+; from the standard equations (angles in radians). The long formulas
+; are split into named parts. Brackets go around every (RADSIN ...)
+; and (RADCOS ...), because otherwise the function would swallow the
+; whole sum that follows it.
+to accelerations
+  localmake "d :t1 - :t2
+  localmake "den 2 * :m1 + :m2 - :m2 * (radcos 2 * :d)
+  localmake "a (minus :g) * (2 * :m1 + :m2) * (radsin :t1)
+  localmake "b :m2 * :g * (radsin :t1 - 2 * :t2)
+  localmake "c 2 * (radsin :d) * :m2 * (:w2 * :w2 * :l2 + :w1 * :w1 * :l1 * (radcos :d))
+  localmake "acc1 (:a - :b - :c) / (:l1 * :den)
+  localmake "e :w1 * :w1 * :l1 * (:m1 + :m2)
+  localmake "f :g * (:m1 + :m2) * (radcos :t1)
+  localmake "h :w2 * :w2 * :l2 * :m2 * (radcos :d)
+  localmake "acc2 2 * (radsin :d) * (:e + :f + :h) / (:l2 * :den)
+  output list :acc1 :acc2
+end
+
+; ADVANCE moves the simulation on by a small time step :dt.
+to advance
+  localmake "acc accelerations
+  make "w1 :w1 + :dt * first :acc
+  make "w2 :w2 + :dt * last :acc
+  make "t1 :t1 + :dt * :w1
+  make "t2 :t2 + :dt * :w2
+end
+
+; ARMS outputs the two bob positions, with the pivot at (0, 120).
+; An angle of 0 means hanging straight down.
+to arms
+  localmake "x1 :scale * :l1 * radsin :t1
+  localmake "y1 120 - :scale * :l1 * radcos :t1
+  localmake "x2 :x1 + :scale * :l2 * radsin :t2
+  localmake "y2 :y1 - :scale * :l2 * radcos :t2
+  output (list :x1 :y1 :x2 :y2)
+end
+
+; DRAW.ARMS draws the arms and the two bobs.
+to draw.arms :p
+  setpencolor [40 40 60]
+  setpensize 4
+  penup setxy 0 120 pendown
+  setxy item 1 :p item 2 :p
+  setxy item 3 :p item 4 :p
+  setpensize 18
+  dot list item 1 :p item 2 :p
+  ; the fixed pivot
+  setpencolor [150 150 160] setpensize 12 dot [0 120]
+  setpensize 18
+  setpencolor [200 60 80]
+  dot list item 3 :p item 4 :p
+end
+
+; DRAW.TAIL joins up the remembered points. Old points are pale and
+; new ones are strong, so the tail seems to fade.
+to draw.tail
+  localmake "n count :tail
+  setpensize 2
+  penup
+  foreach :tail [
+    localmake "t # / :n
+    setpencolor (list 255 - 175 * :t 255 - 205 * :t 255 - 95 * :t)
+    setpos ?
+    pendown
+  ]
+end
+
+clearscreen hideturtle
+setbackground 7
+make "g 9.8
+make "m1 1 make "m2 1
+make "l1 1 make "l2 1
+make "scale 130
+; starting angles in degrees, turned into radians for the math
+make "a1 120 make "a2 -20
+make "t1 :a1 * pi / 180
+make "t2 :a2 * pi / 180
+make "w1 0 make "w2 0
+make "dt 0.01
+make "tail []
+forever [
+  repeat 3 [advance]
+  localmake "p arms
+  ; QUEUE adds the newest point at the end; once the tail is long
+  ; enough, DEQUEUE drops the oldest point from the front.
+  queue "tail list item 3 :p item 4 :p
+  if (count :tail) > 200 [ignore dequeue "tail]
+  clean
+  draw.tail
+  draw.arms :p
+  wait 1
+]

@@ -1,0 +1,76 @@
+; ============================================================
+; TITLE:    Blinking Face
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Beginner
+; TAGS:     animation, cartoon, ARC, DOT, random, WAIT
+; SUMMARY:  A friendly cartoon face that looks around and blinks at random moments.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws a round yellow face with rosy cheeks and a smile. The eyes
+;   glance left, right and straight ahead, and every few seconds
+;   the face blinks: the eyes are painted over with skin color and
+;   replaced by closed eyelids, then they open again.
+;
+; HOW TO USE
+;   Press Run and watch the face. Press Stop when you are done.
+;
+; CONCEPTS YOU WILL LEARN
+;   * redrawing only the part that changes (the eyes)
+;   * painting over something to hide it
+;   * ARC for a smile and for closed eyelids
+;   * RANDOM to decide when to blink and where to look
+;
+; THINGS TO TRY
+;   * Make the face wink with only one eye.
+;   * Change the smile to a surprised round mouth.
+;   * Make the blinks happen more often.
+; ============================================================
+
+; FACE draws the parts that never change.
+to face
+  setpencolor [255 210 80] setpensize 400 dot [0 0]
+  setpencolor [250 150 140] setpensize 50
+  dot [-120 -40] dot [120 -40]
+  ; The smile: an arc of a circle centered below the eyes.
+  penup setxy 0 -20 setheading 120 pendown
+  setpencolor [120 50 40] setpensize 8
+  arc 120 100
+end
+
+; EYE draws one open eye at (x, y), with the pupil shifted by :look
+; (negative looks left, positive looks right).
+to eye :x :y :look
+  setpencolor 7 setpensize 70 dot list :x :y
+  setpencolor [40 40 60] setpensize 30 dot list :x + :look :y
+  setpencolor 7 setpensize 8 dot list :x + :look - 6 :y + 6
+end
+
+; CLOSED draws one closed eye: skin color over the open eye, then a
+; curved eyelid line.
+to closed :x :y
+  setpencolor [255 210 80] setpensize 74 dot list :x :y
+  penup setxy :x :y - 10 setheading 300 pendown
+  setpencolor [120 50 40] setpensize 6
+  arc 120 30
+end
+
+to open.eyes :look
+  eye -80 60 :look
+  eye 80 60 :look
+end
+
+to blink
+  closed -80 60
+  closed 80 60
+  wait 8
+end
+
+clearscreen hideturtle
+setbackground [180 220 250]
+face
+forever [
+  open.eyes pick [-15 0 0 15]
+  wait (random 60 180)
+  blink
+]

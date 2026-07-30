@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Solar System in Motion
+; CATEGORY: Animation & Many Turtles
+; LEVEL:    Intermediate
+; TAGS:     many turtles, orbits, SIN, COS, SETTURTLE, circles
+; SUMMARY:  Planet turtles circle a glowing sun at different speeds, and a tiny moon circles the Earth.
+; ============================================================
+;
+; WHAT IT DOES
+;   The sun sits in the middle. Four planets, each a turtle with the
+;   circle shape, go round it on their own orbits. Planets close to
+;   the sun go faster, just like in the real solar system. Earth has
+;   a little moon of its own that goes round it many times a year.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to end it.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a separate turtle for every moving body, using ASK and SETTURTLE
+;   * moving in a circle: x = r sin a, y = r cos a
+;   * a moon's position measured from its planet, not the sun
+;   * drawing the orbits once, and moving turtles over them
+;
+; THINGS TO TRY
+;   * Add Jupiter far out with a slow speed.
+;   * Give Mars two moons.
+;   * Let the planets leave trails by putting their pens down.
+; ============================================================
+
+; Each planet is [turtle radius speed color]. Speed is in degrees
+; per frame; inner planets are faster.
+make "planets [[1 70 4 [180 170 160]] [2 110 2.6 [240 200 120]]
+               [3 160 1.6 [70 140 240]] [4 220 0.9 [230 90 60]]]
+
+; ORBITS draws faint circles where the planets travel, and the sun.
+to orbits
+  setpencolor [60 60 90]
+  setpensize 1
+  foreach :planets [penup home pendown arc 360 item 2 ?]
+  setpencolor [255 200 60] setpensize 60 dot [0 0]
+  setpencolor [255 240 150] setpensize 36 dot [0 0]
+end
+
+; PLACE puts turtle :t at radius :r and angle :a around (cx, cy).
+to place :t :cx :cy :r :a
+  ask :t [setxy :cx + :r * sin :a :cy + :r * cos :a]
+end
+
+; SETUP gets the planet turtles and the moon ready.
+to setup
+  foreach :planets [
+    ask first ? [penup setshape "circle setpencolor last ? showturtle]
+  ]
+  ; SETTURTLE is another way to talk to one turtle: everything after
+  ; it goes to turtle 5 until we switch back to turtle 0.
+  setturtle 5
+  penup setshape "circle setpencolor [220 220 220] showturtle
+  setturtle 0
+end
+
+; MOVE.ALL puts everything where it belongs at time :t.
+to move.all :t
+  foreach :planets [
+    place first ? 0 0 item 2 ? :t * item 3 ?
+  ]
+  ; The moon goes round Earth (turtle 3) 12 times as fast, 22 away.
+  localmake "earth ask 3 [pos]
+  place 5 first :earth last :earth 22 :t * 1.6 * 12
+end
+
+clearscreen hideturtle
+setbackground [8 8 24]
+orbits
+setup
+make "t 0
+forever [
+  move.all :t
+  make "t :t + 1
+  wait 1
+]
