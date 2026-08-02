@@ -1,0 +1,122 @@
+; ============================================================
+; TITLE:    Breakout
+; CATEGORY: Games
+; LEVEL:    Advanced
+; TAGS:     keyp, readchar, mdarray, collisions, animation
+; SUMMARY:  Knock out a wall of rainbow bricks with a bouncing ball and a paddle you move with the arrow keys.
+; ============================================================
+;
+; WHAT IT DOES
+;   Five rows of colored bricks hang at the top of the screen. Keep
+;   the ball in play with your paddle at the bottom. Every brick the
+;   ball touches disappears. You have three balls. Clear the whole
+;   wall to win.
+;
+; HOW TO USE
+;   Click the turtle world first so it receives your keys. Use the
+;   left and right arrow keys to slide the paddle. Press q to quit.
+;
+; CONCEPTS YOU WILL LEARN
+;   * KEYP and READCHAR to read keys without stopping the game
+;   * an MDARRAY that records which bricks are still standing
+;   * turning a position into a row and column with INT
+;   * erasing one brick with PENERASE instead of redrawing everything
+;
+; THINGS TO TRY
+;   * Make the paddle shorter as the score goes up.
+;   * Give the top row bricks 2 points and the bottom row 1.
+; ============================================================
+
+make "cols 8 make "rows 5
+make "bw 90 make "bh 22               ; brick width and height in steps
+make "left -360 make "top 230         ; top left corner of the wall
+make "colors [[230 60 60] [240 150 40] [240 220 60] [80 190 90] [70 130 230]]
+
+; Draw (or erase) the brick in row r, column c as one fat line.
+to brick :r :c :mode
+  localmake "x :left + (:c - 1) * :bw
+  localmake "y :top - (:r - 0.5) * :bh
+  ; the pen has round ends, so start 15 steps in to leave a gap
+  penup setxy :x + 15 :y setheading 90
+  ifelse :mode = "paint [
+    setpensize :bh - 4 setpencolor item :r :colors penpaint
+    pendown forward :bw - 30
+  ] [
+    setpensize :bh + 2 penerase pendown forward :bw - 30 penpaint
+  ]
+end
+
+to paddle :mode
+  penup setxy :px - 50 -260 setheading 90
+  ifelse :mode = "paint [setpensize 12 setpencolor [220 220 240] penpaint] [setpensize 16 penerase]
+  pendown forward 100 penpaint penup
+end
+
+to read.keys
+  if not keyp [stop]
+  localmake "k readchar
+  if or :k = "q :k = "Q [make "lives 0 stop]
+  localmake "step 0
+  if :k = "LEFT [make "step -40]
+  if :k = "RIGHT [make "step 40]
+  if :step = 0 [stop]
+  paddle "erase
+  make "px :px + :step
+  if :px < -340 [make "px -340]
+  if :px > 340 [make "px 340]
+  paddle "paint
+end
+
+; If the ball is inside the wall, find its brick and knock it out.
+to hit.brick
+  localmake "c 1 + int (:bx - :left) / :bw
+  localmake "r 1 + int (:top - :by) / :bh
+  if or :c < 1 :c > :cols [stop]
+  if or :r < 1 :r > :rows [stop]
+  if (:top - :by) < 0 [stop]
+  if not mditem list :r :c :wall [stop]
+  mdsetitem list :r :c :wall "false
+  brick :r :c "erase
+  make "vy minus :vy
+  make "left.over :left.over - 1
+  make "score :score + 10
+  tone 500 + 60 * (:rows - :r) 25
+end
+
+to move.ball
+  make "bx :bx + :vx
+  make "by :by + :vy
+  if or :bx < -390 :bx > 390 [make "vx minus :vx]
+  if :by > 290 [make "vy minus :vy]
+  hit.brick
+  ; the paddle: bounce up, and steer a little by where it was hit
+  if and :vy < 0 and :by < -250 :by > -268 [
+    if (abs :bx - :px) < 58 [make "vy abs :vy make "vx (:bx - :px) / 8 tone 300 20]
+  ]
+  setturtle 1 setxy :bx :by setturtle 0
+  if :by < -300 [lose.ball]
+end
+
+to lose.ball
+  make "lives :lives - 1
+  tone 120 250
+  print sentence [Balls left:] :lives
+  make "bx :px make "by -200 make "vx 3 make "vy 6
+end
+
+to setup
+  clearscreen setbackground [15 15 35] hideturtle
+  make "wall mdarray (list :rows :cols)
+  for [r 1 5] [for [c 1 8] [mdsetitem list :r :c :wall "true brick :r :c "paint]]
+  make "px 0 paddle "paint
+  make "bx 0 make "by -200 make "vx 3 make "vy 6
+  make "lives 3 make "score 0 make "left.over :rows * :cols
+  setturtle 1 penup setshape "circle setpencolor "white showturtle setturtle 0
+end
+
+setup
+print [Click the turtle world. Left and right arrow keys move the paddle.]
+until [or :lives < 1 :left.over = 0] [read.keys move.ball wait 1]
+setpencolor [255 220 120] setlabelheight 34 penup setxy -120 -40
+label ifelse :left.over = 0 [[Wall cleared!]] [[Game over]]
+print sentence [Your score:] :score

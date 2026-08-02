@@ -1,0 +1,117 @@
+; ============================================================
+; TITLE:    Nim
+; CATEGORY: Games
+; LEVEL:    Advanced
+; TAGS:     strategy, bitxor, readlist, arrays, math
+; SUMMARY:  The ancient matchstick game against a computer that plays perfectly using the binary nim-sum.
+; ============================================================
+;
+; WHAT IT DOES
+;   Three piles of matchsticks are drawn on the screen. You and the
+;   computer take turns. On your turn you take as many sticks as
+;   you like, but only from one pile. Whoever takes the very last
+;   stick wins. The computer knows the secret of Nim, so you have to
+;   be clever (and a little lucky) to beat it.
+;
+; HOW TO USE
+;   Press Run. Type two numbers: the pile, then how many to take.
+;   For example  2 3  takes three sticks from pile 2. Type quit to
+;   stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * BITXOR and the "nim-sum" found by Charles Bouton in 1901
+;   * READLIST to read two numbers typed on one line
+;   * checking every part of the input before trusting it
+;
+; THINGS TO TRY
+;   * Change the piles to {1 3 5 7}, the layout used in the film
+;     "Last Year at Marienbad".
+;   * Work out the nim-sum yourself in binary and try to leave the
+;     computer a position whose nim-sum is 0.
+; ============================================================
+
+make "piles {3 4 5}
+
+to draw.piles
+  clean hideturtle
+  for [p 1 count :piles] [
+    localmake "x -260 + (:p - 1) * 250
+    setpencolor [210 210 230] setlabelheight 18
+    penup setxy :x - 10 -100 label sentence "Pile :p
+    for [k 1 item :p :piles] [draw.match :x + (:k - 1) * 22 -60]
+  ]
+end
+
+; A matchstick: a tan stick with a red head on top.
+to draw.match :x :y
+  setpensize 6 setpencolor [222 184 135]
+  penup setxy :x :y pendown setxy :x :y + 100
+  setpensize 14 setpencolor [200 30 30] forward 0
+end
+
+to total
+  output reduce "sum arraytolist :piles
+end
+
+; The nim-sum is the XOR of all pile sizes. When it is 0 the player
+; about to move is in trouble; otherwise there is a winning move.
+to nim.sum
+  output reduce "bitxor arraytolist :piles
+end
+
+to take :p :n
+  setitem :p :piles (item :p :piles) - :n
+  draw.piles
+end
+
+to computer.move
+  localmake "s nim.sum
+  for [p 1 count :piles] [
+    localmake "size item :p :piles
+    ; this pile can be shrunk to make the nim-sum zero
+    if and :s > 0 (bitxor :size :s) < :size [
+      computer.takes :p :size - bitxor :size :s
+      stop
+    ]
+  ]
+  ; no winning move: take one stick from the biggest pile and hope
+  localmake "big 1
+  for [p 2 count :piles] [if (item :p :piles) > (item :big :piles) [make "big :p]]
+  computer.takes :big 1
+end
+
+to computer.takes :p :n
+  print (sentence [I take] :n [from pile] word :p ".)
+  take :p :n
+end
+
+; Outputs a two-number list [pile count] or the word quit.
+to ask.move
+  print sentence [Piles now:] arraytolist :piles
+  type [Pile and how many? ]
+  localmake "m readlist
+  if emptyp :m [output "quit]
+  if memberp first :m [quit q bye stop exit] [output "quit]
+  if not (count :m) = 2 [print [Type two numbers, like 2 3] output ask.move]
+  if not and numberp first :m numberp last :m [print [Those need to be numbers.] output ask.move]
+  localmake "p first :m
+  localmake "n last :m
+  if not memberp :p iseq 1 count :piles [print [There is no such pile.] output ask.move]
+  if or :n < 1 :n > item :p :piles [print (sentence [You can take 1 to] item :p :piles [from that pile.]) output ask.move]
+  output :m
+end
+
+to play
+  localmake "m ask.move
+  if :m = "quit [print [Game stopped.] stop]
+  take first :m last :m
+  if (total) = 0 [print [You took the last stick. You win!] stop]
+  computer.move
+  if (total) = 0 [print [I took the last stick. I win!] stop]
+  play
+end
+
+clearscreen setbackground [30 40 60]
+draw.piles
+print [Take sticks from one pile. Whoever takes the last stick wins.]
+play

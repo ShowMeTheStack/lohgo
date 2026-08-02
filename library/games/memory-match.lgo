@@ -1,0 +1,150 @@
+; ============================================================
+; TITLE:    Memory Match
+; CATEGORY: Games
+; LEVEL:    Intermediate
+; TAGS:     arrays, memory, concentration, readlist, shapes
+; SUMMARY:  Find the 8 matching pairs hidden under 16 face-down cards by turning over two at a time.
+; ============================================================
+;
+; WHAT IT DOES
+;   Sixteen cards lie face down in a 4 by 4 grid. Under them are 8
+;   pairs of colored shapes. Turn over two cards: if they match they
+;   stay face up, otherwise the turtle shows them for a moment and
+;   turns them back. Find all pairs in as few turns as you can.
+;
+; HOW TO USE
+;   Press Run. Type two card numbers separated by a space, such as
+;   3 14, and press Enter. Cards are numbered 1 to 16 from the top
+;   left, row by row. Type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * an ARRAY for the hidden cards and another for what is showing
+;   * shuffling a list into random order
+;   * drawing a whole board again from the game state
+;   * RUN to call a drawing procedure whose name is stored as data
+;
+; THINGS TO TRY
+;   * Make the cards stay visible for less time (change WAIT 90).
+;   * Add a 5th row and two more pairs of shapes.
+; ============================================================
+
+; Each card face names a drawing procedure and a color.
+make "faces [[disk red] [box blue] [tri green] [star orange] ~
+             [diamond purple] [ring magenta] [cross brown] [hex cyan]]
+
+to disk :c
+  setpensize 50 setpencolor :c pendown forward 0
+end
+to box :c
+  setpensize 3 setpencolor :c penup back 22 left 90 forward 22 right 90 pendown
+  filled :c [repeat 4 [forward 44 right 90]]
+end
+to tri :c
+  setpensize 3 setpencolor :c penup back 20 left 90 forward 25 right 90 pendown
+  filled :c [right 30 repeat 3 [forward 50 right 120]]
+end
+to star :c
+  ; begin at the top point and aim at the lower right point
+  setpensize 2 setpencolor :c penup setheading 0 forward 27 setheading 162 pendown
+  filled :c [repeat 5 [forward 52 right 144]]
+end
+to diamond :c
+  setpensize 3 setpencolor :c penup back 28 pendown
+  filled :c [right 35 forward 34 left 70 forward 34 left 110 forward 34 left 70 forward 34]
+end
+to ring :c
+  setpensize 10 setpencolor :c pendown arc 360 20
+end
+to cross :c
+  setpensize 14 setpencolor :c
+  penup back 24 pendown forward 48 penup back 24 left 90 back 24 pendown forward 48
+end
+to hex :c
+  ; start at the left corner so the hexagon ends up centered
+  setpensize 3 setpencolor :c penup setheading 270 forward 28 setheading 30 pendown
+  filled :c [repeat 6 [forward 28 right 60]]
+end
+
+to shuffle :l
+  if emptyp :l [output []]
+  localmake "x pick :l
+  output fput :x shuffle remove.one :x :l
+end
+
+; REMOVE would take out both copies of a pair, so remove just one.
+to remove.one :x :l
+  if (first :l) = :x [output butfirst :l]
+  output fput first :l remove.one :x butfirst :l
+end
+
+to card.center :n
+  output list (remainder :n - 1 4) * 110 - 165   165 - (int (:n - 1) / 4) * 110
+end
+
+to draw.card :n :up
+  localmake "c card.center :n
+  setheading 0 setpensize 2 setpencolor [70 70 90]
+  penup setxy (first :c) - 48 (last :c) - 48 pendown
+  ; a face-down card is dark blue; a face-up card is cream colored
+  filled ifelse :up [[255 250 235]] [[50 70 150]] [repeat 4 [forward 96 right 90]]
+  penup setpos :c setheading 0
+  ifelse :up [
+    ; the face names its drawing procedure, so build a line like
+    ; [star "orange] and RUN it
+    localmake "f item :n :cards
+    run (list first :f quoted last :f)
+  ] [
+    setpencolor [200 210 255] setlabelheight 18
+    setxy xcor - 8 ycor - 6 label :n
+  ]
+end
+
+to draw.board :extra
+  clean hideturtle
+  for [n 1 16] [draw.card :n or (item :n :up) memberp :n :extra]
+  setpencolor [60 60 60] setlabelheight 18
+  penup setxy -220 -270 label (sentence [Turns:] :turns [- Pairs found:] :pairs)
+end
+
+to ask.pair
+  type [Two cards to turn over? ]
+  localmake "m readlist
+  if wordp :m [output "quit]       ; an empty word: no more input at all
+  if emptyp :m [output ask.pair]
+  if memberp first :m [quit q bye stop exit] [output "quit]
+  if not (count :m) = 2 [print [Please type two numbers, like 3 14] output ask.pair]
+  if not and numberp first :m numberp last :m [print [Card numbers, please.] output ask.pair]
+  if or (first :m) = (last :m) not and on.board? first :m on.board? last :m [
+    print [Pick two different cards from 1 to 16.] output ask.pair
+  ]
+  if or (item first :m :up) (item last :m :up) [print [One of those is already face up.] output ask.pair]
+  output :m
+end
+
+to on.board? :n
+  output memberp :n iseq 1 16
+end
+
+to play
+  if :pairs = 8 [print (sentence [All pairs found in] :turns [turns!]) stop]
+  localmake "m ask.pair
+  if :m = "quit [print [Game stopped.] stop]
+  make "turns :turns + 1
+  draw.board :m
+  ifelse equalp item first :m :cards item last :m :cards [
+    print [A match!]
+    setitem first :m :up "true setitem last :m :up "true
+    make "pairs :pairs + 1
+  ] [
+    print [No match. Remember where they were!]
+    wait 90
+  ]
+  draw.board []
+  play
+end
+
+clearscreen hideturtle setbackground [235 230 250]
+make "cards listtoarray shuffle sentence :faces :faces
+make "up {false false false false false false false false false false false false false false false false}
+make "turns 0 make "pairs 0 draw.board []
+play

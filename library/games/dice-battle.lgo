@@ -1,0 +1,96 @@
+; ============================================================
+; TITLE:    Dice Battle
+; CATEGORY: Games
+; LEVEL:    Beginner
+; TAGS:     random, dice, drawing, procedures with inputs
+; SUMMARY:  Roll two dice against the computer; the turtle draws every die with its spots and the first to 5 points wins.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each round you and the computer roll two dice. The turtle draws
+;   the dice with their spots. The bigger total wins the round. Roll
+;   a double and your total counts twice! First to 5 points wins.
+;
+; HOW TO USE
+;   Press Run. Press Enter in the command center to roll (you can
+;   type anything). Type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * RANDOM to roll a die: 1 + RANDOM 6
+;   * a procedure that draws a die for any number
+;   * IF and IFELSE to compare scores
+;
+; THINGS TO TRY
+;   * Use three dice instead of two.
+;   * Change the double rule: maybe a double six wins the game at once.
+; ============================================================
+
+; Where the spots go on a die of size 80, measured from its center.
+; Each list holds the [x y] places for that number of spots.
+make "spots [
+  [[0 0]]
+  [[-20 20] [20 -20]]
+  [[-20 20] [0 0] [20 -20]]
+  [[-20 20] [20 20] [-20 -20] [20 -20]]
+  [[-20 20] [20 20] [0 0] [-20 -20] [20 -20]]
+  [[-20 20] [20 20] [-20 0] [20 0] [-20 -20] [20 -20]]
+]
+
+to die :n :x :y :color
+  ; the body of the die: a filled square with a dark edge
+  setheading 0 setpensize 3 setpencolor [50 50 50]
+  penup setxy :x - 40 :y - 40 pendown
+  filled :color [repeat 4 [forward 80 right 90]]
+  ; a big pen makes a round spot with DOT
+  setpensize 16 setpencolor [30 30 30]
+  foreach item :n :spots [dot list :x + first ? :y + last ?]
+end
+
+to roll
+  output 1 + random 6
+end
+
+; Doubles count twice. That one rule makes the game more exciting.
+to score :a :b
+  if :a = :b [output 2 * (:a + :b)]
+  output :a + :b
+end
+
+to show.scores
+  setpencolor [40 40 40] setlabelheight 20
+  penup setxy -260 -200 label sentence [You:] :you
+  penup setxy 140 -200 label sentence [Computer:] :cpu
+end
+
+to battle
+  type [Press Enter to roll, or type quit: ]
+  localmake "w readlist
+  if wordp :w [print [No more rolls.] stop]
+  if not emptyp :w [if memberp first :w [quit q bye stop exit] [print [Bye!] stop]]
+  localmake "a roll localmake "b roll
+  localmake "c roll localmake "d roll
+  clean hideturtle
+  die :a -260 60 [255 255 255]
+  die :b -150 60 [255 255 255]
+  die :c 150 60 [255 230 200]
+  die :d 260 60 [255 230 200]
+  localmake "mine score :a :b
+  localmake "theirs score :c :d
+  setpencolor [40 40 40] setlabelheight 22
+  penup setxy -260 140 label sentence [You rolled] :mine
+  penup setxy 120 140 label sentence [I rolled] :theirs
+  if :a = :b [print [You rolled a double!]]
+  if :c = :d [print [I rolled a double!]]
+  if :mine > :theirs [make "you :you + 1 print [You win this round.]]
+  if :mine < :theirs [make "cpu :cpu + 1 print [I win this round.]]
+  if :mine = :theirs [print [A tie! No points.]]
+  show.scores
+  if :you = 5 [print [You win the battle!] stop]
+  if :cpu = 5 [print [I win the battle!] stop]
+  battle
+end
+
+clearscreen hideturtle setbackground [200 225 255]
+make "you 0 make "cpu 0
+print [First to 5 points wins.]
+battle

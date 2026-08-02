@@ -1,0 +1,109 @@
+; ============================================================
+; TITLE:    Rock Paper Scissors
+; CATEGORY: Games
+; LEVEL:    Beginner
+; TAGS:     random, property lists, readword, drawing
+; SUMMARY:  Play rock, paper, scissors against the computer, with both choices drawn by the turtle and a running score.
+; ============================================================
+;
+; WHAT IT DOES
+;   You and the computer each pick rock, paper or scissors. The
+;   turtle draws both picks side by side and says who won the round.
+;   The first one to reach 3 points wins the match.
+;
+; HOW TO USE
+;   Press Run. Type rock, paper or scissors (or just r, p or s) and
+;   press Enter. Type quit to stop early.
+;
+; CONCEPTS YOU WILL LEARN
+;   * PPROP and GPROP to store which choice beats which
+;   * PICK to let the computer choose at random
+;   * small drawing procedures with inputs for position
+;
+; THINGS TO TRY
+;   * Change :target to 5 for a longer match.
+;   * Add lizard and Spock: each one beats two others.
+; ============================================================
+
+make "target 3
+
+; The rules live in property lists: rock's "beats property is scissors.
+pprop "rock "beats "scissors
+pprop "paper "beats "rock
+pprop "scissors "beats "paper
+
+; Short answers are turned into full names with CASE.
+to full.name :w
+  output case lowercase :w [
+    [[r rock] "rock]
+    [[p paper] "paper]
+    [[s scissors] "scissors]
+    [else "none]
+  ]
+end
+
+to draw.rock :x
+  penup setxy :x 20 setpencolor [120 120 130] setpensize 110 pendown forward 0
+  setpensize 30 setpencolor [150 150 160] penup setxy :x - 20 45 pendown forward 0
+end
+
+to draw.paper :x
+  penup setxy :x - 45 -40 setheading 0 setpensize 2 setpencolor [60 60 60]
+  filled [255 255 250] [repeat 2 [pendown forward 120 right 90 forward 90 right 90]]
+  repeat 4 [penup setxy :x - 35 50 - 20 * repcount pendown setxy :x + 35 50 - 20 * repcount]
+end
+
+to draw.scissors :x
+  setpensize 6 setpencolor [90 90 100]
+  penup setxy :x - 30 -40 pendown setxy :x + 30 80
+  penup setxy :x + 30 -40 pendown setxy :x - 30 80
+  setpencolor [200 40 40] setpensize 4
+  penup setxy :x - 30 -55 setheading 90 pendown arc 360 16
+  penup setxy :x + 30 -55 pendown arc 360 16
+end
+
+to draw.choice :what :x
+  if :what = "rock [draw.rock :x]
+  if :what = "paper [draw.paper :x]
+  if :what = "scissors [draw.scissors :x]
+end
+
+to show.round :mine :yours :message
+  clean hideturtle setpensize 1
+  draw.choice :mine -180
+  draw.choice :yours 180
+  setpencolor "black setlabelheight 18
+  penup setxy -215 -120 label [You]
+  penup setxy 135 -120 label [Computer]
+  penup setxy -40 20 setlabelheight 30 label [vs]
+  setlabelheight 20 penup setxy -200 160 label :message
+  penup setxy -200 -200 label (sentence [Score: you] :me [computer] :it)
+end
+
+to ask.choice
+  type [rock, paper or scissors? ]
+  localmake "w readword
+  if emptyp :w [output "quit]
+  if memberp lowercase :w [quit q bye stop exit] [output "quit]
+  if (full.name :w) = "none [print [I only know rock, paper and scissors.] output ask.choice]
+  output full.name :w
+end
+
+to play.round
+  localmake "mine ask.choice
+  if :mine = "quit [print [Thanks for playing!] stop]
+  localmake "yours pick [rock paper scissors]
+  localmake "message [It is a draw.]
+  if (gprop :mine "beats) = :yours [make "me :me + 1 make "message (sentence :mine [beats] :yours [- point to you!])]
+  if (gprop :yours "beats) = :mine [make "it :it + 1 make "message (sentence :yours [beats] :mine [- point to me!])]
+  print :message
+  show.round :mine :yours :message
+  if :me = :target [print [You win the match!] stop]
+  if :it = :target [print [I win the match!] stop]
+  play.round
+end
+
+clearscreen hideturtle setbackground [235 245 255]
+make "me 0 make "it 0
+print (sentence [First to] :target [points wins.])
+play.round

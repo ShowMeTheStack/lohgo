@@ -1,0 +1,113 @@
+; ============================================================
+; TITLE:    Turtle Crossing
+; CATEGORY: Games
+; LEVEL:    Intermediate
+; TAGS:     keyp, readchar, several turtles, collisions, frogger
+; SUMMARY:  A Frogger-style game: help the turtle hop across five lanes of busy traffic to the pond on the other side.
+; ============================================================
+;
+; WHAT IT DOES
+;   Five lanes of cars (little square turtles) speed across the road,
+;   each lane in its own direction and speed. Your turtle starts on
+;   the grass at the bottom. Hop it up, one lane at a time, to the
+;   pond at the top. Each crossing scores a point and the traffic
+;   gets faster. Three bumps and the game is over.
+;
+; HOW TO USE
+;   Click the turtle world first so it receives your keys. Arrow
+;   keys hop the turtle up, down, left and right. Press q to quit.
+;
+; CONCEPTS YOU WILL LEARN
+;   * many turtles, each one given its orders with ASK
+;   * WRAP mode: cars that leave one side come back on the other
+;   * DISTANCE to check for a collision
+;
+; THINGS TO TRY
+;   * Add a sixth lane.
+;   * Make one lane a row of logs that carry the turtle along.
+; ============================================================
+
+; Each lane: its y position and its speed (minus means leftward).
+make "lanes [[-120 3] [-60 -4] [0 5] [60 -3] [120 4]]
+make "cars [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15]
+make "paint [[240 80 60] [250 200 50] [240 240 240] [90 200 250] [250 140 200]]
+
+to draw.scene
+  clearscreen hideturtle setbackground [110 190 90]
+  setheading 90
+  ; the road: a dark band with dashed white lines between lanes
+  penup setxy -400 0 setpensize 300 setpencolor [70 70 80] pendown forward 800
+  setpensize 2 setpencolor [230 230 230]
+  foreach [-90 -30 30 90] [
+    penup setxy -400 ? repeat 27 [pendown forward 15 penup forward 15]
+  ]
+  ; the pond starts right where the road ends
+  penup setxy -400 225 setpensize 150 setpencolor [70 140 220] pendown forward 800
+  penup
+end
+
+; Three cars per lane, spread out along the lane.
+to place.cars
+  localmake "n 1
+  foreach :lanes [
+    localmake "lane ?
+    localmake "color item # :paint
+    repeat 3 [
+      ask :n [
+        penup setshape "square setpencolor :color showturtle
+        setxy -400 + 270 * repcount + random 80 first :lane
+        setheading ifelse (last :lane) > 0 [90] [270]
+      ]
+      pprop :n "speed abs last :lane
+      make "n :n + 1
+    ]
+  ]
+end
+
+to drive
+  foreach :cars [ask ? [forward (gprop ? "speed) + :level]]
+end
+
+to hop :dx :dy :heading
+  ask 0 [
+    setheading :heading
+    if and (abs xcor + :dx) < 380 (abs ycor + :dy) < 280 [setxy xcor + :dx ycor + :dy]
+  ]
+end
+
+to read.keys
+  if not keyp [stop]
+  localmake "k readchar
+  if memberp :k [q Q] [make "lives 0 stop]
+  if :k = "UP [hop 0 60 0]
+  if :k = "DOWN [hop 0 -60 180]
+  if :k = "LEFT [hop -30 0 270]
+  if :k = "RIGHT [hop 30 0 90]
+end
+
+to check
+  localmake "me ask 0 [pos]
+  foreach :cars [
+    if (ask ? [distance :me]) < 18 [
+      make "lives :lives - 1 tone 120 200
+      print sentence [Bump! Lives left:] :lives
+      ask 0 [setxy 0 -180 setheading 0]
+      stop
+    ]
+  ]
+  if (last :me) > 170 [
+    make "score :score + 1 make "level :level + 1
+    tone 523 100 tone 784 150
+    print sentence [Safe! Crossings:] :score
+    ask 0 [setxy 0 -180 setheading 0]
+  ]
+end
+
+draw.scene
+wrap
+place.cars
+ask 0 [penup setshape "turtle setpencolor [40 120 40] setxy 0 -180 setheading 0 showturtle]
+make "lives 3 make "score 0 make "level 0
+print [Click the turtle world. Use the arrow keys to cross the road.]
+until [:lives < 1] [read.keys drive check wait 2]
+print sentence [Game over. Crossings:] :score

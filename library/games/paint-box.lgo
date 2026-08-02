@@ -1,0 +1,119 @@
+; ============================================================
+; TITLE:    Paint Box
+; CATEGORY: Games
+; LEVEL:    Intermediate
+; TAGS:     mouseon, mousepos, fill, drawing program
+; SUMMARY:  A little paint program: pick colors and brush sizes from the toolbar, draw with the mouse and right-click to pour paint.
+; ============================================================
+;
+; WHAT IT DOES
+;   A toolbar runs along the left edge with twelve color swatches,
+;   three brush sizes and a clear button. Hold the left button and
+;   move the mouse to paint. Click the right button inside a closed
+;   shape to pour the chosen color into it.
+;
+; HOW TO USE
+;   Press Run. Click a swatch to choose a color, a dot to choose a
+;   brush size, and the X to clear the canvas. Draw on the white
+;   area to the right of the toolbar.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MOUSEON with separate lists for button down, up and moving
+;   * MOUSEPOS to follow the mouse while it moves
+;   * deciding what a click means from where it happened
+;   * FILL, the flood fill that spreads color up to the lines
+;
+; THINGS TO TRY
+;   * Add an eraser button that switches to PENERASE.
+;   * Add a "stamp" tool that draws a star wherever you click.
+; ============================================================
+
+make "swatches [[0 0 0] [255 255 255] [220 40 40] [250 140 30] [250 210 40] [80 180 60] ~
+                [40 140 220] [110 70 200] [240 120 180] [140 90 50] [128 128 128] [40 200 200]]
+make "sizes [3 8 18]
+
+; Swatch n sits in one of two columns down the toolbar.
+to swatch.pos :n
+  output list -380 + 30 * remainder :n - 1 2   250 - 34 * int (:n - 1) / 2
+end
+
+to box :pos :size :color
+  penup setpos :pos setxy xcor - :size / 2 ycor - :size / 2 setheading 0
+  setpencolor [90 90 90] setpensize 1 pendown
+  filled :color [repeat 4 [forward :size right 90]]
+  penup
+end
+
+to draw.toolbar
+  ; the grey toolbar first, then everything that sits on it
+  setpencolor [190 190 190] setpensize 1 penup setxy -400 -300 setheading 0 pendown
+  filled [235 235 235] [forward 600 right 90 forward 60 right 90 forward 600 right 90 forward 60 right 90]
+  penup
+  for [n 1 12] [box swatch.pos :n 24 item :n :swatches]
+  for [k 1 3] [
+    penup setxy -365 30 - 40 * :k setpencolor "black setpensize item :k :sizes pendown forward 0 penup
+  ]
+  ; the clear button: a red X
+  setpencolor [200 30 30] setpensize 4
+  penup setxy -378 -158 pendown setxy -352 -132 penup setxy -378 -132 pendown setxy -352 -158 penup
+  show.choice
+end
+
+; A sample stroke at the bottom of the toolbar shows the current brush.
+to show.choice
+  penup setxy -366 -230 setpensize 40 penerase pendown forward 0 penpaint penup
+  setpencolor :color setpensize :size pendown forward 0 penup
+end
+
+to toolbar.click :p
+  localmake "x first :p
+  localmake "y last :p
+  for [n 1 12] [
+    if (distancexy :p swatch.pos :n) < 13 [make "color item :n :swatches show.choice stop]
+  ]
+  for [k 1 3] [
+    if (distancexy :p list -365 30 - 40 * :k) < 15 [make "size item :k :sizes show.choice stop]
+  ]
+  if (distancexy :p [-365 -145]) < 18 [clean draw.toolbar]
+end
+
+to distancexy :a :b
+  output sqrt ((first :a) - (first :b)) * ((first :a) - (first :b)) + ((last :a) - (last :b)) * ((last :a) - (last :b))
+end
+
+to press
+  localmake "p mousepos
+  if (first :p) < -340 [toolbar.click :p stop]
+  make "painting "true
+  penup setpos :p setpencolor :color setpensize :size pendown forward 0
+end
+
+to drag
+  if not :painting [stop]
+  localmake "p mousepos
+  ; keep the paint off the toolbar
+  if (first :p) < -335 [stop]
+  setpos :p
+end
+
+to release
+  make "painting "false
+  penup
+end
+
+to pour
+  localmake "p mousepos
+  if (first :p) < -340 [stop]
+  penup setpos :p setfloodcolor :color fill
+end
+
+clearscreen hideturtle setbackground "white
+make "color [40 140 220] make "size 8 make "painting "false
+draw.toolbar
+; a ready-made outline to try the paint pot on
+setpencolor "black setpensize 3 penup setxy 60 -40 setheading 0 pendown
+repeat 5 [forward 160 right 144]
+penup
+print [Hold the left button to paint. Right-click inside a shape to fill it.]
+mouseon [press] [release] [pour] [] [drag]
+forever [wait 10]

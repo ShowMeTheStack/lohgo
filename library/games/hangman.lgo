@@ -1,0 +1,121 @@
+; ============================================================
+; TITLE:    Hangman
+; CATEGORY: Games
+; LEVEL:    Intermediate
+; TAGS:     words, readword, memberp, lists, drawing
+; SUMMARY:  Guess the hidden word one letter at a time before the turtle finishes drawing the stick figure.
+; ============================================================
+;
+; WHAT IT DOES
+;   The computer hides an animal name. You type one letter at a
+;   time. Right letters appear in their places on the screen; every
+;   wrong letter adds one more part to the drawing. Six wrong
+;   guesses and the game is over.
+;
+; HOW TO USE
+;   Press Run and type a letter, then Enter. You may also type the
+;   whole word if you think you know it (a wrong word costs a part).
+;   Type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * treating a word as a list of letters with FOREACH and MEMBERP
+;   * keeping the game state in a few global variables
+;   * redrawing the whole picture from the state each turn
+;
+; THINGS TO TRY
+;   * Put your own words in the :words list.
+;   * Give the player 8 lives and invent two more body parts.
+; ============================================================
+
+make "words [turtle penguin giraffe octopus kangaroo dolphin hamster squirrel]
+make "alphabet "abcdefghijklmnopqrstuvwxyz
+
+; The picture is drawn from the number of misses, so after any
+; change we can simply clean the screen and draw it all again.
+to draw.scene
+  clean hideturtle setpensize 4 setpencolor [110 70 40]
+  ; the gallows is always there
+  penup setxy -330 -150 pendown setxy -150 -150
+  penup setxy -280 -150 pendown setxy -280 180 setxy -170 180 setxy -170 140
+  setpencolor [40 40 90] setpensize 3
+  if :misses > 0 [penup setxy -170 115 setheading 90 pendown arc 360 25]
+  if :misses > 1 [penup setxy -170 90 pendown setxy -170 10]
+  if :misses > 2 [penup setxy -170 70 pendown setxy -210 40]
+  if :misses > 3 [penup setxy -170 70 pendown setxy -130 40]
+  if :misses > 4 [penup setxy -170 10 pendown setxy -200 -50]
+  if :misses > 5 [penup setxy -170 10 pendown setxy -140 -50]
+  draw.word
+  setpensize 1 setpencolor [150 30 30] setlabelheight 18
+  penup setxy -60 -120 label sentence [Wrong:] :wrong
+end
+
+; Show each letter of the secret word, or a gap if not found yet.
+to draw.word
+  localmake "x -60
+  setlabelheight 34 setpensize 3
+  foreach :secret [
+    setpencolor [40 40 90]
+    penup setxy :x 40 pendown setxy :x + 30 40
+    if memberp ? :found [penup setxy :x + 4 50 label uppercase ?]
+    make "x :x + 44
+  ]
+end
+
+; MAP.SE collects the answers into a sentence, so the gaps print
+; with spaces between them: _ _ R T _ E
+to shown.word
+  output map.se [ifelse memberp ? :found [uppercase ?] ["_]] :secret
+end
+
+to solved?
+  output not memberp "_ shown.word
+end
+
+; Read one guess. Outputs a lowercase word, or "quit.
+to ask.letter
+  type [Letter or word? ]
+  localmake "g readword
+  if emptyp :g [output "quit]
+  make "g lowercase :g
+  if memberp :g [quit bye stop exit] [output "quit]
+  if not wordp :g [print [Just one letter, please.] output ask.letter]
+  if not memberp first :g :alphabet [print [Letters only, please.] output ask.letter]
+  output :g
+end
+
+to turn
+  localmake "g ask.letter
+  if :g = "quit [print sentence [The word was] :secret stop]
+  if (count :g) > 1 [
+    ifelse :g = :secret [make "found :secret] [print [No, that is not it.] make "misses :misses + 1]
+  ]
+  if (count :g) = 1 [
+    if or memberp :g :found memberp :g :wrong [print [You already tried that one.] turn stop]
+    ifelse memberp :g :secret [make "found word :found :g] [
+      make "wrong word :wrong :g
+      make "misses :misses + 1
+    ]
+  ]
+  draw.scene
+  print shown.word
+  if solved? [print [You got it!] celebrate stop]
+  if :misses > 5 [print sentence [Out of guesses. The word was] :secret stop]
+  turn
+end
+
+to celebrate
+  setpencolor [0 140 60] setlabelheight 30
+  penup setxy -60 140 label [Well done!]
+end
+
+to play
+  clearscreen hideturtle setbackground [245 240 225]
+  make "secret pick :words
+  make "found " make "wrong " make "misses 0
+  draw.scene
+  print (sentence [I am thinking of an animal with] count :secret [letters.])
+  print shown.word
+  turn
+end
+
+play

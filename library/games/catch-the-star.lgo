@@ -1,0 +1,100 @@
+; ============================================================
+; TITLE:    Catch the Falling Stars
+; CATEGORY: Games
+; LEVEL:    Beginner
+; TAGS:     keyboardon, several turtles, animation, random
+; SUMMARY:  Slide a basket left and right to catch the stars that fall from the night sky; let five drop and it is over.
+; ============================================================
+;
+; WHAT IT DOES
+;   Three star-shaped turtles fall from the top of the screen at
+;   different speeds. Move your basket under them to catch them.
+;   Every catch scores a point and plays a little note. When five
+;   stars reach the ground the game ends.
+;
+; HOW TO USE
+;   Click the turtle world first so it receives your keys. Use the
+;   left and right arrow keys to move the basket.
+;
+; CONCEPTS YOU WILL LEARN
+;   * KEYBOARDON: a procedure runs every time a key goes down
+;   * several turtles, each one a falling star (ASK, SETSHAPE)
+;   * a property list to give each star its own speed
+;
+; THINGS TO TRY
+;   * Add a fourth star by changing [1 2 3] to [1 2 3 4].
+;   * Make the stars fall faster as your score grows.
+; ============================================================
+
+make "stars [1 2 3]
+
+to draw.basket :mode
+  setturtle 0
+  penup setxy :bx - 40 -240 setheading 180
+  ifelse :mode = "paint [setpencolor [200 130 60] setpensize 6 penpaint] [setpensize 10 penerase]
+  ; a basket: down the left side, across the bottom, up the right side
+  pendown forward 20 left 90 forward 80 left 90 forward 20
+  penpaint penup
+end
+
+to keys
+  localmake "k keyboardvalue
+  if not memberp :k [37 39] [stop]
+  draw.basket "erase
+  ifelse :k = 37 [make "bx :bx - 30] [make "bx :bx + 30]
+  if :bx < -350 [make "bx -350]
+  if :bx > 350 [make "bx 350]
+  draw.basket "paint
+end
+
+; Put a star back at the top in a random place with a random speed.
+to drop.star :n
+  ask :n [penup setxy (random 700) - 350 300 + random 200]
+  pprop :n "speed 2 + random 4
+end
+
+to fall :n
+  ask :n [setheading 0 setxy xcor ycor - gprop :n "speed]
+  localmake "y ask :n [ycor]
+  localmake "x ask :n [xcor]
+  ; caught: inside the basket's mouth
+  if and :y < -220 :y > -245 [
+    if (abs :x - :bx) < 42 [
+      make "score :score + 1 tone 600 + 20 * :score 40
+      show.score
+      drop.star :n stop
+    ]
+  ]
+  if :y < -300 [make "missed :missed + 1 tone 150 100 show.score drop.star :n]
+end
+
+to show.score
+  ; a wide eraser stroke wipes the old numbers before writing new ones
+  setturtle 0 penup setxy -390 272 setheading 90 setpensize 30
+  penerase pendown forward 300 penpaint penup
+  setpencolor [230 230 255] setlabelheight 20 setxy -380 265
+  label (sentence [Caught:] :score [Missed:] :missed)
+end
+
+to setup
+  clearscreen setbackground [15 20 60]
+  setturtle 0 hideturtle
+  ; a few tiny fixed stars in the sky for decoration
+  setpencolor [120 120 170] setpensize 2
+  repeat 40 [penup setxy (random 800) - 400 (random 500) - 200 pendown forward 0]
+  ; the ground
+  penup setxy -400 -280 setheading 90 setpensize 30 setpencolor [40 70 40] pendown forward 800
+  make "bx 0 make "score 0 make "missed 0
+  draw.basket "paint
+  foreach :stars [ask ? [setshape "star setpencolor [255 220 60] showturtle] drop.star ?]
+  show.score
+end
+
+setup
+print [Click the turtle world. Left and right arrow keys move the basket.]
+keyboardon [keys]
+until [:missed > 4] [foreach :stars [fall ?] wait 1]
+keyboardoff
+setturtle 0 setpencolor [255 220 60] setlabelheight 34 penup setxy -110 0
+label [Game over]
+print sentence [Stars caught:] :score

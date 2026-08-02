@@ -1,0 +1,140 @@
+; ============================================================
+; TITLE:    Asteroids Lite
+; CATEGORY: Games
+; LEVEL:    Advanced
+; TAGS:     keyboardon, wrap, vectors, several turtles, arrays
+; SUMMARY:  Turn, thrust and shoot to break up drifting space rocks in a small version of the arcade classic.
+; ============================================================
+;
+; WHAT IT DOES
+;   Your ship is a classic Logo triangle turtle in the middle of
+;   space. Rocks drift across the screen and wrap around the edges.
+;   Shoot a big rock and it splits into two small ones; shoot a small
+;   one and it is gone. Clear every rock to win. Touching a rock costs
+;   one of your three ships.
+;
+; HOW TO USE
+;   Click the turtle world first so it receives your keys.
+;   Left and right arrows turn, the up arrow thrusts, space fires.
+;
+; CONCEPTS YOU WILL LEARN
+;   * velocity and thrust with SIN and COS of the heading
+;   * a list of records, each rock being [x y vx vy radius]
+;   * WRAP mode and a small procedure to wrap numbers by hand
+;   * erasing and redrawing shapes with PENERASE for animation
+;
+; THINGS TO TRY
+;   * Add friction: multiply :svx and :svy by 0.99 every frame.
+;   * Start with more rocks, or make small rocks faster.
+; ============================================================
+
+; Keep a coordinate inside -limit..limit, coming back on the far side.
+to wrapped :v :limit
+  if :v > :limit [output :v - 2 * :limit]
+  if :v < minus :limit [output :v + 2 * :limit]
+  output :v
+end
+
+; A rock is a nine-sided polygon around (x, y) with radius r.
+to rock.shape :rock :mode
+  localmake "r item 5 :rock
+  setturtle 0 penup setxy item 1 :rock item 2 :rock setheading 0 forward :r right 110
+  ifelse :mode = "paint [setpensize 3 setpencolor [200 190 170] penpaint] [setpensize 7 penerase]
+  pendown repeat 9 [forward 2 * :r * sin 20 right 40] penpaint penup
+end
+
+to new.rock :x :y :r
+  output (list :x :y (random 5) - 2 + 0.5 (random 5) - 2 + 0.5 :r)
+end
+
+to drift :rock
+  output (list wrapped (item 1 :rock) + (item 3 :rock) 400 ~
+               wrapped (item 2 :rock) + (item 4 :rock) 300 ~
+               item 3 :rock item 4 :rock item 5 :rock)
+end
+
+to keys
+  localmake "k keyboardvalue
+  if :k = 37 [ask 1 [left 15]]
+  if :k = 39 [ask 1 [right 15]]
+  if :k = 38 [
+    localmake "h ask 1 [heading]
+    make "svx :svx + 0.6 * sin :h
+    make "svy :svy + 0.6 * cos :h
+  ]
+  if and :k = 32 :bullet.life < 1 [
+    ; the bullet starts at the ship and flies the way the ship points
+    make "bullet.life 40
+    ask 2 [setpos ask 1 [pos] setheading ask 1 [heading] showturtle]
+  ]
+end
+
+to move.ship
+  ask 1 [setxy wrapped xcor + :svx 400 wrapped ycor + :svy 300]
+  if :bullet.life > 0 [
+    make "bullet.life :bullet.life - 1
+    ask 2 [forward 12 if :bullet.life < 1 [hideturtle]]
+  ]
+end
+
+; Move every rock, check it against the bullet and the ship.
+to move.rocks
+  localmake "kept []
+  localmake "shot ask 2 [pos]
+  localmake "ship ask 1 [pos]
+  foreach :rocks [
+    rock.shape ? "erase
+    localmake "rock drift ?
+    localmake "hit and :bullet.life > 0 (distancexy :shot :rock) < item 5 :rock
+    if :hit [
+      make "bullet.life 0 ask 2 [hideturtle]
+      make "score :score + 1 tone 220 40
+      if (item 5 :rock) > 25 [
+        make "kept fput new.rock item 1 :rock item 2 :rock 20 :kept
+        make "kept fput new.rock item 1 :rock item 2 :rock 20 :kept
+      ]
+    ]
+    if not :hit [
+      if (distancexy :ship :rock) < (item 5 :rock) + 8 [crash]
+      make "kept fput :rock :kept
+    ]
+  ]
+  make "rocks :kept
+  foreach :rocks [rock.shape ? "paint]
+end
+
+to distancexy :p :rock
+  output sqrt ((first :p) - (item 1 :rock)) * ((first :p) - (item 1 :rock)) + ~
+              ((last :p) - (item 2 :rock)) * ((last :p) - (item 2 :rock))
+end
+
+to crash
+  make "lives :lives - 1
+  tone 90 300
+  print sentence [Crash! Ships left:] :lives
+  ask 1 [setxy 0 0 setheading 0]
+  make "svx 0 make "svy 0
+end
+
+to setup
+  clearscreen setbackground [5 5 20] hideturtle
+  ; in WRAP mode a rock drawn across an edge shows its other half
+  ; on the opposite side, just like the arcade game
+  wrap
+  setpencolor [200 200 255] setpensize 2
+  repeat 60 [penup setxy (random 800) - 400 (random 600) - 300 pendown forward 0]
+  make "rocks map [new.rock ? 220 40] [-300 -100 100 300]
+  ask 1 [penup setshape "triangle setpencolor [120 220 255] home showturtle]
+  ask 2 [penup setshape "circle setpencolor [255 240 120] hideturtle]
+  make "svx 0 make "svy 0 make "bullet.life 0
+  make "lives 3 make "score 0
+end
+
+setup
+print [Click the turtle world. Arrows turn and thrust, space fires.]
+keyboardon [keys]
+until [or :lives < 1 emptyp :rocks] [move.ship move.rocks wait 2]
+keyboardoff
+setturtle 0 setpencolor [255 230 120] setlabelheight 34 penup setxy -110 -20
+label ifelse emptyp :rocks [[Space is clear!]] [[Game over]]
+print sentence [Rocks hit:] :score

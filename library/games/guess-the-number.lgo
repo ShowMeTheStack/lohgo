@@ -1,0 +1,110 @@
+; ============================================================
+; TITLE:    Guess the Number
+; CATEGORY: Games
+; LEVEL:    Beginner
+; TAGS:     readword, numbers, input, number line
+; SUMMARY:  Guess the secret number from 1 to 100 while the turtle shades a number line to show what is left.
+; ============================================================
+;
+; WHAT IT DOES
+;   The computer picks a secret number from 1 to 100. You type
+;   guesses in the command center. After every guess the turtle
+;   marks it on a number line and greys out the part that can no
+;   longer hold the secret, so you can see the hiding place shrink.
+;
+; HOW TO USE
+;   Press Run, then type a number and press Enter. Type quit to
+;   give up. Words that are not numbers are politely refused.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READWORD to read what the player types
+;   * NUMBERP to check the input before using it
+;   * turning a number into a screen position
+;   * a recursive procedure used as a loop
+;
+; THINGS TO TRY
+;   * Change :top to 1000. How many guesses do you need now?
+;   * Halve the range every time (always guess the middle) and
+;     count your guesses. Why is it never more than 7 for 100?
+; ============================================================
+
+make "top 100
+
+; Turn a number from 1 to :top into an x position on the line.
+; The line runs from x = -350 to x = 350.
+to xfor :n
+  output -350 + 700 * (:n - 1) / (:top - 1)
+end
+
+to draw.line
+  clearscreen hideturtle
+  setbackground [250 246 235]
+  setpensize 24 setpencolor [120 200 120]
+  penup setxy xfor 1 0 pendown setxy xfor :top 0
+  setpensize 1 setpencolor "black setlabelheight 14
+  foreach (list 1 25 50 75 :top) [
+    penup setxy (xfor ?) - 6 -36 pendown label ?
+  ]
+  penup setxy -150 120 setlabelheight 26 setpencolor [60 60 140]
+  label [Guess the Number]
+end
+
+; Paint the numbers from :a to :b grey: the secret cannot be there.
+to grey.out :a :b
+  if :a > :b [stop]
+  setpensize 24 setpencolor [190 190 190]
+  penup setxy xfor :a 0 pendown setxy xfor :b 0
+end
+
+; A little flag above the line shows where the guess landed.
+to mark :g :color
+  setpensize 2 setpencolor :color
+  penup setxy xfor :g 14 pendown setheading 0 forward 40
+  right 90 forward 14 right 120 forward 16
+  penup setxy (xfor :g) - 8 70 setlabelheight 14 label :g
+end
+
+; Outputs a number from the player, or the word quit.
+to ask.guess
+  type [Your guess? ]
+  localmake "answer readword
+  if emptyp :answer [output "quit]
+  if memberp :answer [quit q bye stop exit] [output "quit]
+  if not numberp :answer [print [That is not a number. Try again.] output ask.guess]
+  if or :answer < 1 :answer > :top [print (sentence [Keep it between 1 and] :top) output ask.guess]
+  output :answer
+end
+
+to play
+  draw.line
+  make "secret 1 + random :top
+  make "low 1 make "high :top make "tries 0
+  print (sentence [I am thinking of a number from 1 to] word :top ".)
+  guess.loop
+end
+
+to guess.loop
+  localmake "g ask.guess
+  if :g = "quit [print (sentence [The secret was] word :secret ". [Bye!]) stop]
+  make "tries :tries + 1
+  if :g = :secret [mark :g [0 140 0] win stop]
+  mark :g "red
+  ifelse :g < :secret [
+    print [Higher!]
+    grey.out :low :g
+    if :g >= :low [make "low :g + 1]
+  ] [
+    print [Lower!]
+    grey.out :g :high
+    if :g <= :high [make "high :g - 1]
+  ]
+  guess.loop
+end
+
+to win
+  print (sentence [Yes! It was] :secret [and you needed] :tries [guesses.])
+  penup setxy -120 -120 setpencolor [0 120 0] setlabelheight 22
+  label (sentence [Found in] :tries [guesses])
+end
+
+play

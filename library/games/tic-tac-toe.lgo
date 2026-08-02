@@ -1,0 +1,139 @@
+; ============================================================
+; TITLE:    Tic-Tac-Toe
+; CATEGORY: Games
+; LEVEL:    Intermediate
+; TAGS:     arrays, strategy, readword, drawing
+; SUMMARY:  Play noughts and crosses against a computer that looks for wins, blocks yours and loves the middle square.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle draws a 3 by 3 board with the squares numbered 1 to
+;   9. You are X, the computer is O. The computer follows a short
+;   list of rules: win if it can, block you if you are about to win,
+;   take the middle, take a corner, take anything left.
+;
+; HOW TO USE
+;   Press Run. Type the number of an empty square and press Enter.
+;      1 | 2 | 3
+;      4 | 5 | 6
+;      7 | 8 | 9
+;   Type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * an ARRAY as the game board, with ITEM and SETITEM
+;   * a list of winning lines that every check walks through
+;   * strategy written as rules tried in order
+;
+; THINGS TO TRY
+;   * Let the computer start by calling computer.move first.
+;   * Remove the blocking rule and see how easy it gets.
+; ============================================================
+
+; Every way to get three in a row, as square numbers.
+make "lines [[1 2 3] [4 5 6] [7 8 9] [1 4 7] [2 5 8] [3 6 9] [1 5 9] [3 5 7]]
+
+; Square n has its center at these x y coordinates (each square 120 steps).
+to center.of :n
+  output list (remainder :n - 1 3) * 120 - 120   120 - (int (:n - 1) / 3) * 120
+end
+
+to draw.board
+  clearscreen hideturtle setbackground [250 248 240]
+  setpencolor [60 60 80] setpensize 6
+  foreach [-60 60] [
+    penup setxy ? -180 pendown setxy ? 180
+    penup setxy -180 ? pendown setxy 180 ?
+  ]
+  ; little grey numbers in the corner of each square help the player
+  setpensize 1 setpencolor [170 170 170] setlabelheight 14
+  for [n 1 9] [penup setpos center.of :n setxy xcor - 52 ycor + 38 label :n]
+end
+
+to draw.x :n
+  setpencolor [210 50 50] setpensize 10
+  penup setpos center.of :n setxy xcor - 35 ycor - 35 pendown setxy xcor + 70 ycor + 70
+  penup setpos center.of :n setxy xcor - 35 ycor + 35 pendown setxy xcor + 70 ycor - 70
+end
+
+to draw.o :n
+  setpencolor [40 90 200] setpensize 10
+  penup setpos center.of :n setheading 0 pendown arc 360 38
+end
+
+to place :n :mark
+  setitem :n :board :mark
+  ifelse :mark = "x [draw.x :n] [draw.o :n]
+end
+
+; A line is won when all three squares hold the same mark.
+to winner?
+  foreach :lines [
+    localmake "a item first ? :board
+    if and :a <> "- and (item item 2 ? :board) = :a (item last ? :board) = :a [output :a]
+  ]
+  output "none
+end
+
+to free.squares
+  output filter [(item ? :board) = "-] [1 2 3 4 5 6 7 8 9]
+end
+
+; Find a square that would complete a line for :mark, or output 0.
+to completing.square :mark
+  foreach :lines [
+    localmake "marks map [item ? :board] ?
+    if and (count filter [? = :mark] :marks) = 2 memberp "- :marks [
+      output item (position "- :marks) ?
+    ]
+  ]
+  output 0
+end
+
+to position :x :l
+  if (first :l) = :x [output 1]
+  output 1 + position :x butfirst :l
+end
+
+to computer.move
+  localmake "n completing.square "o
+  if :n = 0 [make "n completing.square "x]
+  if and :n = 0 (item 5 :board) = "- [make "n 5]
+  if :n = 0 [
+    localmake "corners filter [(item ? :board) = "-] [1 3 7 9]
+    ifelse emptyp :corners [make "n pick free.squares] [make "n pick :corners]
+  ]
+  print sentence [I take square] :n
+  place :n "o
+end
+
+to ask.square
+  type [Your square, 1 to 9? ]
+  localmake "w readword
+  if or emptyp :w memberp :w [quit q bye stop exit] [output "quit]
+  if not numberp :w [print [Please type a number from 1 to 9.] output ask.square]
+  if not memberp :w free.squares [print [That square is not free.] output ask.square]
+  output :w
+end
+
+to game.over?
+  localmake "w winner?
+  if :w = "x [print [You win! Three in a row.] output "true]
+  if :w = "o [print [I win this time.] output "true]
+  if emptyp free.squares [print [A draw. Nobody wins.] output "true]
+  output "false
+end
+
+to play.turns
+  localmake "n ask.square
+  if :n = "quit [print [Bye!] stop]
+  place :n "x
+  if game.over? [stop]
+  computer.move
+  if game.over? [stop]
+  play.turns
+end
+
+make "board {- - - - - - - - -}
+draw.board
+print [You are X. The squares are numbered 1 to 9 like a phone keypad.]
+play.turns

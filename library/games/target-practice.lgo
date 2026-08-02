@@ -1,0 +1,111 @@
+; ============================================================
+; TITLE:    Target Practice
+; CATEGORY: Games
+; LEVEL:    Intermediate
+; TAGS:     mouseon, clickpos, distance, animation, scoring
+; SUMMARY:  A shooting gallery: click on the sliding bullseye targets, and score more the closer you hit to the middle.
+; ============================================================
+;
+; WHAT IT DOES
+;   Ten round targets slide across the screen one after another,
+;   each a bit faster than the last. Click on a target to hit it.
+;   The middle gives 10 points, the next ring 5, then 3, then 1.
+;   Every shot leaves a small mark so you can see your aim.
+;
+; HOW TO USE
+;   Press Run, then click on the targets in the turtle world with
+;   the left mouse button. You get one shot per target.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MOUSEON and CLICKPOS for mouse clicks
+;   * a mouse handler that only records the click, and a game loop
+;     that acts on it
+;   * scoring by distance with a list of rings
+;   * moving a drawing: erase it, shift it, draw it again
+;
+; THINGS TO TRY
+;   * Let targets move up and down as well as across.
+;   * Give the player three shots per target.
+; ============================================================
+
+; Each ring: [radius color points]. Smallest ring first, so the
+; first ring the shot is inside gives its points.
+make "rings [[10 [220 30 30] 10] [24 [255 255 255] 5] [38 [220 30 30] 3] [52 [255 255 255] 1]]
+
+; Draw from the biggest ring in, so the smaller ones sit on top.
+to target :x :y
+  foreach reverse :rings [
+    penup setxy :x :y setpencolor item 2 ? setpensize 2 * first ? pendown forward 0
+  ]
+  penup
+end
+
+to wipe :x :y
+  penup setxy :x :y setpensize 2 * 52 + 4 penerase pendown forward 0 penpaint penup
+end
+
+to points.for :d
+  foreach :rings [if :d <= first ? [output last ?]]
+  output 0
+end
+
+; The mouse handler only writes down where the click was. The game
+; loop does the real work, so a click can never land halfway through
+; drawing a target.
+to shoot
+  if emptyp :click [make "click clickpos]
+end
+
+to score.shot
+  penup setxy :tx :ty
+  localmake "p points.for distance :click
+  make "score :score + :p
+  ifelse :p > 0 [tone 300 + 60 * :p 60] [tone 100 80]
+  print (sentence [Target] word :which ": :p [points])
+  ; a small mark where the shot landed
+  make "marks fput :click :marks
+  make "shot "true
+end
+
+to draw.marks
+  setpencolor [40 40 40] setpensize 6
+  foreach :marks [penup setpos ? pendown forward 0]
+  penup
+end
+
+to show.score
+  penup setxy -390 272 setheading 90 setpensize 30 penerase pendown forward 400 penpaint penup
+  setpencolor [60 40 20] setlabelheight 20 setxy -380 264
+  label (sentence [Target] :which [of 10 - Score:] :score)
+end
+
+to run.target
+  make "tx -440 make "ty (random 300) - 170 make "shot "false make "click []
+  localmake "speed 2 + :which
+  show.score
+  while [and :tx < 440 not :shot] [
+    wipe :tx :ty
+    make "tx :tx + :speed
+    target :tx :ty
+    if not emptyp :click [score.shot]
+    draw.marks
+    wait 1
+  ]
+  ; after a hit, leave the target there for a moment to admire
+  if :shot [wait 30]
+  wipe :tx :ty
+  draw.marks
+  if not :shot [print (sentence [Target] :which [got away.])]
+end
+
+clearscreen hideturtle setbackground [235 215 170]
+setpencolor [150 110 70] setpensize 12
+penup setxy -400 -250 setheading 90 pendown forward 800 penup
+make "score 0 make "marks [] make "click []
+print [Click on the targets as they slide past!]
+mouseon [shoot] [] [] [] []
+for [i 1 10] [make "which :i run.target]
+mouseoff
+setpencolor [60 40 20] setlabelheight 34 penup setxy -150 0
+label sentence [Final score:] :score
+print sentence [Final score:] :score

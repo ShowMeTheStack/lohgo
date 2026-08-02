@@ -1,0 +1,146 @@
+; ============================================================
+; TITLE:    Blackjack
+; CATEGORY: Games
+; LEVEL:    Intermediate
+; TAGS:     cards, lists, shuffle, readword, drawing
+; SUMMARY:  Play twenty-one against a dealer who must hit on 16, with the cards drawn on a green table.
+; ============================================================
+;
+; WHAT IT DOES
+;   You start with 10 chips and bet one chip a hand. Cards are drawn
+;   face up on a green felt table. Try to get closer to 21 than the
+;   dealer without going over. Picture cards count 10 and an ace
+;   counts 11, or 1 if 11 would make you bust.
+;
+; HOW TO USE
+;   Press Run. Type h to hit (take a card) or s to stand. After each
+;   hand press Enter to play again, or type quit to leave the table.
+;
+; CONCEPTS YOU WILL LEARN
+;   * building a deck with CROSSMAP
+;   * shuffling by picking cards at random and removing them
+;   * scoring a hand with an ace that can change its value
+;
+; THINGS TO TRY
+;   * Make the dealer stand on 15 or hit until 18. Who wins more?
+;   * Add "double down": double your bet, take exactly one card.
+; ============================================================
+
+; A card is a two-word list like [Q ♥]. A full deck has 52.
+to new.deck
+  ; CROSSMAP pairs every rank with every suit
+  output crossmap [list ?1 ?2] [[A 2 3 4 5 6 7 8 9 10 J Q K] [♠ ♥ ♦ ♣]]
+end
+
+to shuffle :cards
+  if emptyp :cards [output []]
+  localmake "c pick :cards output fput :c shuffle remove :c :cards
+end
+
+to deal.card
+  if emptyp :shoe [make "shoe shuffle new.deck]
+  localmake "c first :shoe
+  make "shoe butfirst :shoe
+  output :c
+end
+
+to card.value :card
+  if (first :card) = "A [output 11]
+  output ifelse memberp first :card [J Q K] [10] [first :card]
+end
+
+; Count aces as 11, then turn them into 1s while the hand is bust.
+to hand.score :hand
+  localmake "total reduce "sum fput 0 map [card.value ?] :hand
+  localmake "aces count filter [(first ?) = "A] :hand
+  while [and :total > 21 :aces > 0] [make "total :total - 10 make "aces :aces - 1]
+  output :total
+end
+
+; A blank card of any color: white for the front, blue for the back.
+to blank :x :y :color
+  setpensize 2 setpencolor [60 60 60] setheading 0 penup setxy :x :y pendown
+  filled :color [repeat 2 [forward 110 right 90 forward 76 right 90]]
+end
+
+to draw.card :card :x :y
+  blank :x :y "white
+  ifelse memberp last :card [♥ ♦] [setpencolor [200 20 30]] [setpencolor "black]
+  setlabelheight 22 penup setxy :x + 8 :y + 82 label first :card
+  setlabelheight 40 penup setxy :x + 24 :y + 22 label last :card
+end
+
+; Draw a row of cards. The dealer's second card stays hidden until
+; the player is done, so we draw a blue back instead.
+to draw.hand :hand :y :hide
+  localmake "x -390
+  foreach :hand [
+    make "x :x + 90
+    ifelse and :hide # = 2 [blank :x :y [40 60 160]] [draw.card ? :x :y]
+  ]
+end
+
+to draw.table :hide
+  clean hideturtle
+  draw.hand :dealer 100 :hide
+  draw.hand :player -170 "false
+  setpencolor [240 230 160] setlabelheight 18
+  penup setxy -300 230 label ifelse :hide [[Dealer]] [sentence [Dealer:] hand.score :dealer]
+  penup setxy -300 -40 label sentence [You:] hand.score :player
+  penup setxy 180 230 label sentence [Chips:] :chips
+end
+
+to ask.move
+  type [h to hit, s to stand? ]
+  localmake "w readword
+  if listp :w [output "quit]     ; an empty list means no more input at all
+  make "w lowercase :w
+  if memberp :w [quit q bye stop exit] [output "quit]
+  if memberp :w [h hit] [output "hit]
+  if memberp :w [s stand] [output "stand]
+  print [Please type h or s.]
+  output ask.move
+end
+
+to player.turn
+  if (hand.score :player) > 21 [output "bust]
+  if (hand.score :player) = 21 [output "stand]
+  localmake "m ask.move
+  if not :m = "hit [output :m]
+  make "player lput deal.card :player draw.table "true
+  output player.turn
+end
+
+to play.hand
+  make "player list deal.card deal.card make "dealer list deal.card deal.card
+  draw.table "true
+  localmake "result player.turn
+  if :result = "quit [output "quit]
+  ; the dealer's rule is fixed: hit on 16 or less, stand on 17 or more
+  if not :result = "bust [while [(hand.score :dealer) < 17] [make "dealer lput deal.card :dealer]]
+  draw.table "false
+  localmake "me hand.score :player localmake "it hand.score :dealer
+  print (sentence [You have] :me [and the dealer has] word :it ".)
+  cond [
+    [[:me > 21] print [Bust! You lose a chip.] make "chips :chips - 1]
+    [[:it > 21] print [The dealer busts. You win a chip!] make "chips :chips + 1]
+    [[:me > :it] print [You beat the dealer!] make "chips :chips + 1]
+    [[:me < :it] print [The dealer wins.] make "chips :chips - 1]
+    [else print [A push: nobody wins.]]
+  ]
+  output "done
+end
+
+to table.loop
+  if :chips = 0 [print [You are out of chips. Thanks for playing!] stop]
+  if (play.hand) = "quit [print sentence [You leave with chips:] :chips stop]
+  print sentence [Chips:] :chips
+  type [Enter for another hand, or quit? ]
+  localmake "w readword
+  if or listp :w memberp :w [quit q bye stop exit] [print [Bye!] stop]
+  table.loop
+end
+
+clearscreen hideturtle setbackground [20 110 60]
+make "shoe [] make "chips 10
+table.loop

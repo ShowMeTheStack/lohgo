@@ -1,0 +1,130 @@
+; ============================================================
+; TITLE:    Lunar Lander
+; CATEGORY: Games
+; LEVEL:    Intermediate
+; TAGS:     keyboardon, gravity, physics, animation, labels
+; SUMMARY:  Fire your rocket in short bursts to land gently on the moon's landing pad before the fuel runs out.
+; ============================================================
+;
+; WHAT IT DOES
+;   A lander drops toward the moon. Gravity pulls it down a little
+;   faster every moment. The up arrow fires the main engine and the
+;   left and right arrows nudge it sideways. Touch down on the yellow
+;   pad slower than 2 steps per tick to land safely. Land anywhere
+;   else, or too fast, and it is a crash.
+;
+; HOW TO USE
+;   Click the turtle world first so it receives your keys. Tap the up
+;   arrow for thrust (holding it burns fuel fast) and use left and
+;   right to steer. Press Run again for another try.
+;
+; CONCEPTS YOU WILL LEARN
+;   * gravity as a small number added to the speed every tick
+;   * KEYBOARDON to change the speed when a key is pressed
+;   * updating a label by erasing the old text and writing the new
+;   * finding the ground height between two corner points
+;   * FORM to show numbers with one decimal place
+;
+; THINGS TO TRY
+;   * Change :gravity to 0.16 (the moon is gentle) or 0.4 (much harder).
+;   * Move the pad, or make it narrower.
+; ============================================================
+
+make "gravity 0.05
+make "pad.left 120 make "pad.right 220 make "ground -220
+
+; The ground is a list of corner points. Two of them make the flat
+; pad. Keeping the points lets us ask how high the ground is under
+; the lander, wherever it flies.
+to make.ground
+  make "land (list (list -400 :ground - 10))
+  foreach [-320 -250 -170 -90 -20 60] [make "land lput (list ? :ground + (random 60) - 20) :land]
+  make "land sentence :land (list (list :pad.left :ground) (list :pad.right :ground) (list 300 :ground + 40) (list 400 :ground - 10))
+end
+
+; Height of the ground at x: find the two corners on either side and
+; go the right fraction of the way from one to the other.
+to height.at :x
+  localmake "a first :land
+  foreach butfirst :land [
+    if :x <= first ? [
+      output (last :a) + ((last ?) - (last :a)) * (:x - first :a) / ((first ?) - (first :a))
+    ]
+    make "a ?
+  ]
+  output last last :land
+end
+
+to draw.moon
+  clearscreen hideturtle setbackground [10 10 25]
+  ; stars
+  setpencolor [180 180 210] setpensize 2
+  repeat 50 [penup setxy (random 800) - 400 (random 400) - 150 pendown forward 0]
+  make.ground
+  setpencolor [150 150 160] setpensize 3
+  penup setpos first :land pendown
+  foreach butfirst :land [setpos ?]
+  setpencolor [255 210 40] setpensize 8
+  penup setxy :pad.left :ground pendown setxy :pad.right :ground penup
+  ; fill the ground below the line with grey
+  setfloodcolor [70 70 80] setxy 0 -290 fill
+end
+
+to keys
+  if :fuel <= 0 [stop]
+  localmake "k keyboardvalue
+  if memberp :k [38 32] [make "vy :vy + 0.6 make "fuel :fuel - 3 flame]
+  if :k = 37 [make "vx :vx - 0.3 make "fuel :fuel - 1]
+  if :k = 39 [make "vx :vx + 0.3 make "fuel :fuel - 1]
+  if :fuel < 0 [make "fuel 0]
+end
+
+; A quick puff of fire under the lander: a short tone is enough
+; to feel it, and a small orange dot that fades as it is erased.
+to flame
+  tone 90 20
+  ask 2 [setxy :x :y - 18 showturtle]
+end
+
+to readout
+  ; wipe the old numbers with a wide eraser stroke, then write new ones
+  setturtle 0 penup setxy -390 276 setheading 90 setpensize 24 penerase pendown forward 520 penpaint penup
+  setpencolor [200 230 255] setlabelheight 16 setxy -380 270
+  label (sentence [Fuel:] :fuel [- Down speed:] form minus :vy 4 1 [- Side speed:] form :vx 4 1)
+end
+
+to fly
+  make "vy :vy - :gravity
+  make "x :x + :vx
+  make "y :y + :vy
+  if :x > 390 [make "x -390]
+  if :x < -390 [make "x 390]
+  ask 1 [setxy :x :y]
+  ask 2 [hideturtle]
+  readout
+end
+
+to touchdown
+  localmake "on.pad and :x > :pad.left :x < :pad.right
+  localmake "soft and (abs :vy) < 2 (abs :vx) < 1
+  setturtle 0 setlabelheight 30 penup setxy -150 120
+  ifelse and :on.pad :soft [
+    setpencolor [120 230 120] label [The Eagle has landed!]
+    tone 523 150 tone 659 150 tone 784 300
+  ] [
+    setpencolor [255 90 70] label ifelse :on.pad [[Too fast. Crash!]] [[You missed the pad. Crash!]]
+    tone 80 600
+  ]
+  print (sentence [Touchdown speed] form minus :vy 1 1 [with] :fuel [fuel left.])
+end
+
+draw.moon
+make "x -250 make "y 250 make "vx 1 make "vy 0 make "fuel 100
+ask 1 [penup setshape "arrow setpencolor [230 230 240] setheading 0 setxy :x :y showturtle]
+ask 2 [penup setshape "circle setpencolor [255 140 0] setheading 180 hideturtle]
+setturtle 0
+print [Click the turtle world. Up arrow fires the engine, left and right steer.]
+keyboardon [keys]
+until [:y < (height.at :x) + 12] [fly wait 2]
+keyboardoff
+touchdown

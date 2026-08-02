@@ -1,0 +1,97 @@
+; ============================================================
+; TITLE:    Reaction Timer
+; CATEGORY: Games
+; LEVEL:    Beginner
+; TAGS:     timemilli, keyp, readchar, averages
+; SUMMARY:  Wait for the light to turn green, then press a key as fast as you can; five tries and your average in milliseconds.
+; ============================================================
+;
+; WHAT IT DOES
+;   A big traffic light shows red. After a random wait it turns green.
+;   Press any key the moment you see green. The program measures how
+;   many milliseconds you took. Press too early and that try does not
+;   count. After five good tries it shows your best and your average.
+;
+; HOW TO USE
+;   Click the turtle world first so it receives your keys, then wait
+;   for green and press the space bar (any key works).
+;
+; CONCEPTS YOU WILL LEARN
+;   * TIMEMILLI, a clock that counts milliseconds
+;   * KEYP to check for a key without waiting for one
+;   * clearing old key presses so they do not spoil the next try
+;   * keeping results in a list and working out the average
+;
+; THINGS TO TRY
+;   * Most people take 200 to 300 milliseconds. Is it faster with
+;     sound? Add a TONE when the light turns green.
+;   * Draw a bar chart of all five times.
+; ============================================================
+
+to light :color
+  penup setxy 0 30 setpencolor :color setpensize 220 pendown forward 0 penup
+end
+
+to message :text
+  penup setxy -390 -200 setheading 90 setpensize 50 penerase pendown forward 780 penpaint penup
+  setpencolor [230 230 230] setlabelheight 26 setxy -200 -210 label :text
+end
+
+; Throw away any keys pressed earlier.
+to clear.keys
+  while [keyp] [ignore readchar]
+end
+
+; One try. Outputs the time in milliseconds, "early, or "none when
+; the keyboard has nothing more to give (no key ever comes).
+to one.try
+  clear.keys
+  light [150 20 20]
+  message [Wait for green...]
+  localmake "until.green timemilli + 1500 + random 3000
+  while [timemilli < :until.green] [
+    if keyp [ignore readchar output "early]
+    wait 1
+  ]
+  light [40 220 80]
+  message [NOW!]
+  localmake "start timemilli
+  localmake "k readchar
+  if emptyp :k [output "none]
+  output timemilli - :start
+end
+
+to average :l
+  output (reduce "sum :l) / count :l
+end
+
+to play :times
+  if (count :times) = 5 [finish :times stop]
+  localmake "t one.try
+  if :t = "none [print [No more keys. Bye!] stop]
+  ifelse :t = "early [
+    print [Too soon! That one does not count.]
+    message [Too soon!]
+  ] [
+    print (sentence [Try] 1 + count :times [:] :t [milliseconds])
+    message (sentence :t [milliseconds])
+  ]
+  wait 60
+  play ifelse :t = "early [:times] [lput :t :times]
+end
+
+to finish :times
+  light [60 60 200]
+  message (sentence [Best:] reduce "min2 :times [ms - Average:] round average :times [ms])
+  print sentence [Your times:] :times
+end
+
+to min2 :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+clearscreen hideturtle setbackground [25 25 35]
+; the dark box of the traffic light
+setpencolor [60 60 70] setpensize 260 penup setxy 0 30 pendown forward 0 penup
+print [Click the turtle world. When the light turns green, press a key!]
+play []

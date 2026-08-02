@@ -1,0 +1,97 @@
+; ============================================================
+; TITLE:    Higher or Lower
+; CATEGORY: Games
+; LEVEL:    Beginner
+; TAGS:     cards, random, readword, streak
+; SUMMARY:  Guess whether the next card will be higher or lower and build the longest streak you can.
+; ============================================================
+;
+; WHAT IT DOES
+;   A big card is turned over in the middle of the screen. You guess
+;   whether the next card will be higher or lower. Every right guess
+;   adds a gold star to your streak. One wrong guess ends the game.
+;   Ace is low (1) and King is high (13).
+;
+; HOW TO USE
+;   Press Run. Type h for higher or l for lower and press Enter.
+;   If the next card has the same rank, nobody loses and you go on.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ITEM to turn a number into a card name
+;   * RANDOM for a fair draw
+;   * keeping a score with a global variable
+;
+; THINGS TO TRY
+;   * Think about the odds: after a 2, is "higher" a good bet?
+;   * Make the game end after 3 wrong guesses instead of 1.
+; ============================================================
+
+make "names [A 2 3 4 5 6 7 8 9 10 J Q K]
+
+to new.card
+  output list (1 + random 13) pick [♠ ♥ ♦ ♣]
+end
+
+; Draws a large card centered at (0, 40).
+to draw.card :card
+  clean hideturtle
+  setheading 0 setpensize 3 setpencolor [40 40 40]
+  penup setxy -90 -90 pendown
+  filled [255 253 245] [repeat 2 [forward 260 right 90 forward 180 right 90]]
+  ifelse memberp last :card [♥ ♦] [setpencolor [200 20 30]] [setpencolor "black]
+  setlabelheight 36
+  penup setxy -78 125 label item first :card :names
+  setlabelheight 110
+  penup setxy -40 0 label last :card
+  draw.streak
+end
+
+; One gold star for every right guess, in a row along the bottom.
+to draw.streak
+  setpencolor [230 170 0] setpensize 2
+  repeat :streak [
+    penup setxy -330 + 34 * repcount -200 setheading 18 pendown
+    filled [255 210 40] [repeat 5 [forward 24 right 144]]
+  ]
+  setpencolor [230 240 230] setlabelheight 18
+  penup setxy -300 -250 label sentence [Streak:] :streak
+end
+
+to ask.guess
+  type [Higher or lower, h or l? ]
+  localmake "w readword
+  if listp :w [output "quit]
+  make "w lowercase :w
+  if memberp :w [h higher] [output "higher]
+  if memberp :w [l lower] [output "lower]
+  if memberp :w [quit q bye stop exit] [output "quit]
+  print [Type h or l.]
+  output ask.guess
+end
+
+to turn.over :card
+  localmake "g ask.guess
+  if :g = "quit [print sentence [Your streak was] :streak stop]
+  localmake "next new.card
+  draw.card :next
+  print sentence [The card is] item first :next :names
+  if (first :next) = (first :card) [print [Same rank! You live to guess again.] turn.over :next stop]
+  localmake "right ifelse :g = "higher [(first :next) > (first :card)] [(first :next) < (first :card)]
+  ifelse :right [
+    make "streak :streak + 1
+    print [Right!]
+    draw.card :next
+    turn.over :next
+  ] [
+    print sentence [Wrong. Final streak:] :streak
+    setpencolor [255 220 120] setlabelheight 30
+    penup setxy -95 200 label [Game over]
+  ]
+end
+
+clearscreen setbackground [25 100 70]
+make "streak 0
+make "start new.card
+draw.card :start
+print sentence [The first card is] item first :start :names
+turn.over :start

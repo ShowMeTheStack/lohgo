@@ -1,0 +1,120 @@
+; ============================================================
+; TITLE:    Maze Runner
+; CATEGORY: Games
+; LEVEL:    Intermediate
+; TAGS:     readchar, maze, words as data, grid
+; SUMMARY:  Guide the turtle through a maze drawn from rows of text, from the green start to the gold star.
+; ============================================================
+;
+; WHAT IT DOES
+;   The maze is written in the program as rows of characters: # is
+;   a wall, a dot is a path, S is the start and E is the exit. The
+;   turtle draws it, then waits for you. Each arrow key moves the
+;   turtle one square, leaving a trail of crumbs behind it. Walls
+;   stop you with a low beep.
+;
+; HOW TO USE
+;   Click the turtle world first so it receives your keys. Use the
+;   arrow keys to move. Press q to give up.
+;
+; CONCEPTS YOU WILL LEARN
+;   * storing a picture as a list of words and reading it with ITEM
+;   * READCHAR, which waits for one key (arrows come back as the
+;     words UP, DOWN, LEFT and RIGHT)
+;   * the turtle itself as the player: SETHEADING shows its direction
+;
+; THINGS TO TRY
+;   * Draw your own maze: change the rows of :maze (keep them all
+;     the same length and keep one S and one E).
+;   * Add a key K that must be picked up before E opens.
+; ============================================================
+
+make "maze [
+  #####################
+  #S....#.......#.....#
+  #.###.#.#####.#.###.#
+  #.#...#.#...#...#...#
+  #.#.###.#.#.#####.###
+  #.#.....#.#.......#.#
+  #.#######.#######.#.#
+  #.......#.#.....#...#
+  #######.#.#.###.###.#
+  #.......#...#.#.....#
+  #.#########.#.#####.#
+  #...........#......E#
+  #####################
+]
+make "size 30
+
+; Screen position of the center of row r, column c (row 1 is the top).
+to spot :r :c
+  output list (:c - 1) * :size - (count first :maze) * :size / 2 + :size / 2 ~
+              (count :maze) * :size / 2 - (:r - 1) * :size - :size / 2
+end
+
+; A filled square, one maze cell in size, centered on the cell.
+to square.at :r :c :color
+  penup setpos spot :r :c setheading 0
+  setxy xcor - :size / 2 ycor - :size / 2
+  setpensize 1 setpencolor :color pendown
+  filled :color [repeat 4 [forward :size right 90]]
+  penup
+end
+
+to char.at :r :c
+  output item :c item :r :maze
+end
+
+to draw.maze
+  for [r 1 count :maze] [
+    for [c 1 count first :maze] [
+      localmake "ch char.at :r :c
+      if :ch = "# [square.at :r :c [60 50 90]]
+      if :ch = "S [make "row :r make "col :c square.at :r :c [120 200 120]]
+      if :ch = "E [make "goal list :r :c]
+    ]
+  ]
+  ; a gold star marks the exit
+  penup setpos spot first :goal last :goal setheading 0 forward 12 right 162
+  setpencolor [230 170 0] setpensize 1
+  pendown filled [255 210 40] [repeat 5 [forward 24 right 144]] penup
+end
+
+to try.move :dr :dc :heading
+  setheading :heading
+  localmake "r :row + :dr
+  localmake "c :col + :dc
+  if (char.at :r :c) = "# [tone 110 80 stop]
+  ; leave a crumb where we were, then step
+  setpensize 6 setpencolor [200 160 120] pendown forward 0 penup
+  make "row :r make "col :c make "moves :moves + 1
+  setpos spot :row :col
+end
+
+to play
+  if equalp list :row :col :goal [win stop]
+  localmake "k readchar
+  if emptyp :k [play stop]
+  if memberp :k [q Q] [print [You gave up. Try again soon!] stop]
+  if :k = "UP [try.move -1 0 0]
+  if :k = "DOWN [try.move 1 0 180]
+  if :k = "LEFT [try.move 0 -1 270]
+  if :k = "RIGHT [try.move 0 1 90]
+  play
+end
+
+to win
+  tone 523 120 tone 659 120 tone 784 240
+  print (sentence [You escaped in] :moves [moves and] round (timemilli - :start) / 1000 [seconds!])
+  penup setxy -120 -230 setpencolor [40 120 40] setlabelheight 26
+  setheading 0 label [You escaped!]
+end
+
+clearscreen hideturtle setbackground [245 240 230]
+draw.maze
+make "moves 0
+penup setpos spot :row :col setheading 90
+setshape "turtle setpencolor [40 120 200] showturtle
+print [Click the turtle world, then use the arrow keys. Press q to quit.]
+make "start timemilli
+play

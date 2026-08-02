@@ -1,0 +1,119 @@
+; ============================================================
+; TITLE:    Pong
+; CATEGORY: Games
+; LEVEL:    Intermediate
+; TAGS:     keyboardon, animation, several turtles, physics
+; SUMMARY:  Bat a ball past a computer opponent in the classic tennis game; first to 5 points wins.
+; ============================================================
+;
+; WHAT IT DOES
+;   Your paddle is on the left, the computer's is on the right. The
+;   ball is a second turtle with a round shape. It bounces off the top
+;   and bottom walls and off the paddles. Where the ball hits your
+;   paddle changes the angle it flies off at, so aim with the edges!
+;
+; HOW TO USE
+;   Click the turtle world first so it receives your keys. Hold the
+;   up and down arrow keys (or W and S) to move your paddle.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a game loop: move, check for hits, wait, again
+;   * velocity as two numbers, :vx and :vy, flipped on a bounce
+;   * a second turtle used as a moving sprite (SETTURTLE, SETSHAPE)
+;   * a simple computer player that chases the ball at limited speed
+;
+; THINGS TO TRY
+;   * Change :cpu.speed to 3 (easier) or 8 (much harder).
+;   * Make the ball a little faster after every hit.
+; ============================================================
+
+make "cpu.speed 5
+make "half 45              ; half the height of a paddle
+
+to draw.paddle :x :y :color
+  setturtle 0 penup setxy :x :y - :half
+  setheading 0 setpensize 12 setpencolor :color penpaint pendown forward 2 * :half
+end
+
+to erase.paddle :x :y
+  setturtle 0 penup setxy :x :y - :half - 8
+  setheading 0 setpensize 16 penerase forward 2 * :half + 16 penpaint
+end
+
+to move.paddle :who :dy
+  ; keep paddles inside the court
+  localmake "y :who + :dy
+  if :y > 290 - :half [make "y 290 - :half]
+  if :y < :half - 290 [make "y :half - 290]
+  output :y
+end
+
+to keys
+  localmake "k keyboardvalue
+  localmake "old :me
+  if memberp :k [38 87] [make "me move.paddle :me 25]
+  if memberp :k [40 83] [make "me move.paddle :me -25]
+  if :me <> :old [erase.paddle -360 :old draw.paddle -360 :me [40 90 200]]
+end
+
+to computer.think
+  localmake "old :cpu
+  localmake "gap :by - :cpu
+  if :gap > :cpu.speed [make "gap :cpu.speed]
+  if :gap < minus :cpu.speed [make "gap minus :cpu.speed]
+  make "cpu move.paddle :cpu :gap
+  if :cpu <> :old [erase.paddle 360 :old draw.paddle 360 :cpu [200 60 40]]
+end
+
+to serve :towards
+  make "bx 0 make "by 0
+  make "vx 6 * :towards make "vy (random 7) - 3
+  setturtle 1 setxy 0 0
+  wait 30
+end
+
+to move.ball
+  make "bx :bx + :vx
+  make "by :by + :vy
+  if or :by > 280 :by < -280 [make "vy minus :vy]
+  ; your paddle: the further from the middle you hit, the steeper the bounce
+  if and :vx < 0 :bx < -345 [
+    if (abs :by - :me) < :half + 8 [make "vx minus :vx make "vy (:by - :me) / 6 tone 440 30]
+  ]
+  if and :vx > 0 :bx > 345 [
+    if (abs :by - :cpu) < :half + 8 [make "vx minus :vx make "vy (:by - :cpu) / 6 tone 330 30]
+  ]
+  setturtle 1 setxy :bx :by
+  if :bx < -400 [make "cpu.score :cpu.score + 1 show.score tone 150 300 serve -1]
+  if :bx > 400 [make "my.score :my.score + 1 show.score tone 660 300 serve 1]
+end
+
+to show.score
+  ; rub out the old score with a wide eraser stroke, then write the new one
+  setturtle 0 penup setxy -100 264 setheading 90 setpensize 36
+  penerase pendown forward 200 penpaint penup
+  setxy -42 250 setlabelheight 30 setpencolor [230 230 230]
+  label (sentence :my.score "- :cpu.score)
+end
+
+to setup
+  clearscreen setbackground [20 30 50]
+  setturtle 0 hideturtle
+  ; the dashed net stops below the score, so erasing the score never nibbles it
+  setpencolor [80 90 120] setpensize 4 penup setxy 0 -300 setheading 0
+  repeat 18 [pendown forward 15 penup forward 15]
+  make "me 0 make "cpu 0 make "my.score 0 make "cpu.score 0
+  draw.paddle -360 :me [40 90 200]
+  draw.paddle 360 :cpu [200 60 40]
+  setturtle 1 penup setshape "circle setpencolor [255 230 80] showturtle
+  show.score
+end
+
+setup
+print [Click the turtle world, then use the up and down arrow keys.]
+keyboardon [keys]
+serve 1
+until [or :my.score = 5 :cpu.score = 5] [move.ball computer.think wait 1]
+keyboardoff
+setturtle 0 setpencolor [255 230 80] setlabelheight 34 penup setxy -110 -20
+label ifelse :my.score = 5 [[You win!]] [[Computer wins]]

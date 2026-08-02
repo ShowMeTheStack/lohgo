@@ -1,0 +1,150 @@
+; ============================================================
+; TITLE:    Battleship
+; CATEGORY: Games
+; LEVEL:    Advanced
+; TAGS:     mdarray, readword, words, random placement, grid
+; SUMMARY:  Hunt for four hidden ships on an 8 by 8 sea by calling shots like C5, with hits and misses drawn on the grid.
+; ============================================================
+;
+; WHAT IT DOES
+;   The computer hides four ships (4, 3, 2 and 2 squares long) on an
+;   8 by 8 grid. You call shots by letter and number. A miss leaves a
+;   white splash, a hit leaves a red mark, and when every square of a
+;   ship is hit the computer tells you it has sunk. Sink them all in
+;   40 shots or fewer to win.
+;
+; HOW TO USE
+;   Press Run. Type a square such as B7 and press Enter. Columns are
+;   the letters A to H, rows are the numbers 1 to 8. Type quit to
+;   stop and see where the ships were.
+;
+; CONCEPTS YOU WILL LEARN
+;   * an MDARRAY as a map of the sea
+;   * placing ships at random and trying again if they do not fit
+;   * taking a word like C5 apart with FIRST, BUTFIRST and MEMBER
+;
+; THINGS TO TRY
+;   * Add a fifth ship of length 5.
+;   * Let the computer shoot back at a fleet of yours.
+; ============================================================
+
+make "letters "ABCDEFGH
+make "fleet [4 3 2 2]
+make "cell 50
+
+; Center of the square in column c, row r (row 1 at the top).
+to square.at :c :r
+  output list -200 + (:c - 0.5) * :cell  200 - (:r - 0.5) * :cell
+end
+
+to draw.sea
+  clearscreen hideturtle setbackground [20 60 110]
+  setpensize 2 setpencolor [90 150 210]
+  for [k 0 8] [
+    penup setxy -200 + :k * :cell 200 pendown setxy -200 + :k * :cell -200
+    penup setxy -200 200 - :k * :cell pendown setxy 200 200 - :k * :cell
+  ]
+  setpencolor [220 230 255] setlabelheight 18
+  for [k 1 8] [
+    penup setxy -207 + (:k - 0.5) * :cell 210 label item :k :letters
+    penup setxy -230 193 - (:k - 0.5) * :cell label :k
+  ]
+end
+
+; Try to place a ship of length :len; output "true if it fit.
+to try.place :len :n
+  localmake "across 0 = random 2
+  localmake "c 1 + random ifelse :across [9 - :len] [8]
+  localmake "r 1 + random ifelse :across [8] [9 - :len]
+  localmake "cells []
+  repeat :len [
+    make "cells lput list :c :r :cells
+    ifelse :across [make "c :c + 1] [make "r :r + 1]
+  ]
+  if not emptyp filter [(mditem ? :sea) <> 0] :cells [output "false]
+  foreach :cells [mdsetitem ? :sea :n]
+  pprop "ships :n :len
+  output "true
+end
+
+to hide.ships
+  make "sea mdarray [8 8]
+  for [c 1 8] [for [r 1 8] [mdsetitem list :c :r :sea 0]]
+  foreach :fleet [
+    localmake "n #
+    do.until [] [try.place ? :n]
+  ]
+end
+
+; Turn a word like c5 into [3 5], or output [] if it is not a square.
+to decode :w
+  if not wordp :w [output []]
+  if not (count :w) = 2 [output []]
+  localmake "c position uppercase first :w :letters
+  localmake "r butfirst :w
+  if :c = 0 [output []]
+  if not numberp :r [output []]
+  if or :r < 1 :r > 8 [output []]
+  output list :c :r
+end
+
+to position :ch :w
+  if emptyp :w [output 0]
+  if :ch = first :w [output 1]
+  localmake "rest position :ch butfirst :w
+  if :rest = 0 [output 0]
+  output 1 + :rest
+end
+
+to mark :sq :color :size
+  penup setpos square.at first :sq last :sq
+  setpencolor :color setpensize :size pendown forward 0 penup
+end
+
+to fire :sq
+  localmake "what mditem :sq :sea
+  if or :what = "hit :what = "miss [print [You already shot there.] stop]
+  make "shots :shots + 1
+  if :what = 0 [mdsetitem :sq :sea "miss mark :sq [230 240 255] 14 print [Splash. A miss.] stop]
+  mdsetitem :sq :sea "hit
+  mark :sq [230 40 40] 34
+  tone 200 120
+  pprop "ships :what (gprop "ships :what) - 1
+  ifelse (gprop "ships :what) = 0 [
+    print (sentence [Hit! You sank a ship of length] word item :what :fleet ".)
+    make "sunk :sunk + 1
+  ] [print [Hit!]]
+end
+
+to reveal
+  for [c 1 8] [for [r 1 8] [
+    if numberp mditem list :c :r :sea [
+      if (mditem list :c :r :sea) > 0 [mark list :c :r [150 150 160] 24]
+    ]
+  ]]
+end
+
+to ask.shot
+  type [Your shot? ]
+  localmake "w readword
+  if listp :w [output "quit]
+  if memberp lowercase :w [quit q bye stop exit] [output "quit]
+  localmake "sq decode :w
+  if emptyp :sq [print [Type a letter A-H and a number 1-8, like C5.] output ask.shot]
+  output :sq
+end
+
+to play
+  if :sunk = count :fleet [print (sentence [You sank the whole fleet in] :shots [shots!]) stop]
+  if :shots >= 40 [print [Out of shots! Here is where the ships were.] reveal stop]
+  localmake "sq ask.shot
+  if :sq = "quit [print [Here is where the ships were.] reveal stop]
+  fire :sq
+  play
+end
+
+draw.sea
+hide.ships
+make "shots 0 make "sunk 0
+print [Four ships are hiding. Call your shots, like C5.]
+play

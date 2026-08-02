@@ -1,0 +1,111 @@
+; ============================================================
+; TITLE:    Simon Says
+; CATEGORY: Games
+; LEVEL:    Intermediate
+; TAGS:     readchar, sound, lists, memory, arc
+; SUMMARY:  Watch and listen as four colored pads light up in a growing sequence, then repeat it with the arrow keys.
+; ============================================================
+;
+; WHAT IT DOES
+;   Four colored pads form a ring, each with its own note. The
+;   computer plays a sequence: one pad, then two, then three... After
+;   each turn you play the sequence back. Get one wrong and the game
+;   is over. How long a sequence can you remember?
+;
+; HOW TO USE
+;   Click the turtle world first so it receives your keys. Each pad
+;   has an arrow key: up is green, right is red, down is blue and
+;   left is yellow. The keys 1 to 4 work too. Press q to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * TONE to play a note while a pad is lit
+;   * LPUT to make the sequence one step longer each round
+;   * READCHAR to wait for one key, and arrow keys as words
+;   * FILLED with SIN and COS to make ring-shaped buttons
+;
+; THINGS TO TRY
+;   * Speed the computer up as the sequence gets longer.
+;   * Change the notes to C E G and high C for a friendlier sound.
+; ============================================================
+
+; Each pad: the key that plays it, where its arc starts, its dim and
+; bright colors, and its note in hertz (G, E, high E and C).
+make "pads [
+  [UP 318 [30 110 40] [90 240 100] 392]
+  [RIGHT 48 [120 25 25] [255 80 80] 330]
+  [DOWN 138 [25 50 130] [80 140 255] 659]
+  [LEFT 228 [130 110 20] [255 230 60] 262]
+]
+
+; A pad is a slice of a ring: out along the big circle, back along
+; the small one. FILLED fills whatever shape the turtle walks, even
+; with the pen up, so the pad has no outline at all.
+to pad.draw :n :bright
+  localmake "p item :n :pads
+  localmake "a item 2 :p
+  penup setxy 190 * sin :a 190 * cos :a
+  filled item ifelse :bright [4] [3] :p [
+    for [d :a :a + 84 3] [setxy 190 * sin :d 190 * cos :d]
+    for [d :a + 84 :a -3] [setxy 95 * sin :d 95 * cos :d]
+  ]
+end
+
+to flash :n
+  pad.draw :n "true
+  tone item 5 item :n :pads 350
+  pad.draw :n "false
+  wait 6
+end
+
+to play.sequence
+  print sentence [Watch: round] count :sequence
+  wait 30
+  foreach :sequence [flash ?]
+end
+
+; Output the pad number for a key, 0 for an unknown key, -1 to quit.
+to which.pad :k
+  if emptyp :k [output 0]
+  if memberp :k [q Q] [output -1]
+  if memberp :k [1 2 3 4] [output :k]
+  foreach :pads [if :k = first ? [output #]]
+  output 0
+end
+
+; Read the player's answer key by key. Output "true if all correct.
+to copy.sequence :left
+  if emptyp :left [output "true]
+  localmake "n which.pad readchar
+  if :n = -1 [make "quitting "true output "false]
+  if :n = 0 [print [Use the arrow keys.] output copy.sequence :left]
+  flash :n
+  if not :n = first :left [output "false]
+  output copy.sequence butfirst :left
+end
+
+to draw.board
+  clearscreen hideturtle setbackground [20 20 25]
+  for [n 1 4] [pad.draw :n "false]
+  penup home setpencolor [60 60 70] setpensize 90 pendown forward 0 penup
+  setpencolor [230 230 230] setlabelheight 22 setxy -30 -8 label "SIMON
+end
+
+to game
+  make "sequence lput 1 + random 4 :sequence
+  play.sequence
+  print [Your turn!]
+  ifelse copy.sequence :sequence [
+    print [Correct!]
+    wait 20
+    game
+  ] [
+    if :quitting [print [Bye!] stop]
+    tone 110 700
+    print sentence [Wrong pad! Longest sequence you copied:] (count :sequence) - 1
+  ]
+end
+
+draw.board
+make "sequence [] make "quitting "false
+print [Click the turtle world first. Use the arrow keys to copy the pads.]
+game

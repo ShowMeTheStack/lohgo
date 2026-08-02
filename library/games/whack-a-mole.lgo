@@ -1,0 +1,105 @@
+; ============================================================
+; TITLE:    Whack-a-Mole
+; CATEGORY: Games
+; LEVEL:    Beginner
+; TAGS:     mouseon, clickpos, distance, timemilli, random
+; SUMMARY:  Moles pop out of nine holes; click them with the mouse before they hide again. You have 30 seconds.
+; ============================================================
+;
+; WHAT IT DOES
+;   Nine holes sit in a field. A mole pops up out of one of them for a
+;   short moment. Click on it to bonk it and score a point. The moles
+;   get quicker as your score climbs. After 30 seconds the game ends.
+;
+; HOW TO USE
+;   Press Run, then click on the moles in the turtle world with the
+;   left mouse button.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MOUSEON: an instruction list runs when the button goes down
+;   * CLICKPOS and DISTANCE to see if the click was on the mole
+;   * TIMEMILLI to time the game
+;
+; THINGS TO TRY
+;   * Make the game last 60 seconds.
+;   * Add a golden mole that is worth 5 points but shows up rarely.
+; ============================================================
+
+; The nine holes, as [x y] positions in a 3 by 3 layout.
+make "holes [[-220 120] [0 120] [220 120] [-220 -30] [0 -30] [220 -30] [-220 -180] [0 -180] [220 -180]]
+
+to draw.hole :spot
+  penup setpos :spot setheading 90 setpencolor [70 45 25] setpensize 4 pendown
+  ; ELLIPSE only draws an outline, so rings that shrink step by step
+  ; fill the hole in. Heading 90 lays the ellipse on its side.
+  repeat 14 [ellipse 44 - 3 * repcount 130 - 9 * repcount]
+  penup
+end
+
+to draw.mole :spot
+  penup setpos :spot setxy xcor ycor + 25
+  setpencolor [140 95 60] setpensize 70 pendown forward 0 penup
+  setpencolor "black setpensize 9
+  setxy xcor - 13 ycor + 8 pendown forward 0 penup
+  setxy xcor + 26 ycor pendown forward 0 penup
+  setpencolor [240 140 160] setpensize 14 setxy xcor - 13 ycor - 16 pendown forward 0 penup
+end
+
+; Erasing the mole also erases the top of its hole, so draw that again.
+to hide.mole
+  if emptyp :mole [stop]
+  penup setpos :mole setxy xcor ycor + 25
+  setpensize 76 penerase pendown forward 0 penpaint penup
+  draw.hole :mole
+  make "mole []
+end
+
+to pop.up
+  hide.mole
+  make "mole pick :holes
+  draw.mole :mole
+  make "popped timemilli
+end
+
+to bonk
+  if emptyp :mole [stop]
+  localmake "spot list first :mole (last :mole) + 25
+  ; DISTANCE measures from the turtle, so stand on the mole first
+  penup setpos :spot
+  if (distance clickpos) < 40 [
+    make "score :score + 1
+    tone 880 40
+    hide.mole
+    show.score
+  ]
+end
+
+to show.score
+  penup setxy -390 268 setheading 90 setpensize 30
+  penerase pendown forward 380 penpaint penup
+  setpencolor [30 60 30] setlabelheight 22 setxy -380 260
+  label (sentence [Score:] :score [- Time left:] int (:length - (timemilli - :start)) / 1000)
+end
+
+to setup
+  clearscreen hideturtle setbackground [120 190 90]
+  foreach :holes [draw.hole ?]
+  make "mole [] make "score 0 make "popped 0
+  make "length 30000
+  make "start timemilli
+  show.score
+end
+
+setup
+print [Click the moles with the mouse! You have 30 seconds.]
+mouseon [bonk] [] [] [] []
+while [(timemilli - :start) < :length] [
+  ; moles stay up for a shorter time as the score goes up
+  if (timemilli - :popped) > (1200 - 40 * :score) [pop.up show.score]
+  wait 3
+]
+mouseoff
+hide.mole
+setpencolor [255 255 255] setlabelheight 40 penup setxy -150 -280
+label sentence [Final score:] :score
+print sentence [Time is up! Moles bonked:] :score

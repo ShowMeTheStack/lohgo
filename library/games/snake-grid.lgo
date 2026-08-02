@@ -1,0 +1,128 @@
+; ============================================================
+; TITLE:    Grid Snake
+; CATEGORY: Games
+; LEVEL:    Advanced
+; TAGS:     keyboardon, mdarray, game loop, animation
+; SUMMARY:  Steer a growing snake around a walled grid with the arrow keys, eat apples and never bite your own tail.
+; ============================================================
+;
+; WHAT IT DOES
+;   A snake crawls across a 30 by 20 grid. Each apple makes it three
+;   squares longer and a little faster. Running into the wall or
+;   into your own body ends the game.
+;
+; HOW TO USE
+;   Click the turtle world first so it receives your keys. Steer
+;   with the arrow keys (or W A S D). Press Run again to restart.
+;
+; CONCEPTS YOU WILL LEARN
+;   * KEYBOARDON and KEYBOARDVALUE: reacting to keys as events
+;   * an MDARRAY that remembers which grid squares are taken, so a
+;     collision test is one MDITEM instead of a search
+;   * a queue: the head is added at one end, the tail removed at the other
+;   * erasing with PENERASE so only two squares change each step
+;
+; THINGS TO TRY
+;   * Let the snake pass through the walls and come out the other side.
+;   * Put a few rocks on the grid at the start.
+; ============================================================
+
+; The grid is :cols by :rows squares of :cell steps each.
+make "cols 30 make "rows 20 make "cell 20
+
+; Center of square (c, r) on the screen. Square (1, 1) is bottom left.
+to cell.pos :c :r
+  output list (:c - 0.5) * :cell - :cols * :cell / 2  (:r - 0.5) * :cell - :rows * :cell / 2
+end
+
+to paint.cell :c :r :color
+  penup setpos cell.pos :c :r
+  setpensize :cell - 3 setpencolor :color penpaint forward 0
+end
+
+to erase.cell :c :r
+  penup setpos cell.pos :c :r
+  setpensize :cell penerase forward 0 penpaint
+end
+
+to draw.walls
+  setpensize 4 setpencolor [90 60 30] setheading 0
+  penup setxy -2 - :cols * :cell / 2 -2 - :rows * :cell / 2 pendown
+  repeat 2 [forward :rows * :cell + 4 right 90 forward :cols * :cell + 4 right 90]
+end
+
+; Arrow keys have the codes 37 to 40; W A S D are 87 65 83 68.
+; The snake may not turn straight back into its own neck.
+to steer
+  localmake "k keyboardvalue
+  if and memberp :k [38 87] :dir <> [0 -1] [make "next [0 1]]
+  if and memberp :k [40 83] :dir <> [0 1] [make "next [0 -1]]
+  if and memberp :k [37 65] :dir <> [1 0] [make "next [-1 0]]
+  if and memberp :k [39 68] :dir <> [-1 0] [make "next [1 0]]
+end
+
+to place.apple
+  localmake "c 1 + random :cols
+  localmake "r 1 + random :rows
+  if mditem list :c :r :taken [place.apple stop]
+  make "apple list :c :r
+  paint.cell :c :r [220 30 40]
+end
+
+to show.score :new
+  ; wipe the old score with a wide eraser stroke, then write the new one
+  penup setxy -305 226 setheading 90 setpensize 26 penerase pendown forward 200 penpaint penup
+  setpencolor [40 40 40] setlabelheight 18 setxy -300 220
+  label sentence [Score:] :new
+end
+
+; One step: work out the new head, check for a crash, then move.
+to crawl
+  make "dir :next
+  localmake "head first :body
+  localmake "c (first :head) + first :dir
+  localmake "r (last :head) + last :dir
+  if or :c < 1 :c > :cols [make "alive "false stop]
+  if or :r < 1 :r > :rows [make "alive "false stop]
+  if mditem list :c :r :taken [make "alive "false stop]
+  ; the old head becomes body colored, the new head is darker
+  paint.cell first :head last :head [90 180 70]
+  paint.cell :c :r [30 110 40]
+  make "body fput list :c :r :body
+  mdsetitem list :c :r :taken "true
+  ifelse equalp list :c :r :apple [
+    make "grow :grow + 3
+    make "score :score + 1
+    show.score :score
+    if :delay > 2 [make "delay :delay - 1]
+    place.apple
+  ] [
+    if :grow > 0 [make "grow :grow - 1 stop]
+    localmake "tail last :body
+    erase.cell first :tail last :tail
+    mdsetitem :tail :taken "false
+    make "body butlast :body
+  ]
+end
+
+to setup
+  clearscreen hideturtle setbackground [235 245 215]
+  draw.walls
+  make "taken mdarray (list :cols :rows)
+  for [c 1 30] [for [r 1 20] [mdsetitem list :c :r :taken "false]]
+  make "body [[8 10] [7 10] [6 10]]
+  foreach :body [mdsetitem ? :taken "true paint.cell first ? last ? [90 180 70]]
+  make "dir [1 0] make "next [1 0]
+  make "grow 0 make "score 0 make "delay 8 make "alive "true
+  show.score 0
+  place.apple
+end
+
+setup
+print [Click the turtle world, then steer with the arrow keys.]
+keyboardon [steer]
+while [:alive] [crawl wait :delay]
+keyboardoff
+setpencolor [180 30 30] setlabelheight 40 penup setxy -120 -20
+label [Game over]
+print sentence [Game over! Apples eaten:] :score

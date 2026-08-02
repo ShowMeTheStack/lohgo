@@ -1,0 +1,137 @@
+; ============================================================
+; TITLE:    Connect Four
+; CATEGORY: Games
+; LEVEL:    Advanced
+; TAGS:     mdarray, strategy, readword, counting in a line
+; SUMMARY:  Drop counters into a 7-column frame and get four in a row before the computer does.
+; ============================================================
+;
+; WHAT IT DOES
+;   A blue frame with 7 columns and 6 rows stands on the screen. You
+;   play red, the computer plays yellow. Counters fall to the lowest
+;   empty hole of the column you pick. Four in a row across, down or
+;   on a slant wins. The computer wins when it can, blocks you when
+;   it must, and otherwise prefers the middle columns.
+;
+; HOW TO USE
+;   Press Run. Type a column number from 1 to 7 and press Enter.
+;   Type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * an MDARRAY for the board, indexed [column row]
+;   * counting matching counters in four directions with one procedure
+;   * trying a move, testing it, then taking it back
+;
+; THINGS TO TRY
+;   * Let the computer look one move further: avoid a column if your
+;     reply on top of it would win.
+;   * Make the board 8 columns wide.
+; ============================================================
+
+make "colors [[220 40 40] [250 210 40]]   ; red for you (1), yellow for me (2)
+
+to hole.pos :c :r
+  output list -240 + (:c - 1) * 80  -200 + (:r - 1) * 70
+end
+
+to draw.frame
+  clearscreen hideturtle setbackground [235 240 250]
+  setpencolor [20 50 150] setpensize 1 penup setxy -290 -240 setheading 0 pendown
+  filled [40 80 190] [repeat 2 [forward 450 right 90 forward 580 right 90]]
+  penup
+  for [c 1 7] [
+    for [r 1 6] [disc :c :r [235 240 250]]
+    setpencolor [60 60 60] setlabelheight 18 penup setpos hole.pos :c 7 setxy xcor - 5 ycor + 2 label :c
+  ]
+end
+
+to disc :c :r :color
+  penup setpos hole.pos :c :r setpencolor :color setpensize 56 pendown forward 0 penup
+end
+
+; The lowest empty row of a column, or 0 if the column is full.
+to free.row :c
+  for [r 1 6] [if (mditem list :c :r :board) = 0 [output :r]]
+  output 0
+end
+
+; How many counters of :who in a row through (c, r) along (dc, dr),
+; counting both ways from the square itself.
+to run.length :c :r :dc :dr :who
+  output 1 + (stretch :c + :dc :r + :dr :dc :dr :who) + (stretch :c - :dc :r - :dr minus :dc minus :dr :who)
+end
+
+to stretch :c :r :dc :dr :who
+  if or :c < 1 :c > 7 [output 0]
+  if or :r < 1 :r > 6 [output 0]
+  if not (mditem list :c :r :board) = :who [output 0]
+  output 1 + stretch :c + :dc :r + :dr :dc :dr :who
+end
+
+to wins? :c :r :who
+  foreach [[1 0] [0 1] [1 1] [1 -1]] [
+    if (run.length :c :r first ? last ? :who) >= 4 [output "true]
+  ]
+  output "false
+end
+
+; Would dropping :who's counter into column c win? Try it and undo it.
+to winning.drop? :c :who
+  localmake "r free.row :c
+  if :r = 0 [output "false]
+  mdsetitem list :c :r :board :who
+  localmake "result wins? :c :r :who
+  mdsetitem list :c :r :board 0
+  output :result
+end
+
+to choose.column
+  localmake "open filter [(free.row ?) > 0] [4 3 5 2 6 1 7]
+  foreach :open [if winning.drop? ? 2 [output ?]]
+  foreach :open [if winning.drop? ? 1 [output ?]]
+  ; no win or block: mostly the middle, with a little surprise now and then
+  if 0 = random 4 [output pick :open]
+  output first :open
+end
+
+; Drop a counter, with a short fall animation. Outputs "true on a win.
+to drop :c :who
+  localmake "r free.row :c
+  for [k 6 :r -1] [
+    disc :c :k item :who :colors
+    wait 2
+    if :k > :r [disc :c :k [235 240 250]]
+  ]
+  mdsetitem list :c :r :board :who
+  make "moves :moves + 1
+  output wins? :c :r :who
+end
+
+to ask.column
+  type [Your column, 1 to 7? ]
+  localmake "w readword
+  if listp :w [output "quit]
+  if memberp lowercase :w [quit q bye stop exit] [output "quit]
+  if not memberp :w [1 2 3 4 5 6 7] [print [Please type a number from 1 to 7.] output ask.column]
+  if (free.row :w) = 0 [print [That column is full.] output ask.column]
+  output :w
+end
+
+to play
+  localmake "c ask.column
+  if :c = "quit [print [Game stopped.] stop]
+  if drop :c 1 [print [Four in a row. You win!] stop]
+  if :moves = 42 [print [The board is full. A draw!] stop]
+  localmake "mine choose.column
+  print sentence [I drop into column] :mine
+  if drop :mine 2 [print [Four in a row. I win!] stop]
+  if :moves = 42 [print [The board is full. A draw!] stop]
+  play
+end
+
+make "board mdarray [7 6]
+for [c 1 7] [for [r 1 6] [mdsetitem list :c :r :board 0]]
+make "moves 0
+draw.frame
+print [You are red. Pick a column from 1 to 7.]
+play
