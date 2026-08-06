@@ -1,0 +1,73 @@
+; ============================================================
+; TITLE:    Josephus Circle
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Beginner
+; TAGS:     lists, circles, counting, animation
+; SUMMARY:  People stand in a circle and every third one steps out; where should you stand to be the last?
+; ============================================================
+;
+; WHAT IT DOES
+;   Twelve numbered players stand in a ring. Counting round the ring,
+;   every third player steps out and turns grey, and the counting
+;   carries on from the next player. The last one left wins. The
+;   puzzle is named after Flavius Josephus, the historian, who told
+;   a story about such a circle. Can you guess the winner before the
+;   turtle finishes?
+;
+; HOW TO USE
+;   Press Run and watch. Change the numbers in the last line, for
+;   example "josephus 10 2", for a different size of ring or count.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a list used as a ring: move the front player to the back
+;   * placing things evenly around a circle with the turtle
+;   * BUTFIRST to remove the player who steps out
+;
+; THINGS TO TRY
+;   * With a count of 2, try rings of 1 to 16 players and write down
+;     the winners. Do you see the pattern?
+;   * Collect the players who step out in a list and print it at the end.
+; ============================================================
+
+; Go to the place in the ring where player p stands.
+to gospot :p
+  penup home
+  right 360 * (:p - 1) / :size
+  forward 200
+end
+
+; Draw a player as a colored disc with its number on it.
+to player :p :color
+  gospot :p
+  setpencolor :color setpensize 50
+  dot pos
+  setheading 0 back 6 left 90 forward 5 + 4 * int :p / 10 right 90
+  setpencolor 7 label :p
+end
+
+; Move the first player in the ring to the back.
+to rotate :ring
+  output lput first :ring butfirst :ring
+end
+
+to josephus :size :count
+  clearscreen hideturtle
+  setbackground [245 240 230]
+  setlabelheight 18
+  for [p 1 :size] [player :p [50 110 200]]
+  localmake "ring iseq 1 :size
+  while [(count :ring) > 1] [
+    ; skip past count - 1 players, then the next one is out
+    repeat :count - 1 [make "ring rotate :ring]
+    wait 30
+    player first :ring [180 180 180]
+    print (sentence [Player] first :ring [steps out.])
+    make "ring butfirst :ring
+  ]
+  player first :ring [230 160 30]
+  penup home setheading 0 back 10 left 90 forward 60 right 90
+  setpencolor 0 label (sentence [Player] first :ring [wins!])
+  print (sentence [The winner is player] first :ring)
+end
+
+josephus 12 3

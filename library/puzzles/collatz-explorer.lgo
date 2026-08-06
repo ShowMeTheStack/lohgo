@@ -1,0 +1,84 @@
+; ============================================================
+; TITLE:    Collatz Explorer
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Beginner
+; TAGS:     numbers, graphs, readword, unsolved problems
+; SUMMARY:  Follows the "halve it or triple it plus one" rule from any number and graphs the hailstone path.
+; ============================================================
+;
+; WHAT IT DOES
+;   Pick a whole number. If it is even, halve it. If it is odd,
+;   multiply by 3 and add 1. Keep going. Every number anyone has ever
+;   tried ends up at 1, but nobody has proved that it always will.
+;   Lothar Collatz asked this question in 1937 and it is still
+;   unsolved. The numbers bounce up and down like hailstones in a
+;   cloud, so the turtle draws them as a graph.
+;
+; HOW TO USE
+;   Press Run and type a starting number in the command center.
+;   If you just press Enter the program uses 27, a famous wild one.
+;
+; CONCEPTS YOU WILL LEARN
+;   * WHILE loops that run until something happens
+;   * even and odd with REMAINDER
+;   * scaling numbers so a graph fits the screen
+;   * checking that the user typed a sensible number
+;
+; THINGS TO TRY
+;   * Compare 27 with 26 and 28. Neighbors can behave very differently.
+;   * Find the number below 100 that takes the most steps.
+; ============================================================
+
+; One step of the rule.
+to nextnum :n
+  ifelse 0 = remainder :n 2 [output :n / 2] [output 3 * :n + 1]
+end
+
+; The whole path from n down to 1, as a list.
+to hailstones :n
+  localmake "path (list :n)
+  while [:n > 1] [
+    make "n nextnum :n
+    make "path lput :n :path
+  ]
+  output :path
+end
+
+; Ask until we get a whole number of at least 1. An empty answer
+; means "use the default".
+to asknumber
+  print [Type a starting number and press Enter:]
+  localmake "a readword
+  if emptyp :a [output 27]
+  if not numberp :a [print [That is not a number.] output asknumber]
+  if or :a < 1 :a <> int :a [print [Please use a whole number of 1 or more.] output asknumber]
+  output :a
+end
+
+to graph :path
+  localmake "high reduce [ifelse ?1 > ?2 [?1] [?2]] :path
+  localmake "dx 700 / (count :path)
+  ; the axes
+  setpencolor [120 120 120] setpensize 1
+  penup setxy -360 -250 pendown setxy 360 -250
+  penup setxy -360 -250 pendown setxy -360 260
+  ; the path: one point per number, joined by lines
+  setpencolor [200 60 30] setpensize 2
+  penup
+  foreach :path [
+    setxy -360 + :dx * (# - 1) -250 + 500 * ? / :high
+    pendown
+    if ? = :high [setpencolor [30 90 200] label ? setpencolor [200 60 30]]
+  ]
+  penup setxy -350 270 setpencolor 0
+  label (sentence [Start] first :path [  steps] (count :path) - 1 [  highest] :high)
+end
+
+clearscreen hideturtle
+setbackground [250 250 245]
+setlabelheight 14
+make "start asknumber
+make "path hailstones :start
+graph :path
+print :path
+print (sentence [It took] (count :path) - 1 [steps to reach 1.])

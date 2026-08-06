@@ -1,0 +1,124 @@
+; ============================================================
+; TITLE:    Maze Maker and Solver
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Advanced
+; TAGS:     stacks, queues, random, search, mazes
+; SUMMARY:  Digs a random maze with a stack, then finds the way out with a breadth-first search.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle tunnels through solid rock. From each cell it picks a
+;   random neighbor it has not dug yet; when it is boxed in it backs
+;   up along its own tunnel until it finds a cell with somewhere new
+;   to go. That makes a "perfect" maze: exactly one path between any
+;   two cells. Then a second search spreads out from the top left
+;   corner and the shortest way to the bottom right is drawn in red.
+;
+; HOW TO USE
+;   Press Run. Every run makes a different maze. Change the numbers
+;   in "maze 20 15" for more or fewer cells.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a stack (PUSH and POP) to remember the way back
+;   * a queue (QUEUE and DEQUEUE) to search nearest-first
+;   * arrays that hold one list or one number per cell
+;   * drawing tunnels with a fat pen instead of drawing walls
+;
+; THINGS TO TRY
+;   * Remove the WAIT in DIG to make the maze appear at once.
+;   * Use RERANDOM 1 before MAZE to get the same maze every time.
+;   * Draw the search frontier as it spreads, in a pale color.
+; ============================================================
+
+; Cells are numbered row by row, starting at 1 in the top left.
+to cellx :i
+  output :left + :size * remainder :i - 1 :cols
+end
+to celly :i
+  output :top - :size * int (:i - 1) / :cols
+end
+
+; The cells next door (up, down, left, right) that are inside the grid.
+to neighbors :i
+  localmake "c 1 + remainder :i - 1 :cols
+  localmake "result []
+  if :i > :cols [push "result :i - :cols]
+  if :i <= :cols * (:rows - 1) [push "result :i + :cols]
+  if :c > 1 [push "result :i - 1]
+  if :c < :cols [push "result :i + 1]
+  output :result
+end
+
+; Draw a tunnel between two cells.
+to tunnel :a :b :color
+  setpencolor :color
+  penup setxy cellx :a celly :a pendown
+  setxy cellx :b celly :b
+end
+
+to dig
+  make "seen (array :rows * :cols)
+  make "open (array :rows * :cols)
+  for [i 1 :rows * :cols] [setitem :i :seen "false setitem :i :open []]
+  make "stack []
+  push "stack 1
+  setitem 1 :seen "true
+  setpensize :size - 10
+  while [not emptyp :stack] [
+    localmake "here first :stack
+    localmake "fresh filter [not item ? :seen] neighbors :here
+    ifelse emptyp :fresh [
+      ignore pop "stack          ; dead end: back up one cell
+    ] [
+      localmake "next pick :fresh
+      setitem :next :seen "true
+      setitem :here :open fput :next item :here :open
+      setitem :next :open fput :here item :next :open
+      tunnel :here :next [235 225 200]
+      push "stack :next
+      wait 1
+    ]
+  ]
+end
+
+; Breadth-first search from the first cell. FROM remembers which cell
+; each one was reached from, so we can walk back from the exit.
+to solve
+  localmake "last :rows * :cols
+  make "from (array :last)
+  for [i 1 :last] [setitem :i :from 0]
+  setitem 1 :from -1
+  make "todo [1]
+  while [not emptyp :todo] [
+    localmake "here dequeue "todo
+    foreach item :here :open [
+      if 0 = item ? :from [setitem ? :from :here queue "todo ?]
+    ]
+  ]
+  setpensize 6
+  localmake "cell :last
+  localmake "steps 0
+  while [:cell <> 1] [
+    tunnel :cell item :cell :from [210 40 40]
+    make "cell item :cell :from
+    make "steps :steps + 1
+    wait 2
+  ]
+  print (sentence [The way out is] :steps [steps long.])
+end
+
+to maze :cols :rows
+  clearscreen hideturtle
+  setbackground [70 50 40]
+  make "size int ifelse 720 / :cols < 540 / :rows [720 / :cols] [540 / :rows]
+  make "left minus :size * (:cols - 1) / 2
+  make "top :size * (:rows - 1) / 2
+  dig
+  ; mark the entrance and the exit
+  setpensize :size - 14
+  setpencolor [60 160 60] dot list cellx 1 celly 1
+  setpencolor [200 60 60] dot list cellx :rows * :cols celly :rows * :cols
+  solve
+end
+
+maze 20 15

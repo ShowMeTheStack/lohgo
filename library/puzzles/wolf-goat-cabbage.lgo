@@ -1,0 +1,122 @@
+; ============================================================
+; TITLE:    Wolf, Goat and Cabbage
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Intermediate
+; TAGS:     search, recursion, words, river crossing
+; SUMMARY:  Solves the farmer's river crossing puzzle by depth-first search and acts out the answer.
+; ============================================================
+;
+; WHAT IT DOES
+;   A farmer must take a wolf, a goat and a cabbage across a river.
+;   His boat holds him and one passenger. Left alone, the wolf eats
+;   the goat and the goat eats the cabbage. This puzzle is more than
+;   a thousand years old: it appears in a collection of problems
+;   linked to Alcuin of York. The program searches for a safe plan,
+;   prints it, and then shows each crossing on the screen.
+;
+; HOW TO USE
+;   Press Run and read the plan in the text window while the turtle
+;   acts it out.
+;
+; CONCEPTS YOU WILL LEARN
+;   * describing a whole situation as one short word, like "LLRL
+;   * depth-first search with a list of places already visited
+;   * a procedure that outputs a whole plan or [] for "no luck"
+;   * redrawing a scene with CLEAN for each step of a story
+;
+; THINGS TO TRY
+;   * Change the order in MOVES and see whether a different plan appears.
+;   * Make the wolf a vegetarian (remove its rule in SAFE) and see how
+;     much shorter the plan becomes.
+; ============================================================
+
+; A state is a word of four letters, L (left bank) or R (right bank),
+; for the farmer, the wolf, the goat and the cabbage, in that order.
+make "names [farmer wolf goat cabbage]
+
+to other :side
+  output ifelse :side = "L ["R] ["L]
+end
+
+; Something is in danger when it shares a bank with what it eats,
+; and the farmer is on the other bank.
+to safe :s
+  if and (item 2 :s) = (item 3 :s) (item 1 :s) <> (item 2 :s) [output "false]
+  if and (item 3 :s) = (item 4 :s) (item 1 :s) <> (item 3 :s) [output "false]
+  output "true
+end
+
+; Every state the farmer can reach in one crossing: alone (k = 1)
+; or together with one thing that is on his bank (k = 2, 3, 4).
+to moves :s
+  localmake "result []
+  for [k 1 4] [
+    if (item :k :s) = (item 1 :s) [
+      localmake "new :s
+      make "new setletter 1 :new other item 1 :s
+      if :k > 1 [make "new setletter :k :new other item :k :s]
+      if safe :new [make "result lput (list :k :new) :result]
+    ]
+  ]
+  output :result
+end
+
+; Replace letter i of a word.
+to setletter :i :w :ch
+  if :i = 1 [output word :ch butfirst :w]
+  output word first :w setletter :i - 1 butfirst :w :ch
+end
+
+; Depth-first search. Outputs a list of [passenger state] steps that
+; reach the goal, or [] if this branch is hopeless.
+to search :s :seen
+  if :s = "RRRR [output [[0 RRRR]]]
+  foreach moves :s [
+    if not memberp last ? :seen [
+      localmake "rest search last ? fput last ? :seen
+      if not emptyp :rest [output fput ? :rest]
+    ]
+  ]
+  output []
+end
+
+; ---- the picture ----
+
+to scene :s :caption
+  clean
+  ; the river is walked with the pen up, so it gets no border line
+  penup setxy -110 -300 setheading 0
+  filled [70 140 220] [repeat 2 [forward 600 right 90 forward 220 right 90]]
+  penup setxy -330 150 setpencolor 0 label :caption
+  for [k 1 4] [
+    localmake "x ifelse (item :k :s) = "L [-260] [260]
+    localmake "y 100 - 60 * :k
+    setpencolor item :k [[150 90 40] [110 110 120] [240 240 240] [60 170 60]]
+    setpensize 34 dot list :x :y
+    penup setxy :x + 24 :y - 6 setpencolor 0 label item :k :names
+  ]
+end
+
+to actout :plan
+  localmake "s "LLLL
+  scene :s [Everyone starts on the left bank.]
+  wait 60
+  foreach :plan [
+    localmake "who first ?
+    if :who > 0 [
+      localmake "text ifelse :who = 1 [[The farmer crosses alone.]] ~
+        [(sentence [The farmer takes the] item :who :names [across.])]
+      print :text
+      scene last ? :text
+      wait 60
+    ]
+  ]
+  scene "RRRR [Everyone is safely across!]
+end
+
+clearscreen hideturtle
+setbackground [120 190 90]
+setlabelheight 16
+make "plan search "LLLL [LLLL]
+print (sentence [A plan with] (count :plan) - 1 [crossings:])
+actout :plan

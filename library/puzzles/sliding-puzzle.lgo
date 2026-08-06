@@ -1,0 +1,105 @@
+; ============================================================
+; TITLE:    Sliding Eight Puzzle
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Intermediate
+; TAGS:     interactive, readword, lists, puzzle
+; SUMMARY:  A three by three sliding tile puzzle: type a tile number to slide it into the gap.
+; ============================================================
+;
+; WHAT IT DOES
+;   Eight numbered tiles and one gap sit in a frame. The program
+;   jumbles them by making random slides from the finished position,
+;   so the puzzle can always be solved. You put the tiles back in
+;   order, 1 to 8, with the gap in the bottom right corner. It is the
+;   little brother of the 15 puzzle that swept America in 1880.
+;
+; HOW TO USE
+;   Press Run, then type the number of a tile next to the gap in the
+;   command center and press Enter. Type quit to give up.
+;
+; CONCEPTS YOU WILL LEARN
+;   * keeping a board as a simple list of 9 items, with 0 for the gap
+;   * checking what the player typed before trusting it
+;   * swapping two items of a list with a recursive helper
+;
+; THINGS TO TRY
+;   * Make the puzzle easier by changing 30 random slides to 8.
+;   * Count the moves and print a message if you beat 20.
+; ============================================================
+
+; Positions 1 to 9 go row by row. Two positions are neighbors when
+; they are side by side in the same row, or one above the other.
+to besides :p :q
+  if (abs :p - :q) = 3 [output "true]
+  if and (abs :p - :q) = 1 (int (:p - 1) / 3) = (int (:q - 1) / 3) [output "true]
+  output "false
+end
+
+; Output a copy of the list with items i and j swapped.
+to swap :i :j :board
+  output map [ifelse # = :i [item :j :board] [ifelse # = :j [item :i :board] [?]]] :board
+end
+
+to where :tile
+  output first filter [(item ? :board) = :tile] [1 2 3 4 5 6 7 8 9]
+end
+
+; Slide a tile into the gap, if it is next to the gap.
+to slide :tile
+  localmake "p where :tile
+  localmake "g where 0
+  if not besides :p :g [output "false]
+  make "board swap :p :g :board
+  output "true
+end
+
+; Jumble the tiles with random legal slides.
+to jumble :n
+  repeat :n [
+    localmake "g where 0
+    localmake "options filter [besides ? :g] [1 2 3 4 5 6 7 8 9]
+    ignore slide item pick :options :board
+  ]
+end
+
+to drawboard
+  clean
+  for [p 1 9] [
+    localmake "x -150 + 100 * remainder :p - 1 3
+    localmake "y 50 - 100 * int (:p - 1) / 3
+    localmake "t item :p :board
+    if :t > 0 [
+      penup setxy :x + 4 :y + 4 setheading 0 pendown
+      filled [230 160 60] [repeat 4 [forward 92 right 90]]
+      penup setxy :x + 36 :y + 32 setpencolor [80 40 0] label :t
+    ]
+  ]
+  penup setxy -154 -154 setheading 0 pendown setpencolor [90 60 40] setpensize 6
+  repeat 4 [forward 308 right 90]
+end
+
+to play
+  make "board [1 2 3 4 5 6 7 8 0]
+  jumble 30
+  make "moves 0
+  while [not equalp :board [1 2 3 4 5 6 7 8 0]] [
+    drawboard
+    print [Which tile should slide? Type quit to stop.]
+    localmake "answer readword
+    if or emptyp :answer memberp :answer [quit q] [print [Bye for now.] stop]
+    ifelse not memberp :answer [1 2 3 4 5 6 7 8] [
+      print [Please type a tile number from 1 to 8.]
+    ] [
+      ifelse slide :answer [make "moves :moves + 1] [
+        print (sentence [Tile] :answer [is not next to the gap.])
+      ]
+    ]
+  ]
+  drawboard
+  print (sentence [Solved in] :moves [moves. Well done!])
+end
+
+clearscreen hideturtle
+setbackground [250 240 220]
+setlabelheight 36
+play

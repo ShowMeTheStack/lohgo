@@ -1,0 +1,115 @@
+; ============================================================
+; TITLE:    Magic Square Builder
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Intermediate
+; TAGS:     arrays, arithmetic, patterns, mdarray
+; SUMMARY:  Builds an odd-sized magic square with the old "up and to the right" rule and checks every sum.
+; ============================================================
+;
+; WHAT IT DOES
+;   In a magic square every row, every column and both diagonals add
+;   up to the same number. For squares with an odd number of sides
+;   there is a famous recipe, described by Simon de la Loubere in
+;   1693 after his visit to Siam: put 1 in the middle of the top row,
+;   then keep stepping up one and right one, wrapping around the
+;   edges. If that square is taken, drop down one instead.
+;   The turtle fills in the numbers one by one, coloring each square,
+;   and then prints all the sums.
+;
+; HOW TO USE
+;   Press Run. Change the 5 in "magic 5" to 3, 7 or 9.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MDARRAY, MDITEM and MDSETITEM for a grid of numbers
+;   * wrapping around with MODULO
+;   * checking a result with a loop instead of trusting it
+;
+; THINGS TO TRY
+;   * Try an even size like 4 and see where the rule breaks down.
+;   * Start in a different square and check whether it is still magic.
+;   * Work out the magic sum yourself: it is n * (n * n + 1) / 2.
+; ============================================================
+
+; Screen position of the lower left corner of square (row, col).
+to cornerx :col
+  output (:col - 1) * :size - :n * :size / 2
+end
+to cornery :row
+  output :n * :size / 2 - :row * :size
+end
+
+; Color a square, then write its number. FILLED paints over the grid
+; lines and then redraws the square's own outline, so we walk the square
+; with the same pen as the grid lines to keep them looking the same.
+to putnumber :row :col :k
+  mdsetitem (list :row :col) :sq :k
+  setpencolor [90 60 30] setpensize 2
+  penup setxy cornerx :col cornery :row setheading 0 pendown
+  localmake "shade 255 - int 150 * :k / (:n * :n)
+  filled (list 255 :shade 120) [repeat 4 [forward :size right 90]]
+  ; a digit is about 0.6 of the label height wide, so shift left by
+  ; half the width of the number to center it
+  penup setxy (cornerx :col) + :size / 2 - 0.3 * :h * count :k (cornery :row) + :size / 2 - 0.35 * :h
+  setpencolor [60 30 0]
+  label :k
+end
+
+to gridlines
+  setpencolor [90 60 30] setpensize 2
+  for [k 0 :n] [
+    penup setxy cornerx 1 cornery :k setheading 90 pendown forward :n * :size
+    penup setxy (cornerx 1) + :k * :size cornery :n setheading 0 pendown forward :n * :size
+  ]
+end
+
+; The Siamese method. MODULO keeps the row and column between 0 and
+; n-1, so stepping off one edge brings us back on the opposite edge.
+to fillsquare
+  localmake "r 0
+  localmake "c int :n / 2
+  for [k 1 :n * :n] [
+    putnumber :r + 1 :c + 1 :k
+    wait 6
+    localmake "nr modulo :r - 1 :n
+    localmake "nc modulo :c + 1 :n
+    ifelse 0 = mditem (list :nr + 1 :nc + 1) :sq [
+      make "r :nr make "c :nc
+    ] [
+      make "r modulo :r + 1 :n
+    ]
+  ]
+end
+
+; Add up every row, column and diagonal and print them.
+to checksums
+  localmake "d1 0
+  localmake "d2 0
+  for [i 1 :n] [
+    localmake "rs 0
+    localmake "cs 0
+    for [j 1 :n] [
+      make "rs :rs + mditem (list :i :j) :sq
+      make "cs :cs + mditem (list :j :i) :sq
+    ]
+    print (sentence [Row] :i [adds to] :rs [  column] :i [adds to] :cs)
+    make "d1 :d1 + mditem (list :i :i) :sq
+    make "d2 :d2 + mditem (list :i :n + 1 - :i) :sq
+  ]
+  print (sentence [Diagonals add to] :d1 [and] :d2)
+  print (sentence [The magic sum for size] :n [is] :n * (:n * :n + 1) / 2)
+end
+
+to magic :n
+  clearscreen hideturtle
+  setbackground [250 245 230]
+  make "size int 400 / :n
+  make "h int :size / 3
+  setlabelheight :h
+  make "sq mdarray list :n :n
+  for [i 1 :n] [for [j 1 :n] [mdsetitem (list :i :j) :sq 0]]
+  gridlines
+  fillsquare
+  checksums
+end
+
+magic 5

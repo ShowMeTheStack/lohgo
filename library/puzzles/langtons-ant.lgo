@@ -1,0 +1,75 @@
+; ============================================================
+; TITLE:    Langton's Ant
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Beginner
+; TAGS:     turtle, simulation, arrays, emergence
+; SUMMARY:  The turtle becomes an ant following two tiny rules, and after a long mess it builds a highway.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle walks on a grid of small squares. The rules are:
+;     on a white square: turn right, color the square, step forward;
+;     on a colored square: turn left, make it white, step forward.
+;   For about ten thousand steps the drawing looks like a random
+;   blob. Then, suddenly, the ant starts building a straight
+;   "highway" that goes on forever. Chris Langton described this ant
+;   in 1986, and nobody has proved why the highway always appears.
+;
+; HOW TO USE
+;   Press Run and wait. The highway shows up near step 10,000 and
+;   heads off toward the bottom left.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the turtle's own heading and position as the state of a creature
+;   * an array that remembers the color of every square
+;   * simple rules can lead to complicated, surprising results
+;
+; THINGS TO TRY
+;   * Start with a few squares already colored and see what happens.
+;   * Make the ant turn left on white and right on colored.
+;   * Change "repeat 14000" to 9000: the ant is still lost in its mess.
+; ============================================================
+
+make "cell 5           ; size of a square in turtle steps
+make "across 160       ; squares in each row (160 x 5 = 800)
+make "down 120         ; rows (120 x 5 = 600)
+
+; Which square is the turtle standing on? Count from the bottom left.
+to here
+  localmake "col 1 + round (xcor + 400) / :cell
+  localmake "row 1 + round (ycor + 300) / :cell
+  output :col + :across * (:row - 1)
+end
+
+; One step of the ant.
+to antstep
+  localmake "spot here
+  ifelse 0 = item :spot :squares [
+    right 90
+    setitem :spot :squares 1
+    setpencolor [180 40 90]
+  ] [
+    left 90
+    setitem :spot :squares 0
+    setpencolor 7
+  ]
+  ; DOT paints the square under the ant without moving it
+  dot pos
+  forward :cell
+end
+
+clearscreen hideturtle
+setbackground 7
+penup                   ; the ant walks without leaving a trail
+setpensize :cell
+make "squares (array :across * :down)
+for [i 1 :across * :down] [setitem :i :squares 0]
+; start up and to the right of center, so the highway has room
+setxy 150 100
+repeat 14000 [
+  antstep
+  ; pause every 200 steps so we can watch it grow
+  if 0 = remainder repcount 200 [wait 1]
+]
+showturtle
+print [14000 steps. Can you see the highway?]

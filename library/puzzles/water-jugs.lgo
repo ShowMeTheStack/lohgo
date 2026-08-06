@@ -1,0 +1,129 @@
+; ============================================================
+; TITLE:    Water Jugs
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Intermediate
+; TAGS:     breadth-first search, queues, property lists, puzzle
+; SUMMARY:  Finds the shortest way to measure 4 liters with a 3 liter jug and a 5 liter jug.
+; ============================================================
+;
+; WHAT IT DOES
+;   You have a 3 liter jug, a 5 liter jug and a tap, but no markings.
+;   How do you measure exactly 4 liters? (You may know this puzzle
+;   from the film Die Hard with a Vengeance, but it is centuries
+;   older.) The program explores every possible pouring, nearest
+;   first, so the first answer it finds is also the shortest. Then it
+;   shows the jugs filling and emptying step by step.
+;
+; HOW TO USE
+;   Press Run. Change the three numbers in the last line, for example
+;   "jugs 4 9 6", to set the two jug sizes and the amount you want.
+;
+; CONCEPTS YOU WILL LEARN
+;   * breadth-first search with QUEUE and DEQUEUE
+;   * property lists (PPROP and GPROP) to remember where each state came from
+;   * following those links backwards to rebuild the answer
+;
+; THINGS TO TRY
+;   * Ask for an amount that cannot be made, like "jugs 4 6 3". Why not?
+;   * Count how many different states the search visits.
+; ============================================================
+
+; A state is a list [a b]: liters in jug A and in jug B.
+; KEY turns it into one word so it can name a property list.
+to key :s
+  output (word "jugs first :s "_ last :s)
+end
+
+; The six things you can do, each with the state it leads to.
+to nextstates :s
+  localmake "a first :s
+  localmake "b last :s
+  ; how much can be poured from A into B, and from B into A
+  localmake "ab ifelse :a < :capb - :b [:a] [:capb - :b]
+  localmake "ba ifelse :b < :capa - :a [:b] [:capa - :a]
+  output (list (list [Fill jug A.] list :capa :b) ~
+    (list [Fill jug B.] list :a :capb) ~
+    (list [Empty jug A.] list 0 :b) ~
+    (list [Empty jug B.] list :a 0) ~
+    (list [Pour A into B.] list :a - :ab :b + :ab) ~
+    (list [Pour B into A.] list :a + :ba :b - :ba))
+end
+
+to done :s
+  output or (first :s) = :goal (last :s) = :goal
+end
+
+; Breadth-first search: states wait their turn in a queue, so short
+; plans are always looked at before long ones.
+to search
+  make "todo []
+  queue "todo [0 0]
+  pprop key [0 0] "from "start
+  while [not emptyp :todo] [
+    localmake "s dequeue "todo
+    if done :s [output :s]
+    foreach nextstates :s [
+      localmake "new last ?
+      if emptyp gprop key :new "from [
+        pprop key :new "from :s
+        pprop key :new "how first ?
+        queue "todo :new
+      ]
+    ]
+  ]
+  output []
+end
+
+; Walk the "from" links back to the start, collecting the steps.
+to plan :s
+  if :s = [0 0] [output []]
+  output lput (list gprop key :s "how :s) plan gprop key :s "from
+end
+
+; ---- drawing ----
+
+to jug :x :size :amount :name
+  ; water first, then the jug's outline on top of it. The water is
+  ; walked with the pen up so it has no border of its own.
+  if :amount > 0 [
+    penup setxy :x + 2 -148 setheading 0
+    filled [60 140 230] [repeat 2 [forward :unit * :amount - 2 right 90 forward 116 right 90]]
+  ]
+  setpencolor [60 60 80] setpensize 4
+  penup setxy :x -150 setheading 0 pendown
+  forward :unit * :size right 90 penup forward 120 right 90 pendown forward :unit * :size
+  right 90 forward 120
+  penup setxy :x + 20 -180 setpencolor 0
+  label (sentence :name :amount [of] :size)
+end
+
+to picture :s :caption
+  clean
+  jug -200 :capa first :s [A:]
+  jug 80 :capb last :s [B:]
+  penup setxy -200 250 setpencolor 0 label :caption
+end
+
+to jugs :capa :capb :goal
+  clearscreen hideturtle
+  setbackground [245 240 225]
+  setlabelheight 18
+  ; one liter is this many steps tall, so the bigger jug fits the screen
+  make "unit int 340 / ifelse :capa > :capb [:capa] [:capb]
+  ; forget the links left over from an earlier run
+  erpls
+  localmake "end search
+  if emptyp :end [print [It cannot be done with these jugs.] stop]
+  localmake "steps plan :end
+  print (sentence [Found a plan with] count :steps [steps:])
+  picture [0 0] [Both jugs start empty.]
+  wait 60
+  foreach :steps [
+    print first ?
+    picture last ? first ?
+    wait 60
+  ]
+  print (sentence [Now one jug holds] :goal [liters.])
+end
+
+jugs 3 5 4

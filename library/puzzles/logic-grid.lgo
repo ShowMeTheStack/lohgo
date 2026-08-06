@@ -1,0 +1,113 @@
+; ============================================================
+; TITLE:    Three Houses Logic Puzzle
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Advanced
+; TAGS:     permutations, logic, brute force, templates
+; SUMMARY:  Solves a small "who lives where" logic grid puzzle by testing every arrangement against the clues.
+; ============================================================
+;
+; WHAT IT DOES
+;   Three friends live in three houses in a row. Each house has its
+;   own color and each friend has a different pet. Five clues are
+;   printed. The program builds every possible arrangement of friends,
+;   colors and pets (6 x 6 x 6 = 216 of them) and keeps only those
+;   that agree with every clue. Then it draws the street.
+;
+; HOW TO USE
+;   Press Run. Try to solve it on paper first by reading the clues,
+;   then compare. Edit the clues in FITS to make your own puzzle.
+;
+; CONCEPTS YOU WILL LEARN
+;   * generating all permutations of a list with recursion
+;   * FOREACH loops inside each other to try every combination
+;   * writing each clue as a small true or false test
+;   * this "generate and test" method is how many puzzle solvers start
+;
+; THINGS TO TRY
+;   * Delete clue 5 and see how many answers are left.
+;   * Add a fourth friend, color and pet. How many arrangements now?
+; ============================================================
+
+; All orderings of a list: each member in turn goes first, followed by
+; every ordering of the others.
+to perms :items
+  if emptyp :items [output [[]]]
+  output reduce "sentence map [
+    [x] map [[p] fput :x :p] perms remove :x :items
+  ] :items
+end
+
+; Which house (1, 2 or 3) holds a given thing in a given arrangement?
+to house :thing :row
+  output first filter [(item ? :row) = :thing] [1 2 3]
+end
+
+; The clues. :people, :colors and :pets are lists in house order.
+to fits
+  ; 1. Ann lives in the red house.
+  if (house "Ann :people) <> (house "red :colors) [output "false]
+  ; 2. The dog lives in the first house.
+  if (house "dog :pets) <> 1 [output "false]
+  ; 3. Ben lives just to the left of the green house.
+  if (1 + house "Ben :people) <> (house "green :colors) [output "false]
+  ; 4. The cat lives in the green house.
+  if (house "cat :pets) <> (house "green :colors) [output "false]
+  ; 5. Ann does not own the fish.
+  if (house "Ann :people) = (house "fish :pets) [output "false]
+  output "true
+end
+
+to solve
+  localmake "answers []
+  localmake "tried 0
+  foreach perms [Ann Ben Cara] [
+    localmake "people ?
+    foreach perms [red green blue] [
+      localmake "colors ?
+      foreach perms [cat dog fish] [
+        localmake "pets ?
+        make "tried :tried + 1
+        if fits [make "answers lput (list :people :colors :pets) :answers]
+      ]
+    ]
+  ]
+  print (sentence [Tried] :tried [arrangements and] count :answers [fit every clue.])
+  output :answers
+end
+
+; ---- drawing ----
+
+; Draw the walls first and the door after them: each FILLED shape
+; is painted on top of what is already there, so the door ends up in front.
+to drawhouse :x :color :name :pet
+  penup setxy :x -100 setheading 0 pendown
+  filled :color [repeat 2 [forward 140 right 90 forward 120 right 90]]
+  penup setxy :x + 40 -100 setheading 0 pendown
+  filled [100 60 30] [repeat 2 [forward 70 right 90 forward 40 right 90]]
+  penup setxy :x - 10 40 pendown
+  filled [150 40 40] [setxy :x + 60 100 setxy :x + 130 40 setxy :x - 10 40]
+  penup setxy :x + 20 -140 setpencolor 0
+  label :name
+  setxy :x + 20 -170 label (sentence [pet:] :pet)
+end
+
+to clues
+  print [1. Ann lives in the red house.]
+  print [2. The dog lives in the first house.]
+  print [3. Ben lives just to the left of the green house.]
+  print [4. The cat lives in the green house.]
+  print [5. Ann does not own the fish.]
+end
+
+clearscreen hideturtle
+setbackground [200 230 250]
+setlabelheight 18
+clues
+make "found solve
+foreach :found [
+  localmake "a ?
+  for [k 1 3] [
+    drawhouse -290 + 200 * (:k - 1) item :k item 2 :a item :k item 1 :a item :k item 3 :a
+  ]
+  print (sentence [Left to right:] item 1 :a)
+]

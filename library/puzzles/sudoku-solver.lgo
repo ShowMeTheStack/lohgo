@@ -1,0 +1,120 @@
+; ============================================================
+; TITLE:    Sudoku Solver
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Advanced
+; TAGS:     backtracking, arrays, recursion, search
+; SUMMARY:  Solves a sudoku by always filling the square with the fewest choices, backing up when stuck.
+; ============================================================
+;
+; WHAT IT DOES
+;   The puzzle is drawn with its given numbers in black. The program
+;   works out the answer, then writes the missing numbers in blue one
+;   at a time. It prints how many guesses it had to make.
+;
+; HOW TO USE
+;   Press Run. To solve your own puzzle, change the nine rows in the
+;   PUZZLE list at the bottom. Use 0 for an empty square.
+;
+; CONCEPTS YOU WILL LEARN
+;   * one array of 81 items standing for a 9 by 9 grid
+;   * turning a square number into a row, a column and a 3 by 3 box
+;   * recursive backtracking with an undo step
+;   * the "most constrained first" idea that makes searching fast
+;
+; THINGS TO TRY
+;   * Remove a few more givens (make them 0) and see if the guesses go up.
+;   * Make CHOOSE pick the first empty square instead of the best one,
+;     and compare the number of guesses.
+; ============================================================
+
+; Squares are numbered 1 to 81, row by row.
+to rowof :i
+  output 1 + int (:i - 1) / 9
+end
+to colof :i
+  output 1 + remainder :i - 1 9
+end
+to at :r :c
+  output item 9 * (:r - 1) + :c :grid
+end
+
+; Every digit that may still go in square i.
+to candidates :i
+  localmake "r rowof :i
+  localmake "c colof :i
+  localmake "br 3 * int (:r - 1) / 3
+  localmake "bc 3 * int (:c - 1) / 3
+  localmake "used []
+  for [k 1 9] [
+    make "used fput at :r :k :used
+    make "used fput at :k :c :used
+  ]
+  for [a 1 3] [for [b 1 3] [make "used fput at :br + :a :bc + :b :used]]
+  output filter [not memberp ? :used] [1 2 3 4 5 6 7 8 9]
+end
+
+; Find the empty square with the fewest candidates.
+; Outputs [square candidates], or [] when the grid is full.
+to choose
+  localmake "best []
+  localmake "low 10
+  for [i 1 81] [
+    if 0 = item :i :grid [
+      localmake "cs candidates :i
+      if (count :cs) < :low [make "low count :cs make "best list :i :cs]
+    ]
+  ]
+  output :best
+end
+
+to solve
+  localmake "pick choose
+  if emptyp :pick [output "true]
+  localmake "i first :pick
+  if (count last :pick) > 1 [make "guesses :guesses + 1]
+  foreach last :pick [
+    setitem :i :grid ?
+    if solve [output "true]
+  ]
+  setitem :i :grid 0          ; undo, so the caller can try something else
+  output "false
+end
+
+; ---- drawing ----
+
+to gridlines
+  for [k 0 9] [
+    setpensize ifelse 0 = remainder :k 3 [4] [1]
+    penup setxy -225 + 50 * :k -225 setheading 0 pendown forward 450
+    penup setxy -225 225 - 50 * :k setheading 90 pendown forward 450
+  ]
+end
+
+to writedigit :i :color
+  penup setxy -209 + 50 * ((colof :i) - 1) 186 - 50 * ((rowof :i) - 1)
+  setpencolor :color
+  label item :i :grid
+end
+
+to start :puzzle
+  clearscreen hideturtle
+  setbackground [250 248 240]
+  setlabelheight 28
+  ; flatten the nine row words into one array of 81 digits
+  localmake "digits reduce "word :puzzle
+  make "grid (array 81)
+  for [i 1 81] [setitem :i :grid 0 + item :i :digits]
+  localmake "givens arraytolist :grid
+  setpencolor [40 40 60]
+  gridlines
+  for [i 1 81] [if 0 < item :i :grid [writedigit :i 0]]
+  make "guesses 0
+  ifelse solve [
+    for [i 1 81] [if 0 = item :i :givens [writedigit :i [30 90 200] wait 2]]
+    print (sentence [Solved with] :guesses [guesses.])
+  ] [
+    print [This puzzle has no solution.]
+  ]
+end
+
+start [000000907 000420180 000705026 100904000 050000040 000507009 920108000 034059000 507000000]

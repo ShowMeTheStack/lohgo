@@ -1,0 +1,101 @@
+; ============================================================
+; TITLE:    Lights Out
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Intermediate
+; TAGS:     mouse, events, arrays, puzzle game
+; SUMMARY:  Click a light to flip it and its neighbors; switch every light off to win.
+; ============================================================
+;
+; WHAT IT DOES
+;   A 5 by 5 board of lights, some on (yellow) and some off (dark).
+;   Clicking a light flips it and the lights above, below, left and
+;   right of it. The goal is to turn every light off. The puzzle is
+;   made by pressing random lights on a dark board, so it can always
+;   be solved. It is based on the handheld game Lights Out from 1995.
+;
+; HOW TO USE
+;   Press Run, then click the lights in the turtle world with the left
+;   mouse button. Right-click to get a new puzzle. Press Stop to quit.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MOUSEON: running instructions when the mouse button goes down
+;   * turning a mouse position into a row and a column
+;   * an array of 25 lights, and flipping a light with 1 - value
+;   * repainting just the squares that change
+;
+; THINGS TO TRY
+;   * Pressing the same light twice undoes it. Use that to explain
+;     why the order of your clicks never matters.
+;   * Make the board 6 by 6 (change :n and the cell size).
+; ============================================================
+
+make "n 5
+make "size 90
+
+; The lower left corner of a cell, for column c and row r (1 to 5).
+to cornerx :c
+  output -225 + :size * (:c - 1)
+end
+to cornery :r
+  output 135 - :size * (:r - 1)
+end
+
+; Paint a cell with fat strokes so it covers what was there before.
+to paintcell :c :r
+  localmake "on item :c + :n * (:r - 1) :lights
+  setpencolor ifelse :on = 1 [[250 220 60]] [[50 60 80]]
+  setpensize 10 setheading 90
+  for [dy 10 80 8] [penup setxy (cornerx :c) + 10 (cornery :r) + :dy pendown forward :size - 20]
+end
+
+; Flip one light, if it is on the board.
+to flip :c :r
+  if or :c < 1 :c > :n [stop]
+  if or :r < 1 :r > :n [stop]
+  localmake "i :c + :n * (:r - 1)
+  setitem :i :lights 1 - item :i :lights
+  paintcell :c :r
+end
+
+; Pressing a light flips it and its four neighbors.
+to press :c :r
+  flip :c :r
+  flip :c - 1 :r
+  flip :c + 1 :r
+  flip :c :r - 1
+  flip :c :r + 1
+end
+
+to alloff
+  output not memberp 1 arraytolist :lights
+end
+
+; Called by MOUSEON when the left button goes down.
+to clicked
+  localmake "p mousepos
+  localmake "c 1 + int ((first :p) + 225) / :size
+  localmake "r 1 + int (225 - last :p) / :size
+  if or (first :p) < -225 (last :p) > 225 [stop]
+  if or :c > :n :r > :n [stop]
+  press :c :r
+  make "moves :moves + 1
+  if alloff [print (sentence [All dark in] :moves [presses!]) tone 880 200]
+end
+
+to newpuzzle
+  clean
+  make "lights (array :n * :n)
+  for [i 1 :n * :n] [setitem :i :lights 0]
+  for [r 1 :n] [for [c 1 :n] [paintcell :c :r]]
+  repeat 6 [press 1 + random :n 1 + random :n]
+  if alloff [press 3 3]
+  make "moves 0
+  print [New puzzle. Click the lights to switch them all off.]
+end
+
+clearscreen hideturtle
+setbackground [20 25 35]
+print [Click inside the turtle world. Right-click for a new puzzle.]
+newpuzzle
+mouseon [clicked] [] [newpuzzle] [] []
+forever [wait 10]

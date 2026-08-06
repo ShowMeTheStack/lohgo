@@ -1,0 +1,106 @@
+; ============================================================
+; TITLE:    Map Coloring
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Advanced
+; TAGS:     graph coloring, backtracking, geometry, lists
+; SUMMARY:  Colors a map so that neighbors never share a color, and shows that this map needs four colors.
+; ============================================================
+;
+; WHAT IT DOES
+;   A made-up map has nine countries, all rectangles. Two countries
+;   are neighbors when they share a stretch of border. The program
+;   first works out who borders whom, then tries to color the map
+;   with 3 colors by backtracking. It fails, because the middle
+;   country is surrounded by a ring of seven, and an odd ring cannot
+;   alternate between two colors. With 4 colors it succeeds. The Four
+;   Color Theorem (proved by Appel and Haken in 1976 with a computer)
+;   says four colors are always enough for any flat map.
+;
+; HOW TO USE
+;   Press Run. Read the neighbor lists and the attempts in the text
+;   window, then look at the colored map.
+;
+; CONCEPTS YOU WILL LEARN
+;   * finding neighbors by comparing rectangle edges
+;   * backtracking: color, recurse, undo
+;   * property lists: each country keeps its color and neighbors
+;
+; THINGS TO TRY
+;   * Split the middle country E into two and see if 3 colors now work.
+;   * Count how many times the search undoes a color with 3 and with 4.
+; ============================================================
+
+; Each country: [name left bottom right top] in map units.
+make "countries [[A 0 1 4 3] [B 4 0 8 2] [C 8 0 12 3] [D 0 3 4 6] [E 4 2 8 6] ~
+  [F 8 3 12 6] [G 0 6 6 8] [H 6 6 12 8] [I 0 0 4 1]]
+make "paints [[240 120 100] [120 190 120] [110 150 230] [245 210 90]]
+
+; Do two number ranges overlap by more than a point?
+to overlap :a1 :a2 :b1 :b2
+  output and :a1 < :b2 :b1 < :a2
+end
+
+; Two rectangles touch along a border when an edge of one lies on an
+; edge of the other and the edges overlap.
+to touching :p :q
+  localmake "pl item 2 :p localmake "pb item 3 :p localmake "pr item 4 :p localmake "pt item 5 :p
+  localmake "ql item 2 :q localmake "qb item 3 :q localmake "qr item 4 :q localmake "qt item 5 :q
+  if and (or :pr = :ql :qr = :pl) overlap :pb :pt :qb :qt [output "true]
+  if and (or :pt = :qb :qt = :pb) overlap :pl :pr :ql :qr [output "true]
+  output "false
+end
+
+to findneighbors
+  foreach :countries [
+    localmake "me ?
+    pprop first :me "near map [first ?] filter [and not equalp ? :me touching :me ?] :countries
+    print (sentence first :me [borders] gprop first :me "near)
+  ]
+end
+
+; Can this color go on this country? Not if a neighbor already has it.
+to allowed :name :color
+  output not memberp :color map [gprop ? "color] gprop :name "near
+end
+
+; Color the countries in :todo using colors 1 to :k.
+to colorall :todo :k
+  if emptyp :todo [output "true]
+  localmake "name first first :todo
+  for [c 1 :k] [
+    if allowed :name :c [
+      pprop :name "color :c
+      if colorall butfirst :todo :k [output "true]
+      pprop :name "color 0
+      make "undos :undos + 1
+    ]
+  ]
+  output "false
+end
+
+to tryk :k
+  foreach :countries [pprop first ? "color 0]
+  make "undos 0
+  localmake "ok colorall :countries :k
+  print (sentence :k [colors:] ifelse :ok ["works] ["impossible] [after] :undos [undos])
+  output :ok
+end
+
+to drawmap
+  foreach :countries [
+    localmake "x -330 + 55 * item 2 ?
+    localmake "y -220 + 55 * item 3 ?
+    localmake "w 55 * ((item 4 ?) - (item 2 ?))
+    localmake "h 55 * ((item 5 ?) - (item 3 ?))
+    penup setxy :x :y setheading 0 pendown setpencolor [60 50 40] setpensize 3
+    filled item gprop first ? "color :paints [repeat 2 [forward :h right 90 forward :w right 90]]
+    penup setxy :x + :w / 2 - 6 :y + :h / 2 - 8 setpencolor 0 label first ?
+  ]
+end
+
+clearscreen hideturtle
+setbackground [220 235 245]
+setlabelheight 20
+findneighbors
+if not tryk 3 [ignore tryk 4]
+drawmap

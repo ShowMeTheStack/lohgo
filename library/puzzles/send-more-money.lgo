@@ -1,0 +1,144 @@
+; ============================================================
+; TITLE:    SEND + MORE = MONEY
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Advanced
+; TAGS:     cryptarithm, backtracking, property lists, words
+; SUMMARY:  Cracks letter-arithmetic puzzles column by column, carrying just like you do on paper.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each letter stands for a different digit, and no number starts
+;   with 0. Which digits make SEND + MORE = MONEY true? Henry Dudeney
+;   published this one in 1924. Trying all ways to give eight letters
+;   different digits means almost two million cases, so the program
+;   is cleverer: it works from the rightmost column to the left,
+;   carrying as it goes, and gives up on a guess as soon as one
+;   column fails.
+;
+; HOW TO USE
+;   Press Run. Try other puzzles by changing the last line, for
+;   example  crack [TWO TWO] "FOUR  or  crack [BASE BALL] "GAMES
+;
+; CONCEPTS YOU WILL LEARN
+;   * property lists as a little table from letters to digits
+;   * backtracking: assign, recurse, and undo when it fails
+;   * the carry in column addition, written as code
+;
+; THINGS TO TRY
+;   * Try a sum with three numbers: crack [FORTY TEN TEN] "SIXTY
+;   * Change the program so it finds every answer, not just the first.
+; ============================================================
+
+; The digit given to a letter, or [] if it has none yet.
+to val :ch
+  output gprop "cipher :ch
+end
+
+; The letter of a word in a given column, counting from the right.
+; Outputs [] when the word is too short to reach that column.
+to letterat :w :col
+  if :col > count :w [output []]
+  output item (count :w) - :col + 1 :w
+end
+
+; A letter may not be 0 if some number starts with it.
+to digitok :ch :d
+  if not emptyp gprop "taken :d [output "false]
+  if and :d = 0 memberp :ch :leaders [output "false]
+  output "true
+end
+
+to give :ch :d
+  pprop "cipher :ch :d
+  pprop "taken :d :ch
+  make "guesses :guesses + 1
+end
+
+to takeback :ch :d
+  remprop "cipher :ch
+  remprop "taken :d
+end
+
+; Work on one column, starting with no letters added up yet.
+to column :col :carry
+  if :col > count :answer [output :carry = 0]
+  output addup filter [not emptyp ?] map [letterat ? :col] :addends :col :carry
+end
+
+; Add the letters of this column one at a time, guessing digits
+; for any letter we have not met before.
+to addup :pending :col :total
+  if emptyp :pending [output checkdigit :col :total]
+  localmake "ch first :pending
+  if not emptyp val :ch [output addup butfirst :pending :col :total + val :ch]
+  for [d 0 9] [
+    if digitok :ch :d [
+      give :ch :d
+      if addup butfirst :pending :col :total + :d [output "true]
+      takeback :ch :d
+    ]
+  ]
+  output "false
+end
+
+; The last digit of the total must match the answer's letter here.
+to checkdigit :col :total
+  localmake "ch letterat :answer :col
+  localmake "d remainder :total 10
+  localmake "carry int :total / 10
+  if not emptyp val :ch [
+    if (val :ch) = :d [output column :col + 1 :carry]
+    output "false
+  ]
+  if not digitok :ch :d [output "false]
+  give :ch :d
+  if column :col + 1 :carry [output "true]
+  takeback :ch :d
+  output "false
+end
+
+; Turn a word into a number using the letters' digits.
+to decode :w
+  output reduce "word map [val ?] :w
+end
+
+; Write a line of the sum on the screen, lined up on the right.
+to sumline :y :w
+  foreach :w [penup setxy 100 - 36 * ((count :w) - #) :y label ?]
+end
+
+; Draw a whole sum, the way it looks in an exercise book, with its
+; top line at height :top.
+to showsum :top :lines :total
+  foreach :lines [sumline :top - 45 * (# - 1) ?]
+  localmake "y :top - 45 * count :lines
+  penup setxy -160 :y + 45 label "+
+  penup setxy -170 :y + 30 pendown setpensize 3 setxy 140 :y + 30
+  sumline :y - 15 :total
+end
+
+to crack :addends :answer
+  clearscreen hideturtle
+  setbackground [30 40 60]
+  setlabelheight 34
+  erpl [cipher taken]
+  make "guesses 0
+  make "leaders map [first ?] fput :answer :addends
+  setpencolor [250 220 120]
+  showsum 230 :addends :answer
+  ; the search only walks the columns of the answer, so an addend
+  ; longer than the answer could never fit anyway
+  if not emptyp filter [(count ?) > count :answer] :addends [
+    print [No answer exists: the total is too short.] stop
+  ]
+  ifelse column 1 0 [
+    setpencolor [120 220 160]
+    showsum -20 map [decode ?] :addends decode :answer
+    print (sentence map [decode ?] :addends [=] decode :answer)
+    print (sentence [Digit guesses made:] :guesses)
+  ] [
+    print [No answer exists.]
+  ]
+end
+
+crack [SEND MORE] "MONEY

@@ -1,0 +1,136 @@
+; ============================================================
+; TITLE:    Missionaries and Cannibals
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Advanced
+; TAGS:     breadth-first search, queues, lists, river crossing
+; SUMMARY:  Finds the shortest safe way to ferry three missionaries and three cannibals across a river.
+; ============================================================
+;
+; WHAT IT DOES
+;   Three missionaries and three cannibals must cross a river in a
+;   boat that holds one or two people. If cannibals ever outnumber
+;   missionaries on either bank, the missionaries are in trouble.
+;   This puzzle became a favorite example in early artificial
+;   intelligence work (Saul Amarel wrote about it in 1968). The
+;   program searches level by level, keeping whole paths in a queue,
+;   so the first path to reach the far bank is a shortest one.
+;   Then little stick figures act out the trips.
+;
+; HOW TO USE
+;   Press Run. Read the trips in the text window and watch the river.
+;
+; CONCEPTS YOU WILL LEARN
+;   * describing a situation with a short list: [missionaries cannibals boat]
+;   * breadth-first search where the queue holds whole paths
+;   * checking a rule on both banks at once
+;   * drawing stick figures with ARC and lines
+;
+; THINGS TO TRY
+;   * Let the boat carry three people (add [3 0] [2 1] [1 2] [0 3] to
+;     LOADS) and see how much shorter the trip gets.
+;   * Change "make "total 3" to 4. Can four and four still cross?
+; ============================================================
+
+; A state counts the people on the LEFT bank and says where the boat is.
+make "loads [[2 0] [1 0] [1 1] [0 1] [0 2]]
+
+; Missionaries are safe on a bank if there are none there,
+; or if they are not outnumbered.
+to bankok :m :c
+  output or :m = 0 :m >= :c
+end
+
+to valid :s
+  localmake "m first :s
+  localmake "c item 2 :s
+  if or :m < 0 :m > :total [output "false]
+  if or :c < 0 :c > :total [output "false]
+  output and bankok :m :c bankok :total - :m :total - :c
+end
+
+; The boat takes a load away from whichever bank it is on.
+to after :s :load
+  localmake "dir ifelse (last :s) = "L [-1] [1]
+  output (list (first :s) + :dir * first :load (item 2 :s) + :dir * last :load ifelse (last :s) = "L ["R] ["L])
+end
+
+to search
+  localmake "start (list :total :total "L)
+  localmake "seen (list :start)
+  make "paths []
+  queue "paths (list :start)
+  while [not emptyp :paths] [
+    localmake "path dequeue "paths
+    localmake "s last :path
+    if :s = (list 0 0 "R) [output :path]
+    foreach :loads [
+      localmake "new after :s ?
+      if and valid :new not memberp :new :seen [
+        make "seen fput :new :seen
+        queue "paths lput :new :path
+      ]
+    ]
+  ]
+  output []
+end
+
+; ---- drawing ----
+
+to person :x :y :color
+  setpencolor :color setpensize 3
+  penup setxy :x :y + 40 pendown arc 360 8
+  penup setxy :x :y + 32 setheading 180 pendown forward 18
+  right 30 forward 14 back 14 left 60 forward 14 back 14 right 30
+  back 10 left 90 forward 10 back 20
+  setheading 0
+end
+
+to crowd :m :c :x
+  repeat :m [person :x + 30 * repcount 20 [30 60 200]]
+  repeat :c [person :x + 30 * repcount -50 [200 50 40]]
+end
+
+to picture :s :caption
+  clean
+  ; the river is walked with the pen up, so it gets no border line
+  penup setxy -200 -150 setheading 0
+  filled [80 150 220] [repeat 2 [forward 360 right 90 forward 300 right 90]]
+  crowd first :s item 2 :s -380
+  crowd :total - first :s :total - item 2 :s 120
+  ; the boat
+  localmake "bx ifelse (last :s) = "L [-190] [20]
+  penup setxy :bx -60 setheading 90 pendown setpencolor [120 70 30] setpensize 6
+  forward 70 setxy :bx + 60 -75 setxy :bx + 10 -75 setxy :bx -60
+  penup setxy -380 230 setpencolor 0 label :caption
+end
+
+; "1 missionary" but "2 missionaries"
+to people :n :one :many
+  output sentence :n ifelse :n = 1 [:one] [:many]
+end
+
+to describe :a :b
+  localmake "m abs (first :a) - (first :b)
+  localmake "c abs (item 2 :a) - (item 2 :b)
+  output (sentence [The boat carries] people :m "missionary "missionaries [and] ~
+    people :c "cannibal "cannibals ifelse (last :b) = "R [[across.]] [[back.]])
+end
+
+to actout :plan
+  if emptyp :plan [print [There is no safe way across.] stop]
+  print (sentence [Shortest plan:] (count :plan) - 1 [trips.])
+  picture first :plan [Everyone starts on the left bank.]
+  wait 60
+  for [k 2 count :plan] [
+    localmake "text describe item :k - 1 :plan item :k :plan
+    print :text
+    picture item :k :plan :text
+    wait 60
+  ]
+end
+
+make "total 3
+clearscreen hideturtle
+setbackground [140 200 110]
+setlabelheight 16
+actout search

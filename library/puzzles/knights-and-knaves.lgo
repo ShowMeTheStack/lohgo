@@ -1,0 +1,95 @@
+; ============================================================
+; TITLE:    Knights and Knaves
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Intermediate
+; TAGS:     logic, booleans, run, truth tables
+; SUMMARY:  Solves island-of-knights-and-knaves riddles by trying every possibility in a truth table.
+; ============================================================
+;
+; WHAT IT DOES
+;   On a certain island, knights always tell the truth and knaves
+;   always lie. Raymond Smullyan made these riddles popular in his
+;   1978 book "What Is the Name of This Book?". Each riddle below is
+;   written as Logo: every statement is a true-or-false expression.
+;   The program tries every way of making each person a knight or a
+;   knave, and keeps the ways where knights' statements come out true
+;   and knaves' statements come out false. The answers are drawn as
+;   blue shields (knights) and red shields (knaves).
+;
+; HOW TO USE
+;   Press Run and read the riddles. Try to solve each one in your
+;   head before you look at the answer. Add your own riddles to the
+;   list at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * true and false as values you can store and compare
+;   * RUN to evaluate a statement kept as a list
+;   * a truth table built with recursion
+;   * MAKE with a computed name, so "A, "B and "C become variables
+;
+; THINGS TO TRY
+;   * Write a riddle with no answer, or one with two answers.
+;   * Add a fourth islander, D, to one of the riddles.
+; ============================================================
+
+; Every list of n true/false values: 2 to the power n of them.
+to truthtable :n
+  if :n = 0 [output [[]]]
+  localmake "shorter truthtable :n - 1
+  output sentence map [fput "true ?] :shorter map [fput "false ?] :shorter
+end
+
+; Does this assignment fit the riddle? Each statement is [speaker claim].
+; A knight's claim must be true and a knave's claim must be false,
+; so in both cases the claim's value equals the speaker's value.
+to fits :statements
+  foreach :statements [
+    if not equalp thing first ? run last ? [output "false]
+  ]
+  output "true
+end
+
+; Try every assignment and output the ones that fit.
+to solve :people :statements
+  localmake "answers []
+  foreach truthtable count :people [
+    localmake "values ?
+    ; make variables named A, B, C ... hold true (knight) or false (knave)
+    foreach :people [make ? item # :values]
+    if fits :statements [make "answers lput :values :answers]
+  ]
+  output :answers
+end
+
+to shield :x :y :name :knight
+  penup setxy :x :y + 20 setheading 0 pendown
+  setpencolor ifelse :knight [[40 80 200]] [[200 40 40]]
+  setpensize 36 dot pos
+  penup setxy :x - 5 :y + 13 setpencolor 7 label :name
+  penup setxy :x - 22 :y - 12 setpencolor 0
+  label ifelse :knight ["knight] ["knave]
+end
+
+to riddle :y :story :people :statements
+  print " print :story
+  localmake "answers solve :people :statements
+  penup setxy -380 :y + 15 setpencolor 0 label :story
+  if emptyp :answers [print [No answer: this riddle is impossible.] stop]
+  if (count :answers) > 1 [print [More than one answer fits!]]
+  foreach :people [
+    shield -380 + 70 * # :y - 40 ? item # first :answers
+    print (sentence ? [is a] ifelse item # first :answers [[knight.]] [[knave.]])
+  ]
+end
+
+clearscreen hideturtle
+setbackground [245 235 200]
+setlabelheight 14
+riddle 230 [A says: "We are both knaves."] [A B] ~
+  [[A [and not :A not :B]]]
+riddle 90 [A says: "At least one of us is a knave."] [A B] ~
+  [[A [or not :A not :B]]]
+riddle -50 [A says: "All of us are knaves." B says: "Exactly one of us is a knight."] [A B C] ~
+  [[A [(and not :A not :B not :C)]] [B [equalp 1 count filter [thing ?] [A B C]]]]
+riddle -190 [A says: "I am a knave or B is a knight." B says nothing.] [A B] ~
+  [[A [or not :A :B]]]

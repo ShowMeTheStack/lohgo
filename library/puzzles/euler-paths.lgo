@@ -1,0 +1,121 @@
+; ============================================================
+; TITLE:    Bridges and Envelopes
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Intermediate
+; TAGS:     graphs, euler path, backtracking, lists
+; SUMMARY:  Explains why the seven bridges of Konigsberg cannot be crossed once each, and draws the envelope in one stroke.
+; ============================================================
+;
+; WHAT IT DOES
+;   Left: the town of Konigsberg had two river banks and two islands
+;   joined by seven bridges. Could you walk over every bridge exactly
+;   once? In 1736 Leonhard Euler showed that you cannot, and started
+;   the subject of graph theory. The trick is to count the lines
+;   meeting at each place (its degree). A walk that uses every line
+;   once is only possible when zero or two places have an odd degree.
+;   Right: the "house of Santa Claus" envelope, a drawing children
+;   try to make without lifting the pencil. It has exactly two odd
+;   places, so the program finds a route and draws it, line by line.
+;
+; HOW TO USE
+;   Press Run. The degrees are written next to each place, and the
+;   text window explains each verdict.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a graph stored as a list of points and a list of edges
+;   * counting degrees with FILTER
+;   * backtracking over edges to find a route that uses each one once
+;
+; THINGS TO TRY
+;   * Add an eighth bridge to Konigsberg and run it again.
+;   * Remove one line from the envelope. Can it still be drawn?
+; ============================================================
+
+; An edge is [from to bend]. A bend of 0 is a straight line; other
+; bends curve the line to one side, so double bridges do not overlap.
+
+to spotof :name :places
+  output last find [(first ?) = :name] :places
+end
+
+to degree :name :edges
+  output count filter [or (first ?) = :name (item 2 ?) = :name] :edges
+end
+
+to drawedge :e :places
+  localmake "a spotof first :e :places
+  localmake "b spotof item 2 :e :places
+  localmake "mx ((first :a) + (first :b)) / 2
+  localmake "my ((last :a) + (last :b)) / 2
+  ; push the middle point sideways, at right angles to the edge
+  localmake "len sqrt ((first :b) - (first :a)) * ((first :b) - (first :a)) + ((last :b) - (last :a)) * ((last :b) - (last :a))
+  localmake "bend last :e
+  localmake "mx :mx - :bend * ((last :b) - (last :a)) / :len
+  localmake "my :my + :bend * ((first :b) - (first :a)) / :len
+  penup setpos :a pendown
+  setxy :mx :my
+  setpos :b
+end
+
+to drawgraph :places :edges :color
+  setpencolor :color setpensize 4
+  foreach :edges [drawedge ? :places]
+  foreach :places [
+    setpencolor [40 40 40] setpensize 16 dot last ?
+    penup setpos last ? setxy xcor + 12 ycor + 8
+    label (word first ? ": degree first ? :edges)
+  ]
+end
+
+; Find a walk from node :at that uses every edge in :left exactly once.
+; Outputs the list of edges in walking order, or "none.
+to walk :at :left
+  if emptyp :left [output []]
+  foreach :left [
+    localmake "e ?
+    localmake "next []
+    if (first :e) = :at [make "next item 2 :e]
+    if (item 2 :e) = :at [make "next first :e]
+    if not emptyp :next [
+      localmake "rest walk :next remove :e :left
+      if not equalp :rest "none [output fput (list :at :next last :e) :rest]
+    ]
+  ]
+  output "none
+end
+
+to verdict :title :places :edges
+  localmake "odd filter [odd? degree first ? :edges] :places
+  print (sentence :title [has] count :odd [places with an odd degree.])
+  if (count :odd) > 2 [print [So no walk can cross every line exactly once.] output []]
+  localmake "start ifelse emptyp :odd [first first :places] [first first :odd]
+  print (sentence [A route exists. Start at] :start)
+  output walk :start :edges
+end
+
+to odd? :n
+  output 1 = remainder :n 2
+end
+
+clearscreen hideturtle
+setbackground [235 240 245]
+setlabelheight 15
+
+make "town [[N [-200 170]] [S [-200 -150]] [I [-280 10]] [E [-90 10]]]
+make "bridges [[N I 25] [N I -25] [S I 25] [S I -25] [N E 0] [S E 0] [I E 0]]
+make "house [[1 [130 -150]] [2 [290 -150]] [3 [290 10]] [4 [130 10]] [5 [210 120]]]
+make "lines [[1 2 0] [2 3 0] [3 4 0] [4 1 0] [1 3 0] [2 4 0] [3 5 0] [4 5 0]]
+
+drawgraph :town :bridges [60 120 200]
+drawgraph :house :lines [200 200 210]
+penup setxy -330 240 setpencolor 0 label [Konigsberg: 7 bridges]
+penup setxy 120 240 label [The envelope]
+
+ignore verdict [Konigsberg] :town :bridges
+make "route verdict [The envelope] :house :lines
+setpencolor [220 70 40] setpensize 5
+foreach :route [
+  wait 30
+  drawedge ? :house
+  print (sentence [Draw from] first ? [to] item 2 ?)
+]

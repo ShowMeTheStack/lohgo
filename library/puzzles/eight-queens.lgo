@@ -1,0 +1,123 @@
+; ============================================================
+; TITLE:    Eight Queens
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Intermediate
+; TAGS:     backtracking, recursion, chess, arrays
+; SUMMARY:  Places eight chess queens so that no two attack each other, then draws them on a board.
+; ============================================================
+;
+; WHAT IT DOES
+;   A queen in chess attacks along its row, its column and both
+;   diagonals. Can you put eight queens on the board so none of them
+;   can capture another? The program searches one row at a time and
+;   backs up whenever it gets stuck. The answer is drawn on a
+;   checkerboard and the number of tries is printed.
+;
+; HOW TO USE
+;   Press Run. Change "make "firstcol 1" at the bottom to any column
+;   from 1 to 8 to force the first queen somewhere else and see a
+;   different answer.
+;
+; CONCEPTS YOU WILL LEARN
+;   * backtracking: try a choice, and undo it if it leads nowhere
+;   * a procedure that OUTPUTs true or false to report success
+;   * an array that remembers one number per row
+;   * drawing a grid of squares with FILLED
+;
+; THINGS TO TRY
+;   * Change the 8s to 6 (and the square size) to solve six queens.
+;   * Print every value of :tries to watch how the search wanders.
+;   * Can you find a first column where the search needs the fewest tries?
+; ============================================================
+
+; :cols is an array; item r holds the column of the queen in row r.
+
+; Is it safe to put a queen at (row, col)? Only rows above have queens.
+to safe :row :col
+  for [r 1 :row - 1] [
+    localmake "c item :r :cols
+    if :c = :col [output "false]
+    ; same diagonal: the rows differ by as much as the columns
+    if (abs :c - :col) = (:row - :r) [output "false]
+  ]
+  output "true
+end
+
+; Try every column in this row. If one leads to a full board, report
+; success; if none does, report failure so the row above tries again.
+to placerow :row
+  if :row > 8 [output "true]
+  for [col 1 8] [
+    make "tries :tries + 1
+    if safe :row :col [
+      setitem :row :cols :col
+      if placerow :row + 1 [output "true]
+    ]
+  ]
+  output "false
+end
+
+; ---- drawing ----
+
+to cellx :col
+  output -200 + 50 * (:col - 1)
+end
+
+to celly :row
+  output 150 - 50 * (:row - 1)
+end
+
+to cell :x :y :color
+  penup setxy :x :y setheading 0 pendown
+  filled :color [repeat 4 [forward 50 right 90]]
+end
+
+to board
+  for [row 1 8] [
+    for [col 1 8] [
+      ifelse 0 = remainder :row + :col 2 ~
+        [cell cellx :col celly :row [240 220 180]] ~
+        [cell cellx :col celly :row [170 110 70]]
+    ]
+  ]
+  ; a frame around the whole board
+  penup setxy -204 -204 pendown setpensize 4 setpencolor [80 50 30]
+  repeat 4 [forward 408 right 90]
+end
+
+; A queen: a round body with a golden crown. Queens are drawn after
+; the board, so they sit on top of its squares.
+to queen :row :col
+  localmake "cx (cellx :col) + 25
+  localmake "cy (celly :row) + 25
+  setpencolor [70 20 70] setpensize 30
+  dot list :cx :cy - 4
+  setpensize 4 setpencolor [250 200 40]
+  penup setxy :cx - 12 :cy + 2 pendown
+  setxy :cx - 13 :cy + 18
+  setxy :cx - 6 :cy + 8
+  setxy :cx :cy + 20
+  setxy :cx + 6 :cy + 8
+  setxy :cx + 13 :cy + 18
+  setxy :cx + 12 :cy + 2
+  setxy :cx - 12 :cy + 2
+end
+
+to solve :first
+  make "cols (array 8)
+  make "tries 1
+  setitem 1 :cols :first
+  ifelse placerow 2 [
+    for [r 1 8] [queen :r item :r :cols]
+    print (sentence [Columns, row by row:] arraytolist :cols)
+    print (sentence [The search tried] :tries [squares.])
+  ] [
+    print [No answer with the first queen there.]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [225 235 225]
+board
+make "firstcol 1
+solve :firstcol

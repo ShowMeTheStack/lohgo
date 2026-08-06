@@ -1,0 +1,142 @@
+; ============================================================
+; TITLE:    Towers of Hanoi, Animated
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Intermediate
+; TAGS:     recursion, animation, arrays, puzzle
+; SUMMARY:  Watch colored discs hop from peg to peg as a recursive procedure solves the Towers of Hanoi.
+; ============================================================
+;
+; WHAT IT DOES
+;   Five discs sit on the left peg. The turtle lifts them one at a
+;   time and carries them to the right peg, never putting a big disc
+;   on a smaller one. A counter at the top shows how many moves have
+;   been made; the puzzle always needs 2^n - 1 moves for n discs.
+;
+; HOW TO USE
+;   Press Run and watch. Change the number in "make "discs 5" near the
+;   bottom (1 to 7 fit on the screen) and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a recursive procedure that solves a big problem with two smaller ones
+;   * keeping the state of each peg in an array of lists
+;   * simple animation: erase, move a little, draw again, WAIT
+;   * erasing with PENERASE so the background shows through
+;
+; THINGS TO TRY
+;   * Make the discs move faster by changing the 18 in GLIDE to 30.
+;   * Solve it onto the middle peg instead of the right one.
+;   * Add a TONE in MOVEDISC whose pitch depends on the disc size.
+; ============================================================
+
+; The x position of each peg, numbered 1, 2 and 3.
+to pegx :p
+  output -250 + 250 * (:p - 1)
+end
+
+; The height of the centre of a disc that sits at a given level
+; (level 1 is resting on the base).
+to levely :level
+  output -131 + 22 * (:level - 1)
+end
+
+; A disc is just one fat line with round ends. Bigger discs are wider.
+to drawdisc :k :x :y
+  localmake "w 30 + 26 * :k
+  penup setxy :x - :w / 2 :y setheading 90 pendown
+  penpaint setpensize 20
+  setpencolor item :k [4 14 6 2 3 1 13]
+  forward :w
+end
+
+; Erasing uses a slightly fatter pen so no colored fringe is left.
+; Erasing also rubs out part of a peg, so we paint that part back.
+to erasedisc :k :x :y
+  localmake "w 30 + 26 * :k
+  penup setxy :x - :w / 2 :y setheading 90
+  penerase setpensize 24
+  forward :w
+  penpaint
+  if and memberp :x [-250 0 250] :y < 75 [drawpeg :x :y - 13 :y + 13]
+end
+
+; Draw the part of a peg between two heights (kept within the real peg).
+to drawpeg :x :ylow :yhigh
+  if :ylow < -144 [make "ylow -144]
+  if :yhigh > 60 [make "yhigh 60]
+  if :yhigh < :ylow [stop]
+  penup setxy :x :ylow setheading 0 pendown
+  setpensize 8 setpencolor 8
+  forward :yhigh - :ylow
+end
+
+to drawboard
+  penup setxy -380 -152 setheading 90 pendown
+  setpensize 16 setpencolor 8 forward 760
+  foreach [1 2 3] [drawpeg pegx ? -144 60]
+end
+
+; Slide a disc in a straight line from one point to another in small steps.
+to glide :k :x1 :y1 :x2 :y2
+  localmake "n 1 + int (sqrt ((:x2 - :x1) * (:x2 - :x1) + (:y2 - :y1) * (:y2 - :y1))) / 18
+  localmake "px :x1
+  localmake "py :y1
+  for [i 1 :n] [
+    erasedisc :k :px :py
+    make "px :x1 + (:x2 - :x1) * :i / :n
+    make "py :y1 + (:y2 - :y1) * :i / :n
+    drawdisc :k :px :py
+    wait 1
+  ]
+end
+
+; Take the top disc off one peg and carry it over to another.
+; The first member of each list is the top disc.
+to movedisc :from :to
+  localmake "k first item :from :towers
+  localmake "y1 levely count item :from :towers
+  setitem :from :towers butfirst item :from :towers
+  localmake "y2 levely 1 + count item :to :towers
+  setitem :to :towers fput :k item :to :towers
+  glide :k pegx :from :y1 pegx :from 110
+  glide :k pegx :from 110 pegx :to 110
+  glide :k pegx :to 110 pegx :to :y2
+  make "moves :moves + 1
+  showmoves
+end
+
+; Rub out the old counter with a block of eraser strokes, then write the new one.
+to showmoves
+  penerase setpensize 4
+  for [y 212 236 3] [penup setxy -120 :y setheading 90 pendown forward 240]
+  penpaint penup setxy -70 215 setpencolor 0
+  label (sentence [Moves:] :moves [of] (power 2 :discs) - 1)
+end
+
+; To move n discs: park n-1 on the spare peg, move the biggest,
+; then bring the n-1 back on top of it.
+to hanoi :n :from :to :via
+  if :n = 0 [stop]
+  hanoi :n - 1 :from :via :to
+  movedisc :from :to
+  hanoi :n - 1 :via :to :from
+end
+
+to start
+  clearscreen hideturtle
+  setbackground [235 242 250]
+  setlabelheight 20
+  drawboard
+  make "towers (array 3)
+  setitem 1 :towers iseq 1 :discs
+  setitem 2 :towers []
+  setitem 3 :towers []
+  ; draw the starting tower from the bottom up
+  for [level 1 :discs] [drawdisc :discs - :level + 1 pegx 1 levely :level]
+  make "moves 0
+  showmoves
+  hanoi :discs 1 3 2
+  print (sentence [Solved in] :moves [moves.])
+end
+
+make "discs 5
+start

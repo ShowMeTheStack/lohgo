@@ -1,0 +1,116 @@
+; ============================================================
+; TITLE:    Knight's Tour
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Advanced
+; TAGS:     heuristics, chess, mdarray, animation
+; SUMMARY:  A chess knight visits all 64 squares exactly once, guided by Warnsdorff's rule.
+; ============================================================
+;
+; WHAT IT DOES
+;   The knight jumps in an L shape: two squares one way and one square
+;   to the side. Can it land on every square of the board exactly
+;   once? Trying every path would take far too long, but a simple
+;   rule found by H. C. von Warnsdorff in 1823 almost always works:
+;   always jump to the square that has the FEWEST onward jumps left.
+;   The turtle draws the tour jump by jump and numbers each square.
+;
+; HOW TO USE
+;   Press Run and watch. Change the starting square in the last line,
+;   for example "tour 4 5", and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a greedy heuristic: make the choice that looks best right now
+;   * a two-dimensional array (MDARRAY) for the board
+;   * a list of moves walked with FOREACH
+;   * drawing labels and lines on top of a board
+;
+; THINGS TO TRY
+;   * Take out the heuristic (always pick the first legal jump) and
+;     see how soon the knight gets stuck.
+;   * Make the board smaller, say 5 by 5, and try different starts.
+; ============================================================
+
+; The eight knight jumps, as [row-change column-change].
+make "jumps [[-2 1] [-1 2] [1 2] [2 1] [2 -1] [1 -2] [-1 -2] [-2 -1]]
+
+; A square can be landed on if it is on the board and not yet visited.
+to free :r :c
+  if or :r < 1 :r > 8 [output "false]
+  if or :c < 1 :c > 8 [output "false]
+  output 0 = mditem (list :r :c) :board
+end
+
+; How many free squares can a knight reach from (r, c)?
+to onward :r :c
+  localmake "n 0
+  foreach :jumps [if free :r + first ? :c + last ? [make "n :n + 1]]
+  output :n
+end
+
+; Pick the free jump with the fewest onward moves (Warnsdorff's rule).
+; Outputs [] when the knight is stuck.
+to bestjump :r :c
+  localmake "best []
+  localmake "low 99
+  foreach :jumps [
+    localmake "nr :r + first ?
+    localmake "nc :c + last ?
+    if free :nr :nc [
+      localmake "k onward :nr :nc
+      if :k < :low [make "low :k make "best list :nr :nc]
+    ]
+  ]
+  output :best
+end
+
+; Screen centre of a square.
+to sqx :c
+  output -210 + 60 * (:c - 1)
+end
+to sqy :r
+  output 210 - 60 * (:r - 1)
+end
+
+to drawboard
+  for [r 1 8] [for [c 1 8] [
+    penup setxy (sqx :c) - 30 (sqy :r) - 30 setheading 0 pendown
+    localmake "shade ifelse 0 = remainder :r + :c 2 [[245 235 210]] [[200 170 130]]
+    filled :shade [repeat 4 [forward 60 right 90]]
+  ]]
+end
+
+to mark :r :c :n
+  setpencolor [40 30 120] setpensize 14
+  dot list sqx :c sqy :r
+  penup setxy (sqx :c) - 6 - 4 * int :n / 10 (sqy :r) - 5
+  setpencolor 7 label :n
+end
+
+to tour :r :c
+  clearscreen hideturtle
+  setbackground [60 70 90]
+  setlabelheight 13
+  drawboard
+  make "board mdarray [8 8]
+  for [i 1 8] [for [j 1 8] [mdsetitem (list :i :j) :board 0]]
+  mdsetitem (list :r :c) :board 1
+  mark :r :c 1
+  for [n 2 64] [
+    localmake "next bestjump :r :c
+    if emptyp :next [print (sentence [Stuck after] :n - 1 [squares.]) stop]
+    ; draw the jump as a line, then number the new square
+    setpencolor [220 60 60] setpensize 3
+    penup setxy sqx :c sqy :r pendown
+    setxy sqx last :next sqy first :next
+    ; the line crossed the old number, so write it again on top
+    mark :r :c :n - 1
+    make "r first :next
+    make "c last :next
+    mdsetitem :next :board :n
+    mark :r :c :n
+    wait 4
+  ]
+  print [The knight visited all 64 squares!]
+end
+
+tour 1 1

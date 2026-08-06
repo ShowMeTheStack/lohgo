@@ -1,0 +1,85 @@
+; ============================================================
+; TITLE:    Number Pyramid
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Beginner
+; TAGS:     addition, readword, lists, interactive
+; SUMMARY:  Builds an addition pyramid where each brick is the sum of the two below, and asks you for the top.
+; ============================================================
+;
+; WHAT IT DOES
+;   Five random numbers make the bottom row. Each brick above holds
+;   the sum of the two bricks it sits on. The turtle builds every row
+;   except the top brick, which shows a question mark. You type what
+;   you think the top number is. After three tries, or a right
+;   answer, the top is revealed along with a neat shortcut.
+;
+; HOW TO USE
+;   Press Run, look at the pyramid and type your answer in the command
+;   center, then press Enter. Press Enter on an empty line to give up.
+;
+; CONCEPTS YOU WILL LEARN
+;   * building a new list from an old one (each pair of neighbors)
+;   * checking that an answer is a number before comparing it
+;   * a loop that stops early when the answer is right
+;
+; THINGS TO TRY
+;   * Make the bottom row longer, with 6 numbers. Will it still fit?
+;   * Use bigger numbers, from 10 to 50, for a harder sum.
+; ============================================================
+
+; The row above: add each number to the one on its right.
+to rowabove :row
+  if (count :row) < 2 [output []]
+  output fput (first :row) + (item 2 :row) rowabove butfirst :row
+end
+
+; A brick is a filled rectangle with its number in the middle.
+to brick :x :y :text :color
+  penup setxy :x - 38 :y - 18 setheading 0 pendown
+  filled :color [repeat 2 [forward 36 right 90 forward 76 right 90]]
+  penup setxy :x - 6 * count :text :y - 8 setpencolor [60 30 10]
+  label :text
+end
+
+; Draw one row of bricks centered on the screen at height y.
+to drawrow :row :y
+  localmake "left -40 * ((count :row) - 1)
+  foreach :row [brick :left + 80 * (# - 1) :y ? [230 170 110]]
+end
+
+to askguess :tries
+  if :tries = 0 [output "false]
+  print [What number goes in the top brick?]
+  localmake "guess readword
+  if emptyp :guess [output "false]
+  if not numberp :guess [print [Please type a number.] output askguess :tries]
+  if :guess = :top [output "true]
+  ifelse :guess < :top [print [Too small.]] [print [Too big.]]
+  output askguess :tries - 1
+end
+
+to pyramid
+  clearscreen hideturtle
+  setbackground [210 230 245]
+  setlabelheight 20
+  localmake "row map [1 + random 9] [1 2 3 4 5]
+  localmake "base :row
+  localmake "y -180
+  while [(count :row) > 1] [
+    drawrow :row :y
+    make "row rowabove :row
+    make "y :y + 40
+  ]
+  make "top first :row
+  brick 0 :y "? [250 220 120]
+  ifelse askguess 3 [print [Right! Well done.]] [print (sentence [The top was] :top)]
+  ; paint over the question mark with strokes, then write the answer
+  setpencolor [250 200 80] setpensize 6 setheading 90
+  for [dy -15 15 5] [penup setxy -35 :y + :dy pendown forward 70]
+  penup setxy -6 * count :top :y - 8 setpencolor [60 30 10] label :top
+  print [Shortcut: top = first + 4 x second + 6 x middle + 4 x fourth + last]
+  print (sentence item 1 :base [+ 4 x] item 2 :base [+ 6 x] item 3 :base ~
+    [+ 4 x] item 4 :base [+] item 5 :base [=] :top)
+end
+
+pyramid

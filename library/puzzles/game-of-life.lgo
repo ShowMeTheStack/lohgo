@@ -1,0 +1,100 @@
+; ============================================================
+; TITLE:    Game of Life
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Intermediate
+; TAGS:     cellular automata, arrays, simulation, animation
+; SUMMARY:  John Conway's Game of Life on a 40 by 30 grid, starting with the Gosper glider gun.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each square is a cell that is alive (green) or dead. Every
+;   generation, all cells change at the same moment:
+;     a live cell with 2 or 3 live neighbors stays alive,
+;     a dead cell with exactly 3 live neighbors is born,
+;     every other cell dies or stays dead.
+;   John Conway invented these rules in 1970 and Martin Gardner made
+;   them famous in Scientific American. The starting pattern is Bill
+;   Gosper's glider gun, which keeps firing little "gliders" that
+;   walk diagonally across the grid.
+;
+; HOW TO USE
+;   Press Run and watch. Change "start :gun" at the bottom to
+;   "start :acorn" or "start :pulsar" for other famous patterns.
+;
+; CONCEPTS YOU WILL LEARN
+;   * an array as a grid, with index arithmetic for rows and columns
+;   * working out the next generation in a second array, then swapping
+;   * speeding things up by working out each cell's neighbors only once
+;   * redrawing only the cells that changed
+;
+; THINGS TO TRY
+;   * Change the rules: try "born with 3 or 6 neighbors" (called HighLife).
+;   * Start from a random soup: make each cell alive with RANDOM 4 = 0.
+; ============================================================
+
+make "cols 40
+make "rows 30
+make "size 18
+
+; Patterns are lists of [column row] pairs.
+make "gun [[2 6] [3 6] [2 7] [3 7] [12 6] [12 7] [12 8] [13 5] [13 9] [14 4] [14 10] [15 4] [15 10] [16 7] [17 5] [17 9] [18 6] [18 7] [18 8] [19 7] [22 4] [22 5] [22 6] [23 4] [23 5] [23 6] [24 3] [24 7] [26 2] [26 3] [26 7] [26 8] [36 4] [36 5] [37 4] [37 5]]
+make "acorn [[18 15] [19 13] [19 15] [21 14] [22 15] [23 15] [24 15]]
+make "pulsar [[15 9] [16 9] [17 9] [21 9] [22 9] [23 9] [13 11] [18 11] [20 11] [25 11] [13 12] [18 12] [20 12] [25 12] [13 13] [18 13] [20 13] [25 13] [15 14] [16 14] [17 14] [21 14] [22 14] [23 14] [15 16] [16 16] [17 16] [21 16] [22 16] [23 16] [13 17] [18 17] [20 17] [25 17] [13 18] [18 18] [20 18] [25 18] [13 19] [18 19] [20 19] [25 19] [15 21] [16 21] [17 21] [21 21] [22 21] [23 21]]
+
+to index :c :r
+  output :c + :cols * (:r - 1)
+end
+
+; Paint one cell with a few short fat strokes. Painting always goes on
+; top, so a dead cell is "erased" by painting it the background color.
+to paint :i :alive
+  localmake "x -360 + :size * remainder :i - 1 :cols
+  localmake "y 270 - :size * (1 + int (:i - 1) / :cols)
+  setpencolor ifelse :alive = 1 [[40 140 60]] [[235 240 225]]
+  setheading 90 setpensize 4
+  foreach [4 8 12 14] [penup setxy :x + 4 :y + ? pendown forward 10]
+end
+
+; For every cell, the list of cells around it that are on the grid.
+to findneighbors
+  make "around (array :cols * :rows)
+  for [r 1 :rows] [for [c 1 :cols] [
+    localmake "near []
+    foreach [[-1 -1] [0 -1] [1 -1] [-1 0] [1 0] [-1 1] [0 1] [1 1]] [
+      localmake "nc :c + first ?
+      localmake "nr :r + last ?
+      if (and :nc >= 1 :nc <= :cols :nr >= 1 :nr <= :rows) [push "near index :nc :nr]
+    ]
+    setitem index :c :r :around :near
+  ]]
+end
+
+; Build the next generation in a fresh array so that every cell
+; looks at the OLD neighbors, then repaint the cells that changed.
+to generation
+  localmake "new (array :cols * :rows)
+  for [i 1 :cols * :rows] [
+    localmake "n reduce "sum fput 0 map [item ? :grid] item :i :around
+    localmake "me item :i :grid
+    localmake "next ifelse or :n = 3 (and :me = 1 :n = 2) [1] [0]
+    setitem :i :new :next
+    if :next <> :me [paint :i :next]
+  ]
+  make "grid :new
+end
+
+to start :pattern
+  clearscreen hideturtle
+  setbackground [235 240 225]
+  findneighbors
+  make "grid (array :cols * :rows)
+  for [i 1 :cols * :rows] [setitem :i :grid 0]
+  foreach :pattern [setitem index first ? last ? :grid 1 paint index first ? last ? 1]
+  ; a frame around the world
+  penup setxy -362 -272 setheading 0 pendown setpensize 2 setpencolor [120 120 120]
+  repeat 2 [forward 544 right 90 forward 724 right 90]
+  for [g 1 300] [generation wait 2]
+  print [300 generations done.]
+end
+
+start :gun

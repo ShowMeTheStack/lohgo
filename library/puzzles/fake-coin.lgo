@@ -1,0 +1,102 @@
+; ============================================================
+; TITLE:    Find the Fake Coin
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Beginner
+; TAGS:     logic, dividing into thirds, lists, drawing
+; SUMMARY:  Finds the one light coin among nine using a balance scale only twice.
+; ============================================================
+;
+; WHAT IT DOES
+;   Nine coins look the same, but one is a fake that is a little
+;   lighter. With a balance scale you can compare two piles. How few
+;   weighings do you need? The trick is to split the coins into
+;   three piles, not two: put one pile on each side. If the scale
+;   balances, the fake is in the pile you kept off the scale. If not,
+;   it is on the side that goes UP. Each weighing leaves a third as
+;   many suspects, so 9 coins need just 2 weighings.
+;   The turtle draws the scale tipping for each weighing.
+;
+; HOW TO USE
+;   Press Run. The fake is chosen at random, so every run is a little
+;   different. Change "make "coins 9" to 27 or 3 and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * cutting a list into three equal parts
+;   * a loop that keeps going until one suspect is left
+;   * drawing a picture that depends on a result (the tilt)
+;
+; THINGS TO TRY
+;   * Try 27 coins. How many weighings now? What about 81?
+;   * Make the fake heavier instead. What must change in the logic?
+; ============================================================
+
+; The first n members of a list.
+to firstfew :n :items
+  if :n = 0 [output []]
+  output fput first :items firstfew :n - 1 butfirst :items
+end
+
+; Everything after the first n members.
+to skipfew :n :items
+  if :n = 0 [output :items]
+  output skipfew :n - 1 butfirst :items
+end
+
+; The weight of a pile: every real coin weighs 10, the fake weighs 9.
+to weight :pile
+  output (10 * count :pile) - ifelse memberp :fake :pile [1] [0]
+end
+
+; Draw the balance. Tilt is -1 (left side down), 0, or 1 (right side down).
+to scale :left :right :tilt
+  clean
+  setpencolor [90 70 50] setpensize 8
+  penup setxy 0 -200 pendown setxy 0 60
+  penup setxy -60 -200 pendown setxy 60 -200
+  ; the beam turns around the top of the post
+  penup setxy 0 60 setheading 90 + 12 * :tilt
+  pendown forward 200 pan :right
+  penup setxy 0 60 setheading 270 + 12 * :tilt
+  pendown forward 200 pan :left
+end
+
+; A pan hangs below the end of the beam, with its coins on it.
+to pan :pile
+  localmake "x xcor
+  localmake "y ycor
+  setpensize 3 setheading 180
+  penup setxy :x :y pendown setxy :x - 70 :y - 80 setxy :x + 70 :y - 80 setxy :x :y
+  setpencolor [200 160 40] setpensize 22
+  foreach :pile [
+    localmake "cx :x - 60 + 24 * remainder # - 1 6
+    localmake "cy :y - 69 + 24 * int (# - 1) / 6
+    dot list :cx :cy
+  ]
+  setpencolor [90 70 50]
+end
+
+to findfake :suspects
+  localmake "weighings 0
+  while [(count :suspects) > 1] [
+    ; a third of the suspects, rounded so it works for any number
+    localmake "third int ((count :suspects) + 1) / 3
+    localmake "left firstfew :third :suspects
+    localmake "right firstfew :third skipfew :third :suspects
+    localmake "off skipfew 2 * :third :suspects
+    make "weighings :weighings + 1
+    print (sentence [Weighing] :weighings [puts coins] :left [against] :right)
+    localmake "wl weight :left
+    localmake "wr weight :right
+    if :wl = :wr [scale :left :right 0 print [It balances. The fake was kept off the scale.] make "suspects :off]
+    if :wl < :wr [scale :left :right 1 print [The left side goes up.] make "suspects :left]
+    if :wl > :wr [scale :left :right -1 print [The right side goes up.] make "suspects :right]
+    wait 120
+  ]
+  print (sentence [The fake is coin] first :suspects [found in] :weighings [weighings.])
+end
+
+clearscreen hideturtle
+setbackground [235 240 250]
+make "coins 9
+make "fake 1 + random :coins
+findfake iseq 1 :coins

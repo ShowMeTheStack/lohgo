@@ -1,0 +1,130 @@
+; ============================================================
+; TITLE:    Triangle Peg Solitaire
+; CATEGORY: Puzzles & Logic
+; LEVEL:    Advanced
+; TAGS:     backtracking, recursion, lists, animation
+; SUMMARY:  Solves the 15-hole triangle peg game so that only one peg is left, then replays the jumps.
+; ============================================================
+;
+; WHAT IT DOES
+;   Fourteen pegs sit in a triangle of fifteen holes, with the top
+;   hole empty. A peg may jump over a neighbor into an empty hole,
+;   and the peg jumped over is removed. Can you finish with just one
+;   peg? This wooden puzzle is often found on restaurant tables. The
+;   program searches for a winning list of 13 jumps by trying a jump,
+;   going deeper, and undoing it when it leads nowhere. Then it plays
+;   the jumps back slowly.
+;
+; HOW TO USE
+;   Press Run. Change the empty hole in the last line (1 to 15) to
+;   start from a different position.
+;
+; CONCEPTS YOU WILL LEARN
+;   * working out every legal jump once, before the search starts
+;   * backtracking with a list of moves made so far
+;   * turning row and position numbers into screen points
+;
+; THINGS TO TRY
+;   * Count how many jumps the search tried before it found an answer.
+;   * Ask for a finish where the last peg ends in the starting hole.
+; ============================================================
+
+; Holes are numbered 1 to 15, top to bottom, left to right:
+;              1
+;            2   3
+;          4   5   6
+;        7   8   9  10
+;     11  12  13  14  15
+to holenum :row :k
+  output :k + :row * (:row - 1) / 2
+end
+
+to onboard :row :k
+  output (and :row >= 1 :row <= 5 :k >= 1 :k <= :row)
+end
+
+; Every jump [from over to] on the board. In this numbering the six
+; directions are: along a row, down-left, down-right, and back again.
+to alljumps
+  localmake "result []
+  for [row 1 5] [for [k 1 :row] [
+    foreach [[0 1] [0 -1] [1 0] [-1 0] [1 1] [-1 -1]] [
+      localmake "r2 :row + 2 * first ?
+      localmake "k2 :k + 2 * last ?
+      if onboard :r2 :k2 [
+        push "result (list holenum :row :k ~
+          holenum :row + first ? :k + last ? ~
+          holenum :r2 :k2)
+      ]
+    ]
+  ]]
+  output :result
+end
+
+; :pegs is an array of 15 items, 1 for a peg and 0 for a hole.
+to legal :j
+  output (and (item first :j :pegs) = 1 (item item 2 :j :pegs) = 1 (item last :j :pegs) = 0)
+end
+
+to setjump :j :a :b :c
+  setitem first :j :pegs :a
+  setitem item 2 :j :pegs :b
+  setitem last :j :pegs :c
+end
+
+; Outputs a winning list of jumps, or [] if there is none from here.
+to search :left
+  if :left = 1 [output [done]]
+  foreach :jumps [
+    if legal ? [
+      localmake "j ?
+      setjump :j 0 0 1
+      localmake "rest search :left - 1
+      setjump :j 1 1 0
+      if not emptyp :rest [output fput :j :rest]
+    ]
+  ]
+  output []
+end
+
+; ---- drawing ----
+
+to spot :h :color
+  localmake "row 1
+  while [:h > :row * (:row + 1) / 2] [make "row :row + 1]
+  localmake "k :h - :row * (:row - 1) / 2
+  setpencolor :color setpensize 40
+  dot list 70 * :k - 35 * :row - 35 200 - 70 * :row
+end
+
+to showboard
+  ; the wooden block goes in first, so the holes and pegs sit on top of it
+  penup setxy 0 200 pendown setpencolor [150 100 50] setpensize 1
+  filled [190 135 75] [setxy -230 -195 setxy 230 -195 setxy 0 200]
+  for [h 1 15] [spot :h ifelse 1 = item :h :pegs [[220 60 40]] [[70 45 25]]]
+end
+
+to start :empty
+  clearscreen hideturtle
+  setbackground [240 215 160]
+  make "jumps alljumps
+  make "pegs (array 15)
+  for [h 1 15] [setitem :h :pegs 1]
+  setitem :empty :pegs 0
+  showboard
+  localmake "found search 14
+  if emptyp :found [print [No way to finish with one peg.] stop]
+  localmake "plan butlast :found      ; drop the word "done" at the end
+  print (sentence [Found] count :plan [jumps:])
+  foreach :plan [
+    wait 50
+    print (sentence [Jump from] first ? [over] item 2 ? [to] last ?)
+    setjump ? 0 0 1
+    spot first ? [70 45 25]
+    spot item 2 ? [70 45 25]
+    spot last ? [220 60 40]
+  ]
+  print [One peg left. Genius!]
+end
+
+start 1
