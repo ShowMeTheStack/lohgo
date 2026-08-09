@@ -1,0 +1,109 @@
+; ============================================================
+; TITLE:    Arithmetic Quiz
+; CATEGORY: Mathematics
+; LEVEL:    Beginner
+; TAGS:     quiz, input, random, addition, multiplication, stars
+; SUMMARY:  Asks ten random sums, checks your answers and draws a gold star for every right one.
+; ============================================================
+;
+; WHAT IT DOES
+;   The computer makes up ten questions: adding, taking away and
+;   multiplying small numbers. You type the answers. A right answer
+;   earns a gold star on the screen; a wrong one gets a grey cross,
+;   and the computer tells you the correct answer. Your score is
+;   shown at the end.
+;
+; HOW TO USE
+;   Press Run, click in the command center, type each answer and
+;   press Enter. Type quit to stop early.
+;
+; CONCEPTS YOU WILL LEARN
+;   * RANDOM to make a new question every time
+;   * PICK to choose one item from a list at random
+;   * READWORD to read an answer, and NUMBERP to check it is a number
+;   * keeping score in a variable
+;
+; THINGS TO TRY
+;   * Make the numbers bigger by changing (random 1 10).
+;   * Add division questions. Hint: make the answer first, then
+;     multiply to get a question that comes out exactly.
+;   * Make the quiz keep going until you get three wrong.
+; ============================================================
+
+make "questions 10
+
+; A five-pointed star centered on the turtle. Starting at heading 18
+; makes it stand upright; the start corner is the bottom-left point,
+; which sits 0.309 sizes left of and 0.476 sizes below the middle.
+to star :size :color
+  penup setxy xcor - 0.309 * :size ycor - 0.476 * :size setheading 18
+  filled :color [repeat 5 [forward :size right 144]]
+  setheading 0
+end
+
+; Two crossing strokes through the turtle's position.
+to cross :size
+  localmake "here pos
+  setpencolor [150 150 150] setpensize 6
+  setheading 45 penup back :size / 2 pendown forward :size
+  penup setpos :here
+  setheading 135 back :size / 2 pendown forward :size penup
+end
+
+; Where the mark for question n goes: two rows of five.
+to markspot :n
+  penup setxy -240 + 120 * remainder (:n - 1) 5 120 - 150 * int ((:n - 1) / 5)
+end
+
+; Make up a question. Outputs [text answer].
+to makequestion
+  localmake "a (random 1 10)
+  localmake "b (random 1 10)
+  localmake "op pick [+ - x]
+  if :op = "+ [output list (sentence :a "+ :b) :a + :b]
+  ; for taking away, put the bigger number first so the answer is not negative
+  if :op = "- [
+    if :a < :b [localmake "t :a make "a :b make "b :t]
+    output list (sentence :a "- :b) :a - :b
+  ]
+  output list (sentence :a "x :b) :a * :b
+end
+
+; Read an answer, asking again until it is a number or "quit".
+to getanswer :text
+  type (sentence :text "=) type "| |
+  localmake "reply readword
+  if not wordp :reply [output "quit]
+  if memberp :reply [quit q stop exit] [output "quit]
+  if numberp :reply [output :reply]
+  print "|  Please type a number (or quit).|
+  output getanswer :text
+end
+
+to quiz
+  localmake "score 0
+  for [n 1 :questions] [
+    localmake "q makequestion
+    localmake "reply getanswer first :q
+    if :reply = "quit [print [OK, stopping early.] output :score]
+    markspot :n
+    ifelse :reply = last :q [
+      print [  Right!]
+      make "score :score + 1
+      star 70 [250 200 40]
+    ] [
+      print (sentence [  Not quite:] first :q "= last :q)
+      cross 50
+    ]
+  ]
+  output :score
+end
+
+clearscreen hideturtle
+penup setxy -200 230 setpencolor [60 60 60] setlabelheight 24
+label [Arithmetic quiz: ten questions]
+print [Click here, type each answer and press Enter.]
+make "final quiz
+print (sentence [Your score:] :final [out of] :questions)
+penup setxy -110 -230 setpencolor [40 120 200] setlabelheight 28
+label (sentence [Score:] :final [/] :questions)

@@ -1,0 +1,105 @@
+; ============================================================
+; TITLE:    Long Division
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     division, place value, algorithms, words, layout
+; SUMMARY:  Works through a long division one digit at a time, explaining each step in words and writing it out on paper style.
+; ============================================================
+;
+; WHAT IT DOES
+;   Long division splits a big division into small ones. Take digits
+;   from the left until the divisor fits, write how many times it
+;   fits, subtract, then bring down the next digit and repeat. The
+;   program explains every step in the text area and writes the whole
+;   calculation in the turtle world, laid out the way you would on
+;   paper, with the answer on top.
+;
+; HOW TO USE
+;   Press Run. To divide other numbers, change the last line, for
+;   example:  longdivide 98765 43
+;
+; CONCEPTS YOU WILL LEARN
+;   * treating a number as a word of digits with FIRST, ITEM and COUNT
+;   * INT and REMAINDER: the two halves of every division
+;   * an algorithm: the same few steps repeated for each digit
+;   * placing characters on a grid of columns and rows
+;
+; THINGS TO TRY
+;   * Divide by 7 and look at the remainders. Can there be more than
+;     7 different ones?
+;   * Check the answer: quotient times divisor plus remainder should
+;     give back the number you started with.
+;   * Try a number with a 0 in the middle, like 6012 divided by 6.
+; ============================================================
+
+; Character grid for the drawing: column 0 is where the dividend starts.
+make "colwidth 26
+make "rowheight 36
+make "left -60
+make "top 200
+
+to cell :col :row :text
+  penup setxy :left + :col * :colwidth :top - :row * :rowheight
+  label :text
+end
+
+; Write a number so its last digit lands in column :col.
+to rightalign :n :col :row
+  localmake "w (word :n)
+  for [k 1 count :w] [cell :col - (count :w) + :k :row item :k :w]
+end
+
+; A short line under columns a to b, just below the given row.
+to underline :a :b :row
+  setpensize 2
+  penup setxy :left + :a * :colwidth - 2 :top - :row * :rowheight - 8
+  pendown setx :left + (:b + 1) * :colwidth - 6
+  penup
+end
+
+to longdivide :number :divisor
+  clean
+  localmake "digits (word :number)
+  setlabelheight 30 setpencolor [40 40 40]
+  ; the divisor and the "bracket"
+  rightalign :divisor -2 1
+  for [k 1 count :digits] [cell :k - 1 1 item :k :digits]
+  setpensize 3
+  penup setxy :left - 8 :top - :rowheight - 8 pendown
+  setxy :left - 2 :top - 4
+  setx :left + (count :digits) * :colwidth
+  penup
+  localmake "r 0
+  localmake "row 2
+  localmake "started "false
+  localmake "answer "||
+  for [i 1 count :digits] [
+    make "r :r * 10 + item :i :digits
+    localmake "q int (:r / :divisor)
+    if or :started :q > 0 [
+      make "started "true
+      make "answer word :answer :q
+      setpencolor [200 50 50] cell :i - 1 0 :q setpencolor [40 40 40]
+      localmake "p :q * :divisor
+      print (sentence :divisor [goes into] :r :q [times.] :q "x :divisor "= (word :p ",) :r "- :p "= :r - :p)
+      rightalign :p :i - 1 :row
+      underline (:i - (count (word :p))) :i - 1 :row
+      make "r :r - :p
+      make "row :row + 1
+      rightalign :r :i - 1 :row
+      ; bring down the next digit next to the remainder
+      if :i < count :digits [
+        setpencolor [40 130 60] cell :i :row item :i + 1 :digits setpencolor [40 40 40]
+        print (sentence [  Bring down the] item :i + 1 :digits [to make] :r * 10 + item :i + 1 :digits)
+      ]
+      make "row :row + 1
+    ]
+  ]
+  if emptyp :answer [make "answer 0]
+  setpencolor [200 50 50] cell 1 + count :digits 0 word "r :r
+  print (sentence :number "/ :divisor "= :answer [remainder] :r)
+  print (sentence [Check:] :answer "x :divisor "+ :r "= :answer * :divisor + :r)
+end
+
+clearscreen hideturtle
+longdivide 7865 23

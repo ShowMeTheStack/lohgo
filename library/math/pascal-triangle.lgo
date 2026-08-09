@@ -1,0 +1,85 @@
+; ============================================================
+; TITLE:    Pascal's Triangle
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     patterns, lists, map, recursion, sierpinski
+; SUMMARY:  Prints Pascal's triangle and then draws 32 rows of it, coloring odd numbers to reveal a hidden fractal.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every number in Pascal's triangle is the sum of the two numbers
+;   just above it. The program prints the first rows as numbers, then
+;   draws 32 rows as colored dots: a dot is dark when its number is
+;   odd and pale when it is even. A famous pattern appears, made of
+;   triangles inside triangles (the Sierpinski triangle).
+;
+; HOW TO USE
+;   Press Run and look at both the text and the drawing. Change
+;   :rows to draw more or fewer rows, or change :modulus to 3 or 5.
+;
+; CONCEPTS YOU WILL LEARN
+;   * building the next row from the previous one with MAP
+;   * giving MAP two lists at once, so it adds them item by item
+;   * REMAINDER to sort numbers into odd and even
+;   * a pattern that is easy to miss in numbers but obvious in color
+;
+; THINGS TO TRY
+;   * Set :modulus to 3: dots are dark when the number is not a
+;     multiple of 3. A different fractal appears.
+;   * Add up each printed row. What do you notice? (Try powers of 2.)
+;   * Read along the diagonals: 1 2 3 4 ..., then 1 3 6 10 ...
+; ============================================================
+
+make "rows 32
+make "modulus 2
+
+; The trick: shift the row one place each way and add.
+;   row      1 3 3 1
+;   0 + row  0 1 3 3 1
+;   row + 0  1 3 3 1 0
+;   sum      1 4 6 4 1
+to nextrow :row
+  output (map "sum fput 0 :row lput 0 :row)
+end
+
+; Print a row with spaces in front so the triangle looks centered.
+to showrow :row :indent
+  repeat :indent [type "| |]
+  foreach :row [type form ? 4 0]
+  print "
+end
+
+to printtriangle :n
+  localmake "row [1]
+  for [i 0 :n - 1] [
+    showrow :row 2 * (:n - 1 - :i)
+    make "row nextrow :row
+  ]
+end
+
+; Draw the rows as dots. Row r has r+1 numbers; each row starts
+; half a gap further left so the shape stays symmetric.
+to drawtriangle :n
+  localmake "gap 520 / :n
+  localmake "row [1]
+  setpensize :gap * 0.85
+  for [r 0 :n - 1] [
+    localmake "y 250 - :r * :gap * 0.87
+    localmake "x 0 - :r * :gap / 2
+    foreach :row [
+      ifelse 0 = remainder ? :modulus [setpencolor [230 225 240]] [setpencolor [110 50 160]]
+      dot list :x + (# - 1) * :gap :y
+    ]
+    make "row nextrow :row
+  ]
+end
+
+clearscreen hideturtle
+print [The first rows of Pascal's triangle:]
+print "
+printtriangle 12
+print "
+print [Odd numbers are dark in the drawing.]
+drawtriangle :rows
+penup setxy -240 -225 setpencolor [80 80 80] setlabelheight 16
+label (sentence [Pascal's triangle, numbers not divisible by] :modulus [shown dark])

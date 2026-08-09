@@ -1,0 +1,86 @@
+; ============================================================
+; TITLE:    Compound Interest
+; CATEGORY: Mathematics
+; LEVEL:    Beginner
+; TAGS:     money, percentages, growth, charts, loops
+; SUMMARY:  Compares simple and compound interest year by year with a table and a side-by-side bar chart.
+; ============================================================
+;
+; WHAT IT DOES
+;   You put 100 dollars in a bank that pays 10 percent a year.
+;   With simple interest you get 10 dollars every year, always the
+;   same. With compound interest you earn interest on your interest
+;   too, so each year's gift is a little bigger than the last. The
+;   chart shows both: grey bars for simple, green bars for compound.
+;   Watch the green bars pull away.
+;
+; HOW TO USE
+;   Press Run. Change :start, :rate and :years at the top.
+;
+; CONCEPTS YOU WILL LEARN
+;   * percentages: multiplying by 1 + rate/100 adds rate percent
+;   * a variable that is updated every time around a loop
+;   * the difference between adding the same amount and multiplying
+;   * ROUND and FORM to show money with two decimal places
+;
+; THINGS TO TRY
+;   * The "rule of 72": at 10 percent, money doubles in about
+;     72 / 10 = 7.2 years. Find the doubling year in the table.
+;   * Try a rate of 5 or 20. Does the rule of 72 still work?
+;   * Make :years 30 and :barscale smaller so the bars fit.
+; ============================================================
+
+make "start 100
+make "rate 10
+make "years 20
+; how many screen steps tall one dollar is
+make "barscale 0.64
+
+to money :x
+  output word "$ form :x 0 2
+end
+
+; One bar. Its bottom-left corner is at (x, -230).
+to bar :x :width :amount :color
+  penup setxy :x -230 setheading 0
+  filled :color [
+    forward :amount * :barscale right 90
+    forward :width right 90
+    forward :amount * :barscale right 90
+    forward :width right 90
+  ]
+end
+
+to growth
+  localmake "simple :start
+  localmake "compound :start
+  print "|year     simple     compound|
+  for [y 1 :years] [
+    ; simple: always the same 10 percent of the STARTING money
+    make "simple :simple + :start * :rate / 100
+    ; compound: 10 percent of whatever is in the bank NOW
+    make "compound :compound * (1 + :rate / 100)
+    print (sentence form :y 4 0 form :simple 11 2 form :compound 12 2)
+    localmake "x -360 + (:y - 1) * 36
+    bar :x 15 :simple [170 170 170]
+    bar :x + 15 15 :compound [40 160 90]
+    if 0 = remainder :y 5 [
+      penup setxy :x + 6 -250 setpencolor [60 60 60] setlabelheight 12 label :y
+    ]
+  ]
+  print "
+  print (sentence [After] :years [years, simple interest gives] money :simple)
+  print (sentence [and compound interest gives] money :compound)
+  penup setlabelheight 16 setpencolor [40 160 90]
+  setxy -360 250 label (sentence [compound:] money :compound)
+  setpencolor [120 120 120]
+  setxy -360 225 label (sentence [simple:] money :simple)
+end
+
+clearscreen hideturtle
+growth
+penup setxy -370 -230 setheading 90 setpencolor "black setpensize 2
+pendown forward 740
+penup setxy -40 -275 setlabelheight 14 label [years]
+setxy 40 250 setlabelheight 18
+label (sentence money :start [at] word :rate "% [a year])

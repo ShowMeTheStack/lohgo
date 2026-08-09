@@ -1,0 +1,65 @@
+; ============================================================
+; TITLE:    Times Tables on a Circle
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     multiplication, modular arithmetic, circles, patterns, cardioid
+; SUMMARY:  Places 120 points on a circle and joins each point n to point m times n, revealing hearts and flowers.
+; ============================================================
+;
+; WHAT IT DOES
+;   Number 120 points around a circle from 0 to 119. For the 2 times
+;   table, join point 1 to point 2, point 2 to point 4, point 3 to
+;   point 6 and so on. When the answer is bigger than 119, wrap round
+;   the circle (that is, take the remainder after dividing by 120).
+;   The straight lines add up to a curve: the 2 times table makes a
+;   heart shape called a cardioid. Six tables are drawn side by side.
+;
+; HOW TO USE
+;   Press Run. Change the list "tables to try other multipliers,
+;   and :points to use more or fewer points.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MODULO to wrap numbers around a circle, like hours on a clock
+;   * finding the point at a given angle with SIN and COS
+;   * how many straight lines can draw a curve (an envelope)
+;
+; THINGS TO TRY
+;   * Is the 61 times table with 120 points the same as the 1 times
+;     table? What about 121?
+;   * Try the 2 times table with 12 points, then 300 points.
+;   * Use decimals like 2.5: change MODULO to work with the
+;     fractional point positions.
+; ============================================================
+
+make "points 120
+make "tables [2 3 4 5 8 51]
+make "radius 115
+make "colors [[220 60 80] [240 140 30] [50 160 90] [40 120 210] [130 80 200] [200 70 170]]
+
+; Where point k sits on a circle centered at (cx, cy).
+; Point 0 is at the left, like the 9 on a clock face.
+to spot :k :cx :cy
+  localmake "angle 270 + 360 * :k / :points
+  output list :cx + :radius * sin :angle :cy + :radius * cos :angle
+end
+
+to circletable :m :cx :cy :color
+  ; the circle itself
+  setpencolor [200 200 200] setpensize 1
+  penup setxy :cx :cy pendown arc 360 :radius penup
+  ; one chord from every point k to point m*k (wrapped round)
+  setpencolor :color
+  for [k 1 :points - 1] [
+    penup setpos spot :k :cx :cy
+    pendown setpos spot modulo :m * :k :points :cx :cy
+  ]
+  penup setxy :cx - 30 :cy - :radius - 22 setpencolor [60 60 60] setlabelheight 15
+  label word :m "| times|
+end
+
+clearscreen hideturtle
+foreach :tables [
+  localmake "col remainder (# - 1) 3
+  localmake "row int ((# - 1) / 3)
+  circletable ? -260 + 260 * :col 140 - 290 * :row item # :colors
+]

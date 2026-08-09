@@ -1,0 +1,99 @@
+; ============================================================
+; TITLE:    Fibonacci and the Golden Ratio
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     fibonacci, golden ratio, spiral, sequences, lists
+; SUMMARY:  Prints Fibonacci numbers and their ratios closing in on 1.618..., then draws the golden spiral of squares.
+; ============================================================
+;
+; WHAT IT DOES
+;   Starts with 1 and 1 and keeps adding the last two numbers to get
+;   the next: 1 1 2 3 5 8 13 ... Dividing each number by the one
+;   before gives answers that creep closer and closer to the golden
+;   ratio, about 1.618. The picture puts squares with Fibonacci sides
+;   next to each other and draws a quarter circle in each one, which
+;   makes a spiral like the one in a snail shell.
+;
+; HOW TO USE
+;   Press Run. Read the table in the text area, then look at the
+;   drawing. Change :count to use more or fewer squares.
+;
+; CONCEPTS YOU WILL LEARN
+;   * making a sequence with a list that grows from its own end
+;   * comparing a ratio with an exact value using SQRT
+;   * drawing a curve from many tiny steps and turns
+;   * a "dry run" with the pen up to measure a drawing before centering it
+;
+; THINGS TO TRY
+;   * Start the sequence with 2 and 1 instead (the Lucas numbers).
+;     Do the ratios still head for 1.618?
+;   * Change the turn in QUARTER from right to left and see what happens.
+;   * Print :phi * :phi and :phi + 1. Why are they the same?
+; ============================================================
+
+make "count 10
+make "scale 7
+make "phi (1 + sqrt 5) / 2
+
+; The first n Fibonacci numbers as a list.
+to fibs :n
+  localmake "seq [1 1]
+  repeat :n - 2 [make "seq lput (last :seq) + (last butlast :seq) :seq]
+  output :seq
+end
+
+to table
+  localmake "f fibs 20
+  print "| n    F(n)    F(n+1)/F(n)|
+  for [n 1 19] [
+    print (sentence form :n 2 0 form item :n :f 7 0 form (item :n + 1 :f) / (item :n :f) 13 8)
+  ]
+  print sentence [golden ratio phi =] form :phi 0 8
+end
+
+; A quarter of a circle of radius r: 90 small steps, one degree each.
+to quarter :r
+  repeat 90 [forward :r * 3.14159 / 180 right 1]
+end
+
+; Remember the furthest point the turtle has been in each direction.
+to note
+  make "minx min :minx xcor  make "maxx max :maxx xcor
+  make "miny min :miny ycor  make "maxy max :maxy ycor
+end
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+to max :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+; Square, then arc, for each Fibonacci number. When :drawing is
+; false the pen stays up and we only measure.
+to spiral :drawing
+  localmake "colors [[255 214 165] [253 255 182] [202 255 191] [155 246 255] [160 196 255] [189 178 255] [255 198 255] [255 173 173]]
+  foreach fibs :count [
+    localmake "s ? * :scale
+    if :drawing [
+      setpencolor [90 90 90] setpensize 1
+      filled item 1 + remainder # 8 :colors [repeat 4 [forward :s right 90]]
+      pendown
+    ]
+    ; walk the square (drawing it, or just measuring its corners)
+    repeat 4 [forward :s right 90 note]
+    if :drawing [setpencolor [200 40 60] setpensize 3]
+    quarter :s
+    note
+  ]
+end
+
+clearscreen hideturtle
+table
+; the dry run: pen up, measure, then come back
+make "minx 0 make "maxx 0 make "miny 0 make "maxy 0
+penup home spiral "false
+; start the real drawing so the middle of the picture lands at (0, 0)
+penup setxy 0 - (:minx + :maxx) / 2 0 - (:miny + :maxy) / 2 - 20 setheading 0
+pendown spiral "true
+penup setxy -150 270 setpencolor "black setlabelheight 18
+label [The golden spiral of Fibonacci squares]

@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Rolling Two Dice
+; CATEGORY: Mathematics
+; LEVEL:    Beginner
+; TAGS:     probability, random, arrays, histogram, animation
+; SUMMARY:  Rolls two dice a thousand times and grows a bar chart of the totals, showing why 7 comes up most.
+; ============================================================
+;
+; WHAT IT DOES
+;   Two dice are rolled again and again and their total (2 to 12) is
+;   counted. A bar chart grows as the rolls come in. Totals in the
+;   middle win, because there are more ways to make them: a 7 can be
+;   1+6, 2+5, 3+4, 4+3, 5+2 or 6+1, but a 2 can only be 1+1. The red
+;   marks show how tall each bar "should" be, out of 36 equal ways
+;   the two dice can land.
+;
+; HOW TO USE
+;   Press Run and watch the bars grow. Change :rolls for a longer or
+;   shorter experiment.
+;
+; CONCEPTS YOU WILL LEARN
+;   * RANDOM to simulate a die: (RANDOM 1 6) gives 1, 2, 3, 4, 5 or 6
+;   * an ARRAY of counters, one box for each possible total
+;   * comparing an experiment with what probability predicts
+;
+; THINGS TO TRY
+;   * Roll 3000 times with :tall set to 0.6 so the bars still fit.
+;   * Roll only 36 times. Does the chart look like the red marks?
+;   * Change ROLL to use three dice. The totals now go from 3 to 18,
+;     so the array and the chart need more room.
+;   * Count doubles (both dice the same). About 1 in 6 should be.
+; ============================================================
+
+make "rolls 1000
+; how many screen steps tall a bar grows for each roll it counts
+make "tall 2
+; counts for the totals 2 to 12: an array of 11 boxes
+make "counts array 11
+
+to roll
+  output (random 1 6) + (random 1 6)
+end
+
+; How many of the 36 ways of landing give this total?
+to ways :total
+  output 6 - abs (:total - 7)
+end
+
+to bars :done
+  clean
+  for [t 2 12] [
+    localmake "x -330 + (:t - 2) * 60
+    localmake "h :tall * item :t - 1 :counts
+    penup setxy :x -200 setheading 0
+    if :h > 0 [filled [80 150 230] [repeat 2 [forward :h right 90 forward 44 right 90]]]
+    ; the expected height: ways out of 36, times the number of rolls
+    setpencolor [220 50 50] setpensize 3
+    penup setxy :x - 4 -200 + :tall * :done * (ways :t) / 36
+    setheading 90 pendown forward 52
+    penup setxy :x + 22 - 4 * count :t -222 setpencolor [60 60 60] setlabelheight 14 label :t
+  ]
+  setpencolor "black setpensize 2
+  penup setxy -340 -200 setheading 90 pendown forward 660
+  penup setxy -340 250 setlabelheight 18
+  label (sentence [Totals of two dice after] :done [rolls])
+end
+
+to experiment
+  for [i 1 11] [setitem :i :counts 0]
+  for [n 1 :rolls] [
+    localmake "t roll
+    setitem :t - 1 :counts 1 + item :t - 1 :counts
+    if 0 = remainder :n 50 [bars :n wait 2]
+  ]
+  print [total  count  expected]
+  for [t 2 12] [print (sentence form :t 4 0 form item :t - 1 :counts 7 0 form :rolls * (ways :t) / 36 9 1)]
+end
+
+clearscreen hideturtle
+experiment

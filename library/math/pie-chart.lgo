@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Pie Chart
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     data, charts, percentages, angles, filled
+; SUMMARY:  Draws a pie chart from a list of data, with each slice sized by its share of 360 degrees.
+; ============================================================
+;
+; WHAT IT DOES
+;   Shows how a school day of 24 hours is spent. Every activity gets
+;   a slice of the pie. The angle of the slice is its fraction of the
+;   whole, times 360 degrees. Percentages are written next to the
+;   slices and a key on the right names the colors.
+;
+; HOW TO USE
+;   Press Run. Edit the list "day at the bottom to chart something
+;   else. The numbers do not have to add up to 100 or 24: the program
+;   adds them up itself and works out each share.
+;
+; CONCEPTS YOU WILL LEARN
+;   * fractions of a whole turned into angles and percentages
+;   * SIN and COS to find points on a circle
+;   * FILLED with a path made of many short straight lines
+;   * keeping a running total (the angle where the next slice starts)
+;
+; THINGS TO TRY
+;   * Add [Music 1] to the list and watch every slice shrink a little.
+;   * Change :radius, or move the pie by changing :cx and :cy.
+;   * Print the angle of each slice as well as its percentage.
+; ============================================================
+
+make "cx -120
+make "cy 0
+make "radius 200
+make "colors [[230 80 70] [250 170 50] [90 180 90] [70 140 220] [160 100 200] [240 120 170] [120 200 210]]
+
+; The point on the rim at a given angle. Angles here are compass
+; style, like turtle headings: 0 is straight up and they go clockwise.
+to rim :angle :r
+  output list :cx + :r * sin :angle :cy + :r * cos :angle
+end
+
+; One slice from angle :a1 to angle :a2. The edge of the pie is
+; made of many little straight steps, one per degree, which is
+; close enough to a curve that nobody can tell.
+to slice :a1 :a2 :color
+  penup setxy :cx :cy
+  filled :color [
+    setpos rim :a1 :radius
+    for (list "a :a1 :a2 1) [setpos rim :a :radius]
+    setpos rim :a2 :radius
+    setxy :cx :cy
+  ]
+  ; a white line between slices makes them easier to tell apart
+  setpencolor "white setpensize 3
+  pendown setpos rim :a1 :radius penup
+end
+
+to pie :data
+  localmake "total reduce "sum map [last ?] :data
+  localmake "start 0
+  setlabelheight 15
+  foreach :data [
+    localmake "angle 360 * (last ?) / :total
+    localmake "color item 1 + remainder (# - 1) count :colors :colors
+    slice :start :start + :angle :color
+    ; the percentage sits just outside the middle of the slice
+    setpencolor [50 50 50]
+    setpos rim :start + :angle / 2 :radius + 28
+    setx xcor - 14 sety ycor - 5
+    label word round 100 * (last ?) / :total "%
+    key # first ? :color
+    make "start :start + :angle
+  ]
+end
+
+; One line of the color key on the right of the screen.
+to key :n :name :color
+  penup setxy 170 150 - 34 * :n setheading 0
+  filled :color [repeat 4 [forward 20 right 90]]
+  setxy 200 ycor + 4
+  setpencolor [50 50 50] label :name
+end
+
+clearscreen hideturtle
+make "day [[Sleep 9] [School 7] [Play 3] [Meals 2] [Homework 1] [Reading 2]]
+pie :day
+penup setxy -260 260 setpencolor "black setlabelheight 22
+label [How I spend a school day]

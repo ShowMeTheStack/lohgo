@@ -1,0 +1,108 @@
+; ============================================================
+; TITLE:    Number Base Converter
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     binary, hexadecimal, bases, recursion, input
+; SUMMARY:  Converts the numbers you type into binary, base 3, octal and hexadecimal, and lights up binary lamps.
+; ============================================================
+;
+; WHAT IT DOES
+;   We count in base 10 because we have ten fingers. Computers count
+;   in base 2, using only 0 and 1. Type a whole number and the
+;   program writes it in several bases. The screen shows a row of
+;   eight lamps, one for each power of two (128 64 32 16 8 4 2 1):
+;   the lit lamps add up to your number.
+;
+; HOW TO USE
+;   Press Run, click in the command center and type a number from
+;   0 to 255, then Enter. Type as many as you like; type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * repeated division: the remainders are the digits, last one first
+;   * a recursive procedure that builds a word digit by digit
+;   * ITEM to pick a digit symbol out of a word like 0123456789ABCDEF
+;   * converting back again to check the answer
+;
+; THINGS TO TRY
+;   * Type 255, then 256. Why does 256 need a ninth lamp?
+;   * Which numbers have only one lamp lit?
+;   * Add base 5 to the list in SHOWBASES.
+; ============================================================
+
+make "symbols "0123456789ABCDEF
+
+; The digit for a value from 0 to 15.
+to digit :d
+  output item :d + 1 :symbols
+end
+
+; Divide by the base. The remainder is the last digit; the rest of
+; the number is whatever the quotient turns into.
+to tobase :n :base
+  if :n < :base [output digit :n]
+  output word tobase int (:n / :base) :base digit remainder :n :base
+end
+
+; Going back: each digit is worth base times the digits to its right.
+to frombase :w :base
+  localmake "total 0
+  ; MEMBER of "A in the symbols leaves ABCDEF, 6 letters, and 16 - 6 = 10
+  foreach :w [make "total :total * :base + 16 - count member ? :symbols]
+  output :total
+end
+
+to showbases :n
+  print (sentence "|  base 10:| :n)
+  foreach [2 3 8 16] [
+    localmake "w tobase :n ?
+    print (sentence (word "|  base | ? ":) :w (word "|(back to base 10: | frombase :w ? "|)|))
+  ]
+end
+
+; Eight lamps for the eight lowest powers of two.
+to lamps :n
+  clean
+  setlabelheight 16
+  for [i 0 7] [
+    localmake "value power 2 7 - :i
+    localmake "x -315 + :i * 90
+    ; the lamp is lit when that bit of n is 1
+    localmake "on 1 = remainder int (:n / :value) 2
+    penup setxy :x 0 setheading 0
+    setpensize 70
+    ifelse :on [setpencolor [255 200 40]] [setpencolor [70 70 90]]
+    dot list :x 0
+    ; the bit inside the lamp: dark on a lit lamp, white on a dark one
+    ifelse :on [setpencolor "black] [setpencolor "white]
+    setxy :x - 5 -7 setlabelheight 20 label ifelse :on [1] [0] setlabelheight 16
+    ; the place value under the lamp
+    setpencolor "black
+    setxy :x - 5 * count :value -65 label :value
+  ]
+  penup setxy -315 110 setlabelheight 24
+  label (sentence :n "= tobase :n 2 [in binary])
+end
+
+; A whole number is a number, not negative, with nothing after the
+; point. NUMBERP is checked first so we never compare a word with 0.
+to wholep :x
+  if not numberp :x [output "false]
+  output and :x >= 0 :x = int :x
+end
+
+to converter
+  print [Type a whole number from 0 to 255, or quit:]
+  localmake "answer readword
+  if memberp :answer [quit q stop exit bye] [print [Bye.] stop]
+  ifelse wholep :answer [
+    showbases :answer
+    if :answer < 256 [lamps :answer]
+  ] [
+    print sentence :answer [is not a whole number.]
+  ]
+  converter
+end
+
+clearscreen hideturtle
+lamps 42
+converter

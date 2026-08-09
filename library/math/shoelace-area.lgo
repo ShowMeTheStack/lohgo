@@ -1,0 +1,185 @@
+; ============================================================
+; TITLE:    Shoelace Formula
+; CATEGORY: Mathematics
+; LEVEL:    Advanced
+; TAGS:     area, polygons, coordinates, cross product, pick's theorem
+; SUMMARY:  Finds the area of any polygon from its corner coordinates with the shoelace formula, and checks it with Pick's theorem.
+; ============================================================
+;
+; WHAT IT DOES
+;   List the corners of a polygon in order, going around it. Multiply
+;   each x by the NEXT corner's y, and each y by the next corner's x.
+;   Half the difference of the two totals is the area. Written in two
+;   columns the multiplications criss-cross like the laces of a shoe.
+;   The program works through the arithmetic for one shape, draws it
+;   on a grid, and checks the answer a second way using Pick's
+;   theorem, which only counts dots on the grid.
+;
+; HOW TO USE
+;   Press Run. Change the corner list "shape (whole numbers between
+;   -9 and 9 keep it on the grid). Go around the shape in order,
+;   either clockwise or counterclockwise, without the edges crossing.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a polygon as a list of [x y] points
+;   * pairing each point with the next one, wrapping round at the end
+;   * why the sign of the answer tells you which way you went round
+;   * GCD to count grid points along a slanted edge
+;
+; THINGS TO TRY
+;   * Reverse the list of corners. What happens to the signed total?
+;   * Make a square [[0 0] [4 0] [4 4] [0 4]] and check you get 16.
+;   * Draw a shape whose edges cross, like a bow tie. Is the answer
+;     still its area?
+; ============================================================
+
+make "unit 26
+make "shape [[-7 -4] [2 -6] [8 -1] [5 6] [-1 3] [-5 7] [-8 1]]
+
+; The point after point i, going back to the first after the last.
+to nextpoint :i :pts
+  output item 1 + remainder :i count :pts :pts
+end
+
+; Twice the signed area: the sum of x1*y2 - x2*y1 over all edges.
+to doublearea :pts
+  localmake "total 0
+  for [i 1 count :pts] [
+    localmake "p item :i :pts
+    localmake "q nextpoint :i :pts
+    make "total :total + (first :p) * (last :q) - (first :q) * (last :p)
+  ]
+  output :total
+end
+
+to area :pts
+  output (abs doublearea :pts) / 2
+end
+
+; Print every criss-cross product so you can follow the arithmetic.
+to explain :pts
+  print "|  x1  y1    x2  y2    x1*y2 - x2*y1|
+  for [i 1 count :pts] [
+    localmake "p item :i :pts
+    localmake "q nextpoint :i :pts
+    print (sentence form first :p 4 0 form last :p 3 0 form first :q 5 0 form last :q 3 0 ~
+                    form (first :p) * (last :q) - (first :q) * (last :p) 10 0)
+  ]
+  print (sentence [Total:] doublearea :pts [so the area is half of] abs doublearea :pts "= area :pts)
+end
+
+; ---- Pick's theorem: area = inside + boundary/2 - 1 ----------------
+to gcd :a :b
+  if :b = 0 [output abs :a]
+  output gcd :b remainder :a :b
+end
+
+; Grid points on the edges: an edge across dx and up dy passes
+; through gcd(dx, dy) of them, not counting where it starts.
+to boundary :pts
+  localmake "b 0
+  for [i 1 count :pts] [
+    localmake "p item :i :pts
+    localmake "q nextpoint :i :pts
+    make "b :b + gcd (first :q) - (first :p) (last :q) - (last :p)
+  ]
+  output :b
+end
+
+; Is the grid point (x, y) strictly inside? Shoot a ray to the right
+; and count how many edges it crosses: odd means inside.
+to insidep :x :y :pts
+  localmake "in "false
+  for [i 1 count :pts] [
+    localmake "p item :i :pts
+    localmake "q nextpoint :i :pts
+    if not ((last :p) > :y) = ((last :q) > :y) [
+      localmake "cross (first :p) + (:y - last :p) * ((first :q) - (first :p)) / ((last :q) - (last :p))
+      if :x < :cross [make "in not :in]
+    ]
+  ]
+  output :in
+end
+
+; Is (x, y) exactly on one of the edges? Then it is a boundary point.
+to onedgep :x :y :pts
+  for [i 1 count :pts] [
+    localmake "p item :i :pts
+    localmake "q nextpoint :i :pts
+    localmake "turn ((first :q) - (first :p)) * (:y - last :p) - ((last :q) - (last :p)) * (:x - first :p)
+    if and :turn = 0 (between :x first :p first :q) [if between :y last :p last :q [output "true]]
+  ]
+  output "false
+end
+to between :v :a :b
+  output and :v >= (min2 :a :b) :v <= (max2 :a :b)
+end
+to min2 :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+to max2 :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+; Count the grid points strictly inside, marking each with a dot.
+to interior :pts
+  localmake "n 0
+  setpensize 6 setpencolor [40 150 80]
+  for [x -10 10] [
+    for [y -10 10] [
+      if and insidep :x :y :pts not onedgep :x :y :pts [
+        make "n :n + 1
+        dot list :x * :unit :y * :unit
+      ]
+    ]
+  ]
+  output :n
+end
+
+; ---- drawing --------------------------------------------------------
+to grid
+  setpensize 1 setpencolor [215 220 230]
+  for [i -10 10] [
+    penup setxy :i * :unit -10 * :unit pendown sety 10 * :unit
+    penup setxy -10 * :unit :i * :unit pendown setx 10 * :unit
+  ]
+  setpencolor [150 150 160] setpensize 2
+  penup setxy 0 -10 * :unit pendown sety 10 * :unit
+  penup setxy -10 * :unit 0 pendown setx 10 * :unit
+end
+
+; The pale blue inside of the shape. It is painted before the grid,
+; because later drawing covers earlier drawing: this way the grid
+; lines stay visible across the shape.
+to shade :pts
+  penup setpos map [? * :unit] first :pts
+  filled [200 225 255] [foreach :pts [setpos map [? * :unit] ?]]
+end
+
+to drawshape :pts
+  penup setpos map [? * :unit] first :pts
+  setpencolor [30 80 180] setpensize 3 pendown
+  foreach :pts [setpos map [? * :unit] ?]
+  setpos map [? * :unit] first :pts
+  ; label each corner with its coordinates
+  setpencolor [180 30 60] setpensize 9 setlabelheight 12
+  foreach :pts [
+    dot map [? * :unit] ?
+    penup setpos map [? * :unit + 6] ? label (word "|(| first ? ", last ? "|)|)
+  ]
+end
+
+clearscreen hideturtle
+explain :shape
+make "a area :shape
+make "b boundary :shape
+shade :shape
+grid
+drawshape :shape
+; the green dots are the inside grid points that Pick's theorem counts
+make "i interior :shape
+print "
+print (sentence [Pick's theorem counts dots instead: B =] :b [on the edges, I =] :i [inside.])
+print (sentence [I + B/2 - 1 =] :i + :b / 2 - 1 [square units, the same answer.])
+penup setxy -390 270 setpencolor "black setlabelheight 18
+label (sentence [area =] :a [square units])

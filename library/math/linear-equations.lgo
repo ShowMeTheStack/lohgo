@@ -1,0 +1,124 @@
+; ============================================================
+; TITLE:    Two Equations, Two Lines
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     algebra, simultaneous equations, graphs, cramer's rule
+; SUMMARY:  Solves pairs of linear equations with Cramer's rule and shows each solution as the crossing point of two lines.
+; ============================================================
+;
+; WHAT IT DOES
+;   An equation like 2x + 3y = 12 is a straight line: every point on
+;   it makes the equation true. Two such equations are both true only
+;   where their lines cross. The program solves three pairs. It draws
+;   each pair in its own panel and marks the crossing point. One pair
+;   has parallel lines, which never cross, so it has no solution.
+;
+; HOW TO USE
+;   Press Run. Each equation a x + b y = c is written as a list
+;   [a b c]. Change the list "systems at the bottom to solve your own.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the determinant a1*b2 - a2*b1, and what it means when it is 0
+;   * Cramer's rule for x and y
+;   * drawing a line from its equation, even a vertical one
+;   * dividing the screen into panels with a few position variables
+;
+; THINGS TO TRY
+;   * Add [[1 1 4] [2 2 8]]. Why is this pair different from the
+;     parallel one? (Hint: it is the same line twice.)
+;   * Make a pair that crosses at a point with fractions.
+;   * Add a third line to one panel and see if all three meet.
+; ============================================================
+
+; Each panel is a small graph from -6 to 6 in both directions.
+make "unit 21
+
+to det :e1 :e2
+  output (first :e1) * (item 2 :e2) - (first :e2) * (item 2 :e1)
+end
+
+; Cramer's rule. Outputs [x y], or [] when the lines are parallel.
+to solve :e1 :e2
+  localmake "d det :e1 :e2
+  if :d = 0 [output []]
+  localmake "x ((last :e1) * (item 2 :e2) - (last :e2) * (item 2 :e1)) / :d
+  localmake "y ((first :e1) * (last :e2) - (first :e2) * (last :e1)) / :d
+  output list :x :y
+end
+
+; Write an equation nicely: [2 -1 3] becomes 2x - y = 3, and
+; [1 0 -2] becomes x = -2.
+to eqtext :e
+  localmake "a first :e  localmake "b item 2 :e
+  localmake "left ifelse :a = 0 ["||] [term :a "x]
+  if not :b = 0 [
+    ifelse emptyp :left [make "left term :b "y] [
+      make "left (word :left ifelse :b < 0 ["| - |] ["| + |] term abs :b "y)
+    ]
+  ]
+  output (word :left "| = | last :e)
+end
+; 1x is written x, and -1x is written -x
+to term :k :var
+  if :k = 1 [output :var]
+  if :k = -1 [output word "- :var]
+  output word :k :var
+end
+
+; Move to a point given in graph units, inside the panel centered at (cx, cy).
+to at :x :y
+  setxy :cx + :x * :unit :cy + :y * :unit
+end
+
+to axes
+  setpencolor [200 200 210] setpensize 1
+  for [i -6 6] [penup at :i -6 pendown at :i 6 penup at -6 :i pendown at 6 :i]
+  setpencolor [100 100 110] setpensize 2
+  penup at -6 0 pendown at 6 0 penup at 0 -6 pendown at 0 6
+end
+
+; Draw a x + b y = c across the panel.
+to drawline :e :color
+  localmake "a first :e  localmake "b item 2 :e  localmake "c last :e
+  setpencolor :color setpensize 3
+  ifelse :b = 0 [
+    ; vertical: x is the same everywhere
+    penup at :c / :a -6 pendown at :c / :a 6
+  ] [
+    ; step across the panel, drawing only while y stays inside it,
+    ; so steep lines do not spill into the next panel
+    penup
+    for [i -120 120] [
+      localmake "x :i / 20
+      localmake "y (:c - :a * :x) / :b
+      ifelse (abs :y) <= 6 [at :x :y pendown] [penup]
+    ]
+    penup
+  ]
+end
+
+to panel :system :cx :cy
+  localmake "e1 first :system  localmake "e2 last :system
+  axes
+  drawline :e1 [220 70 60]
+  drawline :e2 [40 110 210]
+  localmake "answer solve :e1 :e2
+  setlabelheight 13
+  penup at -6 8.6 setpencolor [220 70 60] label eqtext :e1
+  penup at -6 7.4 setpencolor [40 110 210] label eqtext :e2
+  penup at -6 -7.8 setpencolor "black
+  ifelse emptyp :answer [
+    label [parallel: no solution]
+  ] [
+    label (sentence [x =] word first :answer ", [y =] last :answer)
+    setpensize 12 setpencolor [250 180 30]
+    dot list :cx + :unit * first :answer :cy + :unit * last :answer
+  ]
+  print (sentence eqtext :e1 [and] eqtext :e2)
+  ifelse emptyp :answer [print [  have no solution: the lines are parallel.]] ~
+    [print (sentence [  solution: x =] first :answer [and y =] last :answer)]
+end
+
+make "systems [[[2 3 12] [1 -1 1]] [[1 2 2] [2 4 -8]] [[1 0 -2] [3 -2 0]]]
+clearscreen hideturtle
+foreach :systems [panel ? -262 + 262 * (# - 1) 0]

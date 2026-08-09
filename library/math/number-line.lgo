@@ -1,0 +1,85 @@
+; ============================================================
+; TITLE:    Hopping on the Number Line
+; CATEGORY: Mathematics
+; LEVEL:    Beginner
+; TAGS:     number line, addition, subtraction, negative numbers, animation
+; SUMMARY:  A frog hops along number lines to act out sums with positive and negative numbers.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws three number lines from -10 to 10. On each one a sum is
+;   acted out: start at the first number, then make one hop for
+;   every unit of the second. Adding a positive number hops to the
+;   right; adding a negative number hops to the left. Where the
+;   hops end is the answer.
+;
+; HOW TO USE
+;   Press Run and watch the hops. Change the list "sums at the bottom
+;   to act out your own sums. Keep the answers between -10 and 10.
+;
+; CONCEPTS YOU WILL LEARN
+;   * turning a number into a position: x = number times spacing
+;   * drawing a half circle with REPEAT 180 [FORWARD ... RIGHT 1]
+;   * using the sign of a number to choose a direction
+;   * WAIT to slow down an animation so you can follow it
+;
+; THINGS TO TRY
+;   * Add the sum [-7 7]. Where does it land, and why?
+;   * Make :spacing 20 and use numbers up to 18.
+;   * Draw big hops of 5 instead of hops of 1. Fewer hops, same answer!
+; ============================================================
+
+make "spacing 34
+
+to sx :n
+  output :n * :spacing
+end
+
+; A number line at height y, with a tick and label for every whole number.
+to numberline :y
+  setpencolor [70 70 70] setpensize 2
+  penup setxy sx -10.5 :y setheading 90 pendown setxy sx 10.5 :y
+  setlabelheight 12
+  for [n -10 10] [
+    penup setxy sx :n :y + 5 pendown sety :y - 5
+    penup setxy (sx :n) - 3 * count :n :y - 20
+    ifelse :n = 0 [setpencolor "red label :n setpencolor [70 70 70]] [label :n]
+  ]
+end
+
+; One hop of one unit. :dir is 1 for right, -1 for left.
+to hop :dir
+  localmake "r :spacing / 2
+  ; start with half a turn so the hop is symmetric and lands back
+  ; on the line, not a little above it
+  setheading 2.5 * :dir pendown
+  repeat 36 [
+    forward :r * 3.14159 / 36
+    ifelse :dir > 0 [right 5] [left 5]
+  ]
+  wait 4
+end
+
+to actout :sum :y
+  localmake "a first :sum
+  localmake "b last :sum
+  localmake "dir ifelse :b < 0 [-1] [1]
+  numberline :y
+  ; a big dot where we start
+  setpencolor [40 120 220] setpensize 10 dot list sx :a :y
+  setpensize 3
+  ifelse :b < 0 [setpencolor [220 80 60]] [setpencolor [40 160 80]]
+  penup setxy sx :a :y
+  repeat abs :b [hop :dir]
+  ; a big dot where we land
+  setpencolor [240 170 30] setpensize 12 dot list sx :a + :b :y
+  ; write the sum, adding brackets round a negative second number
+  penup setxy -380 :y + 50 setpencolor "black setlabelheight 18
+  ifelse :b < 0 ~
+    [label (sentence :a "+ (word "|(| :b "|)|) "= :a + :b)] ~
+    [label (sentence :a "+ :b "= :a + :b)]
+end
+
+make "sums [[3 4] [5 -8] [-6 -3]]
+clearscreen hideturtle
+foreach :sums [actout ? 190 - 175 * (# - 1)]

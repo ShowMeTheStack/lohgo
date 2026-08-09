@@ -1,0 +1,87 @@
+; ============================================================
+; TITLE:    Multiplication Grid
+; CATEGORY: Mathematics
+; LEVEL:    Beginner
+; TAGS:     multiplication, tables, grid, nested loops, color
+; SUMMARY:  Draws the 10 by 10 times table as a grid of colored squares with every answer written inside.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws a times table. The top row and the left column hold the
+;   numbers 1 to 10, and every other square holds row times column.
+;   Bigger answers get darker squares, so you can see the table grow
+;   from the top-left corner. The square numbers (1, 4, 9, 16 ...)
+;   run down the diagonal and are colored gold.
+;
+; HOW TO USE
+;   Press Run. Change :size to make a 5 by 5 or a 12 by 12 table.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a FOR loop inside another FOR loop to visit every square
+;   * turning a number into a shade of color with a list [r g b]
+;   * centering a drawing by working out where it should start
+;
+; THINGS TO TRY
+;   * Look at the colors: why is the grid the same on both sides of
+;     the gold diagonal?
+;   * Color only the even answers, using REMAINDER :answer 2.
+;   * Set :size to 12 and :cell to 38 to fit the 12 times table.
+; ============================================================
+
+make "size 10
+make "cell 46
+
+; The top-left corner of the whole grid, worked out so the grid
+; (header row included) sits in the middle of the screen.
+make "x0 0 - (:size + 1) * :cell / 2
+make "y0 (:size + 1) * :cell / 2
+
+; A filled square with a thin border. Its top-left corner is (x, y).
+to cellbox :x :y :color
+  penup setxy :x :y setheading 90
+  filled :color [repeat 4 [forward :cell right 90]]
+  setpencolor [255 255 255] setpensize 2
+  pendown repeat 4 [forward :cell right 90] penup
+end
+
+; Write a number roughly in the middle of a cell. A label starts at
+; the turtle and goes right, so we step left by half the text width.
+to write :n :x :y :color
+  setpencolor :color
+  setxy :x + :cell / 2 - 4 * count :n :y - :cell / 2 - 6
+  label :n
+end
+
+; Lighter for small answers, darker for big ones.
+to shade :answer
+  localmake "k 1 - :answer / (:size * :size)
+  output (list 40 + 180 * :k 90 + 150 * :k 200 + 50 * :k)
+end
+
+to grid
+  setlabelheight 16
+  ; the header row and column
+  for [i 1 :size] [
+    cellbox :x0 + :i * :cell :y0 [90 90 90]
+    write :i :x0 + :i * :cell :y0 "white
+    cellbox :x0 :y0 - :i * :cell [90 90 90]
+    write :i :x0 :y0 - :i * :cell "white
+  ]
+  ; the times table itself
+  for [row 1 :size] [
+    for [col 1 :size] [
+      localmake "x :x0 + :col * :cell
+      localmake "y :y0 - :row * :cell
+      localmake "answer :row * :col
+      ifelse :row = :col [cellbox :x :y [240 190 40]] [cellbox :x :y shade :answer]
+      ; white text on the dark squares, black on the light and gold ones
+      ifelse and :answer > :size * :size / 2 :row <> :col [write :answer :x :y "white] [write :answer :x :y "black]
+    ]
+  ]
+  ; a times sign in the empty corner
+  cellbox :x0 :y0 [40 40 40]
+  write "x :x0 :y0 "white
+end
+
+clearscreen hideturtle
+grid

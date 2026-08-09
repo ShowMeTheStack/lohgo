@@ -1,0 +1,87 @@
+; ============================================================
+; TITLE:    Pi by Throwing Darts
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     pi, probability, random, dot, animation, estimation
+; SUMMARY:  Throws thousands of random darts at a square with a circle in it and estimates pi from how many land inside.
+; ============================================================
+;
+; WHAT IT DOES
+;   A circle fits exactly inside a square. Darts land at random
+;   places in the square: blue if inside the circle, orange if not.
+;   The circle covers pi/4 of the square (about 78.5 percent), so
+;   4 times the fraction of blue darts is a guess for pi. The guess
+;   on the right gets updated as more darts land.
+;
+; HOW TO USE
+;   Press Run and watch. Change :darts to throw more. More darts give
+;   a better guess, but slowly: to get one more correct digit you
+;   need about 100 times as many darts.
+;
+; CONCEPTS YOU WILL LEARN
+;   * RANDOM to make points that land anywhere with equal chance
+;   * the distance formula (Pythagoras) to test "inside the circle"
+;   * DOT to plot single points
+;   * PENERASE to rub out an old label before writing a new one
+;
+; THINGS TO TRY
+;   * Use RERANDOM at the start to get the same darts every run.
+;   * Throw only 100 darts several times. How much do the guesses vary?
+;   * Change :radius. Does the estimate depend on the size?
+; ============================================================
+
+make "radius 200
+make "cx -160
+make "darts 4000
+make "shown []
+
+to frame
+  ; the square, then the circle inside it
+  setpensize 2 setpencolor [60 60 60]
+  penup setxy :cx - :radius 0 - :radius setheading 0 pendown
+  repeat 4 [forward 2 * :radius right 90]
+  penup setxy :cx 0 pendown arc 360 :radius
+end
+
+; Write a line of text on the right, first rubbing out what was there.
+to show.result :text
+  penup setxy 90 20 setlabelheight 22
+  if not emptyp :shown [penerase label :shown penpaint]
+  setpencolor [40 40 40] label :text
+  make "shown :text
+end
+
+; A random coordinate from -radius to +radius, in steps of 0.01.
+to coordinate
+  output (random -100 * :radius 100 * :radius) / 100
+end
+
+to throwdarts :n
+  localmake "inside 0
+  setpensize 3
+  for [i 1 :n] [
+    localmake "x coordinate
+    localmake "y coordinate
+    ; inside the circle when the distance from the middle is at
+    ; most the radius; comparing squares avoids a slow SQRT
+    ifelse :x * :x + :y * :y <= :radius * :radius ~
+      [make "inside :inside + 1 setpencolor [40 110 220]] ~
+      [setpencolor [240 140 40]]
+    dot list :cx + :x :y
+    if 0 = remainder :i 200 [
+      show.result (sentence [pi is about] form 4 * :inside / :i 0 4)
+      wait 1
+    ]
+  ]
+  print (sentence :inside [of] :n [darts landed inside the circle.])
+  print (sentence [Estimate: 4 *] :inside "/ :n "= 4 * :inside / :n)
+  print (sentence [Real pi:] pi)
+end
+
+clearscreen hideturtle
+setbackground "white
+frame
+penup setxy 90 70 setpencolor [40 40 40] setlabelheight 16
+label [Blue darts: inside the circle]
+setxy 90 -30 label [4 x blue / all darts]
+throwdarts :darts

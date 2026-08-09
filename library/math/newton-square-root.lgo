@@ -1,0 +1,111 @@
+; ============================================================
+; TITLE:    Square Roots by Newton's Method
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     square root, newton, iteration, tangent, input
+; SUMMARY:  Asks for a number, finds its square root by repeated averaging, and draws the tangent lines Newton's method follows.
+; ============================================================
+;
+; WHAT IT DOES
+;   To find the square root of N, start with any guess x. If x is too
+;   big, N/x is too small, so their average is a better guess. Repeat
+;   and the guesses improve very fast: the number of correct digits
+;   roughly doubles each step. The drawing shows why this works: each
+;   new guess is where a tangent line to the curve y = x*x - N
+;   crosses the x axis.
+;
+; HOW TO USE
+;   Press Run, click in the command center and type a positive number
+;   such as 7 or 50, then press Enter.
+;
+; CONCEPTS YOU WILL LEARN
+;   * checking input with NUMBERP and asking again if it is wrong
+;   * an iteration: feeding each answer back in as the next guess
+;   * stopping a loop when the answer stops changing
+;   * scaling a graph to fit whatever number was typed
+;
+; THINGS TO TRY
+;   * Try 2. The first guess is 2 and it still gets 1.41421356 quickly.
+;   * Start from a silly guess, like :n * 100, by changing FIRSTGUESS.
+;   * Change the rule to find cube roots: x - (x*x*x - N) / (3*x*x).
+; ============================================================
+
+; Keep asking until we get a positive number.
+to asknumber
+  print [Type a positive number and press Enter:]
+  localmake "answer readword
+  ; check NUMBERP first: comparing a word like "Sam" with 0 is an error
+  if numberp :answer [if :answer > 0 [output :answer]]
+  print sentence :answer [is not a positive number. Try again.]
+  output asknumber
+end
+
+to firstguess :n
+  ; any positive start works; N itself is simple, but 1 is better for N < 1
+  output ifelse :n > 1 [:n] [1]
+end
+
+to better :x :n
+  output (:x + :n / :x) / 2
+end
+
+; Run the method, print each guess, and output the list of guesses.
+to newton :n
+  localmake "x firstguess :n
+  localmake "guesses (list :x)
+  print (sentence [guess 0:] :x)
+  for [k 1 20] [
+    localmake "next better :x :n
+    print (sentence "guess word :k ": form :next 0 10)
+    make "guesses lput :next :guesses
+    ; when two guesses agree to 10 decimal places we are done
+    if (abs :next - :x) < 1e-10 [output :guesses]
+    make "x :next
+  ]
+  output :guesses
+end
+
+; ---- drawing the curve and the tangents --------------------------
+to sx :x
+  output -340 + 640 * :x / :xmax
+end
+to sy :y
+  output -230 + 480 * (:y - :ylow) / (:yhigh - :ylow)
+end
+to curve :x
+  output :x * :x - :n
+end
+
+to drawgraph :guesses
+  make "xmax 1.1 * first :guesses
+  make "ylow minus :n
+  make "yhigh curve :xmax
+  ; the x axis and the parabola
+  setpencolor [90 90 90] setpensize 2
+  penup setxy sx 0 sy 0 pendown setxy sx :xmax sy 0
+  penup setxy sx 0 sy :ylow pendown setxy sx 0 sy :yhigh
+  setpencolor [40 100 200] setpensize 3
+  penup setxy sx 0 sy curve 0 pendown
+  for [i 1 100] [setxy sx :i * :xmax / 100 sy curve :i * :xmax / 100]
+  ; one tangent per guess: from the curve above x down to the next guess
+  setpensize 2
+  foreach butlast :guesses [
+    localmake "next item # + 1 :guesses
+    setpencolor [220 70 60]
+    penup setxy sx ? sy 0 pendown setxy sx ? sy curve ?
+    setpencolor [240 150 40]
+    setxy sx :next sy 0
+    setpensize 7 penup dot list sx ? sy 0 setpensize 2
+  ]
+  setpencolor [30 140 60] setpensize 9
+  dot list sx last :guesses sy 0
+  penup setxy -340 260 setpencolor "black setlabelheight 18
+  label (sentence [square root of] :n [is about] form last :guesses 0 6)
+end
+
+clearscreen hideturtle
+make "n asknumber
+print (sentence [Finding the square root of] :n)
+make "guesses newton :n
+print (sentence [Check:] form last :guesses 0 10 [squared is] form (last :guesses) * (last :guesses) 0 10)
+drawgraph :guesses

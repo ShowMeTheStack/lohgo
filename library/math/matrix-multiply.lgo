@@ -1,0 +1,126 @@
+; ============================================================
+; TITLE:    Matrix Multiplication
+; CATEGORY: Mathematics
+; LEVEL:    Advanced
+; TAGS:     matrices, arrays, mdarray, transformations, linear algebra
+; SUMMARY:  Multiplies matrices stored in two-dimensional arrays and uses them to stretch and turn a letter F.
+; ============================================================
+;
+; WHAT IT DOES
+;   A matrix is a grid of numbers. To multiply two of them, each entry
+;   of the answer is a row of the first times a column of the second:
+;   multiply matching pairs and add. The program prints a worked
+;   example, then shows what 2 by 2 matrices DO: they move every point
+;   of a shape. A shear (A) slants the letter F, a rotation (B) turns
+;   it. Doing A then B is not the same as B then A, and the pictures
+;   prove it.
+;
+; HOW TO USE
+;   Press Run. Change the numbers in "a and "b (the shear and the
+;   rotation) and run again to see other transformations.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MDARRAY, MDITEM and MDSETITEM for tables with rows and columns
+;   * the row-times-column rule, written as three nested loops
+;   * matrices as machines that move points: [x y] goes to M times [x y]
+;   * why the order of multiplication matters
+;
+; THINGS TO TRY
+;   * Make "a the matrix [[2 0] [0 2]]. What does it do to the F?
+;   * Try [[-1 0] [0 1]]: a mirror. What do you get if you use it twice?
+;   * Find a matrix C with C times C equal to the rotation B.
+; ============================================================
+
+; Build an array from a list of rows, like [[1 2] [3 4]].
+to matrix :rows
+  localmake "m mdarray (list count :rows count first :rows)
+  for [i 1 count :rows] [
+    for [j 1 count first :rows] [mdsetitem (list :i :j) :m item :j item :i :rows]
+  ]
+  output :m
+end
+
+to rows :m
+  output count :m
+end
+to cols :m
+  output count item 1 :m
+end
+
+; Row i of the first times column j of the second, added up.
+to matmul :p :q
+  localmake "r mdarray (list rows :p cols :q)
+  for [i 1 rows :p] [
+    for [j 1 cols :q] [
+      localmake "total 0
+      for [k 1 cols :p] [
+        make "total :total + (mditem (list :i :k) :p) * (mditem (list :k :j) :q)
+      ]
+      mdsetitem (list :i :j) :r :total
+    ]
+  ]
+  output :r
+end
+
+to showmatrix :name :m
+  print word :name ":
+  for [i 1 rows :m] [
+    type "|   [|
+    for [j 1 cols :m] [type nice mditem (list :i :j) :m]
+    print "| ]|
+  ]
+end
+
+; Six characters wide; one decimal place only when it is needed.
+to nice :v
+  if :v = int :v [output form :v 6 0]
+  output form :v 6 1
+end
+
+; Move one point [x y] with a 2 by 2 matrix.
+to transform :m :pt
+  localmake "x first :pt  localmake "y last :pt
+  output list (mditem [1 1] :m) * :x + (mditem [1 2] :m) * :y ~
+              (mditem [2 1] :m) * :x + (mditem [2 2] :m) * :y
+end
+
+; The letter F, as a path of points (in small units).
+make "letterf [[0 0] [0 5] [3 5] [3 4] [1 4] [1 3] [2 3] [2 2] [1 2] [1 0] [0 0]]
+
+; Draw the F after moving it with matrix m, in a panel centered at cx.
+to panel :m :cx :title :color
+  localmake "u 16
+  ; faint axes
+  setpencolor [210 210 210] setpensize 1
+  penup setxy :cx - 85 0 pendown setx :cx + 85
+  penup setxy :cx -110 pendown sety 110
+  ; the moved letter, filled
+  localmake "pts map [transform :m ?] :letterf
+  penup setxy :cx + :u * first first :pts :u * last first :pts
+  filled :color [foreach :pts [setxy :cx + :u * first ? :u * last ?]]
+  setpencolor [40 40 40] setpensize 2 pendown
+  foreach :pts [setxy :cx + :u * first ? :u * last ?]
+  penup setxy :cx - 4 * count :title -150 setlabelheight 16 label :title
+end
+
+clearscreen hideturtle
+make "p matrix [[1 2 3] [4 5 6]]
+make "q matrix [[7 8] [9 10] [11 12]]
+print [A 2x3 matrix times a 3x2 matrix gives a 2x2 matrix:]
+showmatrix "P :p
+showmatrix "Q :q
+showmatrix "|P times Q| matmul :p :q
+print [For example, top-left: 1*7 + 2*9 + 3*11 = 58]
+print "
+make "a matrix [[1 0.8] [0 1]]
+make "b matrix [[0 1] [-1 0]]
+showmatrix "|A (shear)| :a
+showmatrix "|B (turn a quarter clockwise)| :b
+showmatrix "|B times A (A first, then B)| matmul :b :a
+showmatrix "|A times B (B first, then A)| matmul :a :b
+panel matrix [[1 0] [0 1]] -300 "F [200 200 200]
+panel :a -100 "A [250 160 80]
+panel matmul :b :a 100 [B times A] [110 170 240]
+panel matmul :a :b 300 [A times B] [140 200 120]
+penup setxy -230 230 setpencolor "black setlabelheight 18
+label [The same F moved by different matrices]

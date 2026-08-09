@@ -1,0 +1,96 @@
+; ============================================================
+; TITLE:    Roman Numerals
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     roman numerals, words, lists, place value, clock
+; SUMMARY:  Converts numbers to Roman numerals and back, then uses them to draw a clock face.
+; ============================================================
+;
+; WHAT IT DOES
+;   The Romans wrote numbers with letters: I=1, V=5, X=10, L=50,
+;   C=100, D=500, M=1000. A smaller letter in front of a bigger one
+;   means "subtract", so IV is 4 and XC is 90. The program converts
+;   numbers both ways, prints some famous years, and finally draws
+;   a clock face whose hour labels it writes by itself.
+;
+; HOW TO USE
+;   Press Run. At the command center try:
+;     print roman 2024
+;     print arabic "MCMXCIX
+;
+; CONCEPTS YOU WILL LEARN
+;   * a table stored as a list of pairs, from biggest to smallest
+;   * the "greedy" method: always take the biggest piece that fits
+;   * reading a word letter by letter with FIRST and BUTFIRST
+;   * placing labels around a circle with SIN and COS
+;
+; THINGS TO TRY
+;   * Which year below 2000 has the longest Roman numeral?
+;   * Some old clocks use IIII instead of IV. Remove [4 IV] from the
+;     table and look at the 4 on the clock.
+;   * Make ARABIC warn about bad numerals like IIX.
+; ============================================================
+
+make "table [[1000 M] [900 CM] [500 D] [400 CD] [100 C] [90 XC] [50 L] [40 XL] [10 X] [9 IX] [5 V] [4 IV] [1 I]]
+
+; Greedy: take the biggest value that fits, write its letters, and
+; convert what is left over in the same way.
+to roman :n
+  if :n = 0 [output "||]
+  localmake "pair find [(first ?) <= :n] :table
+  output word last :pair roman :n - first :pair
+end
+
+; The value of a single letter.
+to letter :c
+  localmake "pair find [(last ?) = :c] :table
+  output first :pair
+end
+
+; Read left to right. If a letter is worth less than the one after
+; it (the I in IV), it counts as negative.
+to arabic :w
+  if emptyp :w [output 0]
+  localmake "here letter first :w
+  if emptyp butfirst :w [output :here]
+  if :here < letter first butfirst :w [output (arabic butfirst :w) - :here]
+  output :here + arabic butfirst :w
+end
+
+to famous
+  foreach [[1066 [Battle of Hastings]] [1492 [Columbus sails]] [1776 [American independence]] ~
+           [1969 [Moon landing]] [2000 [A new millennium]] [3999 [The biggest with these letters]]] [
+    localmake "r roman first ?
+    ; ARABIC converts the numeral back, as a check that both agree
+    print (sentence form first ? 5 0 "= :r (word "|(back: | arabic :r "|)|) last ?)
+  ]
+end
+
+; A clock face with Roman hours. Hour h sits at 30h degrees,
+; measured clockwise from 12 o'clock, just like a turtle heading.
+to clockface :r
+  setpencolor [120 80 40] setpensize 6
+  penup home pendown arc 360 :r
+  setpensize 2 arc 360 :r - 12
+  setlabelheight 22 setpencolor [60 40 30]
+  for [h 1 12] [
+    localmake "text roman :h
+    ; a label starts at its left edge, so shift left by half its width
+    penup setxy (:r - 45) * sin 30 * :h (:r - 45) * cos 30 * :h
+    setxy xcor - 7 * count :text ycor - 8
+    label :text
+    ; a tick mark for each hour
+    penup home setheading 30 * :h forward :r - 12 pendown back 10
+  ]
+  ; the hands show ten past ten, as clocks in shop windows do
+  setpensize 7 penup home setheading 305 pendown forward :r * 0.45
+  setpensize 4 penup home setheading 60 pendown forward :r * 0.62
+  penup home setpensize 16 dot [0 0]
+end
+
+clearscreen hideturtle
+print [Some years in Roman numerals:]
+famous
+print "
+print (sentence [Your turn: MMXXIV is] arabic "MMXXIV)
+clockface 230

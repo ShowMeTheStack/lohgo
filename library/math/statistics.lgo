@@ -1,0 +1,132 @@
+; ============================================================
+; TITLE:    Mean, Median, Mode
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     statistics, average, lists, sorting, dot plot
+; SUMMARY:  Works out the mean, median, mode, range and standard deviation of a list and shows them on a dot plot.
+; ============================================================
+;
+; WHAT IT DOES
+;   Takes the scores of 25 students on a quiz out of 20. It prints
+;   the usual "averages" and how spread out the scores are. Then it
+;   draws a dot plot: one dot per student, stacked above their score.
+;   A red line marks the mean, a blue line marks the median, and a
+;   shaded band shows one standard deviation either side of the mean.
+;
+; HOW TO USE
+;   Press Run. Put your own numbers in the list "scores at the bottom
+;   (whole numbers from 0 to 20 fit the plot).
+;
+; CONCEPTS YOU WILL LEARN
+;   * sorting a list with insertion sort
+;   * REDUCE and MAP to add things up in one line
+;   * counting how often each value appears
+;   * what each kind of average tells you, and what it hides
+;
+; THINGS TO TRY
+;   * Add a score of 0 to the list. Which moves more, mean or median?
+;   * Make two values tie for most common. What does MODE report?
+;   * Change the list so that the mean and median are far apart.
+; ============================================================
+
+; ---- sorting ------------------------------------------------------
+to insert :x :sorted
+  if emptyp :sorted [output (list :x)]
+  if :x <= first :sorted [output fput :x :sorted]
+  output fput first :sorted insert :x butfirst :sorted
+end
+to sortlist :data
+  if emptyp :data [output []]
+  output insert first :data sortlist butfirst :data
+end
+
+; ---- the statistics -----------------------------------------------
+to mean :data
+  output (reduce "sum :data) / count :data
+end
+
+; The middle value once sorted; with an even count, the average of
+; the two middle values.
+to median :data
+  localmake "s sortlist :data
+  localmake "n count :s
+  if odd? :n [output item (:n + 1) / 2 :s]
+  output ((item :n / 2 :s) + (item :n / 2 + 1 :s)) / 2
+end
+to odd? :n
+  output 1 = remainder :n 2
+end
+
+; How many times does x appear?
+to howmany :x :data
+  output count filter [? = :x] :data
+end
+
+; The value that appears most often (the first one, if there is a tie).
+to mode :data
+  localmake "best first :data
+  foreach :data [if (howmany ? :data) > (howmany :best :data) [make "best ?]]
+  output :best
+end
+
+; The typical distance from the mean: average the squared distances,
+; then take the square root to get back to the original units.
+to stdev :data
+  localmake "m mean :data
+  localmake "squares map [(? - :m) * (? - :m)] :data
+  output sqrt (reduce "sum :squares) / count :data
+end
+
+to max2 :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+to min2 :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+; ---- the dot plot --------------------------------------------------
+to sx :v
+  output -300 + 30 * :v
+end
+
+to dotplot :data
+  localmake "m mean :data
+  localmake "sd stdev :data
+  ; the band of one standard deviation each side of the mean
+  penup setxy sx :m - :sd -200 setheading 0
+  filled [255 240 200] [forward 330 right 90 forward 60 * :sd right 90 forward 330 right 90]
+  ; the number line with a tick and number for every score
+  setpencolor [80 80 80] setpensize 2 setlabelheight 12
+  penup setxy sx 0 -200 setheading 90 pendown setxy sx 20 -200
+  for [v 0 20] [
+    penup setxy sx :v -200 setheading 180 pendown forward 6
+    penup setxy (sx :v) - 4 * count :v -222 label :v
+  ]
+  ; one dot per student, stacked
+  setpensize 20 setpencolor [90 120 200]
+  for [v 0 20] [
+    ; REPEAT, not FOR: FOR 1 0 would count backwards and draw two dots
+    repeat howmany :v :data [dot list sx :v -200 + 22 * repcount]
+  ]
+  ; different heights so the two captions never sit on top of each other
+  marker :m 370 [220 50 50] (word "mean| | form :m 0 2)
+  marker median :data 340 [40 140 60] (word "median| | median :data)
+end
+
+to marker :v :height :color :text
+  setpencolor :color setpensize 3
+  penup setxy sx :v -200 setheading 0 pendown forward :height
+  penup forward 6 setx xcor - 20 setlabelheight 14 label :text
+end
+
+make "scores [12 15 14 10 18 15 13 9 15 16 11 14 17 15 12 8 19 14 13 15 20 6 14 16 12]
+clearscreen hideturtle
+print (sentence [Scores:] :scores)
+print (sentence [Sorted:] sortlist :scores)
+print (sentence [Count:] count :scores)
+print (sentence [Mean:] form mean :scores 0 2)
+print (sentence [Median:] median :scores)
+print (sentence [Mode:] mode :scores [appears] howmany mode :scores :scores [times])
+print (sentence [Range:] (reduce "max2 :scores) - (reduce "min2 :scores))
+print (sentence [Standard deviation:] form stdev :scores 0 2)
+dotplot :scores

@@ -1,0 +1,111 @@
+; ============================================================
+; TITLE:    Quadratic Equation Solver
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     algebra, quadratic formula, parabola, discriminant, input
+; SUMMARY:  Asks for a, b and c, solves a x^2 + b x + c = 0 with the quadratic formula and draws the parabola.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every equation a*x*x + b*x + c = 0 can be solved with the
+;   quadratic formula. The number b*b - 4*a*c, the discriminant,
+;   decides how many answers there are: two if it is positive, one
+;   if it is zero, none (among ordinary numbers) if it is negative.
+;   The graph shows the parabola y = a*x*x + b*x + c; the answers are
+;   where it touches the x axis. The lowest (or highest) point, the
+;   vertex, is marked too.
+;
+; HOW TO USE
+;   Press Run, click in the command center and type a, b and c, one
+;   at a time, pressing Enter after each. a must not be 0.
+;   Try 1, -2, -3 (two answers), 1, 4, 4 (one) and 2, 1, 3 (none).
+;
+; CONCEPTS YOU WILL LEARN
+;   * asking for numbers and checking them before using them
+;   * the quadratic formula and the discriminant
+;   * choosing a graph window that fits the interesting part
+;
+; THINGS TO TRY
+;   * Find numbers where both answers are whole numbers.
+;   * Make a negative. Which way does the parabola open now?
+;   * Print the sum and the product of the two answers. Compare them
+;     with -b/a and c/a.
+; ============================================================
+
+; Ask until we get a number (and, if :nonzero is true, not 0).
+to asknum :name :nonzero
+  type (word :name "| = |)
+  localmake "v readword
+  if not numberp :v [print [  Please type a number.] output asknum :name :nonzero]
+  if and :nonzero :v = 0 [print [  It cannot be 0, or there is no x squared.] output asknum :name :nonzero]
+  output :v
+end
+
+to solve :a :b :c
+  localmake "d :b * :b - 4 * :a * :c
+  print (sentence [Discriminant b*b - 4ac =] :d)
+  if :d < 0 [print [It is negative, so the parabola never reaches the x axis: no real solutions.] output []]
+  if :d = 0 [print (sentence [It is zero: one solution, x =] -:b / (2 * :a)) output (list -:b / (2 * :a))]
+  localmake "r sqrt :d
+  localmake "x1 (-:b - :r) / (2 * :a)
+  localmake "x2 (-:b + :r) / (2 * :a)
+  print (sentence [It is positive: two solutions, x =] form :x1 0 4 [and x =] form :x2 0 4)
+  output list :x1 :x2
+end
+
+to f :x
+  output :a * :x * :x + :b * :x + :c
+end
+
+; Screen positions. The vertex sits in the middle, near the bottom
+; when the parabola opens upward (a > 0) and near the top otherwise.
+to sx :x
+  output (:x - :vx) * :xscale
+end
+to sy :y
+  output (ifelse :a > 0 [-200] [200]) + (:y - :vy) * :yscale
+end
+
+to graph :roots
+  make "vx -:b / (2 * :a)
+  make "vy f :vx
+  ; wide enough to see the roots (or 3 units either side of the vertex)
+  localmake "half 3
+  foreach :roots [if (abs ? - :vx) + 1 > :half [make "half (abs ? - :vx) + 1]]
+  make "xscale 360 / :half
+  ; tall enough that the curve climbs (or falls) 400 steps by the edges
+  make "yscale 400 / max 0.001 abs (f :vx + :half) - :vy
+  ; the x axis (y = 0), if it is on screen, and the y axis if x = 0 is
+  setpencolor [120 120 120] setpensize 2
+  if (abs sy 0) < 290 [penup setxy -380 sy 0 pendown setxy 380 sy 0]
+  if (abs sx 0) < 390 [penup setxy sx 0 -290 pendown setxy sx 0 290]
+  ; the parabola
+  setpencolor [40 110 210] setpensize 3 penup
+  for [i -100 100] [
+    localmake "x :vx + :half * :i / 100
+    setxy sx :x sy f :x pendown
+  ]
+  ; the vertex and the roots
+  setpensize 12 setpencolor [140 80 200] dot list sx :vx sy :vy
+  setlabelheight 14
+  penup setxy 10 + sx :vx (sy :vy) - 22
+  label (word "|vertex (| form :vx 0 2 "|, | form :vy 0 2 "|)|)
+  setpencolor [230 70 50]
+  foreach :roots [
+    dot list sx ? sy 0
+    penup setxy (sx ?) - 20 (sy 0) + 14 label form ? 0 2
+  ]
+  penup setxy -380 270 setpencolor "black setlabelheight 18
+  label (sentence [y =] :a [x*x +] :b [x +] :c)
+end
+
+to max :p :q
+  output ifelse :p > :q [:p] [:q]
+end
+
+clearscreen hideturtle
+print [Solve a*x*x + b*x + c = 0. Type each number and press Enter.]
+make "a asknum "a "true
+make "b asknum "b "false
+make "c asknum "c "false
+graph solve :a :b :c

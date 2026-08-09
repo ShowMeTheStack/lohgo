@@ -1,0 +1,88 @@
+; ============================================================
+; TITLE:    Bar Chart
+; CATEGORY: Mathematics
+; LEVEL:    Beginner
+; TAGS:     data, charts, lists, rectangles, foreach
+; SUMMARY:  Turns a list of names and numbers into a colorful bar chart with a scale and labels.
+; ============================================================
+;
+; WHAT IT DOES
+;   A class voted for their favorite fruit. The votes are kept in a
+;   list, and the program draws one bar per fruit. Taller bars mean
+;   more votes. Lines across the back help you read the numbers, and
+;   each bar has its count written on top.
+;
+; HOW TO USE
+;   Press Run. Change the list called "votes at the bottom to chart
+;   your own data: each entry is a little list of a name and a number.
+;
+; CONCEPTS YOU WILL LEARN
+;   * storing data as a list of lists
+;   * FOREACH to visit every item, with # telling you which one it is
+;   * FILLED to paint a solid rectangle
+;   * scaling numbers so the tallest bar fits the screen
+;
+; THINGS TO TRY
+;   * Add a sixth fruit to the list. The bars get narrower by themselves.
+;   * Change :height to make the chart taller or shorter.
+;   * Survey your family about pets and chart the answers.
+; ============================================================
+
+; The chart sits inside this box: left edge, bottom edge and the
+; height of the tallest possible bar.
+make "left -320
+make "bottom -200
+make "width 640
+make "height 380
+
+; Draw a rectangle starting at the bottom-left corner, going up.
+to box :w :h
+  setheading 0
+  repeat 2 [forward :h right 90 forward :w right 90]
+end
+
+; The biggest number in a list of [name number] pairs.
+to biggest :data
+  output reduce "max map [last ?] :data
+end
+
+to max :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+; Horizontal lines every 2 votes so the reader can measure the bars.
+to scale :top :unit
+  setpensize 1 setlabelheight 12
+  for [v 0 :top 2] [
+    penup setxy :left :bottom + :v * :unit
+    setpencolor [220 220 220] pendown setheading 90 forward :width
+    penup setxy :left - 28 ycor - 4 setpencolor "grey label :v
+  ]
+end
+
+to chart :data :title
+  localmake "top 2 * int ((biggest :data) / 2 + 1)
+  localmake "unit :height / :top
+  localmake "slot :width / count :data
+  localmake "barw :slot * 0.6
+  scale :top :unit
+  foreach :data [
+    localmake "x :left + (# - 1) * :slot + (:slot - :barw) / 2
+    localmake "h :unit * last ?
+    ; the bar: fill first, then a dark outline on top
+    penup setxy :x :bottom
+    setpencolor # + 8
+    filled # + 8 [box :barw :h]
+    setpencolor "black setpensize 2 pendown box :barw :h
+    ; the count above the bar and the name below it
+    penup setxy :x + :barw / 2 - 5 :bottom + :h + 8 label last ?
+    setxy :x + :barw / 2 - 4 * count first ? :bottom - 22 label first ?
+  ]
+  ; the floor of the chart
+  penup setxy :left :bottom setheading 90 setpensize 3 pendown forward :width
+  penup setxy -150 260 setlabelheight 20 label :title
+end
+
+make "votes [[Apple 7] [Banana 11] [Cherry 4] [Grape 9] [Mango 13]]
+clearscreen hideturtle
+chart :votes [Favorite fruit in our class]

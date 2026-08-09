@@ -1,0 +1,123 @@
+; ============================================================
+; TITLE:    Pi from Endless Sums
+; CATEGORY: Mathematics
+; LEVEL:    Advanced
+; TAGS:     pi, series, convergence, graphs, accumulators
+; SUMMARY:  Adds up three famous infinite series for pi and graphs how fast each one homes in on the true value.
+; ============================================================
+;
+; WHAT IT DOES
+;   Pi can be written as a sum (or product) that never ends. This
+;   program follows three of them, one term at a time:
+;     Leibniz     4 * (1 - 1/3 + 1/5 - 1/7 + ...)
+;     Nilakantha  3 + 4/(2*3*4) - 4/(4*5*6) + 4/(6*7*8) - ...
+;     Wallis      2 * (2/1 * 2/3 * 4/3 * 4/5 * 6/5 * 6/7 * ...)
+;   The graph shows each running total zigzagging around the dashed
+;   line at pi. A table in the text area prints the numbers.
+;
+; HOW TO USE
+;   Press Run. Change :terms to follow the series further.
+;
+; CONCEPTS YOU WILL LEARN
+;   * running totals and running products updated in a loop
+;   * alternating signs by multiplying by -1 each time
+;   * comparing how quickly different methods converge
+;   * plotting a sequence of values on a graph
+;
+; THINGS TO TRY
+;   * Which series is closest to pi after 50 terms? Look at the table.
+;   * Average two neighboring Leibniz totals. It is much closer to pi!
+;   * Change :ylow and :yhigh to zoom in on the line at pi.
+; ============================================================
+
+make "terms 60
+; the part of the number line shown on the graph
+make "ylow 2.6
+make "yhigh 3.6
+; the graph box on screen
+make "gx -340  make "gy -200  make "gw 640  make "gh 420
+
+; Where on the screen is term n with value v?
+to screenx :n
+  output :gx + :gw * (:n - 1) / (:terms - 1)
+end
+to screeny :v
+  ; clip values outside the window to its edge
+  localmake "v ifelse :v > :yhigh [:yhigh] [ifelse :v < :ylow [:ylow] [:v]]
+  output :gy + :gh * (:v - :ylow) / (:yhigh - :ylow)
+end
+
+to frame
+  setpensize 1 setpencolor [150 150 150] setlabelheight 12
+  ; counting with whole numbers avoids rounding slips like 3.6000000001
+  for [i 0 5] [
+    localmake "v :ylow + :i * (:yhigh - :ylow) / 5
+    penup setxy :gx screeny :v pendown setheading 90 forward :gw
+    penup setxy :gx - 34 (screeny :v) - 4 label form :v 0 1
+  ]
+  ; a dashed line at pi
+  setpencolor "black setpensize 2
+  penup setxy :gx screeny pi setheading 90
+  repeat 32 [pendown forward 10 penup forward 10]
+  setxy :gx + :gw + 6 (screeny pi) - 4 label "pi
+end
+
+; Plot a list of values as a connected line with dots.
+to graph :values :color :name :row
+  setpencolor :color setpensize 2
+  penup
+  foreach :values [
+    setxy screenx # screeny ?
+    pendown
+  ]
+  setpensize 5
+  foreach :values [dot list screenx # screeny ?]
+  penup setxy :gx + 20 :gy + :gh + 66 - 20 * :row
+  setpensize 3 setheading 90 pendown forward 24 penup forward 8
+  setlabelheight 14 sety ycor - 5 label :name
+end
+
+to leibniz :n
+  localmake "total 0  localmake "sign 1  localmake "out []
+  for [k 0 :n - 1] [
+    make "total :total + :sign * 4 / (2 * :k + 1)
+    make "sign minus :sign
+    make "out lput :total :out
+  ]
+  output :out
+end
+
+to nilakantha :n
+  localmake "total 3  localmake "sign 1  localmake "out [3]
+  for [k 1 :n - 1] [
+    localmake "a 2 * :k
+    make "total :total + :sign * 4 / (:a * (:a + 1) * (:a + 2))
+    make "sign minus :sign
+    make "out lput :total :out
+  ]
+  output :out
+end
+
+; Wallis multiplies in two fractions per step: 2k/(2k-1) and 2k/(2k+1).
+to wallis :n
+  localmake "product 1  localmake "out []
+  for [k 1 :n] [
+    make "product :product * (2 * :k) / (2 * :k - 1) * (2 * :k) / (2 * :k + 1)
+    make "out lput 2 * :product :out
+  ]
+  output :out
+end
+
+clearscreen hideturtle
+frame
+make "l leibniz :terms
+make "k nilakantha :terms
+make "w wallis :terms
+graph :l [220 60 60] [Leibniz] 0
+graph :w [40 150 80] [Wallis] 1
+graph :k [50 90 210] [Nilakantha] 2
+print "|terms    Leibniz     Nilakantha    Wallis|
+foreach [1 2 5 10 20 40 60] [
+  if ? <= :terms [print (sentence form ? 5 0 form item ? :l 11 6 form item ? :k 13 8 form item ? :w 11 6)]
+]
+print sentence [pi really is] form pi 0 8

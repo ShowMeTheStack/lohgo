@@ -1,0 +1,103 @@
+; ============================================================
+; TITLE:    Function Plotter
+; CATEGORY: Mathematics
+; LEVEL:    Intermediate
+; TAGS:     graphs, functions, coordinates, templates, axes
+; SUMMARY:  Draws labeled x and y axes and plots several functions on them in different colors.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws a coordinate grid with numbered axes, then plots four
+;   functions: a straight line, a parabola, a sine wave and the
+;   hyperbola y = 4/x. Each curve gets its own color and a label
+;   in a little legend in the corner.
+;
+; HOW TO USE
+;   Press Run. To graph your own function, add a line at the bottom
+;   like:  plot [[x] 0.5 * :x * :x * :x] "purple [y = x^3 / 2]
+;   The function is written as a template: [[x] ...] means "a
+;   recipe that takes a number x and gives back y".
+;
+; CONCEPTS YOU WILL LEARN
+;   * changing between "math units" and "screen steps" with a scale
+;   * templates and INVOKE: passing a function as an input
+;   * lifting the pen when a curve shoots off the page
+;   * FOR with a fractional step to sample points
+;
+; THINGS TO TRY
+;   * Change :unit to 20 to zoom out and see more of each curve.
+;   * Plot [[x] sin 90 * :x] and compare it with the sine curve.
+;   * Make :dx smaller (0.01) and watch the curves get smoother.
+; ============================================================
+
+; One unit in math is :unit turtle steps on the screen.
+make "unit 40
+; How far apart, in math units, the sample points are.
+make "dx 0.05
+; The visible range in math units (the screen is 800 by 600 steps).
+make "xmax 380 / :unit
+make "ymax 280 / :unit
+
+; Move without drawing to a point given in MATH units.
+to jump :x :y
+  penup setxy :x * :unit :y * :unit
+end
+
+to grid
+  ; light lines every unit so you can read values off the graph
+  setpensize 1 setpencolor [225 230 240]
+  for [i (minus int :xmax) (int :xmax)] [jump :i minus :ymax pendown setxy :i * :unit :ymax * :unit]
+  for [j (minus int :ymax) (int :ymax)] [jump minus :xmax :j pendown setxy :xmax * :unit :j * :unit]
+end
+
+to axes
+  setpensize 2 setpencolor [60 60 60]
+  jump minus :xmax 0 pendown setxy :xmax * :unit 0
+  jump 0 minus :ymax pendown setxy 0 :ymax * :unit
+  ; numbers along each axis, skipping 0 so it does not get written twice
+  setlabelheight 11
+  for [i (minus int :xmax) (int :xmax)] [
+    if not :i = 0 [jump :i 0 setheading 180 pendown forward 4 penup forward 14 setx xcor - 4 label :i]
+  ]
+  for [j (minus int :ymax) (int :ymax)] [
+    if not :j = 0 [jump 0 :j setheading 90 pendown back 4 penup forward 6 sety ycor - 4 label :j]
+  ]
+  jump :xmax - 0.4 0.2 label "x
+  jump 0.2 :ymax - 0.4 label "y
+end
+
+; PLOT takes a template, a color and a caption. The pen goes up
+; whenever y leaves the screen, so 4/x does not draw a wild line
+; joining its two branches across the middle.
+to plot :f :color :caption
+  localmake "up "true
+  setpensize 3 setpencolor :color
+  for (list "x minus :xmax :xmax :dx) [
+    ; skip x = 0 exactly, where some functions divide by zero
+    if (abs :x) > 0.0001 [
+      localmake "y invoke :f :x
+      ifelse (abs :y) > :ymax [make "up "true] [
+        ifelse :up [jump :x :y pendown make "up "false] [setxy :x * :unit :y * :unit]
+      ]
+    ]
+  ]
+  legend :color :caption
+end
+
+; Each call to LEGEND writes one line, a bit lower than the last.
+make "legendy 270
+to legend :color :caption
+  penup setxy -390 :legendy setheading 90
+  setpencolor :color pendown forward 20 penup forward 6 sety ycor - 5
+  setlabelheight 14 label :caption
+  make "legendy :legendy - 22
+end
+
+clearscreen hideturtle
+setbackground "white
+grid
+axes
+plot [[x] 2 * :x - 1] "#3060d0 [y = 2x - 1]
+plot [[x] :x * :x / 2 - 3] "#d02040 [y = x*x/2 - 3]
+plot [[x] 3 * sin 45 * :x] "#208040 [y = 3 sin 45x]
+plot [[x] 4 / :x] "#e08000 [y = 4 / x]
