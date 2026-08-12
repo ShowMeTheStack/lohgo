@@ -1,0 +1,77 @@
+; ============================================================
+; TITLE:    Polygons Inside a Circle
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Beginner
+; TAGS:     polygons, circle, pi, sine, perimeter
+; SUMMARY:  Draws regular polygons with 3 to 12 corners inside one circle and shows their perimeters creeping up toward pi times the diameter.
+; ============================================================
+;
+; WHAT IT DOES
+;   A circle is drawn, then a triangle, square, pentagon and so on,
+;   all with their corners on the circle. As the number of sides grows
+;   the polygon hugs the circle more tightly. On the right a table
+;   shows each perimeter divided by the diameter, which gets closer
+;   and closer to pi = 3.14159...
+;
+; HOW TO USE
+;   Press Run and watch. Change :biggest at the bottom to 30 or 60.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a regular polygon in a circle has sides of 2*r*sin(180/n)
+;   * turning 360/n after every side closes the shape
+;   * Archimedes used this idea to estimate pi
+;   * FORM prints a number with a fixed number of decimals
+;
+; THINGS TO TRY
+;   * Set :biggest to 96, the polygon Archimedes used.
+;   * Draw polygons OUTSIDE the circle too (their sides touch it).
+;   * Slow the drawing down with WAIT 20 inside the FOR loop.
+; ============================================================
+
+; Draw a regular n-gon whose corners all touch a circle of radius r
+; around the point cx cy. The first corner is at the top.
+to inscribed :n :r :cx :cy
+  localmake "side 2 * :r * sin (180 / :n)
+  penup setxy :cx :cy + :r setheading 0
+  ; from the top corner the first side points 90 + 180/n degrees round
+  right 90 + 180 / :n
+  pendown
+  repeat :n [forward :side right 360 / :n]
+  penup
+  output :n * :side
+end
+
+to circle.at :cx :cy :r
+  penup setxy :cx :cy setheading 0
+  pendown arc 360 :r penup
+end
+
+to show.row :row :n :ratio
+  penup setxy 120 220 - 26 * :row
+  label (sentence :n [sides:] form :ratio 7 5)
+end
+
+to inscribed.demo :biggest
+  localmake "r 200
+  setpensize 4 setpencolor [200 200 200]
+  circle.at -160 0 :r
+  setlabelheight 18
+  penup setxy 120 250 setpencolor "black
+  label [perimeter / diameter]
+  setpensize 2
+  for [n 3 :biggest] [
+    ; cycle through a short list of colors so neighbors look different
+    setpencolor item 1 + remainder :n 6 [red orange [200 170 0] forest blue purple]
+    localmake "p inscribed :n :r -160 0
+    if :n < 17 [show.row :n - 2 :n :p / (2 * :r)]
+    wait 15
+  ]
+  setpencolor "black
+  ; the pi row goes just below the last row of the table
+  penup setxy 120 220 - 26 * ifelse :biggest < 16 [:biggest - 1] [15]
+  label sentence [pi is] form pi 7 5
+end
+
+clearscreen hideturtle
+setbackground "white
+inscribed.demo 12

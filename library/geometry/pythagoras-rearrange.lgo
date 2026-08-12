@@ -1,0 +1,96 @@
+; ============================================================
+; TITLE:    Pythagoras Without Algebra
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Intermediate
+; TAGS:     pythagoras, proof, area, coordinates, filled
+; SUMMARY:  Shows the famous rearrangement proof: four equal triangles placed two ways inside the same big square leave either c*c or a*a + b*b uncovered.
+; ============================================================
+;
+; WHAT IT DOES
+;   Two equal big squares stand side by side. Each one holds the same
+;   four orange right triangles. On the left the uncovered part is one
+;   tilted square, c by c. On the right the triangles are pushed into
+;   pairs and the uncovered part is two squares, a by a and b by b.
+;   Same big square minus the same triangles, so c*c = a*a + b*b.
+;
+; HOW TO USE
+;   Press Run. Change the call at the bottom, for example
+;     proof 2 5 28
+;   to try another right triangle (legs a and b, then a scale).
+;
+; CONCEPTS YOU WILL LEARN
+;   * a picture can be a proof
+;   * placing shapes with SETXY and coordinates
+;   * FILLED with a list of SETXY moves paints any polygon
+;   * one procedure (tri) reused for every triangle
+;
+; THINGS TO TRY
+;   * Make a and b equal. What shape is the tilted square then?
+;   * Color each of the four triangles differently so you can follow
+;     where each one moves.
+;   * Add a WAIT and draw the triangles one at a time.
+; ============================================================
+
+; A filled triangle with a dark outline through three points.
+to tri :p :q :r :color
+  penup setpos :p
+  setpencolor [90 40 0] setpensize 2
+  filled :color [pendown setpos :q setpos :r setpos :p]
+end
+
+; A filled square from its lower left corner.
+to box :x :y :side :color
+  penup setxy :x :y setheading 0
+  setpencolor "black setpensize 2
+  filled :color [pendown repeat 4 [forward :side right 90]]
+end
+
+to caption :x :y :text
+  penup setxy :x :y setpencolor "black
+  label :text
+end
+
+; The left picture: the triangles sit in the four corners, turning
+; around the square, and leave a tilted square of side c in the middle.
+to picture.c :x :y :a :b
+  localmake "s :a + :b
+  ; Later drawing covers earlier drawing, so the green background
+  ; square comes first and the triangles go on top of it.
+  box :x :y :s [170 230 160]
+  tri (list :x :y) (list :x + :a :y) (list :x :y + :b) "orange
+  tri (list :x + :s :y) (list :x + :s :y + :a) (list :x + :a :y) "orange
+  tri (list :x + :s :y + :s) (list :x + :b :y + :s) (list :x + :s :y + :a) "orange
+  tri (list :x :y + :s) (list :x :y + :b) (list :x + :b :y + :s) "orange
+  caption :x + :s / 2 - 10 :y + :s / 2 - 8 "c*c
+end
+
+; The right picture: the same four triangles pushed into two
+; rectangles, leaving a square a by a and a square b by b.
+to picture.ab :x :y :a :b
+  localmake "s :a + :b
+  box :x :y :s "white
+  box :x :y :a [150 210 255]
+  box :x + :a :y + :a :b [255 210 120]
+  tri (list :x + :a :y) (list :x + :s :y) (list :x + :s :y + :a) "orange
+  tri (list :x + :a :y) (list :x + :a :y + :a) (list :x + :s :y + :a) "orange
+  tri (list :x :y + :a) (list :x + :a :y + :a) (list :x + :a :y + :s) "orange
+  tri (list :x :y + :a) (list :x :y + :s) (list :x + :a :y + :s) "orange
+  caption :x + :a / 2 - 10 :y + :a / 2 - 8 "a*a
+  caption :x + :a + :b / 2 - 10 :y + :a + :b / 2 - 8 "b*b
+end
+
+to proof :a :b :unit
+  localmake "s (:a + :b) * :unit
+  setlabelheight 20
+  picture.c -340 0 - :s / 2 :a * :unit :b * :unit
+  picture.ab 340 - :s 0 - :s / 2 :a * :unit :b * :unit
+  setlabelheight 40
+  caption -20 -15 "=
+  setlabelheight 20
+  caption -340 :s / 2 + 30 [Same big square, same four triangles...]
+  caption -340 0 - :s / 2 - 45 [Leftover areas match: c*c = a*a + b*b]
+end
+
+clearscreen hideturtle
+setbackground [252 250 245]
+proof 3 4 30

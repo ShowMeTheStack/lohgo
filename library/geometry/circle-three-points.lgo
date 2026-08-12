@@ -1,0 +1,92 @@
+; ============================================================
+; TITLE:    Circle Through Three Points
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Advanced
+; TAGS:     circumcircle, mouse, coordinates, perpendicular bisector
+; SUMMARY:  Click any three points and the program finds the one circle that passes through all of them.
+; ============================================================
+;
+; WHAT IT DOES
+;   It first shows an example. Then every three clicks in the turtle
+;   world make a new triangle, and the program draws its circumcircle:
+;   the circle through all three corners, with the center marked and
+;   the three equal radii drawn as thin lines.
+;
+; HOW TO USE
+;   Press Run, look at the example, then click three places in the
+;   turtle world. Keep clicking for more circles. Right-click clears.
+;   Press Stop when you are done.
+;
+; CONCEPTS YOU WILL LEARN
+;   * three points that are not on one line fix exactly one circle
+;   * the center is where the perpendicular bisectors of the sides
+;     meet, and its coordinates come from a formula
+;   * MOUSEON and CLICKPOS make a program react to clicks
+;   * a global list that collects points until there are enough
+;
+; THINGS TO TRY
+;   * Click three points almost in a straight line. Why does the
+;     circle become huge?
+;   * Click the corners of a right triangle. Where is the center?
+;   * Print the radius in the command center after every circle.
+; ============================================================
+
+; The circumcenter of three points, or [] if they lie on one line.
+to circumcenter :a :b :c
+  ; copy the coordinates into plain names first: "first :a - 1" would
+  ; mean "first (:a - 1)", because infix binds tighter than inputs
+  localmake "ax first :a  localmake "ay last :a
+  localmake "bx first :b  localmake "by last :b
+  localmake "cx first :c  localmake "cy last :c
+  localmake "d 2 * (:ax * (:by - :cy) + :bx * (:cy - :ay) + :cx * (:ay - :by))
+  if (abs :d) < 0.001 [output []]
+  localmake "sa :ax * :ax + :ay * :ay
+  localmake "sb :bx * :bx + :by * :by
+  localmake "sc :cx * :cx + :cy * :cy
+  localmake "ux (:sa * (:by - :cy) + :sb * (:cy - :ay) + :sc * (:ay - :by)) / :d
+  localmake "uy (:sa * (:cx - :bx) + :sb * (:ax - :cx) + :sc * (:bx - :ax)) / :d
+  output list :ux :uy
+end
+
+to mark :p :color
+  setpensize 9 setpencolor :color
+  dot :p
+end
+
+to draw.circle :a :b :c
+  localmake "center circumcenter :a :b :c
+  ; the triangle
+  penup setpos :a setpensize 2 setpencolor [40 40 40] pendown
+  setpos :b setpos :c setpos :a
+  if emptyp :center [print [Those points are on one line, so no circle fits.] stop]
+  localmake "r distance :center
+  ; three radii, all the same length
+  setpensize 1 setpencolor [150 150 150]
+  foreach (list :a :b :c) [penup setpos :center pendown setpos ?]
+  ; the circle itself: ARC draws around the turtle, so stand on the center
+  penup setpos :center setheading 0
+  setpensize 3 setpencolor (list random 200 random 200 255)
+  pendown arc 360 :r penup
+  mark :center "red
+  foreach (list :a :b :c) [mark ? "black]
+  print (sentence [Center] round first :center round last :center [radius] round :r)
+end
+
+; Called on every left click.
+to add.click
+  make "clicks lput clickpos :clicks
+  mark clickpos "black
+  if (count :clicks) = 3 [
+    draw.circle item 1 :clicks item 2 :clicks item 3 :clicks
+    make "clicks []
+  ]
+end
+
+clearscreen hideturtle
+setbackground [248 248 255]
+make "clicks []
+; an example to start with
+draw.circle [-200 -100] [150 -150] [60 160]
+print [Click three points in the turtle world. Right-click clears.]
+mouseon [add.click] [] [clean make "clicks []] [] []
+forever [wait 10]

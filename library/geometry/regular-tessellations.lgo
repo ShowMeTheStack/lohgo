@@ -1,0 +1,74 @@
+; ============================================================
+; TITLE:    Which Shapes Tile the Floor?
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Beginner
+; TAGS:     tessellation, regular polygons, interior angle, 360
+; SUMMARY:  Fits copies of triangles, squares, pentagons and hexagons around one point to show why only three regular shapes can tile a floor.
+; ============================================================
+;
+; WHAT IT DOES
+;   Four panels each take one regular shape and put copies of it
+;   corner to corner around a single point. Triangles, squares and
+;   hexagons close up perfectly. Pentagons leave a gap, so they can
+;   never cover a floor without holes.
+;
+; HOW TO USE
+;   Press Run. To try another shape, type for example
+;     around.point 8 0 0 50
+;   after a CLEARSCREEN.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the corner (interior angle) of a regular n-gon is 180 - 360/n
+;   * shapes tile around a point only if their corners add to 360
+;   * INT tells how many fit, and subtracting tells what is left over
+;   * drawing the same shape again after a turn
+;
+; THINGS TO TRY
+;   * Try 8 sides. How big is the gap? (Bathroom floors fill it with
+;     little squares.)
+;   * Try 12 sides with triangles in the gaps.
+;   * Use only two colors. Which panel then has two neighbors alike?
+; ============================================================
+
+to corner.angle :n
+  output 180 - 360 / :n
+end
+
+; Put as many n-gons as will fit around the point x y.
+to around.point :n :x :y :side
+  localmake "corner corner.angle :n
+  localmake "fits int (360 + 0.001) / :corner
+  localmake "gap 360 - :fits * :corner
+  penup setxy :x :y setheading 90
+  setpensize 2 setpencolor [40 40 40]
+  for [k 1 :fits] [
+    ; cycle through three colors so neighbors stand out
+    filled item 1 + remainder :k 3 [[255 190 90] [120 180 240] [150 220 140]] [
+      pendown
+      repeat :n [forward :side left 360 / :n]
+    ]
+    penup
+    ; the next shape starts where this one's corner ends
+    left :corner
+  ]
+  ; a red dot marks the shared point
+  setpensize 10 setpencolor "red dot list :x :y
+  ; the sum written underneath
+  setpencolor "black
+  penup setxy :x - 110 :y - 125
+  label (sentence :fits "x round :corner "= round :fits * :corner)
+  setxy :x - 110 :y - 147
+  ifelse :gap < 0.01 [
+    setpencolor "forest label [fits exactly: it tiles!]
+  ] [
+    setpencolor "red label (sentence [gap of] round :gap [degrees: no tiling])
+  ]
+end
+
+clearscreen hideturtle
+setbackground "white
+setlabelheight 16
+around.point 3 -200 140 80
+around.point 4 200 140 70
+around.point 6 -200 -130 50
+around.point 5 200 -130 55

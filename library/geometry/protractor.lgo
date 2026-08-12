@@ -1,0 +1,97 @@
+; ============================================================
+; TITLE:    Turtle Protractor
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Beginner
+; TAGS:     protractor, angles, input, ticks, loop
+; SUMMARY:  Draws a protractor with tick marks every 5 degrees and then draws any angle you type on it.
+; ============================================================
+;
+; WHAT IT DOES
+;   A big half-circle protractor appears, marked like the plastic one
+;   in a school pencil case: long ticks every 10 degrees, short ones
+;   every 5, and numbers every 30. Each angle you type is drawn as a
+;   colored arm from the center, measured from the right-hand zero
+;   line, with a little arc showing the opening.
+;
+; HOW TO USE
+;   Press Run. In the command center type a number from 0 to 180 and
+;   press Enter. Type as many as you like. Type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a protractor measures turning from a zero line
+;   * ticks are short lines drawn outward from the center
+;   * REPEAT and FOR to place marks at even steps
+;   * a loop that reads input until the user types quit
+;
+; THINGS TO TRY
+;   * Add numbers every 10 degrees instead of every 30.
+;   * Draw the angle measured from the left zero line too (180 - a).
+;   * Make the protractor a full circle with 0 to 360.
+; ============================================================
+
+make "r 260         ; radius of the protractor
+make "base -170     ; height of the center
+make "drawn 0       ; how many angles have been drawn
+
+; Stand at the center facing the direction of a protractor reading.
+; Reading 0 points right (heading 90) and 90 points straight up.
+to face :reading
+  penup setxy 0 :base setheading 90 - :reading
+end
+
+to tick :reading :inner
+  face :reading
+  forward :inner pendown forward :r - :inner penup
+end
+
+to draw.protractor
+  setpensize 3 setpencolor [60 60 80]
+  ; the curved edge: face reading 180 (west) and sweep clockwise
+  face 180 pendown arc 180 :r penup
+  setxy 0 - :r :base pendown setxy :r :base penup
+  setpensize 1
+  for [d 0 180 5] [tick :d :r - 12]
+  setpensize 2
+  for [d 0 180 10] [tick :d :r - 24]
+  setlabelheight 16 setpencolor "black
+  for [d 0 180 30] [
+    face :d forward :r - 50
+    setxy xcor - 12 ycor - 6
+    ; lift the two end numbers off the zero line
+    if or :d = 0 :d = 180 [sety ycor + 14]
+    label :d
+  ]
+  setpensize 8 dot list 0 :base
+end
+
+to show.angle :a
+  make "drawn :drawn + 1
+  localmake "color item 1 + remainder :drawn 6 [red orange forest blue purple magenta]
+  setpencolor :color
+  ; the arm
+  setpensize 3
+  face :a pendown forward :r - 60 penup
+  ; the opening arc, from the arm round to the zero line
+  face :a setpensize 2
+  pendown arc :a 40 + 8 * remainder :drawn 6 penup
+  print (sentence [Drew] :a [degrees])
+end
+
+to ask.angles
+  localmake "answer "
+  forever [
+    print [Type an angle from 0 to 180, or quit:]
+    make "answer readword
+    if :answer = "quit [print [Bye!] stop]
+    ifelse and numberp :answer [and :answer >= 0 :answer <= 180] [
+      show.angle :answer
+    ] [
+      print [That is not an angle from 0 to 180.]
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [250 250 240]
+draw.protractor
+ask.angles

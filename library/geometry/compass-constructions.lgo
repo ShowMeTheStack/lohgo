@@ -1,0 +1,121 @@
+; ============================================================
+; TITLE:    Compass and Straightedge
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Intermediate
+; TAGS:     constructions, compass, arc, bisector, Euclid
+; SUMMARY:  Animates three classic constructions with only a compass and a ruler: an equilateral triangle, a perpendicular bisector and an angle bisector.
+; ============================================================
+;
+; WHAT IT DOES
+;   Three constructions are drawn step by step, the way you would do
+;   them on paper. Grey arcs are compass swings. Colored lines are the
+;   ruler. Each answer is found only where arcs cross, with no
+;   measuring of angles at all.
+;
+; HOW TO USE
+;   Press Run and watch. Make :pause bigger to slow it down.
+;
+; CONCEPTS YOU WILL LEARN
+;   * Euclid's first construction: an equilateral triangle
+;   * every point on the perpendicular bisector is the same distance
+;     from both ends of the segment
+;   * a rhombus's diagonal cuts its angle in half
+;   * ARC centered on the turtle is a perfect compass
+;
+; THINGS TO TRY
+;   * Use the perpendicular bisector to find the middle of a segment
+;     and mark it with a DOT.
+;   * Bisect the angle twice to cut it into four equal parts.
+;   * Construct a square: a perpendicular, then equal lengths.
+; ============================================================
+
+make "pause 25
+
+; The point you reach from :p by going :d steps at heading :h.
+to point.from :p :h :d
+  penup setpos :p setheading :h forward :d
+  output pos
+end
+
+; A compass swing: an arc of :sweep degrees around :center, centered
+; on the direction of :target, with the radius reaching the target.
+to swing :center :target :sweep
+  penup setpos :center
+  localmake "r distance :target
+  setheading (towards :target) - :sweep / 2
+  setpensize 1 setpencolor [150 150 150]
+  pendown arc :sweep :r penup
+  wait :pause
+end
+
+to ruler :p :q :color
+  penup setpos :p setpensize 3 setpencolor :color
+  pendown setpos :q penup
+  wait :pause
+end
+
+to point.mark :p :name
+  setpensize 8 setpencolor "black dot :p
+  penup setpos :p setxy xcor + 6 ycor + 6
+  label :name
+end
+
+to caption :x :text
+  penup setxy :x -230 setpencolor "black
+  label :text
+end
+
+to equilateral
+  localmake "a [-360 -60]
+  localmake "b [-240 -60]
+  ruler :a :b "blue
+  point.mark :a "A point.mark :b "B
+  ; circles of radius AB around A and around B meet at the third
+  ; corner. We only swing the part of each circle near that corner.
+  localmake "c point.from :a 30 120
+  swing :a :c 100
+  swing :b :c 100
+  ruler :a :c "red ruler :b :c "red
+  point.mark :c "C
+  caption -390 [equilateral triangle]
+end
+
+to perpendicular.bisector
+  localmake "a [-60 -60]
+  localmake "b [80 -60]
+  ruler :a :b "blue
+  point.mark :a "A point.mark :b "B
+  ; arcs of radius 100 from each end cross above and below the middle
+  localmake "h sqrt (100 * 100 - 70 * 70)
+  localmake "top list 10 -60 + :h
+  localmake "bottom list 10 -60 - :h
+  swing :a :top 50 swing :a :bottom 50
+  swing :b :top 50 swing :b :bottom 50
+  ruler point.from :bottom 0 -40 point.from :top 0 40 "red
+  point.mark list 10 -60 "M
+  caption -80 [perpendicular bisector]
+end
+
+to angle.bisector
+  localmake "o [150 -120]
+  ruler :o point.from :o 20 190 "blue
+  ruler :o point.from :o 80 190 "blue
+  point.mark :o "O
+  ; one swing from O marks both arms at the same distance
+  localmake "r1 point.from :o 20 90
+  localmake "r2 point.from :o 80 90
+  swing :o point.from :o 50 90 80
+  ; equal swings from those two marks meet on the bisector
+  ; O, r1, q, r2 make a rhombus, so q = r1 + r2 - O
+  localmake "q list (first :r1) + (first :r2) - first :o (last :r1) + (last :r2) - last :o
+  swing :r1 :q 40 swing :r2 :q 40
+  ruler :o point.from :o 50 210 "red
+  caption 150 [angle bisector]
+end
+
+clearscreen hideturtle
+setbackground [252 250 240]
+setlabelheight 16
+equilateral
+perpendicular.bisector
+angle.bisector

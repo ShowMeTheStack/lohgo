@@ -1,0 +1,86 @@
+; ============================================================
+; TITLE:    Angle Sums of Polygons
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Beginner
+; TAGS:     polygons, triangles, angles, lists
+; SUMMARY:  Cuts polygons with 3 to 8 sides into triangles from one corner to show why their angles add up to 180 times (sides - 2).
+; ============================================================
+;
+; WHAT IT DOES
+;   Six regular polygons appear in two rows. Each one is sliced into
+;   colored triangles, all starting from the same corner. Under each
+;   shape you can read how many triangles fit and what the angles of
+;   the polygon add up to.
+;
+; HOW TO USE
+;   Press Run. Read the labels from left to right and look for the
+;   pattern: one more side means one more triangle, and 180 more
+;   degrees.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the angles of every triangle add up to 180 degrees
+;   * a polygon with n sides splits into n - 2 triangles
+;   * remembering points in a list with LPUT and POS
+;   * painter's order: fill first, then draw lines on top
+;
+; THINGS TO TRY
+;   * Change the FOR loops to show 9 to 14 sides.
+;   * Each corner of a regular n-gon is 180*(n-2)/n. Add that to the
+;     label too.
+;   * Slice from a different corner by rotating the list of points.
+; ============================================================
+
+; Walk round a regular polygon and output the list of its corners.
+to corners :n :side
+  localmake "points []
+  repeat :n [
+    make "points lput pos :points
+    forward :side
+    left 360 / :n
+  ]
+  output :points
+end
+
+; Fill the triangles of a fan from the first corner, then draw lines.
+to fan :points
+  localmake "first.corner first :points
+  localmake "colors [[255 180 180] [255 220 150] [250 250 160] [180 240 180] [170 210 255] [220 190 255]]
+  for [i 2 (count :points) - 1] [
+    penup setpos :first.corner
+    filled item :i - 1 :colors [
+      setpos item :i :points
+      setpos item :i + 1 :points
+      setpos :first.corner
+    ]
+  ]
+  ; the diagonals, thin and grey
+  setpensize 1 setpencolor [120 120 120]
+  for [i 3 (count :points) - 1] [
+    penup setpos :first.corner pendown setpos item :i :points
+  ]
+  ; the outline, thick and dark
+  setpensize 3 setpencolor [30 30 90]
+  penup setpos last :points pendown
+  foreach :points [setpos ?]
+end
+
+; One polygon with its labels, centered near x y.
+to polygon.card :n :x :y
+  localmake "side 560 / (:n + 2)
+  ; start on the bottom edge so every shape sits on the same line
+  penup setxy :x - :side / 2 :y setheading 90
+  fan corners :n :side
+  setpencolor "black
+  penup setxy :x - 75 :y - 30
+  label (sentence :n [sides,] :n - 2 ifelse :n = 3 [[triangle]] [[triangles]])
+  setxy :x - 75 :y - 52
+  label (sentence [angles add to] 180 * (:n - 2))
+end
+
+clearscreen hideturtle
+setbackground "white
+setlabelheight 15
+for [n 3 5] [polygon.card :n -520 + 260 * (:n - 2) 90]
+for [n 6 8] [polygon.card :n -520 + 260 * (:n - 5) -200]
+penup setxy -230 260 setlabelheight 22
+label [Every polygon is made of triangles]

@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Reflect, Rotate, Translate
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Intermediate
+; TAGS:     transformations, coordinates, reflection, rotation, map
+; SUMMARY:  Takes one flag shape stored as a list of points and draws it reflected, turned and slid, using simple rules on x and y.
+; ============================================================
+;
+; WHAT IT DOES
+;   A coordinate grid fills the screen. The original flag sits in the
+;   top right quarter. Copies of it appear mirrored in the y axis,
+;   mirrored in the x axis, turned half a turn about the origin and
+;   slid to the right. Each copy is made by applying a small
+;   rule to every corner point.
+;
+; HOW TO USE
+;   Press Run. Change the points in :flag to draw your own shape (keep
+;   x between 0 and 180 and y above 0 so the copies do not overlap).
+;
+; CONCEPTS YOU WILL LEARN
+;   * a shape can be stored as a list of [x y] points
+;   * reflection in the y axis: [x y] becomes [-x y]
+;   * a half turn about the origin: [x y] becomes [-x -y]
+;   * MAP applies one rule to every item of a list
+;
+; THINGS TO TRY
+;   * Write a rule for a quarter turn: [x y] becomes [-y x].
+;   * Write a rule that doubles the size: [2x 2y].
+;   * Reflect in the diagonal line y = x: [x y] becomes [y x].
+; ============================================================
+
+make "flag [[40 40] [40 200] [160 160] [60 130] [60 40]]
+
+; Each rule takes one point and outputs the new point.
+to mirror.y :p
+  output list minus first :p last :p
+end
+
+to mirror.x :p
+  output list first :p minus last :p
+end
+
+to half.turn :p
+  output list minus first :p minus last :p
+end
+
+to slide :p
+  output list (first :p) + 200 last :p
+end
+
+to grid
+  setpensize 1 setpencolor [225 225 235]
+  for [x -400 400 40] [penup setxy :x -300 pendown setxy :x 300]
+  for [y -280 280 40] [penup setxy -400 :y pendown setxy 400 :y]
+  setpensize 2 setpencolor [120 120 140]
+  penup setxy -400 0 pendown setxy 400 0
+  penup setxy 0 -300 pendown setxy 0 300
+end
+
+; Draw a filled shape through its points and write a name near it.
+to draw.shape :points :color :name
+  penup setpos last :points
+  setpensize 2 setpencolor "black
+  filled :color [pendown foreach :points [setpos ?]]
+  ; the name goes above shapes in the top half, below the others
+  localmake "mid.x (reduce "sum map "first :points) / count :points
+  localmake "mid.y (reduce "sum map "last :points) / count :points
+  penup setxy :mid.x - 50 ifelse :mid.y > 0 [225] [-240]
+  label :name
+end
+
+clearscreen hideturtle
+setbackground "white
+grid
+setlabelheight 15
+draw.shape :flag [255 120 120] [original]
+draw.shape map [mirror.y ?] :flag [120 170 255] [mirror in y axis]
+draw.shape map [mirror.x ?] :flag [120 220 140] [mirror in x axis]
+draw.shape map [half.turn ?] :flag [250 200 90] [half turn]
+draw.shape map [slide ?] :flag [200 150 240] [slide right]

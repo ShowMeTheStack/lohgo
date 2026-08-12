@@ -1,0 +1,81 @@
+; ============================================================
+; TITLE:    Spinning Cube
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Intermediate
+; TAGS:     3d, perspective, rotation, animation, arrays
+; SUMMARY:  Spins a wireframe cube in 3D and draws it with perspective, so the near side looks bigger than the far side.
+; ============================================================
+;
+; WHAT IT DOES
+;   A cube made of 8 corners and 12 edges turns slowly in space. Every
+;   frame the corners are rotated around two axes, then squashed onto
+;   the flat screen with perspective: things farther away are drawn
+;   closer to the middle. Edges are colored by direction.
+;
+; HOW TO USE
+;   Press Run and watch it spin. Press Stop to end. Change :eye to
+;   move your eye closer (stronger perspective) or farther away.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a shape in 3D is a list of corners plus a list of edges
+;   * rotation: new x = x*cos(a) - z*sin(a), new z = x*sin(a) + z*cos(a)
+;   * perspective: divide x and y by how far away the point is
+;   * ARRAY and SETITEM store the screen positions of the corners
+;
+; THINGS TO TRY
+;   * Make :eye 1000 and compare with :eye 250.
+;   * Add a corner dot for each point with DOT.
+;   * Change the corners into a pyramid: 4 base corners and 1 apex.
+; ============================================================
+
+make "corners [[-1 -1 -1] [1 -1 -1] [1 1 -1] [-1 1 -1]
+               [-1 -1 1] [1 -1 1] [1 1 1] [-1 1 1]]
+; each edge joins two corners (by their place in the list) and has a color
+make "edges [[1 2 red] [2 3 red] [3 4 red] [4 1 red]
+             [5 6 blue] [6 7 blue] [7 8 blue] [8 5 blue]
+             [1 5 forest] [2 6 forest] [3 7 forest] [4 8 forest]]
+make "size 120
+make "eye 450
+
+; Rotate one corner by angle a around the vertical axis and by b around
+; the horizontal axis, then project it onto the screen.
+to project :p :a :b
+  localmake "x :size * first :p
+  localmake "y :size * item 2 :p
+  localmake "z :size * last :p
+  localmake "ca (cos :a)  localmake "sa (sin :a)
+  localmake "cb (cos :b)  localmake "sb (sin :b)
+  localmake "x1 :x * :ca - :z * :sa
+  localmake "z1 :x * :sa + :z * :ca
+  localmake "y1 :y * :cb - :z1 * :sb
+  localmake "z2 :y * :sb + :z1 * :cb
+  ; perspective: points with bigger z are farther from the eye
+  localmake "k :eye / (:eye + :z2)
+  output list :x1 * :k :y1 * :k
+end
+
+to frame :a :b
+  localmake "screen array 8
+  for [i 1 8] [setitem :i :screen project item :i :corners :a :b]
+  setpensize 3
+  foreach :edges [
+    setpencolor item 3 ?
+    penup setpos item (item 1 ?) :screen
+    pendown setpos item (item 2 ?) :screen
+  ]
+  penup
+end
+
+to spin
+  localmake "a 0
+  forever [
+    clean
+    frame :a :a * 0.6
+    make "a :a + 2
+    wait 2
+  ]
+end
+
+clearscreen hideturtle
+setbackground [245 245 250]
+spin

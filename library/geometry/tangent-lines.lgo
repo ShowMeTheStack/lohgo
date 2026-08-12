@@ -1,0 +1,84 @@
+; ============================================================
+; TITLE:    Tangents From a Point
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Intermediate
+; TAGS:     tangent, circle, right angle, animation, arccos
+; SUMMARY:  A point travels around a circle and the two tangent lines from it are redrawn every frame, always meeting the radius at a right angle.
+; ============================================================
+;
+; WHAT IT DOES
+;   A red point floats around a blue circle. From the point, two green
+;   lines just touch the circle without cutting into it: these are the
+;   tangents. A small square at each touching point shows the right
+;   angle between tangent and radius. The two tangents always have the
+;   same length, which is shown at the top.
+;
+; HOW TO USE
+;   Press Run and watch the animation for two laps. Change :r to make
+;   the circle bigger or smaller.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a tangent meets the radius at 90 degrees
+;   * in the right triangle O-T-P, cos(angle at O) = r / d
+;   * ARCCOS and SQRT turn that into angles and lengths
+;   * animation: CLEAN, draw, WAIT, repeat
+;
+; THINGS TO TRY
+;   * Let the point come inside the circle. What should happen?
+;     (The program skips drawing then: try to see why.)
+;   * Draw the line from P through O too. It cuts the angle between
+;     the tangents exactly in half.
+;   * Slow it down by making the WAIT longer.
+; ============================================================
+
+; A little square that marks a right angle at the turtle's corner.
+; :side is 1 to put the square on the turtle's right, -1 for its left.
+to right.angle.mark :side
+  setpensize 1 setpencolor "black
+  pendown repeat 3 [forward 12 right 90 * :side] penup
+end
+
+; Draw the scene for an outside point P = [px py].
+to tangent.scene :p :r
+  ; measure from the center, so go home first
+  penup home
+  localmake "d distance :p
+  ; circle and center
+  setpensize 3 setpencolor [40 90 200]
+  pendown arc 360 :r penup
+  setpensize 8 setpencolor "black dot [0 0]
+  if :d <= :r [stop]
+  localmake "alpha arccos (:r / :d)
+  ; the two tangent points: turn alpha either way from the line O-P
+  foreach (list :alpha minus :alpha) [
+    penup home setheading (towards :p) + ?
+    setpensize 1 setpencolor [150 150 150]
+    pendown forward :r penup
+    localmake "touch pos
+    ; tangent line from the touching point out to P
+    setpensize 3 setpencolor [20 150 60]
+    pendown setpos :p penup
+    ; the right angle sits at the touching point, between the radius
+    ; and the tangent, so turn back toward the center first
+    setpos :touch setheading towards [0 0]
+    ; P is either a quarter turn to the right or to the left of that
+    localmake "diff modulo (towards :p) - heading 360
+    right.angle.mark ifelse :diff < 180 [1] [-1]
+  ]
+  setpensize 12 setpencolor "red dot :p
+  penup setxy -150 250 setpencolor "black
+  label (sentence [tangent length] round sqrt (:d * :d - :r * :r))
+end
+
+to orbit :r
+  for [a 0 720 3] [
+    localmake "d 2 * :r + 50 * sin (3 * :a)
+    clean
+    tangent.scene (list :d * sin :a :d * cos :a) :r
+    wait 2
+  ]
+end
+
+clearscreen hideturtle
+setlabelheight 20
+orbit 110

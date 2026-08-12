@@ -1,0 +1,83 @@
+; ============================================================
+; TITLE:    Squares on a Right Triangle
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Beginner
+; TAGS:     pythagoras, squares, area, right triangle
+; SUMMARY:  Builds a square on each side of a 3-4-5 triangle and fills each with unit tiles so you can count that 9 + 16 = 25.
+; ============================================================
+;
+; WHAT IT DOES
+;   A right triangle with sides 3, 4 and 5 sits in the middle. A square
+;   grows out of every side, cut into little unit squares. The two
+;   small squares hold 9 and 16 tiles, the big one holds 25.
+;
+; HOW TO USE
+;   Press Run and count the tiles. Change :unit at the bottom to make
+;   the whole picture bigger or smaller.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the theorem of Pythagoras: a*a + b*b = c*c
+;   * POS and HEADING save where the turtle is, so it can come back
+;   * FILLED paints the inside of a shape the turtle walks around
+;   * a turtle that walks around a shape counterclockwise has the
+;     outside on its right hand
+;
+; THINGS TO TRY
+;   * Use the triangle 6 8 10 (change the numbers in the last line).
+;   * Give each square its own grid color.
+;   * Try 5 12 13, but make :unit smaller so it fits.
+; ============================================================
+
+; Draw an n-by-n square of tiles to the RIGHT of the turtle's path.
+; The turtle starts on a corner, heading along the side it sits on,
+; and finishes exactly where it started.
+to tiled.square :n :unit :color
+  localmake "side :n * :unit
+  localmake "start pos
+  localmake "dir heading
+  setpencolor "black setpensize 1
+  filled :color [repeat 4 [forward :side right 90]]
+  ; grid lines in both directions
+  for [i 1 :n - 1] [
+    penup setpos :start setheading :dir
+    right 90 forward :i * :unit left 90
+    pendown forward :side
+    penup setpos :start setheading :dir
+    forward :i * :unit right 90
+    pendown forward :side
+  ]
+  ; the area written in the middle of the square
+  penup setpos :start setheading :dir
+  forward :side / 2 right 90 forward :side / 2
+  setheading 0 setx xcor - 10 sety ycor - 8
+  setpencolor "black setlabelheight 22
+  label :n * :n
+  ; a thick border, then back to the start
+  penup setpos :start setheading :dir
+  setpensize 3 pendown
+  repeat 4 [forward :side right 90]
+end
+
+to pythagoras :a :b :c :unit
+  ; corner A, then walk counterclockwise: along b, up a, back along c
+  penup setxy -110 -60 setheading 90
+  tiled.square :b :unit [255 210 120]
+  forward :b * :unit left 90
+  tiled.square :a :unit [150 210 255]
+  forward :a * :unit
+  setheading towards [-110 -60]
+  tiled.square :c :unit [170 230 160]
+  ; the triangle itself, in red, on top of everything
+  penup setxy -110 -60 setpencolor "red setpensize 4 pendown
+  setxy -110 + :b * :unit -60
+  setxy -110 + :b * :unit -60 + :a * :unit
+  setxy -110 -60
+end
+
+clearscreen hideturtle
+setbackground "white
+pythagoras 3 4 5 40
+penup setxy -380 -245 setpencolor "black setlabelheight 26
+label [9 + 16 = 25]
+setxy -380 -275 setlabelheight 16
+label [The two small squares fill the big one.]

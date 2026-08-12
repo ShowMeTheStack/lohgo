@@ -1,0 +1,114 @@
+; ============================================================
+; TITLE:    Centers of a Triangle and the Euler Line
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Advanced
+; TAGS:     centroid, circumcenter, orthocenter, incenter, Euler line
+; SUMMARY:  Computes four famous centers of a triangle, draws the circles that go with them, and shows that three of the centers always lie on one straight line.
+; ============================================================
+;
+; WHAT IT DOES
+;   For one triangle the program finds
+;     G  the centroid, where the medians cross (the balance point)
+;     O  the circumcenter, the middle of the circle through the corners
+;     H  the orthocenter, where the altitudes cross
+;     I  the incenter, the middle of the biggest circle inside
+;   It draws the circumcircle, the incircle and the medians, and then
+;   a dashed line through O, G and H. Leonhard Euler proved in 1765
+;   that these three always line up, with G one third of the way
+;   from O to H. The incenter I may sit close by, but it is not on
+;   the line unless the triangle has two equal sides.
+;
+; HOW TO USE
+;   Press Run. Change the three corners in the last line to see the
+;   centers move. Keep the triangle inside about 250 steps of the middle.
+;
+; CONCEPTS YOU WILL LEARN
+;   * points as [x y] lists and vector sums with MAP
+;   * the circumcenter formula from perpendicular bisectors
+;   * H = A + B + C - 2*O when coordinates are measured from O
+;   * the incenter is an average of the corners weighted by side length
+;
+; THINGS TO TRY
+;   * Make the triangle equilateral. What happens to the four centers?
+;   * Make it a right triangle. Where is H then?
+;   * Draw the three altitudes and check they meet at H.
+; ============================================================
+
+; small vector helpers on [x y] lists
+to plus :p :q
+  output (map [?1 + ?2] :p :q)
+end
+to times :k :p
+  output map [:k * ?] :p
+end
+to len :p :q
+  output sqrt ((first :p) - (first :q)) * ((first :p) - (first :q)) + ((last :p) - (last :q)) * ((last :p) - (last :q))
+end
+
+to circumcenter :a :b :c
+  localmake "ax first :a  localmake "ay last :a
+  localmake "bx first :b  localmake "by last :b
+  localmake "cx first :c  localmake "cy last :c
+  localmake "d 2 * (:ax * (:by - :cy) + :bx * (:cy - :ay) + :cx * (:ay - :by))
+  localmake "sa :ax * :ax + :ay * :ay
+  localmake "sb :bx * :bx + :by * :by
+  localmake "sc :cx * :cx + :cy * :cy
+  output list (:sa * (:by - :cy) + :sb * (:cy - :ay) + :sc * (:ay - :by)) / :d ~
+              (:sa * (:cx - :bx) + :sb * (:ax - :cx) + :sc * (:bx - :ax)) / :d
+end
+
+to circle.around :center :r :color
+  penup setpos :center setheading 0
+  setpensize 2 setpencolor :color
+  pendown arc 360 :r penup
+end
+
+to segment :p :q :color :width
+  penup setpos :p setpensize :width setpencolor :color
+  pendown setpos :q penup
+end
+
+; A dashed line through p and q, reaching 280 steps out each way from
+; the point halfway between them.
+to dashed.line :p :q :color
+  penup setpos times 0.5 plus :p :q
+  setheading towards :q
+  back 280
+  setpensize 2 setpencolor :color
+  repeat 40 [pendown forward 8 penup forward 6]
+end
+
+to mark :p :name :color
+  setpensize 10 setpencolor :color dot :p
+  penup setpos :p setxy xcor + 8 ycor + 4
+  label :name
+end
+
+to centers :a :b :c
+  localmake "g times 1 / 3 plus plus :a :b :c
+  localmake "o circumcenter :a :b :c
+  ; with O as the origin H is just A + B + C, so H = A + B + C - 2*O
+  localmake "h plus plus plus :a :b :c times -2 :o
+  ; side lengths opposite each corner
+  localmake "la len :b :c  localmake "lb len :a :c  localmake "lc len :a :b
+  localmake "per :la + :lb + :lc
+  localmake "i times 1 / :per plus plus times :la :a times :lb :b times :lc :c
+  ; inradius = area / half the perimeter; area from the cross product
+  localmake "area abs (((first :b) - (first :a)) * ((last :c) - (last :a)) - ((first :c) - (first :a)) * ((last :b) - (last :a)))  / 2
+  circle.around :o len :o :a [170 200 240]
+  circle.around :i 2 * :area / :per [240 190 120]
+  ; medians, thin
+  segment :a times 0.5 plus :b :c [180 180 180] 1
+  segment :b times 0.5 plus :a :c [180 180 180] 1
+  segment :c times 0.5 plus :a :b [180 180 180] 1
+  ; the triangle
+  segment :a :b "black 3 segment :b :c "black 3 segment :c :a "black 3
+  dashed.line :o :h "red
+  mark :o "O "blue mark :g "G "forest mark :h "H "red mark :i "I "orange
+  print (sentence [OG =] round len :o :g [GH =] round len :g :h [so GH is twice OG])
+end
+
+clearscreen hideturtle
+setbackground "white
+setlabelheight 18
+centers [-210 -110] [210 -110] [120 170]

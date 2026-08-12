@@ -1,0 +1,75 @@
+; ============================================================
+; TITLE:    Thales and the Semicircle
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Beginner
+; TAGS:     circle, right angle, towards, theorem
+; SUMMARY:  Draws triangles inside a semicircle with the diameter as one side and measures the top corner each time: it is always 90 degrees.
+; ============================================================
+;
+; WHAT IT DOES
+;   A half circle sits on its diameter AB. The turtle picks five
+;   points on the curved edge and draws a triangle from A to that
+;   point to B. At the top corner it measures the angle with TOWARDS
+;   and writes it down. Every single one is a right angle. This was
+;   discovered by Thales of Miletus about 2600 years ago.
+;
+; HOW TO USE
+;   Press Run. Change the list of positions in the last line (numbers
+;   between 0 and 180 are places along the half circle).
+;
+; CONCEPTS YOU WILL LEARN
+;   * TOWARDS gives the heading from the turtle to a point
+;   * the angle between two directions is the difference of headings
+;   * a point on a circle is center + r*cos and r*sin of an angle
+;   * the same rule checked many times builds confidence in a theorem
+;
+; THINGS TO TRY
+;   * Add more positions, like 5 or 175. Is it still 90?
+;   * Move a point inside the circle. Is the angle bigger or smaller?
+;   * Draw a full circle and use points on the bottom half too.
+; ============================================================
+
+make "r 220
+make "a list minus :r -120
+make "b list :r -120
+
+; Measure the angle at the turtle between the directions to p and q.
+to angle.at :p :q
+  localmake "turn abs ((towards :p) - (towards :q))
+  if :turn > 180 [make "turn 360 - :turn]
+  output :turn
+end
+
+to semicircle
+  setpensize 3 setpencolor "black
+  ; ARC is centered on the turtle, so stand at the center to draw it.
+  ; Facing west and sweeping 180 degrees clockwise traces the top half.
+  penup setxy 0 -120 setheading 270
+  pendown arc 180 :r penup
+  setpos :a pendown setpos :b penup
+  setpensize 10 dot :a dot :b
+  setlabelheight 20
+  setpos :a setxy xcor - 25 ycor - 25 label "A
+  setpos :b setxy xcor + 8 ycor - 25 label "B
+end
+
+to thales :where :color
+  localmake "c list :r * cos :where -120 + :r * sin :where
+  setpensize 2 setpencolor :color
+  penup setpos :a pendown setpos :c setpos :b penup
+  setpensize 10 dot :c
+  ; measure at C and write the answer just outside the circle
+  setpos :c
+  localmake "angle angle.at :a :b
+  setxy (first :c) * 1.12 - 12 -120 + ((last :c) + 120) * 1.12 + 4
+  setlabelheight 16
+  label word round :angle "deg
+end
+
+clearscreen hideturtle
+setbackground [250 250 245]
+semicircle
+make "colors [red orange forest blue purple]
+foreach [25 60 90 125 160] [thales ? item # :colors]
+penup setxy -200 -200 setpencolor "black setlabelheight 18
+label [Every angle in a semicircle is a right angle]

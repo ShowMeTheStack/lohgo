@@ -1,0 +1,76 @@
+; ============================================================
+; TITLE:    Angles Explained
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Beginner
+; TAGS:     angles, degrees, arc, labels
+; SUMMARY:  Draws an acute, a right, an obtuse and a reflex angle side by side, each with its arc and its size in degrees.
+; ============================================================
+;
+; WHAT IT DOES
+;   Four little pictures appear in a row. Each one has two arms that
+;   meet at a corner, a colored arc that shows how far the second arm
+;   turned, and a label with the angle and its name.
+;
+; HOW TO USE
+;   Press Run. To see another angle, type for example
+;     angle.picture 0 0 135
+;   in the command center after a CLEARSCREEN.
+;
+; CONCEPTS YOU WILL LEARN
+;   * an angle is an amount of turning, measured in degrees
+;   * RIGHT turns the turtle clockwise, so a turn is an angle
+;   * ARC draws part of a circle around the turtle
+;   * IFELSE chains that pick a name from a number
+;
+; THINGS TO TRY
+;   * Change the four numbers at the bottom to 30, 90, 150 and 300.
+;   * Draw a straight angle (180) and see why it is called straight.
+;   * Make the arms longer by changing :arm in angle.picture.
+; ============================================================
+
+; Pick the name that goes with an angle size.
+to angle.name :deg
+  if :deg < 90 [output "acute]
+  if :deg = 90 [output "right]
+  if :deg < 180 [output "obtuse]
+  if :deg = 180 [output "straight]
+  output "reflex
+end
+
+; Draw one angle with its corner at x y.
+; The first arm points to the right (heading 90). The second arm is the
+; first arm turned counterclockwise by :deg, just like a protractor.
+to angle.picture :x :y :deg
+  localmake "arm 70
+  ; the turning arc: ARC sweeps clockwise from the heading, so we
+  ; start it from the second arm and sweep back down to the first
+  penup setxy :x :y pendown
+  setpensize 6 setpencolor "orange
+  setheading 90 - :deg
+  arc :deg 25
+  ; the two arms in dark blue
+  setpensize 3 setpencolor [20 40 120]
+  setheading 90 forward :arm back :arm
+  setheading 90 - :deg forward :arm back :arm
+  ; a small black dot marks the corner, which is called the vertex
+  setpensize 8 setpencolor "black
+  dot list :x :y
+  ; the label sits underneath
+  setpensize 1
+  penup setxy :x - 40 :y - 100
+  setheading 0
+  label (sentence :deg "degrees)
+  penup setxy :x - 40 :y - 120
+  label angle.name :deg
+end
+
+clearscreen hideturtle
+setbackground [250 248 240]
+setlabelheight 16
+angle.picture -300 0 40
+angle.picture -110 0 90
+angle.picture 80 0 130
+angle.picture 270 0 250
+penup setxy -230 180 setpencolor "black
+setlabelheight 24
+label [An angle is how far you turn]

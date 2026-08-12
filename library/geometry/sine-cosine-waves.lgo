@@ -1,0 +1,76 @@
+; ============================================================
+; TITLE:    Sine and Cosine Waves
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Beginner
+; TAGS:     sine, cosine, graph, axes, waves
+; SUMMARY:  Plots sine and cosine from 0 to 720 degrees on labeled axes so you can compare the two waves.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws an x axis marked every 90 degrees and a y axis from -1 to 1.
+;   Then a red sine wave and a blue cosine wave are traced across the
+;   screen. The cosine wave is the sine wave slid 90 degrees to the left.
+;
+; HOW TO USE
+;   Press Run. Change the numbers in the last line to plot the waves
+;   taller or flatter.
+;
+; CONCEPTS YOU WILL LEARN
+;   * SIN and COS take an angle in degrees and output -1 to 1
+;   * scaling: one degree becomes one step across, and 1 becomes
+;     :height steps up
+;   * plotting a graph by moving the turtle with SETXY
+;   * FOR with a step to place tick marks
+;
+; THINGS TO TRY
+;   * Plot (sin :a) * (sin :a) in green. What does it look like?
+;   * Plot sin (2 * :a). How many waves fit now?
+;   * Add the two waves together in a third color.
+; ============================================================
+
+; Where on the screen a point of the graph goes.
+; The graph starts at x = -360, so angle 0 is on the left edge.
+to screen.x :angle
+  output :angle - 360
+end
+
+to axes :height
+  setpensize 1 setpencolor [160 160 160]
+  ; horizontal axis with a tick and label every 90 degrees
+  penup setxy -370 0 pendown setxy 370 0
+  for [a 0 720 90] [
+    penup setxy screen.x :a -6 pendown setxy screen.x :a 6
+    penup setxy (screen.x :a) - 10 -30
+    label :a
+  ]
+  ; vertical axis from -1 to 1
+  penup setxy -360 0 - :height - 20 pendown setxy -360 :height + 20
+  foreach [1 -1] [
+    penup setxy -366 ? * :height pendown setxy -354 ? * :height
+    penup setxy -390 ? * :height - 6 label ?
+  ]
+end
+
+; Plot one wave. :fn is a template like [sin ?] that works out a
+; height between -1 and 1 for each angle.
+to plot :fn :height :color
+  setpensize 3 setpencolor :color
+  penup setxy screen.x 0 :height * invoke :fn 0
+  pendown
+  for [a 0 720 4] [setxy screen.x :a :height * invoke :fn :a]
+  penup
+end
+
+to waves :height
+  axes :height
+  plot [sin ?] :height "red
+  plot [cos ?] :height "blue
+  setlabelheight 18
+  penup setxy 200 :height + 50 setpencolor "red label [sine]
+  setxy 280 :height + 50 setpencolor "blue label [cosine]
+end
+
+clearscreen hideturtle
+setbackground "white
+setlabelheight 12
+waves 140

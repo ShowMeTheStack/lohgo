@@ -1,0 +1,100 @@
+; ============================================================
+; TITLE:    Distance Between Two Points
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Beginner
+; TAGS:     coordinates, grid, pythagoras, distance, input
+; SUMMARY:  Asks for two points on a grid, draws the right triangle between them and uses Pythagoras to work out how far apart they are.
+; ============================================================
+;
+; WHAT IT DOES
+;   A square grid with numbered axes is drawn. You type the x and y of
+;   two points. The program plots them, draws the straight line that
+;   joins them, and adds a sideways leg and an up-down leg to make a
+;   right triangle. Then it shows the sum
+;     distance = sqrt (across*across + up*up)
+;
+; HOW TO USE
+;   Press Run and answer the four questions in the command center.
+;   Use whole numbers from -9 to 9.
+;
+; CONCEPTS YOU WILL LEARN
+;   * coordinates: x tells how far across, y how far up
+;   * any slanted line is the long side of a right triangle
+;   * the distance formula is just Pythagoras in disguise
+;   * checking input with NUMBERP and asking again
+;
+; THINGS TO TRY
+;   * Choose points that give a 3-4-5 triangle, like (0,0) and (3,4).
+;   * Compare the answer with the turtle's own DISTANCE.
+;   * Let the program ask for a third point and find the perimeter.
+; ============================================================
+
+make "unit 28   ; steps per grid square
+
+to grid
+  setpensize 1 setpencolor [220 225 235]
+  for [k -9 9] [
+    penup setxy :k * :unit -9 * :unit pendown setxy :k * :unit 9 * :unit
+    penup setxy -9 * :unit :k * :unit pendown setxy 9 * :unit :k * :unit
+  ]
+  setpensize 2 setpencolor [100 100 120]
+  penup setxy -9 * :unit 0 pendown setxy 9 * :unit 0
+  penup setxy 0 -9 * :unit pendown setxy 0 9 * :unit
+  setlabelheight 11
+  foreach [-8 -6 -4 -2 2 4 6 8] [
+    penup setxy ? * :unit - 6 -16 label ?
+    penup setxy -22 ? * :unit - 4 label ?
+  ]
+end
+
+; Ask for a whole number between -9 and 9, as many times as needed.
+to ask.coordinate :question
+  localmake "n "
+  forever [
+    print :question
+    make "n readword
+    if numberp :n [if and (int :n) = :n (abs :n) <= 9 [output :n]]
+    print [Please type a whole number from -9 to 9.]
+  ]
+end
+
+to plot.point :x :y :name
+  setpensize 12 setpencolor "red
+  dot list :x * :unit :y * :unit
+  setlabelheight 16 setpencolor "black
+  penup setxy :x * :unit + 8 :y * :unit + 8
+  label (word :name "|(| :x "|,| :y "|)|)
+end
+
+to distance.demo
+  localmake "x1 ask.coordinate [First point: what is x?]
+  localmake "y1 ask.coordinate [First point: what is y?]
+  localmake "x2 ask.coordinate [Second point: what is x?]
+  localmake "y2 ask.coordinate [Second point: what is y?]
+  localmake "across abs (:x2 - :x1)
+  localmake "up abs (:y2 - :y1)
+  ; the two legs, then the slanted side
+  setpensize 3
+  setpencolor "blue
+  penup setxy :x1 * :unit :y1 * :unit pendown setxy :x2 * :unit :y1 * :unit
+  setpencolor "forest
+  pendown setxy :x2 * :unit :y2 * :unit
+  setpencolor "orange
+  penup setxy :x1 * :unit :y1 * :unit pendown setxy :x2 * :unit :y2 * :unit
+  penup
+  plot.point :x1 :y1 "P
+  plot.point :x2 :y2 "Q
+  localmake "d sqrt (:across * :across + :up * :up)
+  ; the results go in the free strip at the right of the grid
+  setlabelheight 14
+  penup setxy 262 200 setpencolor "blue label (sentence [across =] :across)
+  setxy 262 175 setpencolor "forest label (sentence [up =] :up)
+  setxy 262 150 setpencolor "orange label (sentence [distance =] form :d 1 2)
+  print (sentence :across "* :across "+ :up "* :up "= :across * :across + :up * :up)
+  print (sentence [distance = square root of] :across * :across + :up * :up "= form :d 1 2)
+end
+
+clearscreen hideturtle
+setbackground "white
+grid
+distance.demo

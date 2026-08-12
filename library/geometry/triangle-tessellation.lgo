@@ -1,0 +1,104 @@
+; ============================================================
+; TITLE:    Triangle Tiles Prove 180
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Advanced
+; TAGS:     tessellation, angle sum, vectors, arc, proof
+; SUMMARY:  Tiles the screen with copies of one lopsided triangle and colors the six angles that meet at a corner, showing A + B + C make a straight line.
+; ============================================================
+;
+; WHAT IT DOES
+;   Any triangle, copied and turned upside down, covers the whole
+;   floor with no gaps. Around the middle corner six triangles meet.
+;   Their angles are A, C, B, A, C, B going round, each shown with a
+;   colored arc. Three of them fill the top half of the turn, which is
+;   a straight line, so A + B + C = 180 degrees.
+;
+; HOW TO USE
+;   Press Run. Change :e2 at the bottom (the top corner of the first
+;   triangle) to try a different shape. Any triangle works!
+;
+; CONCEPTS YOU WILL LEARN
+;   * the corners of a tiling sit on a lattice: i*e1 + j*e2
+;   * two-input ARCTAN finds the direction of a vector
+;   * ARC with a thick pen paints an angle marker
+;   * nested FOR loops cover a whole area
+;
+; THINGS TO TRY
+;   * Use e2 = [60 104]: the tiles become equilateral.
+;   * Mark the angles at a second corner too.
+;   * Make the up and down triangles the same color. Can you still
+;     see the triangles? Put PENDOWN inside tri to get outlines.
+; ============================================================
+
+; Direction of a vector, as a math angle: 0 is east, counterclockwise.
+to direction :v
+  output (arctan first :v last :v)
+end
+
+; A filled triangle with no outline. FILLED remembers the corners even
+; with the pen up, and the two tile colors are enough to tell the
+; triangles apart because neighbors are always different colors.
+to tri :p :q :r :color
+  penup setpos :p
+  filled :color [setpos :q setpos :r setpos :p]
+end
+
+; Fill the screen with up and down triangles.
+to tile :e1 :e2
+  localmake "ax first :e1 localmake "bx first :e2 localmake "by last :e2
+  for [j -4 4] [
+    for [i -8 8] [
+      ; o is the lattice point i*e1 + j*e2
+      localmake "ox :i * :ax + :j * :bx
+      localmake "oy :j * :by
+      if (abs :ox) < 640 [
+        tri (list :ox :oy) (list :ox + :ax :oy) (list :ox + :bx :oy + :by) [255 235 170]
+        tri (list :ox + :ax :oy) (list :ox + :ax + :bx :oy + :by) (list :ox + :bx :oy + :by) [190 220 250]
+      ]
+    ]
+  ]
+end
+
+; Paint an angle marker at the origin from math angle m1 round to m2.
+to angle.mark :m1 :m2 :color :name
+  penup home
+  ; turtle heading = 90 - math angle, and ARC sweeps clockwise,
+  ; so start from the m2 side and sweep back to m1
+  setheading 90 - :m2
+  setpensize 10 setpencolor :color
+  pendown arc :m2 - :m1 26 penup
+  ; the letter goes just outside, halfway between
+  localmake "mid (:m1 + :m2) / 2
+  setxy 48 * (cos :mid) - 6 48 * (sin :mid) - 7
+  setpencolor "black label :name
+end
+
+to six.angles :e1 :e2
+  localmake "d1 direction :e1
+  localmake "d2 direction :e2
+  localmake "d3 direction list (first :e2) - first :e1 last :e2
+  angle.mark :d1 :d2 "red "A
+  angle.mark :d2 :d3 "forest "C
+  angle.mark :d3 :d1 + 180 "blue "B
+  angle.mark :d1 + 180 :d2 + 180 "red "A
+  angle.mark :d2 + 180 :d3 + 180 "forest "C
+  angle.mark :d3 + 180 :d1 + 360 "blue "B
+  print (sentence [A =] round :d2 - :d1 [B =] round :d1 + 180 - :d3 [C =] round :d3 - :d2)
+end
+
+to tessellation :e1 :e2
+  tile :e1 :e2
+  ; a white banner along the bottom, painted over the tiles so the
+  ; sentence written on it later is easy to read
+  penup setxy -400 -300 setheading 0
+  filled "white [repeat 2 [forward 45 right 90 forward 800 right 90]]
+  setlabelheight 18
+  six.angles :e1 :e2
+  setpensize 1 setpencolor "black
+  penup setxy -380 -285
+  label [A + C + B along the top half of the turn: a straight line, 180 degrees]
+end
+
+clearscreen hideturtle
+setbackground "white
+tessellation [120 0] [40 100]

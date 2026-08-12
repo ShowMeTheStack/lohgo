@@ -1,0 +1,72 @@
+; ============================================================
+; TITLE:    Star Polygons
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Intermediate
+; TAGS:     stars, polygons, gcd, turning, circle
+; SUMMARY:  Draws star polygons {n/k} by joining every k-th of n points on a circle, and shows what happens when n and k share a factor.
+; ============================================================
+;
+; WHAT IT DOES
+;   Eight stars appear in two rows. A star {n/k} has n points spaced
+;   round a circle, and the turtle joins each point to the one k
+;   places further on. The turtle turns 360*k/n at every tip. When n
+;   and k share a factor, like {6/2}, one path closes early, so the
+;   program draws several rotated copies: {6/2} is two triangles.
+;
+; HOW TO USE
+;   Press Run. Edit the list in the last line; each item is [n k].
+;
+; CONCEPTS YOU WILL LEARN
+;   * the total turning of a closed path is a whole number of turns
+;   * a chord of a circle is 2*r*sin(half the angle it spans)
+;   * GCD (greatest common divisor) by Euclid's method
+;   * the same code draws polygons (k = 1) and stars (k > 1)
+;
+; THINGS TO TRY
+;   * Try {8/2}, {8/3} and {8/4}. Which one is not a star at all?
+;   * Try {11/k} for k from 1 to 5.
+;   * Fill a star with FILLED and see which parts get painted.
+; ============================================================
+
+to gcd :a :b
+  if :b = 0 [output :a]
+  output gcd :b remainder :a :b
+end
+
+; Draw {n/k} centered on cx cy with all points on a circle of radius r.
+to star :n :k :cx :cy :r :color
+  localmake "copies gcd :n :k
+  localmake "chord 2 * :r * sin (180 * :k / :n)
+  setpensize 2 setpencolor :color
+  for [c 0 :copies - 1] [
+    ; each copy starts one point further round the circle
+    localmake "start :c * 360 / :n
+    penup setxy :cx + :r * sin :start :cy + :r * cos :start
+    ; the chord to the point k places on leaves at 90 + half its span
+    setheading :start + 90 + 180 * :k / :n
+    pendown
+    repeat :n / :copies [forward :chord right 360 * :k / :n]
+    penup
+  ]
+  ; the name underneath
+  setpencolor "black
+  setxy :cx - 22 :cy - :r - 28
+  ; braces start an array in Logo, so they need vertical bars
+  label (word "|{| :n "/ :k "|}|)
+end
+
+to star.gallery :pairs
+  localmake "colors [red orange [200 160 0] forest aqua blue purple magenta]
+  localmake "i 0
+  foreach :pairs [
+    make "i :i + 1
+    localmake "cx -300 + 200 * remainder (:i - 1) 4
+    localmake "cy ifelse :i <= 4 [120] [-140]
+    star first ? last ? :cx :cy 80 item :i :colors
+  ]
+end
+
+clearscreen hideturtle
+setbackground "white
+setlabelheight 18
+star.gallery [[5 2] [7 2] [7 3] [8 3] [6 2] [9 3] [10 3] [12 5]]

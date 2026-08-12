@@ -1,0 +1,94 @@
+; ============================================================
+; TITLE:    The Unit Circle in Motion
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Intermediate
+; TAGS:     unit circle, sine, cosine, animation, projection
+; SUMMARY:  A point runs round a circle while its height is traced out as a sine wave beside it, showing where the wave comes from.
+; ============================================================
+;
+; WHAT IT DOES
+;   On the left a point goes round a circle of radius 1 (drawn 100
+;   steps big). Its height above the middle is the sine of the angle
+;   (red) and its distance to the right is the cosine (blue). A grey
+;   line carries the height across to the right, where it draws the
+;   sine wave one degree at a time.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to end the animation.
+;
+; CONCEPTS YOU WILL LEARN
+;   * on the unit circle, x = cos(angle) and y = sin(angle)
+;   * angles in math start at the right and go counterclockwise,
+;     while turtle headings start at the top and go clockwise
+;   * FOREVER with CLEAN and WAIT makes an animation
+;   * FORM rounds a number for a tidy display
+;
+; THINGS TO TRY
+;   * Trace the cosine wave instead of the sine wave.
+;   * Make the point go twice as fast by changing :speed.
+;   * Draw the wave with dots instead of lines.
+; ============================================================
+
+make "r 100          ; one unit on screen
+make "cx -260        ; center of the circle
+make "wave.x -120    ; where the wave starts
+make "per.degree 500 / 360
+make "speed 3
+
+to circle.part :a
+  localmake "px :cx + :r * cos :a
+  localmake "py :r * sin :a
+  ; the circle and its axes
+  setpensize 2 setpencolor [180 180 180]
+  penup setxy :cx 0 setheading 0 pendown arc 360 :r penup
+  setpensize 1
+  setxy :cx - :r - 20 0 pendown setxy 380 0 penup
+  setxy :cx 0 - :r - 20 pendown setxy :cx :r + 20 penup
+  ; radius
+  setpensize 2 setpencolor "black
+  setxy :cx 0 pendown setxy :px :py penup
+  ; cosine along the bottom, sine straight up
+  setpensize 4 setpencolor "blue
+  setxy :cx 0 pendown setxy :px 0 penup
+  setpencolor "red
+  pendown setxy :px :py penup
+  ; the point
+  setpensize 12 setpencolor [200 40 40] dot list :px :py
+  ; numbers
+  setpencolor "black
+  setxy -380 -170 label (sentence "angle :a)
+  setpencolor "red
+  setxy -380 -195 label (sentence "sin "= form sin :a 5 2)
+  setpencolor "blue
+  setxy -380 -220 label (sentence "cos "= form cos :a 5 2)
+end
+
+to wave.part :a
+  ; the wave so far, redrawn every frame
+  setpensize 3 setpencolor "red
+  penup setxy :wave.x 0 pendown
+  for [d 0 :a 3] [setxy :wave.x + :d * :per.degree :r * sin :d]
+  setxy :wave.x + :a * :per.degree :r * sin :a
+  penup
+  ; the link from the point on the circle to the tip of the wave
+  setpensize 1 setpencolor [150 150 150]
+  setxy :cx + :r * cos :a :r * sin :a
+  pendown setxy :wave.x + :a * :per.degree :r * sin :a penup
+end
+
+to animate
+  localmake "a 0
+  forever [
+    clean
+    circle.part :a
+    wave.part :a
+    wait 2
+    make "a :a + :speed
+    if :a > 360 [make "a 0]
+  ]
+end
+
+clearscreen hideturtle
+setbackground "white
+setlabelheight 18
+animate

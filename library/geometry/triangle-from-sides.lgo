@@ -1,0 +1,115 @@
+; ============================================================
+; TITLE:    Triangle From Three Sides
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Intermediate
+; TAGS:     law of cosines, triangle, input, trigonometry
+; SUMMARY:  Asks for three side lengths, checks they can make a triangle, then uses the law of cosines to find the angles and draw it.
+; ============================================================
+;
+; WHAT IT DOES
+;   You type three lengths. If they are able to close up into a
+;   triangle, the program works out all three angles and draws the
+;   triangle to scale, labeling every side and every corner.
+;
+; HOW TO USE
+;   Press Run and answer the three questions in the command center.
+;   Anything that is not a positive number is asked for again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the triangle inequality: any two sides must add up to more
+;     than the third
+;   * the law of cosines: cos A = (b*b + c*c - a*a) / (2*b*c)
+;   * ARCCOS turns a cosine back into an angle
+;   * a loop that keeps asking until the input makes sense
+;   * the corner labels show each angle in degrees
+;
+; THINGS TO TRY
+;   * Try 3 4 5. Which angle comes out exactly 90?
+;   * Try 1 2 3. Why does the program refuse it?
+;   * Try three equal sides and check that every angle is 60.
+; ============================================================
+
+; Ask a question until the answer is a positive number.
+to ask.length :question
+  localmake "answer []
+  forever [
+    print :question
+    make "answer readword
+    if and numberp :answer [:answer > 0] [output :answer]
+    print [Please type a positive number, like 5 or 7.5]
+  ]
+end
+
+; The law of cosines, solved for the angle opposite side :opp.
+to angle.opposite :opp :s1 :s2
+  output arccos ((:s1 * :s1 + :s2 * :s2 - :opp * :opp) / (2 * :s1 * :s2))
+end
+
+to corner.label :text :dx :dy
+  penup setxy xcor + :dx ycor + :dy
+  label :text
+  setxy xcor - :dx ycor - :dy
+end
+
+to draw.triangle :a :b :c
+  ; angle A is at corner A, opposite side a, and so on
+  localmake "angA angle.opposite :a :b :c
+  localmake "angB angle.opposite :b :a :c
+  localmake "angC 180 - :angA - :angB
+  ; scale so the longest side is 360 steps
+  localmake "k 360 / (max3 :a :b :c)
+  ; corner A, with side c running right to corner B. Place A so that
+  ; the middle of the triangle lands in the middle of the screen.
+  localmake "cx (:c * :k + :b * :k * cos :angA) / 3
+  localmake "height :b * :k * sin :angA
+  localmake "ax 0 - :cx
+  localmake "ay 0 - :height / 2
+  penup setxy :ax :ay setheading 90
+  setpensize 3 setpencolor [30 60 160]
+  filled [200 220 255] [
+    pendown
+    forward :c * :k
+    left 180 - :angB
+    forward :a * :k
+    left 180 - :angC
+    forward :b * :k
+  ]
+  ; now the labels, walking round the same way
+  setpencolor "black
+  setheading 90 penup
+  corner.label (sentence "A round :angA) -60 -25
+  forward :c * :k / 2 corner.label (sentence "c "= :c) -10 -25
+  forward :c * :k / 2 corner.label (sentence "B round :angB) 10 -25
+  left 180 - :angB
+  forward :a * :k / 2 corner.label (sentence "a "= :a) 15 0
+  forward :a * :k / 2 corner.label (sentence "C round :angC) -20 15
+  setheading towards list :ax :ay
+  forward :b * :k / 2 corner.label (sentence "b "= :b) -55 0
+  hideturtle
+  print (sentence [Angles:] round :angA round :angB round :angC [add up to] round (:angA + :angB + :angC))
+end
+
+to max3 :x :y :z
+  output max2 :x max2 :y :z
+end
+
+to max2 :x :y
+  output ifelse :x > :y [:x] [:y]
+end
+
+to triangle.program
+  localmake "a ask.length [Length of side a?]
+  localmake "b ask.length [Length of side b?]
+  localmake "c ask.length [Length of side c?]
+  ; the triangle inequality: the longest side must be shorter
+  ; than the other two put together
+  if (max3 :a :b :c) * 2 >= :a + :b + :c [
+    print [Those sides cannot close up into a triangle. Try again.]
+    triangle.program stop
+  ]
+  clearscreen setlabelheight 16
+  draw.triangle :a :b :c
+end
+
+clearscreen hideturtle
+triangle.program

@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Similar Triangles
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Beginner
+; TAGS:     similarity, scale, ratio, triangles
+; SUMMARY:  Draws four triangles with the same angles but different sizes from one shared corner and prints how their sides grow in the same ratio.
+; ============================================================
+;
+; WHAT IT DOES
+;   Four triangles grow out of the same bottom left corner like a
+;   telescope. They all have the same three angles, so they are
+;   "similar": one is just a zoomed copy of another. The command center
+;   shows each triangle's sides and the ratio of its sides to the
+;   smallest triangle's sides. Every side grows by the same number.
+;
+; HOW TO USE
+;   Press Run. Change :angle.a and :angle.b in the last line to try a
+;   different triangle shape.
+;
+; CONCEPTS YOU WILL LEARN
+;   * similar shapes have equal angles and proportional sides
+;   * the law of sines finds the missing sides of a triangle
+;   * the angle at the third corner is 180 minus the other two
+;   * one procedure with a :scale input draws every size
+;
+; THINGS TO TRY
+;   * Make the scale factors 1, 2, 3, 4. What happens to the areas?
+;   * Draw the triangles from different corners so they do not touch.
+;   * Use angles 90 and 45. What kind of triangle is that?
+; ============================================================
+
+; Draw one triangle with base :base, angles A and B at the base ends.
+; The turtle starts at corner A facing along the base.
+to triangle.at :base :angle.a :angle.b :color
+  localmake "angle.c 180 - :angle.a - :angle.b
+  ; law of sines: side over sine of opposite angle is the same for all
+  localmake "side.b :base * (sin :angle.b) / sin :angle.c
+  setpencolor :color
+  pendown
+  forward :base
+  left 180 - :angle.b
+  forward :base * (sin :angle.a) / sin :angle.c
+  left 180 - :angle.c
+  forward :side.b
+  left 180 - :angle.a
+  penup
+end
+
+to telescope :angle.a :angle.b
+  localmake "small 130
+  localmake "colors [[230 60 60] [240 150 0] [40 150 70] [40 90 200]]
+  localmake "scales [1 1.5 2 2.5]
+  localmake "angle.c 180 - :angle.a - :angle.b
+  setpensize 3
+  for [i 1 4] [
+    localmake "k item :i :scales
+    penup setxy -360 -200 setheading 90
+    triangle.at :small * :k :angle.a :angle.b item :i :colors
+    ; side lengths for the table
+    localmake "a :small * :k * (sin :angle.a) / sin :angle.c
+    localmake "b :small * :k * (sin :angle.b) / sin :angle.c
+    localmake "c :small * :k
+    print (sentence [sides] round :a round :b round :c [ratio to smallest] :k)
+    ; the same numbers in a little table on the right
+    penup setxy 170 120 - 30 * :i
+    label (sentence (word "x :k ":) round :a round :b round :c)
+    ; a label at the right end of each base
+    penup setxy -360 + :small * :k - 20 -225
+    label (word "x :k)
+  ]
+  penup setxy 170 120 setpencolor "black
+  label [sides a b c]
+  penup setxy -330 230
+  label (sentence [Same angles:] :angle.a :angle.b :angle.c [degrees])
+end
+
+clearscreen hideturtle
+setbackground "white
+setlabelheight 18
+telescope 50 70

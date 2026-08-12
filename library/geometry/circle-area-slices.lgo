@@ -1,0 +1,95 @@
+; ============================================================
+; TITLE:    Area of a Circle by Slicing
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Intermediate
+; TAGS:     area, circle, pi, sectors, filled
+; SUMMARY:  Cuts a circle into thin pizza slices and lays them head to tail so they form a near rectangle r tall and pi*r wide.
+; ============================================================
+;
+; WHAT IT DOES
+;   At the top, a circle is cut into 16 slices: the top half orange,
+;   the bottom half blue. Below, the same slices are laid in a row,
+;   blue ones pointing up and orange ones pointing down, fitted
+;   together. The row is almost a rectangle. Its height is the radius r
+;   and its width is half the circle's edge, pi * r. So the area is
+;   pi * r * r.
+;
+; HOW TO USE
+;   Press Run. Change :slices to 8 or 32 in the last line. More slices
+;   make the row look more like a true rectangle.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a circle's circumference is 2 * pi * r
+;   * FILLED paints any outline the turtle walks, even a curved one
+;   * a curve can be drawn as many tiny straight steps
+;   * rearranging a shape does not change its area
+;
+; THINGS TO TRY
+;   * Try 64 slices with a smaller radius.
+;   * Draw a dashed rectangle around the row to compare.
+;   * Color the slices in a rainbow so you can follow each one.
+; ============================================================
+
+; One slice: corner at apex, pointing along heading :dir, opening
+; :angle degrees wide, with radius r.
+to slice :apex :dir :angle :r :color
+  penup setpos :apex
+  setpensize 1 setpencolor "white
+  filled :color [
+    pendown
+    ; walk along the curved edge in small steps
+    for [h :dir - :angle / 2 :dir + :angle / 2 :angle / 8] [
+      setxy (first :apex) + :r * sin :h (last :apex) + :r * cos :h
+    ]
+    setpos :apex
+  ]
+  penup
+end
+
+; The color of a slice depends on which half of the circle it is in.
+to half.color :dir
+  output ifelse or :dir < 90 :dir > 270 [[245 160 60]] [[70 140 210]]
+end
+
+to whole.circle :slices :r
+  localmake "angle 360 / :slices
+  for [k 0 :slices - 1] [
+    localmake "dir :k * :angle + :angle / 2
+    slice [0 130] :dir :angle :r half.color :dir
+  ]
+end
+
+; Lay the slices in a row: the bottom ones point up and the top ones
+; point down, each half a slice-width further along.
+to row :slices :r
+  localmake "angle 360 / :slices
+  localmake "width 2 * :r * sin (:angle / 2)
+  localmake "x0 0 - (:slices / 4) * :width
+  localmake "base -180
+  for [k 0 :slices - 1] [
+    localmake "x :x0 + :k * :width / 2
+    ifelse 0 = remainder :k 2 [
+      slice list :x :base + :r 180 :angle :r [70 140 210]
+    ] [
+      slice list :x :base 0 :angle :r [245 160 60]
+    ]
+  ]
+  ; measurements
+  setpencolor "black setlabelheight 16
+  penup setxy :x0 - 20 :base - 30
+  label (sentence [width: about pi * r =] round pi * :r)
+  penup setxy :x0 + :slices * :width / 2 + 10 :base + :r / 2
+  label (sentence [height: r =] :r)
+end
+
+to slices.demo :slices
+  localmake "r 100
+  whole.circle :slices :r
+  row :slices :r
+  penup setxy -390 260 setpencolor "black setlabelheight 18
+  label [area = pi * r * r]
+end
+
+clearscreen hideturtle
+setbackground "white
+slices.demo 16

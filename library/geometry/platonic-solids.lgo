@@ -1,0 +1,131 @@
+; ============================================================
+; TITLE:    The Five Platonic Solids
+; CATEGORY: Geometry & Trigonometry
+; LEVEL:    Advanced
+; TAGS:     3d, projection, rotation, golden ratio, lists
+; SUMMARY:  Builds the corner points of all five Platonic solids from simple coordinate rules, finds their edges, and draws them turned in 3D.
+; ============================================================
+;
+; WHAT IT DOES
+;   The tetrahedron, cube, octahedron, dodecahedron and icosahedron
+;   appear as wire models. Nobody typed in their edges: the program
+;   makes the corner points from sign patterns, then joins every pair
+;   of corners that are the shortest distance apart. Edges at the
+;   back are drawn paler than edges at the front.
+;
+; HOW TO USE
+;   Press Run. Change :turn.y and :turn.x at the bottom to look at the
+;   solids from another direction.
+;
+; CONCEPTS YOU WILL LEARN
+;   * points in 3D as [x y z] lists
+;   * a recursive procedure that makes every +/- sign combination
+;   * rotating a point with SIN and COS, then dropping z to project
+;   * the golden ratio (1 + sqrt 5) / 2 hides inside two of the solids
+;
+; THINGS TO TRY
+;   * Count the corners with COUNT and the edges with COUNT too.
+;     Check that corners - edges + faces = 2 for each solid.
+;   * Make the back edges invisible for a solid-looking model.
+;   * Put the drawing in a loop that changes :turn.y for a spin.
+; ============================================================
+
+make "phi (1 + sqrt 5) / 2
+
+; Every way of putting + or - in front of the nonzero numbers of v.
+to sign.combos :v
+  if emptyp :v [output [[]]]
+  localmake "rest sign.combos butfirst :v
+  localmake "x first :v
+  if :x = 0 [output map [fput 0 ?] :rest]
+  output sentence map [fput :x ?] :rest map [fput minus :x ?] :rest
+end
+
+; The three cyclic shifts of [a b c]: [a b c] [b c a] [c a b].
+to shifts :v
+  output (list :v (list item 2 :v item 3 :v item 1 :v) (list item 3 :v item 1 :v item 2 :v))
+end
+
+to shifted.combos :v
+  output reduce "sentence map [sign.combos ?] shifts :v
+end
+
+to tetrahedron
+  output filter [0 < reduce "product ?] sign.combos [1 1 1]
+end
+to cube
+  output sign.combos [1 1 1]
+end
+to octahedron
+  output shifted.combos [1 0 0]
+end
+to icosahedron
+  output shifted.combos (list 0 1 :phi)
+end
+to dodecahedron
+  output sentence sign.combos [1 1 1] shifted.combos (list 0 1 / :phi :phi)
+end
+
+to dist3 :p :q
+  output sqrt reduce "sum (map [(?1 - ?2) * (?1 - ?2)] :p :q)
+end
+
+; Turn a 3D point, then output [screen.x screen.y depth].
+to view :p :size
+  ; COS and SIN go in parentheses: without them "cos :a + 1" would
+  ; mean cos(:a + 1), because infix binds tighter than inputs
+  localmake "cos.y (cos :turn.y)  localmake "sin.y (sin :turn.y)
+  localmake "cos.x (cos :turn.x)  localmake "sin.x (sin :turn.x)
+  ; first spin around the up-down axis, then tip forward
+  localmake "x1 (first :p) * :cos.y + (last :p) * :sin.y
+  localmake "z1 (last :p) * :cos.y - (first :p) * :sin.y
+  localmake "y2 (item 2 :p) * :cos.x - :z1 * :sin.x
+  localmake "z2 (item 2 :p) * :sin.x + :z1 * :cos.x
+  output (list :size * :x1 :size * :y2 :size * :z2)
+end
+
+to solid :points :cx :cy :size :name
+  localmake "radius dist3 first :points [0 0 0]
+  localmake "scale :size / :radius
+  localmake "shown map [view ? :scale] :points
+  ; the shortest distance between two different corners is an edge
+  localmake "edge min.distance :points
+  setpensize 2
+  for [i 1 (count :points) - 1] [
+    for [j :i + 1 count :points] [
+      if (dist3 item :i :points item :j :points) < :edge * 1.01 [
+        localmake "p item :i :shown
+        localmake "q item :j :shown
+        ; depth runs from -radius (back) to +radius (front)
+        localmake "depth ((last :p) + (last :q)) / (2 * :size)
+        localmake "fade round 110 - 90 * :depth
+        setpencolor (list :fade :fade 120 + :fade / 2)
+        penup setxy :cx + first :p :cy + item 2 :p
+        pendown setxy :cx + first :q :cy + item 2 :q
+      ]
+    ]
+  ]
+  penup setxy :cx - 50 :cy - :size - 35 setpencolor "black
+  label :name
+end
+
+to min.distance :points
+  localmake "best 1000
+  foreach butfirst :points [make "best min2 :best dist3 first :points ?]
+  output :best
+end
+
+to min2 :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+make "turn.y 25
+make "turn.x 20
+clearscreen hideturtle
+setbackground "white
+setlabelheight 18
+solid tetrahedron -260 140 85 "tetrahedron
+solid cube 0 140 85 "cube
+solid octahedron 260 140 85 "octahedron
+solid dodecahedron -130 -130 95 "dodecahedron
+solid icosahedron 130 -130 95 "icosahedron
