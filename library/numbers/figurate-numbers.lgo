@@ -1,0 +1,106 @@
+; ============================================================
+; TITLE:    Figurate Numbers
+; CATEGORY: Number Theory
+; LEVEL:    Beginner
+; TAGS:     triangular numbers, square numbers, pentagonal numbers, dots, patterns
+; SUMMARY:  Draws triangular, square and pentagonal numbers as growing shapes made of dots, with their counts underneath.
+; ============================================================
+;
+; WHAT IT DOES
+;   Some numbers make shapes. 1, 3, 6, 10, 15 dots pile up into
+;   triangles. 1, 4, 9, 16, 25 dots make squares. 1, 5, 12, 22, 35
+;   make pentagons, each one wrapped around the last. The Greeks called
+;   these "figurate" numbers. Each row of the picture shows one family
+;   growing step by step.
+;
+; HOW TO USE
+;   Press Run. Change :SIZES to draw more or fewer shapes in each row,
+;   and :GAP to space the dots out.
+;
+; CONCEPTS YOU WILL LEARN
+;   * nested FOR loops that place dots in rows and columns
+;   * DOT and SETPENSIZE to make round counters
+;   * walking a pentagon with REPEAT 5 and turning 72 degrees
+;   * formulas that predict the count without drawing
+;
+; THINGS TO TRY
+;   * Add a row for hexagonal numbers: 1, 6, 15, 28 (turn 60, walk 6 sides).
+;   * Put two triangles of the same size together. What shape do they make?
+;     That is why the triangular formula has n * (n + 1) / 2 in it.
+; ============================================================
+
+; Triangle number n: row r has r dots, centered on cx.
+to triangle.dots :n :cx :top
+  for [r 1 :n] [
+    for [j 1 :r] [
+      dot (list :cx + (:j - (:r + 1) / 2) * :gap  :top - (:r - 1) * :gap * 0.87)
+    ]
+  ]
+end
+
+; Square number n: an n by n block, centered on cx.
+to square.dots :n :cx :top
+  for [r 1 :n] [
+    for [c 1 :n] [
+      dot (list :cx + (:c - (:n + 1) / 2) * :gap  :top - (:r - 1) * :gap)
+    ]
+  ]
+end
+
+; Pentagonal number n: pentagons of side 1, 2, ... n-1 gaps, all sharing
+; their bottom-left corner. Dots that land on the same spot twice just
+; overlap, so we see each one once.
+to pentagon.dots :n :cx :bottom
+  penup setxy :cx - :gap * (:n - 1) / 2 :bottom
+  localmake "corner pos
+  dot :corner
+  if :n < 2 [stop]      ; careful: FOR [k 2 1] would count DOWN from 2 to 1
+  for [k 2 :n] [
+    setpos :corner setheading 90
+    repeat 5 [
+      repeat :k - 1 [forward :gap dot pos]
+      left 72
+    ]
+  ]
+end
+
+to caption :cx :y :text
+  setlabelheight 15
+  penup setxy :cx - 4.5 * count :text :y
+  setpencolor [50 50 50]
+  label :text
+end
+
+to row.title :y :text
+  setlabelheight 18
+  penup setxy -390 :y setpencolor [50 50 50]
+  label :text
+end
+
+to show.family :kind :y :color
+  localmake "i 0
+  foreach :sizes [
+    localmake "cx -190 + :i * 120
+    setpencolor :color setpensize 8
+    if :kind = "triangle [triangle.dots ? :cx :y + 60  caption :cx :y - 15 ? * (? + 1) / 2]
+    if :kind = "square [square.dots ? :cx :y + 60  caption :cx :y - 15 ? * ?]
+    if :kind = "pentagon [pentagon.dots ? :cx :y + 5  caption :cx :y - 28 ? * (3 * ? - 1) / 2]
+    make "i :i + 1
+  ]
+end
+
+make "sizes [1 2 3 4 5]
+make "gap 13
+
+clearscreen hideturtle
+setbackground [252 250 245]
+row.title 175 [Triangular]
+show.family "triangle 140 [220 90 60]
+row.title 15 [Square]
+show.family "square -30 [60 120 210]
+row.title -175 [Pentagonal]
+show.family "pentagon -230 [60 160 90]
+; Words between vertical bars keep their spaces and parentheses as typed.
+print "|Triangular number n = n * (n + 1) / 2|
+print "|Square number n     = n * n|
+print "|Pentagonal number n = n * (3n - 1) / 2|

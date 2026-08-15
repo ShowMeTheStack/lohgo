@@ -1,0 +1,88 @@
+; ============================================================
+; TITLE:    Ulam Spiral
+; CATEGORY: Number Theory
+; LEVEL:    Intermediate
+; TAGS:     primes, spiral, sieve, dot, patterns
+; SUMMARY:  Winds the counting numbers into a square spiral and puts a dot on every prime, revealing mysterious diagonal lines.
+; ============================================================
+;
+; WHAT IT DOES
+;   In 1963 the mathematician Stanislaw Ulam was doodling during a
+;   boring talk. He wrote 1 in the middle of the page, then 2, 3, 4...
+;   winding outward in a square spiral, and circled the primes. To his
+;   surprise the primes clustered along diagonal lines. Nobody can fully
+;   explain why, even today. This program redraws his doodle with
+;   more than 14000 numbers.
+;
+; HOW TO USE
+;   Press Run. Change :SIDE to make the spiral bigger or smaller, and
+;   :GAP to change the space between dots.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a square spiral: walk 1, turn, 1, turn, 2, turn, 2, turn, 3...
+;   * a sieve stored in an array, so each prime test is just ITEM
+;   * DOT to mark a spot without drawing a line
+;
+; THINGS TO TRY
+;   * Start the spiral at 41 instead of 1 (add 40 to each number before
+;     testing it). Euler's formula n*n + n + 41 makes a famous long
+;     diagonal appear.
+;   * Mark the even numbers instead of the primes. What do you see?
+; ============================================================
+
+; Make an array where item n is "true when n is prime.
+to make.sieve :limit
+  localmake "s (array :limit 1)
+  for [i 1 :limit] [setitem :i :s "true]
+  setitem 1 :s "false
+  for [p 2 sqrt :limit] [
+    if item :p :s [
+      for (list "m :p * :p :limit :p) [setitem :m :s "false]
+    ]
+  ]
+  output :s
+end
+
+; Each arm of the spiral is one straight walk. After every two arms the
+; arms get one step longer; that is what makes the square grow.
+to spiral :total
+  localmake "n 1
+  localmake "arm 1
+  penup home setheading 90
+  mark :n
+  while [:n < :total] [
+    repeat 2 [
+      repeat :arm [
+        if :n < :total [
+          forward :gap
+          make "n :n + 1
+          mark :n
+        ]
+      ]
+      left 90
+    ]
+    make "arm :arm + 1
+  ]
+end
+
+; Primes get a dot. The color slowly shifts from orange near the
+; center to blue at the edge, so you can see how far out you are.
+to mark :n
+  if not item :n :primes [stop]
+  localmake "t :n / :total
+  setpencolor (list 240 - 200 * :t 120 60 + 180 * :t)
+  dot pos
+end
+
+make "side 121          ; an odd number, so 1 sits exactly in the middle
+make "gap 4.2
+make "total :side * :side
+make "primes make.sieve :total
+
+clearscreen hideturtle
+setbackground [15 15 30]
+setpensize 3
+spiral :total
+setpencolor "red setpensize 7 dot [0 0]
+penup setxy -390 276 setpencolor "white setlabelheight 18
+label (sentence [Ulam spiral of the first] :total [numbers])

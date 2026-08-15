@@ -1,0 +1,94 @@
+; ============================================================
+; TITLE:    Prime Checker
+; CATEGORY: Number Theory
+; LEVEL:    Beginner
+; TAGS:     primes, division, input, loops
+; SUMMARY:  Type a whole number and the program tells you whether it is prime, and if not, what divides it.
+; ============================================================
+;
+; WHAT IT DOES
+;   Asks you for a number, then tests it by trial division: it tries
+;   2, 3, 4, ... and stops at the square root. If nothing divides the
+;   number evenly it is prime. If something does, you see the divisor.
+;   The turtle world shows a row of stars for each prime you find.
+;
+; HOW TO USE
+;   Press Run, then type a number in the command center and press
+;   Enter. Keep going as long as you like. Type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READLIST to get an answer from the person at the keyboard
+;   * REMAINDER to test whether one number divides another
+;   * OUTPUT from the middle of a procedure to stop early
+;   * checking input before using it
+;
+; THINGS TO TRY
+;   * Try 97, 91, 221 and 1000003. Which ones surprise you?
+;   * Change SMALLEST.DIVISOR so it only tries odd numbers after 2.
+;     Is it faster for big numbers?
+; ============================================================
+
+; SMALLEST.DIVISOR finds the first number from 2 upward that divides :n.
+; We only need to look up to the square root: if :n = a * b and both a
+; and b were bigger than the square root, their product would be too
+; big. So a divisor must show up early, or there is none.
+to smallest.divisor :n
+  localmake "d 2
+  while [:d * :d <= :n] [
+    if (remainder :n :d) = 0 [output :d]
+    make "d :d + 1
+  ]
+  output :n
+end
+
+to primep :n
+  if :n < 2 [output "false]
+  output (smallest.divisor :n) = :n
+end
+
+; Draw a little star for each prime found, so the screen keeps score.
+to star.mark
+  setpencolor 4 + remainder :found 10
+  pendown
+  repeat 5 [forward 20 right 144]
+  penup
+  setx xcor + 30
+  if xcor > 360 [setxy -360 ycor - 40]
+end
+
+to describe :n
+  if :n < 2 [print [Primes start at 2. 0 and 1 are not prime.] stop]
+  ifelse primep :n [
+    print (sentence :n [is prime!])
+    make "found :found + 1
+    star.mark
+  ] [
+    localmake "d smallest.divisor :n
+    print (sentence :n [is not prime. It equals] :d "x :n / :d)
+  ]
+end
+
+to ask.loop
+  forever [
+    print [Type a whole number, or quit to stop:]
+    localmake "answer readlist
+    if emptyp :answer [print [I did not see anything. Try again.]]
+    if not emptyp :answer [
+      localmake "x first :answer
+      if memberp :x [quit stop bye exit] [print (sentence [You found] :found [primes. Bye!]) stop]
+      ifelse wholep :x [describe :x] [print (sentence :x [is not a whole number.])]
+    ]
+  ]
+end
+
+; A number like 7 or 7.0 counts as whole; 7.5 or Sam does not.
+; We test NUMBERP first, because INT would complain about a word.
+to wholep :x
+  if not numberp :x [output "false]
+  output :x = int :x
+end
+
+clearscreen hideturtle
+penup setxy -360 250
+make "found 0
+ask.loop

@@ -1,0 +1,102 @@
+; ============================================================
+; TITLE:    Fibonacci Clocks
+; CATEGORY: Number Theory
+; LEVEL:    Advanced
+; TAGS:     fibonacci, modular arithmetic, pisano period, string art
+; SUMMARY:  Runs the Fibonacci sequence on clocks of different sizes, where it always repeats, and draws its path as colorful string art.
+; ============================================================
+;
+; WHAT IT DOES
+;   The Fibonacci numbers 0 1 1 2 3 5 8 13 21 ... grow forever. But keep
+;   only the remainder after dividing by some number m (that is, run
+;   them on an m-hour clock) and they must eventually repeat. There are
+;   only m * m possible pairs of neighbors, and each pair decides the
+;   next one. On a 10-hour clock (the last digit of each Fibonacci
+;   number) the pattern repeats every 60 steps. These repeat lengths
+;   are called Pisano periods. Each circle has m points; the program
+;   joins every remainder to the next one with a line, so the path of
+;   one full period becomes a piece of string art.
+;
+; HOW TO USE
+;   Press Run. Change the :CLOCKS list to see other moduli. The Pisano
+;   periods for 2 to 30 are printed in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MODULO keeps numbers small, so the sequence never overflows
+;   * detecting a cycle: stop when the starting pair 0, 1 comes back
+;   * points on a circle with SIN and COS
+;   * shading colors along a path to show its direction in time
+;
+; THINGS TO TRY
+;   * Look at the printed periods for 5, 25 and 125. What is the rule?
+;   * Instead of joining F(k) to F(k+1), join F(k) to F(k+2) and compare.
+; ============================================================
+
+; Length of the cycle of Fibonacci numbers modulo :m. We walk pairs
+; (a, b) -> (b, a + b) until the very first pair (0, 1) comes back.
+to pisano :m
+  localmake "a 0
+  localmake "b 1
+  localmake "steps 0
+  do.until [
+    localmake "c modulo :a + :b :m
+    make "a :b
+    make "b :c
+    make "steps :steps + 1
+  ] [and :a = 0 :b = 1]
+  output :steps
+end
+
+; Point number :k of :m around a circle centered at (cx, cy).
+to rim :k :m :cx :cy :r
+  localmake "angle :k * 360 / :m
+  output (list :cx + :r * sin :angle  :cy + :r * cos :angle)
+end
+
+; Shade from blue at the start of the period to orange at the end.
+to shade :t
+  output (list 40 + 210 * :t  90 + 60 * :t  220 - 190 * :t)
+end
+
+to fib.clock :m :cx :cy
+  localmake "r 100
+  localmake "period pisano :m
+  ; the rim and its numbered points
+  setpencolor [200 200 210] setpensize 1
+  penup setxy :cx :cy setheading 0 pendown arc 360 :r penup
+  setlabelheight 11
+  for [k 0 :m - 1] [
+    setpencolor [90 90 110] setpensize 5 dot rim :k :m :cx :cy :r
+    penup setpos rim :k :m :cx :cy :r + 12
+    setxy xcor - 3 * count :k ycor - 4
+    label :k
+  ]
+  ; the string art: one chord per step of the period
+  localmake "a 0
+  localmake "b 1
+  setpensize 1.5
+  for [step 1 :period] [
+    setpencolor shade :step / :period
+    penup setpos rim :a :m :cx :cy :r
+    pendown setpos rim :b :m :cx :cy :r
+    localmake "c modulo :a + :b :m
+    make "a :b
+    make "b :c
+  ]
+  penup setxy :cx - 50 :cy - :r - 34 setpencolor [40 40 40] setlabelheight 14
+  label (sentence "mod :m [ period] :period)
+end
+
+make "clocks [7 9 10 11 13 16]
+
+clearscreen hideturtle
+setbackground [252 252 250]
+make "i 0
+foreach :clocks [
+  fib.clock ? -255 + 255 * remainder :i 3  135 - 285 * int (:i / 3)
+  make "i :i + 1
+]
+
+print [Pisano periods, modulus then period:]
+for [m 2 30] [type (word :m ": pisano :m "|   |)]
+print []

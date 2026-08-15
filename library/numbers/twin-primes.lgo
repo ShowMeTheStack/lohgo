@@ -1,0 +1,87 @@
+; ============================================================
+; TITLE:    Twin and Cousin Primes
+; CATEGORY: Number Theory
+; LEVEL:    Beginner
+; TAGS:     primes, twin primes, number line, arcs
+; SUMMARY:  Marks the primes up to 300 on a folded number line and joins twin primes with red arches and cousin primes with blue ones.
+; ============================================================
+;
+; WHAT IT DOES
+;   Twin primes are primes that are only 2 apart, like 11 and 13 or
+;   41 and 43. Cousin primes are 4 apart, like 7 and 11. The number
+;   line is folded into rows of 50 so it fits on the screen. Every prime
+;   gets a dot, twins are joined by a red arch above the line, and
+;   cousins by a blue arch below. Notice how the primes thin out as the
+;   numbers grow, yet twins keep turning up. Whether they go on forever
+;   is another famous unsolved question.
+;
+; HOW TO USE
+;   Press Run. The twin pairs are also printed in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a simple prime test with trial division
+;   * ARC to draw a half circle centered on the turtle
+;   * using one procedure (PLACE) to turn a number into a screen position
+;
+; THINGS TO TRY
+;   * Add "sexy primes" (6 apart) in green, drawn as bigger arches.
+;   * Count the twin pairs in each row. Do they get rarer?
+; ============================================================
+
+to primep :n
+  if :n < 2 [output "false]
+  for [d 2 sqrt :n] [if (remainder :n :d) = 0 [output "false]]
+  output "true
+end
+
+; Move the turtle (pen up) to where number :n sits on the folded line.
+to place :n
+  localmake "row int (:n / 50)
+  penup setxy -350 + 14 * remainder :n 50  200 - :row * 90
+end
+
+to number.line
+  setpencolor [170 170 180] setpensize 1 setlabelheight 11
+  for [row 0 5] [
+    penup setxy -350 200 - :row * 90 pendown setxy 336 200 - :row * 90
+    ; a tick at every multiple of 10, with its value underneath
+    for [k 0 40 10] [
+      place :row * 50 + :k
+      pendown setheading 180 forward 6 penup
+      setxy xcor - 6 ycor - 34 label :row * 50 + :k
+    ]
+  ]
+end
+
+; An arch from :n to :n + :gap. The center is halfway between, and the
+; radius is half the gap. Heading west and sweeping clockwise 180
+; degrees goes over the top; heading east goes underneath.
+to arch :n :gap :above :color
+  if not ((int (:n / 50)) = (int ((:n + :gap) / 50))) [stop]   ; pair split across rows
+  place :n
+  setx xcor + 7 * :gap
+  setheading ifelse :above [270] [90]
+  setpencolor :color setpensize 2 pendown
+  arc 180 7 * :gap
+  penup
+end
+
+to mark.primes
+  for [n 2 299] [
+    if primep :n [
+      place :n setpencolor [30 30 30] setpensize 6 dot pos
+      if primep :n + 2 [arch :n 2 "true [220 50 50]  make "twins lput (list :n :n + 2) :twins]
+      if primep :n + 4 [arch :n 4 "false [50 110 220]]
+    ]
+  ]
+end
+
+make "twins []
+clearscreen hideturtle
+setbackground [250 250 245]
+number.line
+mark.primes
+penup setxy -350 255 setpencolor [40 40 40] setlabelheight 18
+label [Primes up to 300: red arches join twins, blue arches join cousins]
+print [Twin prime pairs below 300:]
+show :twins

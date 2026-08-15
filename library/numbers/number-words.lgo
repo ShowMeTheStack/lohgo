@@ -1,0 +1,132 @@
+; ============================================================
+; TITLE:    Numbers in Words
+; CATEGORY: Number Theory
+; LEVEL:    Advanced
+; TAGS:     words, place value, recursion, input, english
+; SUMMARY:  Turns any whole number you type, up to the billions, into English words, the way you would write it on a check.
+; ============================================================
+;
+; WHAT IT DOES
+;   Type 2026 and the program answers "two thousand twenty-six". Type
+;   7000042 and it says "seven million forty-two". It works by splitting
+;   the number into groups of three digits (billions, millions,
+;   thousands, and the rest) and naming each group with the same
+;   small procedure. Each answer is also written into the turtle world,
+;   like a list on a notepad.
+;
+; HOW TO USE
+;   Press Run. Type a whole number in the command center and press
+;   Enter. Negative numbers work too. Type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * place value: INT and REMAINDER split off groups of three digits
+;   * ITEM to look words up in a list
+;   * WORD to build hyphenated words like forty-two
+;   * the same procedure reused at every scale (thousand, million...)
+;
+; THINGS TO TRY
+;   * Add "trillion" to the list of scales.
+;   * Make an "ordinal" version: first, second, twenty-third.
+;   * Count the letters in the words for 1 to 1000. Which is longest?
+; ============================================================
+
+make "ones [one two three four five six seven eight nine ten eleven twelve ~
+            thirteen fourteen fifteen sixteen seventeen eighteen nineteen]
+make "tens [ten twenty thirty forty fifty sixty seventy eighty ninety]
+
+; Words for 1 to 99. Below 20 English has a special word for each
+; number; above that it is "tens" plus a hyphen and "ones".
+to below.100 :n
+  if :n = 0 [output []]
+  if :n < 20 [output (list item :n :ones)]
+  localmake "t item int (:n / 10) :tens
+  localmake "u remainder :n 10
+  if :u = 0 [output (list :t)]
+  output (list (word :t "- item :u :ones))
+end
+
+; Words for 1 to 999: an optional "x hundred" and then the rest.
+to below.1000 :n
+  localmake "h int (:n / 100)
+  localmake "rest below.100 remainder :n 100
+  if :h = 0 [output :rest]
+  output (sentence item :h :ones "hundred :rest)
+end
+
+; Peel off groups of three digits from the top. Each pair in the
+; FOREACH list gives the size of a group and its name.
+to in.words :n
+  if :n = 0 [output [zero]]
+  if :n < 0 [output sentence "minus in.words minus :n]
+  localmake "result []
+  foreach [[1000000000 billion] [1000000 million] [1000 thousand]] [
+    localmake "size first ?
+    localmake "group int (:n / :size)
+    if :group > 0 [
+      make "result (sentence :result below.1000 :group last ?)
+      make "n remainder :n :size
+    ]
+  ]
+  output sentence :result below.1000 :n
+end
+
+; Write words on the notepad. Long answers are wrapped onto more than
+; one line, so a billion-sized number does not run off the page.
+to note :text
+  localmake "line []
+  foreach :text [
+    if (letters lput ? :line) > 56 [write.line :line  make "line []]
+    make "line lput ? :line
+  ]
+  write.line :line
+end
+
+; How many characters a list of words takes, counting the spaces.
+to letters :words
+  output (reduce "sum fput 0 map "count :words) + count :words
+end
+
+to write.line :words
+  if :line.y < -260 [notepad]
+  penup setxy -360 :line.y setpencolor [30 50 120]
+  label :words
+  make "line.y :line.y - 32
+end
+
+to notepad
+  clean
+  setbackground [255 252 225]
+  setpencolor [180 200 230] setpensize 1
+  ; one ruled line just under each place where a line of text will sit
+  for [k 0 16] [penup setxy -390 225 - 32 * :k pendown setxy 390 225 - 32 * :k]
+  setpencolor [230 120 120]
+  penup setxy -370 300 pendown setxy -370 -300 penup
+  make "line.y 230
+end
+
+to take.numbers
+  forever [
+    print [Type a whole number, or quit:]
+    localmake "answer readlist
+    ifelse emptyp :answer [print [Nothing typed. Try again.]] [
+      localmake "x first :answer
+      if memberp :x [quit q bye stop exit] [print [Goodbye.] stop]
+      ifelse not numberp :x [print (sentence :x [is not a number.])] [
+        ifelse not (:x = int :x) [print [Whole numbers only, please.]] [
+          ifelse (abs :x) >= 1e12 [print [That is too big for me.]] [
+            localmake "said in.words :x
+            print :said
+            note (sentence (word :x ":) :said)
+          ]
+        ]
+      ]
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setlabelheight 20
+notepad
+note sentence "2026: in.words 2026
+note sentence "1234567891: in.words 1234567891
+take.numbers

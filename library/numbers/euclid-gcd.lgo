@@ -1,0 +1,91 @@
+; ============================================================
+; TITLE:    Euclid's Rectangle
+; CATEGORY: Number Theory
+; LEVEL:    Beginner
+; TAGS:     gcd, lcm, euclid, remainder, squares
+; SUMMARY:  Finds the greatest common divisor of two numbers with Euclid's algorithm and shows every step as squares cut from a rectangle.
+; ============================================================
+;
+; WHAT IT DOES
+;   Take a rectangle that is A wide and B tall. Cut off the biggest
+;   squares you can. A smaller rectangle is left over; cut the biggest
+;   squares from that, and so on. The last, smallest square fits exactly,
+;   and its side is the greatest common divisor (GCD) of A and B. This is
+;   the same as Euclid's rule: GCD of A and B = GCD of B and the
+;   remainder of A divided by B. The command center lists every step,
+;   and the least common multiple (LCM) too.
+;
+; HOW TO USE
+;   Press Run. Change the two numbers in the last line, for example
+;   euclid 34 21 or euclid 240 84.
+;
+; CONCEPTS YOU WILL LEARN
+;   * REMAINDER and INT for division with a leftover
+;   * a WHILE loop that runs until the remainder is zero
+;   * scaling a drawing so any numbers fit the screen
+;   * FILLED to paint a shape
+;
+; THINGS TO TRY
+;   * Try two neighboring Fibonacci numbers like 89 and 55. Count
+;     the squares at each stage.
+;   * What happens with two numbers that share no factor, like 35 and 12?
+; ============================================================
+
+; GCD in one line: Euclid's rule applied over and over by recursion.
+to gcd :a :b
+  if :b = 0 [output :a]
+  output gcd :b remainder :a :b
+end
+
+to lcm :a :b
+  output :a * :b / gcd :a :b
+end
+
+; A square of side :s (in screen steps) with its bottom-left corner at
+; (x, y), painted in :color with a dark outline.
+to block :x :y :s :color
+  penup setxy :x :y setheading 0
+  pendown setpencolor [40 40 40] setpensize 1
+  filled :color [repeat 4 [forward :s right 90]]
+  penup
+end
+
+to euclid :a :b
+  clearscreen hideturtle
+  setbackground [250 250 245]
+  localmake "scale min 700 / :a 480 / :b
+  localmake "x minus :a * :scale / 2
+  localmake "y minus :b * :scale / 2 + 20
+  localmake "w :a
+  localmake "h :b
+  localmake "stage 0
+  print (sentence [Finding the GCD of] :a "and :b)
+  while [and :w > 0 :h > 0] [
+    localmake "color item 1 + remainder :stage 6 :palette
+    ifelse :w >= :h [
+      ; cut squares of side h from the left end, then move right
+      localmake "k int :w / :h
+      print (sentence :w "= :k "x :h "+ remainder :w :h)
+      repeat :k [block :x :y :h * :scale :color  make "x :x + :h * :scale]
+      make "w remainder :w :h
+    ] [
+      ; the rectangle is taller than wide: cut squares from the bottom
+      localmake "k int :h / :w
+      print (sentence :h "= :k "x :w "+ remainder :h :w)
+      repeat :k [block :x :y :w * :scale :color  make "y :y + :w * :scale]
+      make "h remainder :h :w
+    ]
+    make "stage :stage + 1
+  ]
+  localmake "g gcd :a :b
+  print (sentence [GCD =] :g [  LCM =] lcm :a :b)
+  penup setxy -340 -280 setpencolor [30 30 30] setlabelheight 20
+  label (sentence [GCD of] :a "and :b "is :g [- the side of the smallest square])
+end
+
+to min :p :q
+  output ifelse :p < :q [:p] [:q]
+end
+
+make "palette [[250 200 80] [120 190 240] [240 130 120] [150 220 140] [200 160 230] [250 170 60]]
+euclid 1071 462

@@ -1,0 +1,111 @@
+; ============================================================
+; TITLE:    Collatz Hailstones
+; CATEGORY: Number Theory
+; LEVEL:    Intermediate
+; TAGS:     collatz, sequences, graphs, logarithms
+; SUMMARY:  Graphs the up-and-down Collatz sequences of several starting numbers on a logarithmic scale, like hailstones bouncing in a cloud.
+; ============================================================
+;
+; WHAT IT DOES
+;   The rule is simple. If a number is even, halve it. If it is odd,
+;   triple it and add 1. Repeat. Starting at 6 you get
+;   6 3 10 5 16 8 4 2 1. Every number anyone has ever tried ends at 1,
+;   but nobody has proved that all numbers do: it is one of the most
+;   famous unsolved problems in mathematics. The numbers rise and fall
+;   like hailstones in a storm cloud. Starting at 27 they climb as high
+;   as 9232 before finally dropping to 1 after 111 steps.
+;
+; HOW TO USE
+;   Press Run. Edit the :STARTS list at the bottom to graph other
+;   numbers.
+;
+; CONCEPTS YOU WILL LEARN
+;   * building a list with a recursive procedure
+;   * LOG10 to squeeze huge and tiny values onto the same graph
+;   * drawing axes with tick labels
+;   * a graph is just SETXY from point to point
+;
+; THINGS TO TRY
+;   * Graph 97 or 871. How tall and how long are their flights?
+;   * Change the y axis to a normal (linear) scale. Why is the log
+;     scale easier to read here?
+; ============================================================
+
+to next.hail :n
+  if (remainder :n 2) = 0 [output :n / 2]
+  output 3 * :n + 1
+end
+
+to hailstones :n
+  if :n = 1 [output [1]]
+  output fput :n hailstones next.hail :n
+end
+
+; Screen position for step number :i and value :v. The y axis uses
+; LOG10: each power of ten (1, 10, 100, 1000, 10000) gets equal room.
+to gx :i
+  output -340 + :i * :xscale
+end
+
+to gy :v
+  output -230 + 100 * log10 :v
+end
+
+to axes
+  setpencolor [120 120 120] setpensize 1 setlabelheight 12
+  penup setxy gx 0 gy 1 pendown setxy gx 120 gy 1
+  penup setxy gx 0 gy 1 pendown setxy gx 0 gy 20000
+  foreach [1 10 100 1000 10000] [
+    penup setxy gx 0 gy ? pendown setxy (gx 0) - 6 gy ?
+    penup setxy (gx 0) - 50 (gy ?) - 5 label ?
+    ; faint guide line across the graph
+    setpencolor [225 225 230]
+    penup setxy gx 0 gy ? pendown setxy gx 120 gy ?
+    setpencolor [120 120 120]
+  ]
+  for [s 0 120 20] [
+    penup setxy gx :s gy 1 pendown setxy gx :s (gy 1) - 6
+    penup setxy (gx :s) - 8 (gy 1) - 22 label :s
+  ]
+  penup setxy 150 -275 label [steps]
+end
+
+to plot :n :color
+  localmake "path hailstones :n
+  setpencolor :color setpensize 2
+  penup setxy gx 0 gy first :path pendown
+  localmake "i 0
+  foreach :path [
+    setxy gx :i gy ?
+    make "i :i + 1
+    wait 1
+  ]
+  setpensize 6 dot pos
+  print (sentence :n [takes] (count :path) - 1 [steps and peaks at] reduce "max.of :path)
+end
+
+to max.of :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+to legend
+  setlabelheight 15
+  localmake "y 250
+  foreach :starts [
+    localmake "color item # :colors
+    setpencolor :color setpensize 4
+    penup setxy -300 :y + 5 pendown setxy -270 :y + 5
+    penup setxy -260 :y label (sentence [start at] ?)
+    make "y :y - 22
+  ]
+end
+
+make "starts [27 97 15 7]
+make "colors [[220 60 60] [50 110 210] [40 160 90] [230 150 20]]
+make "xscale 5.5
+
+clearscreen hideturtle
+setbackground [252 252 248]
+axes
+legend
+foreach :starts [plot ? item # :colors]

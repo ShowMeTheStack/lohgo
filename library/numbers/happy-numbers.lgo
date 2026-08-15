@@ -1,0 +1,95 @@
+; ============================================================
+; TITLE:    Happy Numbers
+; CATEGORY: Number Theory
+; LEVEL:    Intermediate
+; TAGS:     digits, squares, cycles, memberp, faces
+; SUMMARY:  Squares and adds the digits of a number over and over to see whether it reaches 1 (happy) or gets stuck in a loop (sad), and draws a face for each number up to 100.
+; ============================================================
+;
+; WHAT IT DOES
+;   Take 7. Square its digits and add: 7 x 7 = 49. Then 16 + 81 = 97,
+;   81 + 49 = 130, 1 + 9 + 0 = 10, 1 + 0 = 1. It reached 1, so 7 is a
+;   happy number. Now try 4: 16, 37, 58, 89, 145, 42, 20, 4 ... back
+;   where it started. It will go around that loop forever, so 4 is sad.
+;   Every number ends one way or the other. The grid shows the numbers
+;   1 to 100 with a smiling or frowning face.
+;
+; HOW TO USE
+;   Press Run. The journeys of a few numbers are printed in the command
+;   center. Change :SHOW.THESE to follow other numbers.
+;
+; CONCEPTS YOU WILL LEARN
+;   * spotting a loop by remembering where you have been (MEMBERP)
+;   * REDUCE and MAP over the digits of a number
+;   * DOT with a big pen size as a filled circle
+;   * ARC to draw a smile or a frown
+;
+; THINGS TO TRY
+;   * If a number is happy, are all the numbers on its journey happy too?
+;   * Use cubes instead of squares. Which numbers reach 1 now?
+; ============================================================
+
+to digit.list :n
+  if emptyp :n [output []]
+  output fput first :n digit.list butfirst :n
+end
+
+to square.digit.sum :n
+  output reduce "sum map [? * ?] digit.list :n
+end
+
+; The full journey from :n. We keep a list of numbers already seen;
+; as soon as one comes back we know we are in a loop and can stop.
+; Reaching 1 also ends the journey (1 just leads to 1 again).
+to journey :n
+  localmake "seen []
+  while [and (not :n = 1) (not memberp :n :seen)] [
+    make "seen lput :n :seen
+    make "n square.digit.sum :n
+  ]
+  output lput :n :seen
+end
+
+to happyp :n
+  output (last journey :n) = 1
+end
+
+to face :x :y :happy
+  ; the head: a DOT with a pen 38 steps wide is a filled circle
+  setpensize 38
+  setpencolor ifelse :happy [[250 200 40]] [[150 170 200]]
+  dot (list :x :y)
+  setpencolor [50 40 30] setpensize 5
+  dot (list :x - 6 :y + 5)
+  dot (list :x + 6 :y + 5)
+  setpensize 2
+  ifelse :happy [
+    penup setxy :x :y + 1 setheading 120 pendown arc 120 9
+  ] [
+    penup setxy :x :y - 13 setheading 300 pendown arc 120 9
+  ]
+  penup
+end
+
+to grid
+  setlabelheight 10
+  for [n 1 100] [
+    localmake "x -225 + 50 * remainder (:n - 1) 10
+    localmake "y 215 - 50 * int ((:n - 1) / 10)
+    face :x :y happyp :n
+    penup setxy :x - 24 :y + 13 setpencolor [90 90 90]
+    label :n
+  ]
+end
+
+make "show.these [7 4 19 2026]
+
+clearscreen hideturtle
+setbackground [250 248 240]
+grid
+penup setxy -230 -290 setpencolor [40 40 40] setlabelheight 18
+label (sentence count filter "happyp iseq 1 100 [of the numbers 1 to 100 are happy])
+foreach :show.these [
+  make "path journey ?
+  print (sentence ifelse (last :path) = 1 [[Happy:]] [[Sad:]] :path)
+]

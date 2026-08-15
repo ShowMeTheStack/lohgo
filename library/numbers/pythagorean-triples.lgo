@@ -1,0 +1,124 @@
+; ============================================================
+; TITLE:    Pythagorean Triples
+; CATEGORY: Number Theory
+; LEVEL:    Advanced
+; TAGS:     pythagorean triples, gcd, euclid formula, scatter plot
+; SUMMARY:  Generates whole-number right triangles with Euclid's formula and plots every leg pair, revealing a pattern of curves and rays.
+; ============================================================
+;
+; WHAT IT DOES
+;   3, 4, 5 is famous: 3 x 3 + 4 x 4 = 5 x 5, so a triangle with those
+;   sides has a right angle. Such whole-number triples are called
+;   Pythagorean triples. Euclid found a recipe that makes all the
+;   "primitive" ones (those with no common factor): pick whole numbers
+;   m > n, one odd and one even, sharing no factor, then
+;       a = m*m - n*n     b = 2*m*n     c = m*m + n*n
+;   Every other triple is a multiple of a primitive one, like 6 8 10.
+;   The program plots a dot at (a, b) for every triple with c up to
+;   600: big dark dots for primitive ones and small pale dots for the
+;   multiples. The multiples line up on rays from the corner, and the
+;   primitive triples trace out curved parabolas.
+;
+; HOW TO USE
+;   Press Run. The primitive triples with c below 100 are printed and
+;   checked in the command center. Change :LIMIT for a denser picture.
+;
+; CONCEPTS YOU WILL LEARN
+;   * GCD by Euclid's algorithm, used to test "no common factor"
+;   * generating things from a formula instead of searching
+;   * a nested FOR loop with an inner range that depends on the outer one
+;   * plotting points with DOT
+;
+; THINGS TO TRY
+;   * Color the dots by n instead of by m. Which curves light up now?
+;   * Search directly: try every a and b up to 100 and test whether
+;     a*a + b*b is a perfect square. Compare the speed with Euclid's way.
+; ============================================================
+
+to gcd :a :b
+  if :b = 0 [output :a]
+  output gcd :b remainder :a :b
+end
+
+to sx :a
+  output -300 + :a * :scale
+end
+
+to sy :b
+  output -250 + :b * :scale
+end
+
+to axes
+  setpencolor [160 160 170] setpensize 1 setlabelheight 12
+  penup setxy sx 0 sy 0 pendown setxy sx :limit sy 0
+  penup setxy sx 0 sy 0 pendown setxy sx 0 sy :limit
+  for [k 100 :limit 100] [
+    penup setxy (sx :k) - 10 (sy 0) - 20 label :k
+    penup setxy (sx 0) - 32 (sy :k) - 4 label :k
+  ]
+  penup setxy sx :limit / 2 (sy 0) - 40 label "a
+  penup setxy (sx 0) - 40 sy :limit / 2 label "b
+end
+
+; Every multiple k*a, k*b of a primitive triple, k = 2, 3, ...
+to multiples :a :b :c
+  localmake "k 2
+  setpencolor [200 205 220] setpensize 3
+  while [:k * :c <= :limit] [
+    dot (list sx :k * :a  sy :k * :b)
+    dot (list sx :k * :b  sy :k * :a)
+    make "k :k + 1
+  ]
+end
+
+; All primitive triples with c up to :limit, as a list of [a b c m]. We keep m
+; so each triple can be colored by the m that made it.
+to generate
+  localmake "found []
+  for [m 2 sqrt :limit] [
+    for [n 1 :m - 1] [
+      ; one odd, one even, and no shared factor: then the triple is primitive
+      if and ((remainder :m + :n 2) = 1) ((gcd :m :n) = 1) [
+        localmake "c :m * :m + :n * :n
+        if :c <= :limit [
+          make "found lput (list :m * :m - :n * :n  2 * :m * :n  :c  :m) :found
+        ]
+      ]
+    ]
+  ]
+  output :found
+end
+
+; Pale multiples first, then the primitive dots on top, so the bright
+; dots are never hidden. Each triple is drawn twice, as (a, b) and
+; (b, a), because the legs can be swapped.
+to plot :triples
+  foreach :triples [multiples item 1 ? item 2 ? item 3 ?]
+  setpensize 6
+  foreach :triples [
+    ; dots made from the same m share a color and lie on one parabola;
+    ; small m is red, large m is blue
+    setpencolor (list 235 - 8 * item 4 ?  60 + 4 * item 4 ?  40 + 8 * item 4 ?)
+    dot (list sx item 1 ? sy item 2 ?)
+    dot (list sx item 2 ? sy item 1 ?)
+  ]
+end
+
+make "limit 600
+make "scale 0.8
+
+clearscreen hideturtle
+setbackground [252 252 248]
+axes
+make "triples generate
+plot :triples
+penup setxy -300 275 setpencolor [40 40 40] setlabelheight 18
+label [Legs a and b of right triangles with whole-number sides]
+print [Primitive triples with c below 100:]
+; Item 4 of each triple is the m it came from; we only print a, b, c.
+foreach filter [(item 3 ?) < 100] :triples [
+  make "a item 1 ?
+  make "b item 2 ?
+  make "c item 3 ?
+  print (sentence :a :b :c [   check:] :a * :a + :b * :b "= :c * :c)
+]

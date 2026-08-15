@@ -1,0 +1,126 @@
+; ============================================================
+; TITLE:    Amicable Numbers
+; CATEGORY: Number Theory
+; LEVEL:    Advanced
+; TAGS:     divisors, amicable pairs, arrays, sieve, friendship
+; SUMMARY:  Finds pairs of "friendly" numbers whose divisors add up to each other, draws the famous pair 220 and 284 as divisor flowers, and marks every pair below 10000.
+; ============================================================
+;
+; WHAT IT DOES
+;   Add up the proper divisors of 220: 1 + 2 + 4 + 5 + 10 + 11 + 20 +
+;   22 + 44 + 55 + 110 = 284. Now add up the proper divisors of 284:
+;   1 + 2 + 4 + 71 + 142 = 220. Each number is made from the other's
+;   pieces! The Pythagoreans called such numbers amicable (friendly).
+;   The top of the picture shows the two numbers with their divisors
+;   arranged around them like petals. The bottom shows all amicable
+;   pairs up to 10000 as brackets over a number line.
+;
+; HOW TO USE
+;   Press Run. The pairs are printed in the command center. Raise
+;   :LIMIT to search further (it takes longer).
+;
+; CONCEPTS YOU WILL LEARN
+;   * filling an array of divisor sums all at once, sieve-style, instead
+;     of testing every number separately
+;   * SETITEM and ITEM on a big array
+;   * placing labels evenly around a circle
+;   * brackets of different heights so labels never overlap
+;
+; THINGS TO TRY
+;   * A number whose divisor sum is itself is perfect (6, 28, 496).
+;     Change the search to print those as well.
+;   * Follow a chain: 12496 goes to 14288, then 15472, 14536, 14264 and
+;     back to 12496. Raise :LIMIT to 15000 and look for "sociable" chains.
+; ============================================================
+
+; Divisor sums for every number up to :n in one sweep. Each d is
+; added to all its multiples 2d, 3d, 4d ... This is far faster than
+; dividing every number by every possible divisor.
+to divisor.sums :n
+  localmake "s (array :n 1)
+  for [i 1 :n] [setitem :i :s 0]
+  for [d 1 :n / 2] [
+    for (list "m 2 * :d :n :d) [setitem :m :s (item :m :s) + :d]
+  ]
+  output :s
+end
+
+to proper.divisors :n
+  output filter [(remainder :n ?) = 0] iseq 1 :n - 1
+end
+
+to find.pairs
+  localmake "pairs []
+  for [a 2 :limit] [
+    localmake "b item :a :sums
+    ; b must be bigger (so each pair is found once) and in range
+    if and (:b > :a) (:b <= :limit) [
+      if (item :b :sums) = :a [make "pairs lput (list :a :b) :pairs]
+    ]
+  ]
+  output :pairs
+end
+
+; A number in the middle with its divisors as petals around it.
+to flower :n :cx :cy :color
+  localmake "petals proper.divisors :n
+  localmake "k count :petals
+  setlabelheight 13
+  for [i 1 :k] [
+    localmake "angle 360 * (:i - 1) / :k
+    localmake "petal.x :cx + 105 * sin :angle
+    localmake "petal.y :cy + 105 * cos :angle
+    ; a stem from the center, then the petal on top of it
+    setpencolor [200 200 200] setpensize 1
+    penup setxy :cx :cy pendown setxy :petal.x :petal.y penup
+    setpencolor :color setpensize 34 dot (list :petal.x :petal.y)
+    setpencolor "white
+    setxy :petal.x - 3.9 * count item :i :petals :petal.y - 5
+    label item :i :petals
+  ]
+  setpencolor [60 60 60] setpensize 60 dot (list :cx :cy)
+  setpencolor "white setlabelheight 22
+  penup setxy :cx - 20 :cy - 8 label :n
+  setpencolor [60 60 60] setlabelheight 14
+  penup setxy :cx - 60 :cy - 150
+  label (sentence [petals add up to] reduce "sum :petals)
+end
+
+to number.line :pairs
+  localmake "y -255
+  localmake "scale 700 / :limit
+  setpencolor [120 120 130] setpensize 2
+  penup setxy -350 :y pendown setxy 350 :y penup
+  setlabelheight 11
+  for [k 0 :limit 2000] [
+    penup setxy -350 + :k * :scale :y pendown setxy -350 + :k * :scale :y - 6
+    penup setxy -360 + :k * :scale :y - 20 label :k
+  ]
+  ; a bracket for each pair: up from one friend, across, down to the
+  ; other. Each bracket is a little taller than the one before, so the
+  ; labels on top never land on each other.
+  setpensize 3
+  foreach :pairs [
+    localmake "x1 -350 + (first ?) * :scale
+    localmake "x2 -350 + (last ?) * :scale
+    localmake "h 25 + 24 * #
+    setpencolor item 1 + remainder # 5 :colors
+    penup setxy :x1 :y pendown setxy :x1 :y + :h setxy :x2 :y + :h setxy :x2 :y penup
+    setxy (:x1 + :x2) / 2 - 30 :y + :h + 5
+    label (word first ? "| & | last ?)
+  ]
+end
+
+make "limit 10000
+make "colors [[220 70 60] [40 130 200] [50 160 80] [230 140 30] [140 80 200]]
+
+clearscreen hideturtle
+setbackground [252 250 245]
+print [Adding up divisors...]
+make "sums divisor.sums :limit
+make "pairs find.pairs
+print sentence [Amicable pairs:] :pairs
+flower 220 -170 110 [230 120 60]
+flower 284 170 110 [60 130 210]
+penup setxy -40 112 setpencolor [200 60 60] setlabelheight 26 label "|<-->|
+number.line :pairs

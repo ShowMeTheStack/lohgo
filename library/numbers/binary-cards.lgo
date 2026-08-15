@@ -1,0 +1,107 @@
+; ============================================================
+; TITLE:    Mind-Reading Cards
+; CATEGORY: Number Theory
+; LEVEL:    Intermediate
+; TAGS:     binary, powers of two, bitand, input, magic trick
+; SUMMARY:  A magic trick with six cards that guesses the number you are thinking of, and then shows how binary numbers make it work.
+; ============================================================
+;
+; WHAT IT DOES
+;   Think of a number from 1 to 63 and keep it secret. The program shows
+;   six cards, one at a time, and asks whether your number is on each.
+;   After six yes-or-no answers it tells you your number. The secret:
+;   every number is a sum of different powers of two (1, 2, 4, 8, 16,
+;   32). Card 1 holds the numbers that use 1, card 2 the numbers that
+;   use 2, and so on. Each "yes" adds that card's first number. Your six
+;   answers are really your number written in binary!
+;
+; HOW TO USE
+;   Press Run. Think of a number. For each card, type yes or no in the
+;   command center and press Enter (y and n work too).
+;
+; CONCEPTS YOU WILL LEARN
+;   * BITAND to test whether a number "contains" a power of two
+;   * READWORD to read a one-word answer
+;   * building a binary numeral with WORD, one digit at a time
+;   * drawing a card of numbers with nested loops
+;
+; THINGS TO TRY
+;   * Make a seventh card (for 64) so the trick works up to 127.
+;   * Card 1 has the odd numbers. Can you explain why?
+; ============================================================
+
+; All numbers from 1 to 63 that use the power of two :p. BITAND keeps
+; only the binary digits two numbers share, so it is nonzero exactly
+; when :n has the :p digit switched on.
+to card.numbers :p
+  output filter [(bitand ? :p) > 0] iseq 1 63
+end
+
+to draw.card :k :p
+  clean
+  ; the card itself: a colored rectangle
+  localmake "color item :k :colors
+  penup setxy -260 -180 setheading 0 setpencolor :color
+  filled :color [repeat 2 [forward 360 right 90 forward 520 right 90]]
+  setpencolor "white setlabelheight 22
+  penup setxy -240 150 label (sentence "Card :k)
+  ; 32 numbers in 4 rows of 8
+  setlabelheight 26
+  localmake "i 0
+  foreach card.numbers :p [
+    penup setxy -235 + 64 * remainder :i 8  90 - 70 * int (:i / 8)
+    label ?
+    make "i :i + 1
+  ]
+end
+
+; Ask until we get something that means yes or no.
+to yes.or.no
+  forever [
+    print [Is your number on this card? Type yes or no:]
+    localmake "a readword
+    ; READWORD can give back an empty list at the end of input, so make
+    ; sure we have a word before calling LOWERCASE
+    if not wordp :a [make "a "]
+    make "a lowercase :a
+    if memberp :a [yes y] [output "true]
+    if memberp :a [no n] [output "false]
+    print [Please answer yes or no.]
+  ]
+end
+
+to trick
+  localmake "secret 0
+  localmake "bits "
+  print [Think of a number from 1 to 63. Do not tell me!]
+  for [k 1 6] [
+    localmake "p power 2 :k - 1
+    draw.card :k :p
+    ifelse yes.or.no [
+      make "secret :secret + :p
+      make "bits word 1 :bits
+    ] [
+      make "bits word 0 :bits
+    ]
+  ]
+  reveal :secret :bits
+end
+
+to reveal :secret :bits
+  clean
+  setpencolor [40 40 60] setlabelheight 40
+  penup setxy -230 120
+  ifelse :secret = 0 [label [Hmm, you said no to every card!]] [
+    label (sentence [Your number is] :secret)
+    setlabelheight 22
+    penup setxy -230 40 label (sentence [In binary that is] :bits)
+    penup setxy -230 0 label [Each 1 is a card where you said yes.]
+  ]
+  print (sentence [Your number was] :secret [and in binary it is] :bits)
+end
+
+make "colors [[220 70 60] [230 140 30] [50 160 80] [40 130 200] [120 80 200] [200 60 150]]
+
+clearscreen hideturtle
+setbackground [250 248 240]
+trick

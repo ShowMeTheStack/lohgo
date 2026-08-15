@@ -1,0 +1,79 @@
+; ============================================================
+; TITLE:    Divisor Chart
+; CATEGORY: Number Theory
+; LEVEL:    Beginner
+; TAGS:     divisors, primes, grid, patterns, nested loops
+; SUMMARY:  Draws a chart with a dot wherever one number divides another, so primes, squares and numbers with many divisors stand out at a glance.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each row is a number n from 1 to 36. Each column is a possible
+;   divisor d. There is a dot where d divides n with nothing left over.
+;   The dots for d = 1 and d = n always form the left edge and the
+;   diagonal. Rows with only those two dots are the primes; their counts
+;   are shown in red at the right. Look down each column too: the
+;   column for 3 has a dot in every third row.
+;
+; HOW TO USE
+;   Press Run. Change :SIZE to draw a bigger or smaller chart.
+;
+; CONCEPTS YOU WILL LEARN
+;   * nested FOR loops: one for rows, one for columns
+;   * REMAINDER = 0 as the test for "divides"
+;   * counting while drawing
+;
+; THINGS TO TRY
+;   * Which rows have an odd number of dots? What kind of numbers are they?
+;   * Which number up to 36 has the most divisors?
+; ============================================================
+
+to divides :d :n
+  output (remainder :n :d) = 0
+end
+
+; Screen position of row :n, column :d.
+to cx :d
+  output -250 + (:d - 1) * :cell
+end
+
+to cy :n
+  output 250 - (:n - 1) * :cell
+end
+
+to row :n
+  localmake "found 0
+  for [d 1 :n] [
+    if divides :d :n [
+      make "found :found + 1
+      ; the two dots every number has are grey; the others are colored
+      ifelse or (:d = 1) (:d = :n) [setpencolor [170 170 180]] [setpencolor item 1 + remainder :d 6 :colors]
+      dot (list cx :d cy :n)
+    ]
+  ]
+  ; number at the left, divisor count at the right
+  setpencolor [60 60 60]
+  penup setxy (cx 1) - 30 (cy :n) - 4 label :n
+  setpencolor ifelse :found = 2 [[220 40 40]] [[60 60 60]]
+  penup setxy (cx :size) + 20 (cy :n) - 4 label :found
+end
+
+to chart
+  setpensize 9 setlabelheight 11
+  for [n 1 :size] [row :n]
+  ; column numbers along the top: 1, 5, 10, 15 ... so they do not crowd
+  setpencolor [60 60 60]
+  for [d 1 :size] [
+    if or (:d = 1) ((remainder :d 5) = 0) [penup setxy (cx :d) - 3 * count :d (cy 1) + 14 label :d]
+  ]
+end
+
+make "size 36
+make "cell 14
+make "colors [[230 80 60] [60 120 220] [50 170 90] [240 160 30] [150 80 200] [0 160 170]]
+
+clearscreen hideturtle
+setbackground [252 252 248]
+chart
+penup setxy 250 264 setpencolor [60 60 60] label [count]
+penup setxy -390 280 setlabelheight 16
+label [Dots show which numbers divide which]

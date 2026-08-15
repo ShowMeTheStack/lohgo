@@ -1,0 +1,106 @@
+; ============================================================
+; TITLE:    Factor Tree
+; CATEGORY: Number Theory
+; LEVEL:    Intermediate
+; TAGS:     prime factorization, recursion, trees, labels
+; SUMMARY:  Draws a factor tree that splits a number into two factors again and again until only primes remain at the leaves.
+; ============================================================
+;
+; WHAT IT DOES
+;   A factor tree is how many classrooms find prime factors. Write the
+;   number at the top. Split it into two factors, then split those, and
+;   so on. When a branch reaches a prime it cannot split any more, so
+;   it becomes a leaf (drawn in a green circle). However you split, the
+;   leaves always end up being the same primes. That fact is called the
+;   Fundamental Theorem of Arithmetic.
+;
+; HOW TO USE
+;   Press Run. Change the number in the last line. Numbers up to a few
+;   thousand fit nicely on the screen.
+;
+; CONCEPTS YOU WILL LEARN
+;   * recursion: a tree is a node with two smaller trees under it
+;   * halving the spread at each level so branches never collide
+;   * collecting results in a list with SENTENCE
+;
+; THINGS TO TRY
+;   * Try 1024, 1001, 997 and 5040.
+;   * Change BEST.SPLIT to always use the smallest divisor. The tree
+;     becomes lopsided, but the leaves are the same. Check it!
+; ============================================================
+
+; The largest divisor that is no bigger than the square root. Using it
+; splits the number into two factors that are as close as possible,
+; which gives a nicely balanced tree.
+to best.split :n
+  localmake "d int sqrt :n
+  while [:d > 1] [
+    if (remainder :n :d) = 0 [output :d]
+    make "d :d - 1
+  ]
+  output 1               ; nothing found: :n is prime
+end
+
+; Draw the number centered on (x, y), inside a circle if it is a leaf.
+to node :n :x :y :leaf
+  localmake "w 0.6 * 16 * count :n
+  if :leaf [
+    ; ARC draws around the turtle, so stand on the center and sweep 360
+    setpencolor [30 150 70] setpensize 2
+    penup setxy :x :y + 2 setheading 0 pendown arc 360 18 penup
+  ]
+  penup setxy :x - :w / 2 :y - 6
+  setpencolor ifelse :leaf [[20 110 50]] [[40 40 90]]
+  label :n
+end
+
+; FTREE draws the tree under :n and outputs the list of its prime leaves.
+to ftree :n :x :y :spread
+  localmake "a best.split :n
+  if :a = 1 [node :n :x :y "true output (list :n)]
+  localmake "b :n / :a
+  localmake "yy :y - 75
+  ; branches first, so the labels sit on top of them
+  setpencolor [150 150 170] setpensize 2
+  penup setxy :x :y - 12 pendown setxy :x - :spread :yy + 14
+  penup setxy :x :y - 12 pendown setxy :x + :spread :yy + 14
+  node :n :x :y "false
+  output sentence (ftree :a :x - :spread :yy :spread / 2) ~
+                  (ftree :b :x + :spread :yy :spread / 2)
+end
+
+; Turn [2 2 2 3 3 5] into the word 2^3 x 3^2 x 5.
+to tidy.factors :primes
+  if emptyp :primes [output []]
+  localmake "p first :primes
+  localmake "k count filter [? = :p] :primes
+  localmake "rest filter [not ? = :p] :primes
+  localmake "piece ifelse :k = 1 [:p] [(word :p "^ :k)]
+  if emptyp :rest [output (list :piece)]
+  output (sentence :piece "x tidy.factors :rest)
+end
+
+to factor.tree :n
+  clearscreen hideturtle
+  setbackground [248 246 238]
+  setlabelheight 16
+  localmake "leaves ftree :n 0 220 180
+  localmake "answer (sentence :n "= tidy.factors sort.numbers :leaves)
+  penup setxy -380 -270 setpencolor [40 40 90] setlabelheight 22
+  label :answer
+  print :answer
+end
+
+; A small insertion sort so the primes come out in order.
+to sort.numbers :l
+  if emptyp :l [output []]
+  output insert.number first :l sort.numbers butfirst :l
+end
+
+to insert.number :x :sorted
+  if emptyp :sorted [output (list :x)]
+  if :x <= first :sorted [output fput :x :sorted]
+  output fput first :sorted insert.number :x butfirst :sorted
+end
+
+factor.tree 720

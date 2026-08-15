@@ -1,0 +1,104 @@
+; ============================================================
+; TITLE:    Perfect, Abundant, Deficient
+; CATEGORY: Number Theory
+; LEVEL:    Beginner
+; TAGS:     divisors, perfect numbers, bar chart, classification
+; SUMMARY:  Adds up the proper divisors of 1 to 72 and draws them as bars, so you can spot the perfect, abundant and deficient numbers.
+; ============================================================
+;
+; WHAT IT DOES
+;   The proper divisors of 12 are 1, 2, 3, 4 and 6 (every divisor
+;   except 12 itself). They add up to 16, which is more than 12, so
+;   the ancient Greeks called 12 "abundant". 8 has 1, 2, 4, adding to
+;   only 7, so 8 is "deficient". And 6 = 1 + 2 + 3 exactly: a "perfect"
+;   number. Each bar shows the divisor sum of one number. The grey
+;   slanted line marks where the sum would equal the number itself.
+;   Green bars poke above it (abundant), red bars stay below (deficient),
+;   and gold bars touch it exactly (perfect).
+;
+; HOW TO USE
+;   Press Run. The perfect numbers up to 500 are printed in the
+;   command center as well.
+;
+; CONCEPTS YOU WILL LEARN
+;   * finding divisors with REMAINDER
+;   * pairing divisors: if d divides n, so does n/d
+;   * IFELSE choosing between colors
+;   * drawing a simple bar chart with FILLED
+;
+; THINGS TO TRY
+;   * Which is the first ODD abundant number? (It is bigger than 72;
+;     change :LAST to find it.)
+;   * Print the abundant numbers only. Are they mostly even?
+; ============================================================
+
+; Sum of the proper divisors. Divisors come in pairs d and n/d, so we
+; only walk d up to the square root and add both members of each pair.
+to divisor.sum :n
+  if :n = 1 [output 0]
+  localmake "total 1                ; 1 always divides
+  localmake "d 2
+  while [:d * :d <= :n] [
+    if (remainder :n :d) = 0 [
+      make "total :total + :d
+      if not (:d * :d = :n) [make "total :total + :n / :d]   ; a square root counts once
+    ]
+    make "d :d + 1
+  ]
+  output :total
+end
+
+to kind :n
+  localmake "s divisor.sum :n
+  if :s = :n [output "perfect]
+  output ifelse :s > :n ["abundant] ["deficient]
+end
+
+to bar :x :height :color
+  penup setxy :x :base setheading 0
+  setpencolor :color
+  filled :color [forward :height right 90 forward :barwidth - 2 right 90 forward :height]
+end
+
+to chart
+  for [n 1 :last] [
+    localmake "x :left + (:n - 1) * :barwidth
+    localmake "k kind :n
+    localmake "color ifelse :k = "perfect [[230 180 20]] ~
+                     [ifelse :k = "abundant [[40 160 80]] [[210 70 70]]]
+    bar :x (divisor.sum :n) * :scale :color
+    ; number labels every 6 bars keep the axis readable
+    if (remainder :n 6) = 0 [
+      penup setxy :x - 4 :base - 18 setpencolor [60 60 60] label :n
+    ]
+  ]
+  ; the line "divisor sum = n" goes from (0,0) to (last, last)
+  setpencolor [120 120 120] setpensize 2
+  penup setxy :left :base pendown
+  setxy :left + :last * :barwidth :base + :last * :scale
+  penup setpensize 1
+end
+
+to key :y :color :text
+  penup setxy -360 :y setheading 0 setpencolor :color
+  filled :color [repeat 4 [forward 14 right 90]]
+  penup setxy -338 :y setpencolor [40 40 40] label :text
+end
+
+make "last 72
+make "barwidth 10
+make "scale 2.4
+make "left minus :last * :barwidth / 2
+make "base -220
+
+clearscreen hideturtle
+setbackground [252 250 244]
+setlabelheight 12
+chart
+setlabelheight 16
+key 250 [230 180 20] [perfect: divisors add up to the number]
+key 225 [40 160 80] [abundant: divisors add up to more]
+key 200 [210 70 70] [deficient: divisors add up to less]
+
+print [Perfect numbers up to 500:]
+print filter [(divisor.sum ?) = ?] iseq 2 500

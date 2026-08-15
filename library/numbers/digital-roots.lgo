@@ -1,0 +1,88 @@
+; ============================================================
+; TITLE:    Digital Roots
+; CATEGORY: Number Theory
+; LEVEL:    Beginner
+; TAGS:     digits, digit sum, recursion, patterns, nines
+; SUMMARY:  Adds up digits again and again until one digit is left, then colors a grid of numbers by that digit to show a striped pattern.
+; ============================================================
+;
+; WHAT IT DOES
+;   Take 4879. Add its digits: 4 + 8 + 7 + 9 = 28. Again: 2 + 8 = 10.
+;   Again: 1 + 0 = 1. The single digit at the end is the "digital
+;   root". The command center shows a few of these chains. The picture
+;   colors the numbers 1 to 100 by their digital root. Because the roots
+;   go 1, 2, 3, ... 9, 1, 2, 3 ... forever, colored stripes appear.
+;   Finally the program uses digital roots to check a multiplication,
+;   an old trick called "casting out nines".
+;
+; HOW TO USE
+;   Press Run. Change :COLUMNS to 9 or 11 and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a word is a list of characters: FIRST, BUTFIRST and COUNT work on numbers
+;   * recursion that stops when the input has one digit
+;   * REDUCE to add up a list in one line
+;
+; THINGS TO TRY
+;   * Is there a shortcut? Compare digital.root with 1 + remainder (:n - 1) 9.
+;   * Make a deliberate mistake in the multiplication check. Does
+;     casting out nines always catch it?
+; ============================================================
+
+; Logo lets us treat the number 4879 as the word "4879", so FIRST gives
+; 4 and BUTFIRST gives 879. A digit sum is then a simple recursion.
+to digit.sum :n
+  if (count :n) = 1 [output :n]
+  output (first :n) + digit.sum butfirst :n
+end
+
+to digital.root :n
+  if (count :n) = 1 [output :n]
+  output digital.root digit.sum :n
+end
+
+; The whole chain of sums, as a list: 4879 28 10 1
+to chain :n
+  if (count :n) = 1 [output (list :n)]
+  output fput :n chain digit.sum :n
+end
+
+to grid
+  setlabelheight 14
+  for [n 1 100] [
+    localmake "col remainder (:n - 1) :columns
+    localmake "row int ((:n - 1) / :columns)
+    localmake "x :left + :col * :cell
+    localmake "y 200 - :row * :cell
+    localmake "color item digital.root :n :colors
+    penup setxy :x :y setheading 0 setpencolor :color
+    filled :color [repeat 4 [forward :cell - 4 right 90]]
+    penup setxy :x + 6 :y + 10 setpencolor [255 255 255]
+    label :n
+  ]
+end
+
+; If a x b = c then the roots must agree: root(root a * root b) = root c.
+to cast.nines :a :b :c
+  localmake "left.side digital.root (digital.root :a) * (digital.root :b)
+  localmake "right.side digital.root :c
+  print (sentence :a "x :b "= :c [?  roots:] :left.side "and :right.side)
+  ifelse :left.side = :right.side [print [   The roots agree, so the answer may well be right.]] ~
+                                  [print [   The roots differ, so the answer is certainly wrong!]]
+end
+
+make "colors [[230 60 60] [240 140 30] [220 190 20] [90 180 60] [30 150 140] ~
+              [50 120 220] [110 80 200] [190 70 180] [90 90 90]]
+make "columns 10
+make "cell 44
+make "left minus :columns * :cell / 2
+
+clearscreen hideturtle
+setbackground [250 250 250]
+grid
+penup setxy -260 -260 setpencolor [40 40 40] setlabelheight 18
+label [Numbers 1 to 100 colored by digital root]
+
+foreach [4879 987654321 2026 99999] [print (sentence [Digit sum chain:] chain ?)]
+cast.nines 123 456 56088
+cast.nines 123 456 56078

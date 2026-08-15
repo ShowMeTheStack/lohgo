@@ -1,0 +1,96 @@
+; ============================================================
+; TITLE:    Sacks Spiral
+; CATEGORY: Number Theory
+; LEVEL:    Advanced
+; TAGS:     primes, polar coordinates, square roots, spiral, sieve
+; SUMMARY:  Places every number on a smooth spiral where the perfect squares line up due east, and lights up the primes to show their curved streams.
+; ============================================================
+;
+; WHAT IT DOES
+;   In 1994 Robert Sacks tried a variation on Ulam's square spiral.
+;   Number n goes at distance sqrt(n) from the center, turned through
+;   sqrt(n) full turns. That means 1, 4, 9, 16, 25 ... (the perfect
+;   squares) all land on the line pointing right, and each turn of the
+;   spiral holds one more number than the turn before. When the primes
+;   are lit up, they gather on curves that sweep out from the center.
+;   Numbers on one curve share a formula: one famous curve is
+;   n*n + n + 41, which Euler noticed gives primes for n = 0 to 39.
+;   Those numbers are drawn in orange.
+;
+; HOW TO USE
+;   Press Run and watch the spiral fill outward. Change :TOTAL for more
+;   or fewer numbers; :SCALE controls the size.
+;
+; CONCEPTS YOU WILL LEARN
+;   * polar coordinates: a distance and an angle instead of x and y
+;   * turning an angle into x and y with SIN and COS
+;   * a sieve array for fast prime tests
+;   * property lists (PPROP and GPROP) as a quick "is this in the set?" table
+;
+; THINGS TO TRY
+;   * Mark the numbers n*n + n (the pronic numbers) in another color.
+;     Where do they go?
+;   * Draw only the composites instead. Do the curves show as gaps?
+; ============================================================
+
+to make.sieve :limit
+  localmake "s (array :limit 1)
+  for [i 1 :limit] [setitem :i :s "true]
+  setitem 1 :s "false
+  for [p 2 sqrt :limit] [
+    if item :p :s [for (list "m :p * :p :limit :p) [setitem :m :s "false]]
+  ]
+  output :s
+end
+
+; Remember Euler's numbers n*n + n + 41 in a property list called
+; "euler, so testing one is just a GPROP.
+to mark.euler
+  for [n 0 200] [
+    localmake "e :n * :n + :n + 41
+    if :e <= :total [pprop "euler :e "true]
+  ]
+end
+
+to eulerp :n
+  output not emptyp gprop "euler :n
+end
+
+; Polar to screen: radius :scale * sqrt n, angle sqrt n whole turns.
+; The angle is measured counterclockwise from due east, the way
+; mathematicians usually do it.
+to place :n
+  localmake "r :scale * sqrt :n
+  localmake "a 360 * sqrt :n
+  output (list :r * cos :a  :r * sin :a)
+end
+
+to spiral
+  for [n 2 :total] [
+    if item :n :primes [
+      ifelse eulerp :n [setpencolor [255 150 40] setpensize 4] ~
+                       [setpencolor [120 190 255] setpensize 2.5]
+      dot place :n
+    ]
+    ; pause now and then so you can watch it grow
+    if (remainder :n 400) = 0 [wait 1]
+  ]
+end
+
+; A faint line through the perfect squares, which all sit due east.
+to squares.line
+  setpencolor [70 70 100] setpensize 1
+  penup setxy 0 0 pendown setxy :scale * sqrt :total 0 penup
+end
+
+make "total 20000
+make "scale 1.85
+make "primes make.sieve :total
+
+clearscreen hideturtle
+setbackground [12 14 30]
+mark.euler
+squares.line
+spiral
+penup setxy -390 276 setpencolor [220 220 240] setlabelheight 16
+label [Sacks spiral: primes in blue, n*n+n+41 in orange]

@@ -1,0 +1,144 @@
+; ============================================================
+; TITLE:    Kaprekar's 6174
+; CATEGORY: Number Theory
+; LEVEL:    Intermediate
+; TAGS:     digits, sorting, input, line graph, kaprekar
+; SUMMARY:  Asks for four-digit numbers and runs Kaprekar's routine on each, graphing how every one of them lands on the mysterious number 6174.
+; ============================================================
+;
+; WHAT IT DOES
+;   In 1949 the Indian schoolteacher D. R. Kaprekar found something
+;   strange. Take any four-digit number whose digits are not all the
+;   same, say 2026. Arrange its digits from biggest to smallest (6220)
+;   and smallest to biggest (0226), and subtract: 6220 - 0226 = 5994.
+;   Repeat with 5994, and so on. In at most seven steps you always
+;   reach 6174, and 6174 just gives 7641 - 1467 = 6174 forever.
+;   Every number you type adds a new colored line to the graph.
+;
+; HOW TO USE
+;   Press Run, click in the command center, type a number from 1 to
+;   9999 and press Enter. Short numbers get zeros in front (7 becomes
+;   0007). Type quit when you are done.
+;
+; CONCEPTS YOU WILL LEARN
+;   * sorting a list of digits with a small insertion sort
+;   * turning a list of digits back into a number with REDUCE and WORD
+;   * checking typed input carefully before using it
+;   * a line graph that grows as you play
+;
+; THINGS TO TRY
+;   * Which numbers take the full seven steps? Try 2111 or 9998.
+;   * Three-digit numbers have their own magic number. Change the
+;     program to use 3 digits and find it.
+; ============================================================
+
+; Pad with zeros on the left so 7 becomes 0007.
+to pad4 :n
+  if (count :n) >= 4 [output :n]
+  output pad4 word 0 :n
+end
+
+to digit.list :n
+  if emptyp :n [output []]
+  output fput first :n digit.list butfirst :n
+end
+
+to insert.digit :d :sorted
+  if emptyp :sorted [output (list :d)]
+  if :d <= first :sorted [output fput :d :sorted]
+  output fput first :sorted insert.digit :d butfirst :sorted
+end
+
+to sort.digits :l
+  if emptyp :l [output []]
+  output insert.digit first :l sort.digits butfirst :l
+end
+
+; One step of the routine. REDUCE "WORD glues [6 2 2 0] into 6220.
+to kaprekar.step :n
+  localmake "up sort.digits digit.list pad4 :n
+  output (reduce "word reverse :up) - (reduce "word :up)
+end
+
+to path.to.6174 :n
+  localmake "path (list :n)
+  while [not :n = 6174] [
+    make "n kaprekar.step :n
+    make "path lput :n :path
+  ]
+  output :path
+end
+
+to gx :step
+  output -300 + :step * 85
+end
+
+to gy :value
+  output -220 + :value * 0.045
+end
+
+to axes
+  setpencolor [150 150 160] setpensize 1 setlabelheight 12
+  penup setxy gx 0 gy 0 pendown setxy gx 7 gy 0
+  penup setxy gx 0 gy 0 pendown setxy gx 0 gy 10000
+  for [s 0 7] [penup setxy (gx :s) - 3 (gy 0) - 20 label :s]
+  foreach [0 2000 4000 6000 8000 10000] [penup setxy (gx 0) - 50 (gy ?) - 4 label ?]
+  ; the target line
+  setpencolor [230 120 120]
+  penup setxy gx 0 gy 6174 pendown setxy gx 7 gy 6174
+  penup setxy (gx 7) + 8 (gy 6174) - 4 label 6174
+  penup setxy -40 -270 setpencolor [90 90 90] label [steps]
+end
+
+to graph :path :color
+  setpencolor :color setpensize 3
+  penup setxy gx 0 gy first :path pendown
+  localmake "s 0
+  foreach :path [
+    setxy gx :s gy ?
+    dot pos
+    make "s :s + 1
+  ]
+  penup
+end
+
+; A number is acceptable if it is a whole number from 1 to 9999 and its
+; four digits are not all the same (1111 would give 1111 - 1111 = 0).
+to problem.with :x
+  if not numberp :x [output [That is not a number.]]
+  if not (:x = int :x) [output [Please use a whole number.]]
+  if or (:x < 1) (:x > 9999) [output [Pick a number from 1 to 9999.]]
+  localmake "d digit.list pad4 :x
+  if (count filter [? = first :d] :d) = 4 [output [The digits must not all be the same.]]
+  output []
+end
+
+to play
+  localmake "tries 0
+  forever [
+    print [Type a number from 1 to 9999, or quit:]
+    localmake "answer readlist
+    ifelse emptyp :answer [print [Nothing typed, try again.]] [
+      localmake "x first :answer
+      if memberp :x [quit q bye stop exit] [print [Thanks for playing.] stop]
+      localmake "trouble problem.with :x
+      ifelse emptyp :trouble [
+        localmake "path path.to.6174 :x
+        print (sentence pad4 :x [reaches 6174 in] (count :path) - 1 [steps:] :path)
+        graph :path item 1 + remainder :tries 8 :colors
+        make "tries :tries + 1
+      ] [print :trouble]
+    ]
+  ]
+end
+
+make "colors [[60 110 220] [40 160 90] [230 140 30] [150 80 200] [0 160 170] [210 70 140] [120 120 40] [90 90 90]]
+
+clearscreen hideturtle
+setbackground [252 252 248]
+axes
+penup setxy -300 260 setpencolor [40 40 40] setlabelheight 18
+label [Every path ends at 6174]
+graph path.to.6174 2026 [220 60 60]
+print [Example: 2026 is drawn in red.]
+play

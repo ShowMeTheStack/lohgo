@@ -1,0 +1,100 @@
+; ============================================================
+; TITLE:    Goldbach's Comet
+; CATEGORY: Number Theory
+; LEVEL:    Intermediate
+; TAGS:     primes, goldbach, conjecture, scatter plot, sieve
+; SUMMARY:  Counts the ways each even number can be written as a sum of two primes and plots the counts, which spread out like the tail of a comet.
+; ============================================================
+;
+; WHAT IT DOES
+;   In 1742 Christian Goldbach guessed that every even number bigger
+;   than 2 is the sum of two primes: 10 = 3 + 7 = 5 + 5, 28 = 5 + 23 =
+;   11 + 17. Computers have checked this for numbers with 18 digits and
+;   never found a failure, yet nobody has proved it. For every even
+;   number up to 1000 the program counts how many such pairs exist and
+;   puts a dot that high. The dots form a fuzzy fan with bright bands,
+;   called Goldbach's comet. Dots for multiples of 3 are colored
+;   differently: notice they sit on a higher band.
+;
+; HOW TO USE
+;   Press Run. The pairs for a few numbers are printed in the command
+;   center. Change :TOP (keep it even) to plot further.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a sieve array for fast prime tests
+;   * counting with a loop and a running total
+;   * a scatter plot made of DOTs
+;   * looking for patterns by coloring groups differently
+;
+; THINGS TO TRY
+;   * Color the multiples of 5 instead of 3. Is there a band for them too?
+;   * Find the even number below 1000 with the most pairs.
+; ============================================================
+
+to make.sieve :limit
+  localmake "s (array :limit 1)
+  for [i 1 :limit] [setitem :i :s "true]
+  setitem 1 :s "false
+  for [p 2 sqrt :limit] [
+    if item :p :s [for (list "m :p * :p :limit :p) [setitem :m :s "false]]
+  ]
+  output :s
+end
+
+to primep :n
+  output item :n :primes
+end
+
+; How many ways to write n as p + q with p <= q both prime.
+to pair.count :n
+  localmake "total 0
+  for [p 2 :n / 2] [
+    if and primep :p primep :n - :p [make "total :total + 1]
+  ]
+  output :total
+end
+
+to pairs :n
+  output filter [primep :n - ?] filter "primep iseq 2 :n / 2
+end
+
+; 28 = 5+23 11+17. Inside MAP's template, ? is the small prime and
+; :n - ? is its partner.
+to show.pairs :n
+  print (sentence :n "= map [(word ? "+ :n - ?)] pairs :n)
+end
+
+to axes
+  setpencolor [150 150 160] setpensize 1 setlabelheight 12
+  penup setxy -360 -240 pendown setxy 360 -240
+  penup setxy -360 -240 pendown setxy -360 200
+  for [k 0 :top 200] [
+    penup setxy -360 + :k * :xscale -240 pendown setxy -360 + :k * :xscale -246
+    penup setxy -370 + :k * :xscale -262 label :k
+  ]
+  for [c 0 50 10] [
+    penup setxy -360 -240 + :c * :yscale pendown setxy -366 -240 + :c * :yscale
+    penup setxy -390 -245 + :c * :yscale label :c
+  ]
+end
+
+to comet
+  setpensize 4
+  for [n 4 :top 2] [
+    ifelse (remainder :n 3) = 0 [setpencolor [230 120 30]] [setpencolor [60 100 200]]
+    dot (list -360 + :n * :xscale -240 + (pair.count :n) * :yscale)
+  ]
+end
+
+make "top 1000
+make "xscale 0.7
+make "yscale 8
+make "primes make.sieve :top
+
+clearscreen hideturtle
+setbackground [250 250 252]
+axes
+comet
+penup setxy -340 270 setpencolor [40 40 40] setlabelheight 18
+label [Ways to write each even number as a sum of two primes]
+foreach [10 28 100] [show.pairs ?]

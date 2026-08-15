@@ -1,0 +1,116 @@
+; ============================================================
+; TITLE:    Sieve of Eratosthenes
+; CATEGORY: Number Theory
+; LEVEL:    Intermediate
+; TAGS:     primes, sieve, arrays, grid, animation
+; SUMMARY:  Draws the numbers 1 to 200 in a grid and crosses out multiples, prime by prime, until only the primes are left circled.
+; ============================================================
+;
+; WHAT IT DOES
+;   More than 2000 years ago Eratosthenes found primes without doing
+;   a single division. Write the numbers down. Circle 2 and cross out
+;   every second number after it. Circle the next number still standing
+;   (3) and cross out every third number. Keep going. Whatever is never
+;   crossed out is prime. Each prime gets its own color for its slashes,
+;   so you can see which prime "caught" each number first.
+;
+; HOW TO USE
+;   Press Run and watch. Change :LIMIT and :COLUMNS at the bottom
+;   (keep LIMIT a multiple of COLUMNS so the grid is a neat rectangle).
+;
+; CONCEPTS YOU WILL LEARN
+;   * an ARRAY as a row of true/false switches
+;   * FOR with a step, to jump through multiples
+;   * turning a number into a row and column with INT and REMAINDER
+;   * why we can stop sieving at the square root of the limit
+;
+; THINGS TO TRY
+;   * Make WAIT bigger to slow the animation down.
+;   * Use 12 columns instead of 20. The primes line up in columns
+;     1, 5, 7 and 11. Why? (Hint: think about remainders mod 12.)
+; ============================================================
+
+; Where the top-left corner of cell :n is. Cells are numbered
+; across the row, then down, like reading a book.
+to cell.x :n
+  output :left + :size * remainder (:n - 1) :columns
+end
+
+to cell.y :n
+  output :top - :size * int ((:n - 1) / :columns)
+end
+
+to draw.cell :n
+  penup setxy cell.x :n cell.y :n setheading 90
+  pendown setpencolor [170 170 190] setpensize 1
+  repeat 4 [forward :size right 90]
+  penup
+  ; center the number: a label is about 0.6 of its height wide per digit
+  setxy (cell.x :n) + :size / 2 - 3.3 * count :n (cell.y :n) - :size / 2 - 4
+  setpencolor [40 40 60]
+  label :n
+end
+
+to draw.grid
+  setlabelheight 11
+  for [n 1 :limit] [draw.cell :n]
+end
+
+; One slash across a cell means "this number has a smaller divisor".
+; A single line (not an X) keeps the number underneath readable.
+to cross.out :n :color
+  localmake "x cell.x :n
+  localmake "y cell.y :n
+  setpencolor :color setpensize 2
+  penup setxy :x + 4 :y - :size + 4 pendown setxy :x + :size - 4 :y - 4
+  penup
+end
+
+; A circle means "nobody caught this one: it is prime".
+to circle.cell :n :color
+  penup setxy (cell.x :n) + :size / 2 (cell.y :n) - :size / 2
+  setheading 0 setpencolor :color setpensize 3
+  pendown arc 360 :size / 2 - 3 penup
+end
+
+to sieve
+  ; crossed is an array of switches, one for each number. "false
+  ; means "not crossed out yet".
+  make "crossed (array :limit 1)
+  for [i 1 :limit] [setitem :i :crossed "false]
+  cross.out 1 "grey       ; 1 is neither prime nor composite
+  localmake "hue 0
+  for [p 2 :limit] [
+    if not item :p :crossed [
+      make "hue :hue + 1
+      localmake "color item 1 + remainder :hue 12 :colors
+      circle.cell :p :color
+      ; Start at p*p: every smaller multiple of p also has a smaller
+      ; prime factor, so it was crossed out already.
+      if :p * :p <= :limit [
+        for (list "m :p * :p :limit :p) [
+          if not item :m :crossed [
+            setitem :m :crossed "true
+            cross.out :m :color
+            wait 1
+          ]
+        ]
+      ]
+    ]
+  ]
+end
+
+make "colors [[220 50 50] [40 120 220] [30 160 70] [230 140 20] [150 60 190] [0 160 160] ~
+              [200 60 140] [120 120 0] [90 90 220] [200 100 60] [60 140 100] [180 40 90]]
+make "limit 200
+make "columns 20
+make "size 36
+make "left minus :columns * :size / 2
+make "top 180
+
+clearscreen hideturtle
+setbackground [250 248 240]
+draw.grid
+penup setxy :left :top + 40 setpencolor [40 40 60] setlabelheight 20
+label [Sieve of Eratosthenes: circled numbers are prime]
+sieve

@@ -1,0 +1,94 @@
+; ============================================================
+; TITLE:    Reverse and Add
+; CATEGORY: Number Theory
+; LEVEL:    Intermediate
+; TAGS:     palindromes, reverse, digits, heat map
+; SUMMARY:  Reverses a number and adds it to itself until a palindrome appears, and colors 1 to 200 by how many steps that takes.
+; ============================================================
+;
+; WHAT IT DOES
+;   A palindrome reads the same both ways, like 121 or 4884. Pick a
+;   number, say 57. Reverse it (75) and add: 57 + 75 = 132. Not a
+;   palindrome, so again: 132 + 231 = 363. Done in two steps! Most
+;   numbers get there fast, but 89 needs 24 steps, and nobody knows if
+;   196 ever gets there at all. Mathematicians have tried for billions
+;   of steps. The grid shows 1 to 200: pale squares are quick, dark
+;   squares are slow, and black squares gave up (we stop when the
+;   numbers grow too long for Logo to add exactly).
+;
+; HOW TO USE
+;   Press Run. Read the chain for 89 in the command center, then try
+;   other numbers by changing the SHOW.CHAIN line at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * REVERSE works on words, and a number is a word
+;   * EQUALP to compare a word with its reverse
+;   * a loop with two ways out: success, or giving up
+;   * mixing colors to make a heat map
+;
+; THINGS TO TRY
+;   * Which numbers below 200 never reach a palindrome here? Are they
+;     related to each other?
+;   * Change :GIVE.UP.AT to 1e10 and see how the picture changes.
+; ============================================================
+
+to palindromep :n
+  output equalp :n reverse :n
+end
+
+; How many reverse-and-add steps until a palindrome. Outputs -1 if the
+; number gets too big for exact arithmetic first. (Logo numbers are
+; exact up to about 16 digits; after that the last digits blur.)
+to steps.to.palindrome :n
+  localmake "steps 0
+  while [not palindromep :n] [
+    make "n :n + reverse :n
+    make "steps :steps + 1
+    if :n > :give.up.at [output -1]
+  ]
+  output :steps
+end
+
+to show.chain :n
+  localmake "chain (list :n)
+  while [and (not palindromep :n) (:n < :give.up.at)] [
+    make "n :n + reverse :n
+    make "chain lput :n :chain
+  ]
+  print (sentence [Starting at] first :chain [takes] (count :chain) - 1 [steps:])
+  foreach :chain [print (sentence "|   | ?)]
+end
+
+; 0 steps is nearly white, 24 steps is deep purple, giving up is black.
+to heat :s
+  if :s < 0 [output [20 20 20]]
+  ; the square root stretches the small step counts apart, so one or
+  ; two steps already look different from zero
+  localmake "t sqrt :s / 24
+  if :t > 1 [make "t 1]
+  output (list 250 - 150 * :t 240 - 220 * :t 220 - 70 * :t)
+end
+
+to grid
+  setlabelheight 11
+  for [n 1 200] [
+    localmake "s steps.to.palindrome :n
+    localmake "x -360 + 36 * remainder (:n - 1) 20
+    localmake "y 200 - 36 * int ((:n - 1) / 20)
+    localmake "color heat :s
+    penup setxy :x :y setheading 0 setpencolor :color
+    filled :color [repeat 4 [forward 33 right 90]]
+    penup setxy :x + 4 :y + 4
+    setpencolor ifelse or (:s < 0) (:s > 6) ["white] [[40 40 40]]
+    label :n
+  ]
+end
+
+make "give.up.at 1e14
+
+clearscreen hideturtle
+setbackground [245 245 250]
+grid
+penup setxy -360 -200 setpencolor [40 40 40] setlabelheight 18
+label [Steps to reach a palindrome: pale is quick, dark is slow, black gave up]
+show.chain 89

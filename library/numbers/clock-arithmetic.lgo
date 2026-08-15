@@ -1,0 +1,102 @@
+; ============================================================
+; TITLE:    Clock Arithmetic
+; CATEGORY: Number Theory
+; LEVEL:    Intermediate
+; TAGS:     modular arithmetic, remainder, modulo, animation
+; SUMMARY:  Animates sums and products on a clock face, where counting past 12 wraps around, to show how modular arithmetic works.
+; ============================================================
+;
+; WHAT IT DOES
+;   If it is 9 o'clock now, what time will it be in 5 hours? Not 14,
+;   but 2. On a clock, numbers wrap around. Mathematicians call this
+;   arithmetic "modulo 12", and Logo's MODULO does it for us:
+;   modulo 9 + 5 12 is 2. A red turtle hops around the clock face one
+;   hour at a time to act out several sums, a subtraction and a
+;   multiplication. Then the program switches to a 7-hour clock, where
+;   the rules are the same but the wrap comes sooner.
+;
+; HOW TO USE
+;   Press Run and watch. Edit the :PUZZLES list at the
+;   bottom, or change the clock size, for example demo 5.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MODULO, and how it differs from REMAINDER for negative numbers
+;   * placing numbers around a circle with SIN and COS
+;   * animation with WAIT
+;   * storing a puzzle as a list and taking it apart with ITEM
+;
+; THINGS TO TRY
+;   * On a 12-hour clock, which number times 5 gives 1? (Hint: 5 is its
+;     own partner.) Now look for a number times 4 that gives 1. Why
+;     can't you find one?
+;   * Compare modulo -3 12 with remainder -3 12 in the command center.
+; ============================================================
+
+; Where hour :h sits on a circle of radius :r. Hour 0 is at the top
+; and hours go clockwise, just like Logo headings.
+to spot :h :r
+  localmake "a :h * 360 / :hours
+  output (list :r * sin :a  :r * cos :a)
+end
+
+to face
+  clean
+  setpencolor [60 60 80] setpensize 3
+  penup home setheading 0 pendown arc 360 200 penup
+  setlabelheight 26
+  for [h 0 :hours - 1] [
+    setpos spot :h 160
+    setpensize 8 setpencolor [60 60 80] dot pos
+    setpos spot :h 225
+    setxy xcor - 7 * count :h ycor - 9
+    label :h
+  ]
+end
+
+; Hop one hour forward (or backward if :dir is -1), sliding along an
+; inner circle so the path is curved like the clock face.
+to hop :from :dir
+  setpencolor [220 50 50] setpensize 4 pendown
+  for [k 1 10] [
+    setpos spot :from + :dir * :k / 10 130
+    wait 1
+  ]
+  penup
+end
+
+; A puzzle is a list like [9 + 5], [3 - 5] or [4 x 3].
+to act.out :puzzle
+  face
+  localmake "a item 1 :puzzle
+  localmake "op item 2 :puzzle
+  localmake "b item 3 :puzzle
+  localmake "here :a
+  ; write the puzzle in the middle of the clock
+  setpencolor [60 60 80] setlabelheight 30
+  penup setxy -50 0 label :puzzle
+  penup setpos spot :a 130
+  if :op = "+ [repeat :b [hop :here 1  make "here :here + 1]]
+  if :op = "- [repeat :b [hop :here -1  make "here :here - 1]]
+  ; multiplication is repeated addition: a x b means b jumps of a, from 0
+  if :op = "x [
+    make "here 0 penup setpos spot 0 130
+    repeat :b [repeat :a [hop :here 1  make "here :here + 1]]
+  ]
+  localmake "answer modulo :here :hours
+  setpencolor [220 50 50] setpensize 16 dot spot :answer 160
+  penup setxy -50 -40 label (word "= :answer)
+  print (sentence :puzzle "= :here [in ordinary arithmetic, but] :answer [on this clock])
+  wait 60
+end
+
+to demo :size
+  make "hours :size
+  print (sentence [--- A clock with] :hours [hours ---])
+  foreach :puzzles [act.out ?]
+end
+
+clearscreen hideturtle
+setbackground [250 250 245]
+make "puzzles [[9 + 5] [10 + 10] [3 - 5] [4 x 5]]
+demo 12
+demo 7

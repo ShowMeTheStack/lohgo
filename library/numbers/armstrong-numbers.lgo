@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    Armstrong Numbers
+; CATEGORY: Number Theory
+; LEVEL:    Beginner
+; TAGS:     digits, powers, search, stacked bars
+; SUMMARY:  Searches 1 to 9999 for numbers equal to the sum of their own digits raised to a power, and draws each one as a stacked bar.
+; ============================================================
+;
+; WHAT IT DOES
+;   153 has three digits. Cube each one and add: 1 + 125 + 27 = 153.
+;   It gives back itself! Numbers like this are called Armstrong numbers
+;   (or narcissistic numbers, because they love their own digits). For a
+;   four-digit number, use fourth powers instead of cubes. The program
+;   finds every one up to 9999 and draws a bar for each, cut into pieces
+;   that show how big each digit's power is.
+;
+; HOW TO USE
+;   Press Run and wait a moment while it searches.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MAP to turn a number's digits into a list of powers
+;   * POWER and COUNT
+;   * FILTER to keep only the numbers that pass a test
+;   * stacking colored pieces so they add up to a whole bar
+;
+; THINGS TO TRY
+;   * Raise :SEARCH.UP.TO to 99999. Three five-digit ones appear (it is
+;     slower, so be patient).
+;   * Change the test to use squares always. Which numbers pass now?
+; ============================================================
+
+; [1 125 27] for 153: every digit raised to the number of digits.
+to digit.powers :n
+  localmake "k count :n
+  output map [power ? :k] digit.list :n
+end
+
+; MAP on a word builds a word, which would glue 1 125 27 into 112527.
+; So first we turn 153 into the list [1 5 3].
+to digit.list :n
+  if emptyp :n [output []]
+  output fput first :n digit.list butfirst :n
+end
+
+to armstrongp :n
+  output (reduce "sum digit.powers :n) = :n
+end
+
+; Draw one stacked bar. Each piece's height is its share of the number,
+; so every bar is the same total height and the pieces show proportions.
+to stacked.bar :n :x
+  localmake "parts digit.powers :n
+  localmake "y -200
+  localmake "i 0
+  foreach :parts [
+    make "i :i + 1
+    localmake "h 380 * ? / :n
+    localmake "color item 1 + remainder :i 5 :colors
+    penup setxy :x :y setheading 0 setpencolor :color
+    if :h > 0 [filled :color [forward :h right 90 forward 70 right 90 forward :h]]
+    ; name the piece, if it is tall enough to hold a label
+    if :h > 14 [
+      penup setxy :x + 4 :y + :h / 2 - 5 setpencolor "white
+      label (word item :i :n "^ count :n)
+    ]
+    make "y :y + :h
+  ]
+  penup setxy :x + 35 - 0.6 * 18 * (count :n) / 2 -230 setpencolor [40 40 40]
+  label :n
+end
+
+make "colors [[230 90 70] [60 130 210] [80 170 90] [240 170 30] [150 90 200]]
+make "search.up.to 9999
+
+clearscreen hideturtle
+setbackground [248 248 244]
+print (sentence [Searching 10 to] :search.up.to [...])
+; single digits pass trivially (5^1 = 5), so start the search at 10
+make "found filter "armstrongp iseq 10 :search.up.to
+print sentence [Armstrong numbers:] :found
+foreach :found [
+  print (sentence ? "= reduce [(word ?1 "+ ?2)] digit.powers ?)
+]
+
+setlabelheight 18
+make "x0 minus (count :found) * 105 / 2
+make "i 0
+foreach :found [
+  stacked.bar ? :x0 + :i * 105
+  make "i :i + 1
+]
+penup setxy -300 230 setpencolor [40 40 40] setlabelheight 22
+label [Each number is the sum of its own digit powers]
