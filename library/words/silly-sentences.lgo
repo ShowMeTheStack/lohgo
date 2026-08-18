@@ -1,0 +1,74 @@
+; ============================================================
+; TITLE:    Silly Sentence Machine
+; CATEGORY: Words & Text
+; LEVEL:    Beginner
+; TAGS:     random, pick, sentence, grammar, label
+; SUMMARY:  Builds random funny sentences from lists of nouns, verbs and adjectives and writes them across the screen in color.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every sentence is made from the same recipe:
+;     the  ADJECTIVE  NOUN  VERB  the  ADJECTIVE  NOUN  PLACE
+;   but each part is picked at random, so you get things like
+;     "the sleepy dragon tickled the purple sandwich under the bed"
+;   Eight sentences are printed and drawn on the screen, each in its
+;   own color.
+;
+; HOW TO USE
+;   Press Run as many times as you like; it is different every time.
+;   Type   print silly   in the command center for one more sentence.
+;
+; CONCEPTS YOU WILL LEARN
+;   * PICK chooses a random item from a list
+;   * SENTENCE glues words and lists together into one list
+;   * small procedures, each building one part of the sentence
+;
+; THINGS TO TRY
+;   * Add your own words to the lists (your friends' names, your pets)
+;   * Add an ADVERB list (quickly, loudly) and put it after the verb
+;   * Change "the" to "a" in SOMEBODY, then make it say "an" before
+;     words that start with a vowel (an ancient wizard)
+; ============================================================
+
+make "adjectives [sleepy purple giant tiny grumpy sparkly invisible ~
+  wobbly hungry polite ancient fluffy noisy secret]
+make "nouns [dragon sandwich robot teacher penguin pirate cupcake ~
+  wizard turtle banana dinosaur astronaut kitten volcano]
+make "verbs [tickled chased hugged painted juggled [sang to] ~
+  borrowed squashed interviewed rescued]
+make "places [[under the bed] [on the moon] [at the library] ~
+  [inside a teapot] [during lunch] [in the bathtub] [at midnight] ~
+  [behind the school]]
+
+; Each helper outputs a small piece. Splitting the work up like this
+; makes it easy to change one part of the recipe.
+to somebody
+  output (sentence "the pick :adjectives pick :nouns)
+end
+
+to silly
+  output (sentence somebody pick :verbs somebody pick :places)
+end
+
+; Write one sentence on the turtle screen at height :y.
+to show.line :y :sent :color
+  penup setxy -380 :y
+  setpencolor :color
+  label :sent
+end
+
+to main
+  clearscreen hideturtle setbackground [25 25 50]
+  localmake "colors [[255 120 120] [255 200 90] [255 255 120] ~
+    [140 240 140] [120 220 255] [170 150 255] [255 150 230] [230 230 230]]
+  penup setxy -120 240 setpencolor 7 setlabelheight 28
+  label [Silly Sentences]
+  setlabelheight 16
+  for [i 1 8] [
+    localmake "s silly
+    print :s
+    show.line 180 - 52 * :i :s item :i :colors
+  ]
+end
+
+main

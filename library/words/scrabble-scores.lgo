@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    Scrabble Scores
+; CATEGORY: Words & Text
+; LEVEL:    Intermediate
+; TAGS:     property lists, scoring, words, tiles, sorting
+; SUMMARY:  Stores the Scrabble letter values on a property list, scores a list of words, and draws the winner as wooden tiles.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every letter in Scrabble is worth some points: common letters like
+;   E are worth 1, rare letters like Q and Z are worth 10. The program
+;   keeps those values on a property list called "tiles", scores a
+;   list of words, prints them from best to worst, and draws the best
+;   word as a row of tiles with the little numbers in the corner.
+;
+; HOW TO USE
+;   Press Run. Then try:
+;     print score "jazz
+;     drawtiles "quiz
+;
+; CONCEPTS YOU WILL LEARN
+;   * PPROP and GPROP: a property list works like a small lookup table
+;   * setting many properties at once with FOREACH over pairs
+;   * adding up the letters of a word with recursion
+;   * sorting a list of [score word] pairs
+;
+; THINGS TO TRY
+;   * Add double letter and triple word squares to SCORE
+;   * Score your own name. Who in your family has the highest score?
+;   * Change the values to those used in another language
+; ============================================================
+
+; Each group of letters shares a value. We store each letter's value
+; separately on the property list "tiles so lookup is a single GPROP.
+to setupvalues
+  foreach [[1 aeilnorstu] [2 dg] [3 bcmp] [4 fhvwy] [5 k] [8 jx] [10 qz]] [
+    localmake "points first ?
+    foreach last ? [pprop "tiles ? :points]
+  ]
+end
+
+; The score of a word is the value of its first letter plus the score
+; of the rest. Unknown characters (digits, dashes) are worth nothing.
+to score :wd
+  if emptyp :wd [output 0]
+  localmake "v gprop "tiles lowercase first :wd
+  if emptyp :v [make "v 0]
+  output :v + score butfirst :wd
+end
+
+; Insert a [score word] pair into a list sorted from high to low.
+to insertpair :pair :sorted
+  if emptyp :sorted [output (list :pair)]
+  if (first :pair) >= (first first :sorted) [output fput :pair :sorted]
+  output fput first :sorted insertpair :pair butfirst :sorted
+end
+
+to ranked :words
+  if emptyp :words [output []]
+  output insertpair (list score first :words first :words) ranked butfirst :words
+end
+
+; One tile: a square with a big letter and its value in the corner.
+to tile :x :y :letter
+  localmake "s 70
+  penup setxy :x :y setheading 0
+  filled [235 200 140] [repeat 4 [forward :s right 90]]
+  setpencolor [150 100 50] setpensize 2 pendown
+  repeat 4 [forward :s right 90]
+  penup setpencolor [60 40 20]
+  setxy :x + 20 :y + 20 setlabelheight 36
+  label uppercase :letter
+  setxy :x + 52 :y + 6 setlabelheight 14
+  label gprop "tiles lowercase :letter
+end
+
+to drawtiles :wd
+  clearscreen hideturtle setbackground [30 110 70]
+  localmake "n count :wd
+  localmake "left 0 - (80 * :n) / 2
+  for [i 1 :n] [tile :left + 80 * (:i - 1) -35 item :i :wd]
+  penup setpencolor 7 setlabelheight 24
+  setxy -80 -110 label (sentence [Score:] score :wd)
+end
+
+setupvalues
+make "list.of.words [quiz jazz cat zebra oxygen puzzle logo turtle ~
+  kayak queen vex hello squawk]
+make "results ranked :list.of.words
+print [Score Word]
+foreach :results [print (sentence first ? last ?)]
+print (sentence [Best word:] last first :results)
+drawtiles last first :results

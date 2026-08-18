@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    Alphabetical Order
+; CATEGORY: Words & Text
+; LEVEL:    Intermediate
+; TAGS:     sorting, beforep, merge sort, words, index
+; SUMMARY:  Puts words into dictionary order with a merge sort and BEFOREP, then prints them as an index grouped by first letter.
+; ============================================================
+;
+; WHAT IT DOES
+;   Sorts a jumble of words into alphabetical order and prints them
+;   the way the index at the back of a book looks:
+;     A  apple  astronaut
+;     B  balloon  banana  bicycle
+;   It also shows a classic trap: computers compare letters by their
+;   code numbers, and every capital letter has a smaller code than every
+;   small letter (ASCII "Z is 90, ASCII "a is 97). Logo hides this from
+;   you while the variable CASEIGNOREDP is true, which it is at the
+;   start. Turn it off and "Zebra" jumps in front of "apple".
+;
+; HOW TO USE
+;   Press Run. Type your own words when asked, all on one line, and
+;   they will be sorted too. Press Enter on its own to skip.
+;
+; CONCEPTS YOU WILL LEARN
+;   * BEFOREP, which says whether one word comes before another
+;   * merge sort: split the list in half, sort each half, merge them
+;   * CASEIGNOREDP, and comparing lowercase copies to be safe either way
+;   * grouping a sorted list by the first letter of each word
+;
+; THINGS TO TRY
+;   * Sort in reverse order (Z to A) by changing just one line
+;   * Sort by word length instead, shortest first
+;   * Count how many comparisons the sort makes for 8, 16 and 32 words
+; ============================================================
+
+; Is word a before word b in the dictionary? Lowercase both copies so
+; capitals never jump the queue, even if CASEIGNOREDP has been changed.
+to earlierp :a :b
+  output beforep lowercase :a lowercase :b
+end
+
+; Take two sorted lists and zip them into one sorted list by always
+; taking the smaller front word.
+to merge :xs :ys
+  if emptyp :xs [output :ys]
+  if emptyp :ys [output :xs]
+  if earlierp first :ys first :xs [output fput first :ys merge :xs butfirst :ys]
+  output fput first :xs merge butfirst :xs :ys
+end
+
+; The first n words of a list, and the rest after them.
+to firstpart :n :xs
+  if :n = 0 [output []]
+  output fput first :xs firstpart :n - 1 butfirst :xs
+end
+to lastpart :n :xs
+  if :n = 0 [output :xs]
+  output lastpart :n - 1 butfirst :xs
+end
+
+to mergesort :xs
+  if (count :xs) < 2 [output :xs]
+  localmake "half int (count :xs) / 2
+  output merge mergesort firstpart :half :xs mergesort lastpart :half :xs
+end
+
+; Print a sorted list as an index: one line per starting letter.
+to index :words
+  if emptyp :words [stop]
+  localmake "letter uppercase first first :words
+  localmake "group filter [equalp uppercase first ? :letter] :words
+  print (sentence :letter :group)
+  index lastpart count :group :words
+end
+
+make "jumble [turtle Zebra apple banana Logo cat astronaut bicycle ~
+  dragon balloon elephant comet Moon xylophone guitar kite igloo ~
+  helicopter octopus rainbow sunflower penguin violin umbrella yo-yo]
+
+print (sentence [Character codes: Z is] ascii "Z [and a is] ascii "a)
+make "caseignoredp "false
+print [With CASEIGNOREDP false, is Zebra before apple?]
+print beforep "Zebra "apple
+print [With lowercase copies, is Zebra before apple?]
+print earlierp "Zebra "apple
+make "caseignoredp "true      ; put the normal setting back
+print []
+print [The index:]
+index mergesort :jumble
+print []
+print [Type some words of your own on one line, or press Enter to skip:]
+make "mine readlist
+if listp :mine [if not emptyp :mine [print mergesort :mine]]

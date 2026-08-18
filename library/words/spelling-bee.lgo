@@ -1,0 +1,108 @@
+; ============================================================
+; TITLE:    Spelling Bee Hive
+; CATEGORY: Words & Text
+; LEVEL:    Intermediate
+; TAGS:     game, words, hexagons, memberp, scoring
+; SUMMARY:  Draws a honeycomb of seven letters and scores the words you make from them using the Spelling Bee puzzle rules.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws seven hexagons like a honeycomb. Make words from those
+;   letters. The rules:
+;     * a word needs at least 4 letters
+;     * it must use the gold letter in the middle
+;     * it may only use letters from the hive (repeats are fine)
+;   A 4 letter word scores 1 point, longer words score 1 point per
+;   letter, and a word that uses all seven letters scores 7 extra.
+;
+; HOW TO USE
+;   Press Run, click in the command center and type one word at a time.
+;   Type quit, or press Enter on an empty line, to see your final score.
+;   This hive is P (middle) with A L N E T R. Try "plant" or "planter".
+;
+; CONCEPTS YOU WILL LEARN
+;   * checking every letter of a word with a recursive predicate
+;   * MEMBERP to test a letter against a word, and a word against a list
+;   * drawing hexagons with REPEAT and placing them with SETXY
+;
+; THINGS TO TRY
+;   * Change the letters in MAIN to build your own puzzle
+;   * Keep a list of accepted words in a file on the virtual disk
+;   * Add a rank: Beginner, Good, Amazing, Queen Bee
+; ============================================================
+
+; One hexagon with flat sides left and right, centered on x y.
+to hexagon :x :y :size :color :letter
+  penup setxy :x :y setheading 0
+  forward :size right 120
+  ; the walk starts at the top corner and visits all six corners
+  filled :color [repeat 6 [forward :size right 60]]
+  setpencolor 8 pendown
+  repeat 6 [forward :size right 60]
+  penup setxy :x - 9 :y - 10
+  setpencolor 0 setlabelheight 28
+  label uppercase :letter
+end
+
+to drawhive
+  clearscreen hideturtle setbackground [255 250 230]
+  localmake "s 60
+  localmake "d :s * sqrt 3       ; distance between neighboring centers
+  hexagon 0 0 :s [245 190 40] :center
+  for [i 1 6] [
+    localmake "angle 30 + 60 * :i
+    hexagon :d * sin :angle :d * cos :angle :s [225 225 225] item :i :outer
+  ]
+end
+
+; Every letter of the guess must come from the hive.
+to allowedp :wd
+  if emptyp :wd [output "true]
+  if not memberp first :wd :hive [output "false]
+  output allowedp butfirst :wd
+end
+
+; A pangram uses every one of the seven letters at least once.
+to pangramp :wd
+  output emptyp filter [not memberp ? :wd] :hive
+end
+
+to points :wd
+  localmake "p ifelse (count :wd) = 4 [1] [count :wd]
+  if pangramp :wd [make "p :p + 7 print [Pangram! All seven letters!]]
+  output :p
+end
+
+to judge :wd
+  make "wd lowercase :wd
+  if (count :wd) < 4 [print [Too short, words need 4 letters.] stop]
+  if not memberp :center :wd [print (sentence [Missing the middle letter] uppercase :center) stop]
+  if not allowedp :wd [print [That uses a letter that is not in the hive.] stop]
+  if memberp :wd :found [print [You already found that one.] stop]
+  localmake "p points :wd
+  make "found lput :wd :found
+  make "score :score + :p
+  print (sentence [Nice!] :wd [scores] :p [and your total is] :score)
+end
+
+to play
+  print [Your word, or quit:]
+  localmake "line readlist
+  if or emptyp :line equalp :line [quit] [stop]
+  judge first :line
+  play
+end
+
+to main
+  make "center "p
+  make "outer "alnetr
+  make "hive word :center :outer
+  make "found []
+  make "score 0
+  drawhive
+  print [Make words from the hive. Every word must use the gold letter P.]
+  play
+  print (sentence [Final score:] :score [from] count :found [words:] :found)
+end
+
+main

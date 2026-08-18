@@ -1,0 +1,87 @@
+; ============================================================
+; TITLE:    Pig Latin Translator
+; CATEGORY: Words & Text
+; LEVEL:    Beginner
+; TAGS:     words, recursion, first, butfirst, translation
+; SUMMARY:  Turns English sentences into Pig Latin by moving leading consonants to the end and adding "ay".
+; ============================================================
+;
+; WHAT IT DOES
+;   Translates a few sample sentences into Pig Latin, then lets you
+;   type your own. "hello world" becomes "ellohay orldway" and
+;   "apple" becomes "appleway".
+;
+; HOW TO USE
+;   Press Run. Type a sentence in the command center when asked and
+;   press Enter. Type quit (or just press Enter) to finish.
+;
+; CONCEPTS YOU WILL LEARN
+;   * taking words apart with FIRST and BUTFIRST
+;   * gluing words together with WORD
+;   * recursion on a word: a procedure that calls itself on a shorter word
+;   * MAP, which runs a procedure on every word of a sentence
+;
+; THINGS TO TRY
+;   * Change "ay" to "oo" to invent your own secret language
+;   * Treat the letter y as a vowel and see which words change
+;   * Write UNPIG to translate Pig Latin back to English (it is harder
+;     than it looks: is "ellohay" from "hello" or "lohel"?)
+; ============================================================
+
+; A letter is a vowel if it is a member of the word "aeiou".
+; MEMBERP works on words too: it looks for a single letter inside.
+to vowelp :letter
+  output memberp lowercase :letter "aeiou
+end
+
+; Move consonants from the front to the back, one at a time, until a
+; vowel reaches the front. Each call looks at only ONE letter and lets
+; the next call handle the rest. The :tries input stops the recursion
+; for words with no vowels at all, like "rhythm".
+to rotate :wd :tries
+  if :tries = 0 [output :wd]
+  if vowelp first :wd [output :wd]
+  output rotate (word butfirst :wd first :wd) :tries - 1
+end
+
+; Translate one word. Words that start with a vowel just get "way".
+to piglatin :wd
+  if not wordp :wd [output :wd]
+  if emptyp :wd [output :wd]
+  if numberp :wd [output :wd]
+  if vowelp first :wd [output word :wd "way]
+  output word rotate :wd count :wd "ay
+end
+
+; MAP hands every word of the sentence to PIGLATIN and collects the
+; answers into a new sentence of the same length.
+to pigsentence :sent
+  output map [piglatin ?] :sent
+end
+
+to show.example :sent
+  print (sentence :sent [->] pigsentence :sent)
+end
+
+; Keep asking for sentences until the user types quit or nothing.
+; READLIST gives back a list of the words typed on one line.
+to translator
+  print []
+  print [Type a sentence to translate, or quit to stop:]
+  localmake "line readlist
+  if emptyp :line [print [Oinkbay!] stop]
+  if equalp first :line "quit [print [Oinkbay!] stop]
+  print pigsentence :line
+  translator
+end
+
+to main
+  print [Pig Latin examples:]
+  show.example [hello world]
+  show.example [the quick brown fox jumps over the lazy dog]
+  show.example [i like apples and string]
+  show.example [rhythm and blues]
+  translator
+end
+
+main

@@ -1,0 +1,110 @@
+; ============================================================
+; TITLE:    Little Spell Checker
+; CATEGORY: Words & Text
+; LEVEL:    Intermediate
+; TAGS:     spelling, recursion, dictionary, filter, memberp
+; SUMMARY:  Checks each word of a sentence against a small dictionary and suggests corrections that are one typing mistake away.
+; ============================================================
+;
+; WHAT IT DOES
+;   Looks up every word you type in a word list. Words that are not in
+;   the list are marked, and the program suggests dictionary words that
+;   differ by just one slip of the finger:
+;     one letter changed    (cat -> bat)
+;     one letter missing    (frend -> friend)
+;     one letter extra      (scchool -> school)
+;     two letters swapped   (freind -> friend)
+;
+; HOW TO USE
+;   Press Run. The sample sentences are checked first. Then type your
+;   own sentence; type quit or press Enter to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * comparing two words letter by letter with recursion
+;   * breaking a big question ("one mistake apart?") into small cases
+;   * FILTER with a template that calls your own procedure
+;
+; THINGS TO TRY
+;   * Add words to the dictionary and watch the suggestions change
+;   * Count how many words in a sentence were spelled right
+;   * Allow two mistakes by calling ONEEDITP twice (it gets slow!)
+; ============================================================
+
+make "dictionary [a about after again all always an and animal apple are ~
+  as at ball bat be because bed big bird book boy but by can cat could ~
+  day did do dog door down eat every fish for friend from fun game girl ~
+  go good green had happy has have he her here him his home house how ~
+  i in is it jump just know like little look made make many me more my ~
+  night no not now of on one our out over park play put rain ran read ~
+  red run said saw school see she sky so some sun that the their them ~
+  then there they this time to today tree two up very want was water we ~
+  went were what when where which who will with would yes you your]
+
+; True when both words are the same except for exactly one letter
+; swapped for another. Works only on words of equal length.
+to onechangep :a :b
+  if emptyp :a [output "false]
+  if equalp first :a first :b [output onechangep butfirst :a butfirst :b]
+  output equalp butfirst :a butfirst :b
+end
+
+; True when :long is :short with exactly one letter added somewhere.
+to oneextrap :long :short
+  if emptyp :short [output (count :long) = 1]
+  if equalp first :long first :short [output oneextrap butfirst :long butfirst :short]
+  output equalp butfirst :long :short
+end
+
+; True when two neighboring letters have been swapped.
+to swappedp :a :b
+  if (count :a) < 2 [output "false]
+  if equalp first :a first :b [output swappedp butfirst :a butfirst :b]
+  output and equalp first :a first butfirst :b ~
+             equalp first :b first butfirst :a ~
+             equalp butfirst butfirst :a butfirst butfirst :b
+end
+
+; Decide which kind of slip to look for from the two lengths.
+to oneeditp :typed :real
+  localmake "d (count :typed) - (count :real)
+  if :d = 0 [output or onechangep :typed :real swappedp :typed :real]
+  if :d = 1 [output oneextrap :typed :real]
+  if :d = -1 [output oneextrap :real :typed]
+  output "false
+end
+
+to suggestions :wd
+  output filter [oneeditp :wd ?] :dictionary
+end
+
+to checkword :wd
+  make "wd lowercase :wd
+  if memberp :wd :dictionary [stop]
+  if numberp :wd [stop]               ; numbers are never misspelled
+  make "mistakes :mistakes + 1
+  localmake "ideas suggestions :wd
+  ifelse emptyp :ideas ~
+    [print (sentence :wd [is not in my dictionary, no ideas.])] ~
+    [print (sentence :wd [might be:] :ideas)]
+end
+
+to checksentence :sent
+  print (sentence [Checking:] :sent)
+  make "mistakes 0
+  foreach :sent [checkword ?]
+  if :mistakes = 0 [print [Every word looks right.]]
+end
+
+to askloop
+  print []
+  print [Type a sentence to check, or quit:]
+  localmake "line readlist
+  if or emptyp :line equalp :line [quit] [stop]
+  checksentence :line
+  askloop
+end
+
+checksentence [my freind and i went to the prak]
+checksentence [the dgo ran ovr the gren hill]
+checksentence [we like to play]
+askloop

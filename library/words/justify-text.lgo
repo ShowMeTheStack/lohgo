@@ -1,0 +1,110 @@
+; ============================================================
+; TITLE:    Justify a Paragraph
+; CATEGORY: Words & Text
+; LEVEL:    Advanced
+; TAGS:     text layout, line breaking, char, type, recursion
+; SUMMARY:  Breaks a paragraph into lines of a fixed width and prints it left aligned, right aligned, centered and fully justified.
+; ============================================================
+;
+; WHAT IT DOES
+;   Newspapers and books spread the spaces in each line so that both
+;   edges of a column are straight. This program does the same in the
+;   command center:
+;     1. it fills each line with as many words as fit (greedy breaking)
+;     2. it pads the lines with spaces in four different styles
+;   A ruler of dots shows the column width.
+;
+; HOW TO USE
+;   Press Run and look at the command center. The text uses a fixed
+;   width font there, so the columns line up. Change the width in the
+;   last lines, or call   layout 20 [your own words here]
+;
+; CONCEPTS YOU WILL LEARN
+;   * CHAR 32 to make a space, and building a word of N spaces
+;   * TYPE to print without starting a new line
+;   * greedy line breaking: take words while they still fit
+;   * sharing out extra spaces fairly, with QUOTIENT and REMAINDER
+;
+; THINGS TO TRY
+;   * Make the width 15 and see how ragged the justified text gets
+;   * Never stretch the last line of the paragraph (books do this)
+;   * Hyphenate words that are longer than the whole width
+; ============================================================
+
+; A word made of n spaces. CHAR 32 is the space character.
+to spaces :n
+  if :n < 1 [output "]
+  output word char 32 spaces :n - 1
+end
+
+; How many characters a line of words takes with single spaces.
+to linelength :words
+  if emptyp :words [output 0]
+  output (count first :words) + (count :words) - 1 + ~
+         reduce "sum fput 0 map [count ?] butfirst :words
+end
+
+; Greedy line breaking. Keep adding words to the current line while the
+; line still fits in :width; when the next word would not fit, start a
+; new line. The output is a list of lines, each a list of words.
+to breaklines :words :width
+  localmake "lines []
+  localmake "current []
+  foreach :words [
+    ifelse (linelength lput ? :current) > :width ~
+      [queue "lines :current make "current (list ?)] ~
+      [make "current lput ? :current]
+  ]
+  if not emptyp :current [queue "lines :current]
+  output :lines
+end
+
+; Glue the words of a line together, putting :gap spaces between them
+; and one extra space in the first :extra gaps.
+to joinwords :words :gap :extra
+  if emptyp butfirst :words [output first :words]
+  localmake "pad spaces :gap + ifelse :extra > 0 [1] [0]
+  output (word first :words :pad joinwords butfirst :words :gap :extra - 1)
+end
+
+to justifyline :line :width
+  localmake "gaps (count :line) - 1
+  if :gaps = 0 [output first :line]
+  ; the spaces we must hand out, beyond the letters themselves
+  localmake "free :width - ((linelength :line) - :gaps)
+  output joinwords :line quotient int :free :gaps remainder :free :gaps
+end
+
+; Every line goes through here, so a margin or border could be added
+; in one place later.
+to showline :text
+  print :text
+end
+
+to layout :width :words
+  localmake "lines breaklines :words :width
+  ; a row of dots exactly :width long: MAP turns each space into a dot
+  localmake "ruler map [".] spaces :width
+  foreach [left right center justify] [
+    print []
+    print (sentence uppercase ? [width] :width)
+    print :ruler
+    localmake "style ?
+    foreach :lines [
+      localmake "short :width - linelength ?
+      localmake "plain joinwords ? 1 0
+      ; each CASE clause is a list: the values to match, then what to do
+      case :style [
+        [[left]    showline :plain]
+        [[right]   showline word spaces :short :plain]
+        [[center]  showline word spaces int :short / 2 :plain]
+        [[justify] showline justifyline ? :width]
+      ]
+    ]
+  ]
+end
+
+layout 34 [Logo was designed in 1967 by Wally Feurzeig, Seymour Papert ~
+  and Cynthia Solomon as a language for learning. Children could teach ~
+  a little turtle to draw, and in doing so they learned to think about ~
+  their own thinking.]

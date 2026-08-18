@@ -1,0 +1,91 @@
+; ============================================================
+; TITLE:    Word Chain Game
+; CATEGORY: Words & Text
+; LEVEL:    Intermediate
+; TAGS:     game, words, last, first, memberp, readlist
+; SUMMARY:  Play a word chain against the computer: each new word must start with the last letter of the word before.
+; ============================================================
+;
+; WHAT IT DOES
+;   A word game played on long car trips. The computer says a word,
+;   you answer with a word that begins with its LAST letter, the
+;   computer answers yours, and so on:
+;     apple -> elephant -> tiger -> rabbit -> ...
+;   No word may be used twice. You get three strikes for bad answers.
+;   The computer loses when it cannot think of a word.
+;
+; HOW TO USE
+;   Press Run and type your words in the command center. Type quit to
+;   give up. The computer only knows the words in its vocabulary, so
+;   steer it towards letters it finds hard (try words ending in x!).
+;
+; CONCEPTS YOU WILL LEARN
+;   * FIRST and LAST letters of a word
+;   * a game loop with WHILE, keeping score in global variables
+;   * FIND to look for the first item in a list that passes a test
+;   * keeping a list of used words and checking it with MEMBERP
+;
+; THINGS TO TRY
+;   * Give the computer a bigger vocabulary
+;   * Make the computer pick a word ending in a hard letter on purpose
+;   * Only allow animal names (give the computer only animals too)
+; ============================================================
+
+make "vocabulary [apple ant ape eagle egg elephant tiger turtle tree ~
+  rabbit robot rain nose nest night kite koala kettle orange owl ostrich ~
+  lemon lion lamp yak yellow yarn wolf window water dog duck drum moon ~
+  mouse map pencil panda piano umbrella uncle snake sun star house hat ~
+  horse frog fish flower giraffe goat garden zebra zoo bear ball boat ~
+  cat car cloud violin van queen quilt jelly jam insect igloo xylophone]
+
+make "used []
+make "strikes 0
+make "rounds 0
+
+; The computer's move: the first unused word that starts with the
+; letter. FIND outputs the empty list when nothing matches.
+to computerword :letter
+  output find [and equalp first ? :letter not memberp ? :used] :vocabulary
+end
+
+; Check the player's word and explain any problem.
+to goodp :wd :letter
+  if numberp :wd [print [That is a number, not a word.] output "false]
+  if not equalp first :wd :letter ~
+    [print (sentence [It has to start with] uppercase :letter) output "false]
+  if memberp :wd :used [print [That word was already used.] output "false]
+  output "true
+end
+
+to strike
+  make "strikes :strikes + 1
+  print (sentence [Strike] :strikes [of 3.])
+end
+
+to play
+  localmake "current pick :vocabulary
+  queue "used :current
+  print (sentence [I start with:] :current)
+  while [:strikes < 3] [
+    localmake "letter last :current
+    print (sentence [Your word, starting with] word uppercase :letter ", [or quit:])
+    localmake "line readlist
+    if or emptyp :line equalp :line [quit] [print [You gave up. I win!] stop]
+    localmake "yours lowercase first :line
+    ifelse goodp :yours :letter [
+      queue "used :yours
+      make "rounds :rounds + 1
+      localmake "mine computerword last :yours
+      if emptyp :mine [print (sentence [I cannot think of a word starting with] ~
+        word uppercase last :yours ". [You win after] :rounds [rounds!]) stop]
+      queue "used :mine
+      make "current :mine
+      print (sentence [My word:] :mine)
+    ] [strike]
+  ]
+  print [Three strikes. I win this time!]
+end
+
+print [Word chain! Click in the command center to type your words.]
+play
+print (sentence [Words used:] :used)

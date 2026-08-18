@@ -1,0 +1,99 @@
+; ============================================================
+; TITLE:    Run-Length Encoding
+; CATEGORY: Words & Text
+; LEVEL:    Intermediate
+; TAGS:     compression, recursion, words, pixel art, decoding
+; SUMMARY:  Squeezes words like "aaaabbb" into "4a3b", unsqueezes them again, and draws a pixel picture stored in the squeezed form.
+; ============================================================
+;
+; WHAT IT DOES
+;   Run-length encoding is one of the oldest ways to make data smaller.
+;   Instead of writing every letter, you write how many times it repeats:
+;     wwwwwbbbww   becomes   5w3b2w
+;   The program encodes and decodes some words, reports how much space
+;   was saved, and then draws a little space invader whose rows are
+;   stored in encoded form (k = black pixel, w = background).
+;
+; HOW TO USE
+;   Press Run. Then try:
+;     print encode "mississippi
+;     print decode [3x 2o 3x]
+;
+; CONCEPTS YOU WILL LEARN
+;   * counting a run of equal letters with recursion
+;   * outputting two things at once by returning a list
+;   * turning [5w] back into wwwww with a simple loop
+;   * storing a picture as text and drawing it with DOT-like squares
+;
+; THINGS TO TRY
+;   * Encode "abcdef". Why does it get LONGER? When is RLE a bad idea?
+;   * Draw your own picture: change the rows in MAIN
+;   * Add more colors: r for red, g for green and so on
+; ============================================================
+
+; How many times does the first letter repeat at the start of the word?
+to runlength :wd
+  if emptyp butfirst :wd [output 1]
+  if not equalp first :wd first butfirst :wd [output 1]
+  output 1 + runlength butfirst :wd
+end
+
+; Drop the first n letters of a word.
+to skip :n :wd
+  if :n = 0 [output :wd]
+  output skip :n - 1 butfirst :wd
+end
+
+; The encoded form is a list of runs like [4a 3b] so that numbers bigger
+; than 9 still work: 12w is one run of twelve w's.
+to encode :wd
+  if emptyp :wd [output []]
+  localmake "n runlength :wd
+  output fput word :n first :wd encode skip :n :wd
+end
+
+; One run, like 4a, becomes aaaa. The letter is the LAST character and
+; the number is everything before it.
+to expand :run
+  localmake "out "
+  repeat butlast :run [make "out word :out last :run]
+  output :out
+end
+
+to decode :runs
+  if emptyp :runs [output "]
+  output word expand first :runs decode butfirst :runs
+end
+
+to demo :wd
+  localmake "packed encode :wd
+  print (sentence :wd "-> :packed "-> decode :packed)
+  print (sentence [  letters before:] count :wd [after:] count reduce "word fput " :packed)
+end
+
+; Draw a picture. Each row is a list of runs; each pixel is a square.
+to pixel :color :size
+  filled :color [repeat 4 [forward :size right 90]]
+  penup right 90 forward :size left 90
+end
+
+to drawrows :rows :size
+  localmake "y (count :rows) * :size / 2
+  foreach :rows [
+    penup setheading 0
+    setxy 0 - (:size * 11) / 2 :y - # * :size
+    foreach decode ? [pixel ifelse equalp ? "k [[60 200 80]] [[20 20 40]] :size]
+  ]
+end
+
+to main
+  demo "aaaabbbcca
+  demo "wwwwwwwwwwwwbwwwwwwwwwwww
+  demo "mississippi
+  clearscreen hideturtle setbackground [20 20 40]
+  ; a space invader, 11 pixels wide and 8 rows tall
+  drawrows [[2w 1k 5w 1k 2w] [3w 1k 3w 1k 3w] [2w 7k 2w] [1w 2k 1w 3k 1w 2k 1w] ~
+            [11k] [1k 1w 7k 1w 1k] [1k 1w 1k 5w 1k 1w 1k] [3w 2k 1w 2k 3w]] 30
+end
+
+main

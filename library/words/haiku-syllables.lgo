@@ -1,0 +1,98 @@
+; ============================================================
+; TITLE:    Haiku Syllable Counter
+; CATEGORY: Words & Text
+; LEVEL:    Intermediate
+; TAGS:     syllables, poems, counting, words, label
+; SUMMARY:  Estimates the syllables in each word by counting vowel groups and checks whether a poem has the 5-7-5 shape of a haiku.
+; ============================================================
+;
+; WHAT IT DOES
+;   A haiku is a short poem with three lines of 5, 7 and 5 syllables.
+;   Counting syllables exactly needs a dictionary, but a simple rule
+;   gets most words right: count the groups of vowels in a row, and do
+;   not count a silent e at the end. "turtle" has the groups u and e,
+;   but "make" has only a (its e is silent).
+;   The program counts every line of a few poems and draws the winner
+;   on the screen with the count beside each line.
+;
+; HOW TO USE
+;   Press Run. Try   print syllables "butterfly   to test single words.
+;
+; CONCEPTS YOU WILL LEARN
+;   * remembering what came before while walking along a word
+;     (here: "was the last letter a vowel?")
+;   * correcting a simple rule with a few special cases
+;   * using MAP and REDUCE to total a whole line
+;
+; THINGS TO TRY
+;   * Find words the rule gets wrong (try "poem", "fire", "every")
+;   * Write your own haiku in the list and check it
+;   * Treat "le" at the end (table, turtle) as its own syllable even
+;     after the silent e rule. Is it already right? Why?
+; ============================================================
+
+to vowelp :ch
+  output memberp lowercase :ch "aeiouy
+end
+
+; Count the places where a vowel follows a non-vowel. :prev says
+; whether the letter before was a vowel, so "oo" in "moon" counts once.
+to groups :wd :prev
+  if emptyp :wd [output 0]
+  localmake "v vowelp first :wd
+  output (ifelse and :v not :prev [1] [0]) + groups butfirst :wd :v
+end
+
+to syllables :wd
+  localmake "wd lowercase filter [memberp lowercase ? "abcdefghijklmnopqrstuvwxyz] :wd
+  if emptyp :wd [output 0]
+  localmake "n groups :wd "false
+  ; silent e: "make", "stone". But "le" at the end is a real syllable
+  ; ("turtle", "little"), and short words like "the" and "be" keep theirs.
+  if and equalp last :wd "e (count :wd) > 3 [
+    if not equalp last butlast :wd "l [make "n :n - 1]
+  ]
+  if :n < 1 [make "n 1]
+  output :n
+end
+
+to linecount :line
+  output reduce "sum map [syllables ?] :line
+end
+
+; A poem is a list of three lines; check that the counts are 5 7 5.
+to haikup :poem
+  output equalp map [linecount ?] :poem [5 7 5]
+end
+
+to drawpoem :poem
+  clearscreen hideturtle setbackground [240 235 220]
+  setpencolor [120 30 30] setlabelheight 26
+  penup setxy -260 140 label [A haiku, checked by the turtle]
+  setlabelheight 22
+  foreach :poem [
+    localmake "y 60 - 70 * (# - 1)
+    setpencolor [40 40 60]
+    setxy -260 :y label ?
+    setpencolor [30 120 60]
+    setxy 230 :y label sentence linecount ? "syllables
+  ]
+  ; a small red seal stamp in the corner, as on a painting
+  setxy 290 -170 setheading 0
+  filled 4 [repeat 4 [forward 40 right 90]]
+end
+
+to report :poem
+  foreach :poem [print (sentence linecount ? "- ?)]
+  ifelse haikup :poem [print [This is a haiku.]] [print [Not quite a haiku.]]
+  print []
+end
+
+make "poems [
+  [[an old silent pond] [a frog jumps into the pond] [splash silence again]]
+  [[the little turtle] [walks in a square on the screen] [then tucks in its head]]
+  [[i like to write code] [it is fun] [the end]]
+]
+
+foreach :poems [report ?]
+drawpoem item 2 :poems

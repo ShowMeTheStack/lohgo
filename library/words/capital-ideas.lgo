@@ -1,0 +1,87 @@
+; ============================================================
+; TITLE:    Capital Ideas
+; CATEGORY: Words & Text
+; LEVEL:    Beginner
+; TAGS:     uppercase, lowercase, words, map, capitalizing
+; SUMMARY:  Changes the capital letters in a sentence five ways: title case, headline style, shouting, camelCase and wobbly case.
+; ============================================================
+;
+; WHAT IT DOES
+;   Takes a few sentences and rewrites each one in five styles:
+;     Title Case       Every Word Starts With A Capital
+;     Headline Case    The Cat in the Hat (small words stay small)
+;     SHOUTING         EVERYTHING IN CAPITALS
+;     camelCase        howProgrammersNameThings
+;     wobbly case      wObBlY lEtTeRs
+;
+; HOW TO USE
+;   Press Run. Then type your own, for example
+;     print headline [a tale of two cities]
+;
+; CONCEPTS YOU WILL LEARN
+;   * UPPERCASE and LOWERCASE on single letters and whole words
+;   * building a new word from FIRST and BUTFIRST
+;   * MAP with a template, and using # (the position of the item)
+;   * REDUCE to glue a list of words into one word
+;
+; THINGS TO TRY
+;   * Add "with" and "from" to the list of small words
+;   * Write snake_case, which joins words with underscores
+;   * Make WOBBLY start with a capital letter instead of a small one
+; ============================================================
+
+; Capital first letter, small letters for the rest.
+to capitalize :wd
+  if emptyp :wd [output :wd]
+  output word uppercase first :wd lowercase butfirst :wd
+end
+
+to titlecase :sent
+  output map [capitalize ?] :sent
+end
+
+to shout :sent
+  output map [uppercase ?] :sent
+end
+
+; Headline style keeps little words small, except when they come first.
+; # is the position of the current word inside MAP: 1, 2, 3, ...
+to headline :sent
+  output map [ifelse and # > 1 memberp lowercase ? :smallwords ~
+                [lowercase ?] [capitalize ?]] :sent
+end
+
+; camelCase: the first word all small, every later word capitalized,
+; then everything glued together with no spaces.
+to camel :sent
+  localmake "parts fput lowercase first :sent titlecase butfirst :sent
+  output reduce [word ?1 ?2] :parts
+end
+
+; Wobbly case: letters in odd positions small, even positions capital.
+; A word is a sequence of letters, so MAP works on it letter by letter
+; and gives back a word.
+to wobblyword :wd
+  output map [ifelse 0 = remainder # 2 [uppercase ?] [lowercase ?]] :wd
+end
+
+to wobbly :sent
+  output map [wobblyword ?] :sent
+end
+
+to fivestyles :sent
+  print (sentence [Original:] :sent)
+  print (sentence [Title:] titlecase :sent)
+  print (sentence [Headline:] headline :sent)
+  print (sentence [Shout:] shout :sent)
+  print (sentence [Camel:] camel :sent)
+  print (sentence [Wobbly:] wobbly :sent)
+  print []
+end
+
+make "smallwords [a an and the of in on at to for or but by]
+
+fivestyles [the cat in the hat]
+fivestyles [a tale OF two cities]
+fivestyles [number of red balloons]
+fivestyles [lord of the rings and the return of the king]

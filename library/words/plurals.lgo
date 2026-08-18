@@ -1,0 +1,98 @@
+; ============================================================
+; TITLE:    Plural Maker
+; CATEGORY: Words & Text
+; LEVEL:    Intermediate
+; TAGS:     plurals, grammar, cond, property lists, word endings
+; SUMMARY:  Turns English nouns into plurals with a set of spelling rules plus a table of irregular words like mouse and mice.
+; ============================================================
+;
+; WHAT IT DOES
+;   English plurals follow rules, and the rules have exceptions:
+;     cat -> cats            box -> boxes        baby -> babies
+;     leaf -> leaves         hero -> heroes      mouse -> mice
+;   The program checks a table of irregular words first, then tries
+;   each spelling rule in order using COND. It also shows how to write
+;   "1 cat" but "3 cats" in a sentence, which every game needs.
+;
+; HOW TO USE
+;   Press Run. Then type nouns one at a time to see their plurals.
+;   Type quit or press Enter to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * looking at word endings with LAST, BUTLAST and a helper ENDSP
+;   * COND to try a list of rules in order, with ELSE at the end
+;   * a property list as a table of exceptions
+;
+; THINGS TO TRY
+;   * Find a word the rules get wrong, then add it to the exceptions
+;   * Write SINGULAR, which goes the other way. Which is harder?
+;   * Some words stay the same: sheep, fish, deer. Add them
+; ============================================================
+
+to setupexceptions
+  foreach [[mouse mice] [goose geese] [child children] [man men] ~
+           [woman women] [tooth teeth] [foot feet] [person people] ~
+           [ox oxen] [sheep sheep] [deer deer] [fish fish] [roof roofs] ~
+           [chief chiefs] [piano pianos] [photo photos] [quiz quizzes]] ~
+    [pprop "irregular first ? last ?]
+end
+
+; Does the word end with this ending? Compare from the back, letter by
+; letter, until the ending runs out.
+to endsp :wd :ending
+  if emptyp :ending [output "true]
+  if emptyp :wd [output "false]
+  if not equalp last :wd last :ending [output "false]
+  output endsp butlast :wd butlast :ending
+end
+
+to vowelp :ch
+  output memberp :ch "aeiou
+end
+
+; Chop n letters off the end of a word.
+to chop :n :wd
+  repeat :n [make "wd butlast :wd]
+  output :wd
+end
+
+to plural :noun
+  localmake "wd lowercase :noun
+  localmake "special gprop "irregular :wd
+  if not emptyp :special [output :special]
+  output cond [
+    [[(or endsp :wd "s endsp :wd "x endsp :wd "z endsp :wd "ch endsp :wd "sh)]
+        word :wd "es]
+    [[and endsp :wd "y not vowelp last butlast :wd]
+        word chop 1 :wd "ies]
+    [[endsp :wd "fe]   word chop 2 :wd "ves]
+    [[endsp :wd "f]    word chop 1 :wd "ves]
+    [[and endsp :wd "o not vowelp last butlast :wd]
+        word :wd "es]
+    [else word :wd "s]
+  ]
+end
+
+; "1 cat" but "2 cats". Games and quizzes need this all the time.
+to howmany :n :noun
+  if :n = 1 [output (sentence :n :noun)]
+  output (sentence :n plural :noun)
+end
+
+to askloop
+  print [Type a noun, or quit:]
+  localmake "line readlist
+  if or emptyp :line equalp :line [quit] [stop]
+  if not numberp first :line [print (sentence first :line "-> plural first :line)]
+  askloop
+end
+
+setupexceptions
+foreach [cat dog box bus quiz church dish baby day toy leaf knife ~
+         wolf hero potato zoo mouse child sheep roof] ~
+  [print (sentence ? "-> plural ?)]
+print []
+print (sentence [I have] howmany 1 "puppy [and] howmany 3 "kitten)
+print (sentence [The farm has] howmany 4 "goose [and] howmany 2 "calf)
+print []
+askloop

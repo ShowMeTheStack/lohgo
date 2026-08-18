@@ -1,0 +1,115 @@
+; ============================================================
+; TITLE:    Word Ladder Solver
+; CATEGORY: Words & Text
+; LEVEL:    Advanced
+; TAGS:     breadth-first search, queues, property lists, words, puzzles
+; SUMMARY:  Finds the shortest word ladder between two words, changing one letter at a time, and draws the ladder with the turtle.
+; ============================================================
+;
+; WHAT IT DOES
+;   Lewis Carroll invented this puzzle: turn COLD into WARM by changing
+;   one letter at a time, and every step must be a real word:
+;     COLD CORD CARD WARD WARM
+;   The program solves it with a breadth-first search. It tries every
+;   word one step away, then every word two steps away, and so on, so
+;   the first ladder it finds is always one of the shortest.
+;   The answer is drawn as a ladder with one word on each rung, and the
+;   letter that changed on each rung is shown in red.
+;
+; HOW TO USE
+;   Press Run. Then try other puzzles that use the word list:
+;     solve "mean "bear       solve "hold "farm
+;
+; CONCEPTS YOU WILL LEARN
+;   * breadth-first search with QUEUE and DEQUEUE
+;   * remembering where each word came from with PPROP and GPROP
+;   * walking the chain of parents backwards to rebuild the path
+;   * comparing words letter by letter
+;
+; THINGS TO TRY
+;   * Add words to the list and find a path from "fish to "bird
+;   * Print how many words the search looked at before it succeeded
+;   * Change the search to a depth-first one (use PUSH and POP instead
+;     of QUEUE and DEQUEUE). Are the ladders still the shortest?
+; ============================================================
+
+make "words [cold cord card ward warm word worm wore core care bore bold ~
+  bolt boat coat cost most mist fist fish wish dish disk desk head heal ~
+  teal tell tall tail toll hell held hold heat beat bead bean bear dear ~
+  deer lion loon lean mean meat heap hear near pear peat seat sell sill ~
+  silt salt malt mall ball bell bill boll belt melt mold gold goad load ~
+  lord lard hard harm farm form fort]
+
+; Two words are neighbors when they differ in exactly one place.
+to differences :a :b
+  if emptyp :a [output 0]
+  output (ifelse equalp first :a first :b [0] [1]) + differences butfirst :a butfirst :b
+end
+
+to neighbors :wd
+  output filter [(differences :wd ?) = 1] :words
+end
+
+; Breadth-first search. The property list LADDER remembers, for every
+; word we have reached, which word we came from. That doubles as the
+; "already visited" check.
+to search :start :goal
+  erpl "ladder
+  pprop "ladder :start "start
+  make "todo (list :start)
+  while [not emptyp :todo] [
+    localmake "current dequeue "todo
+    if equalp :current :goal [output "true]
+    foreach neighbors :current [
+      if emptyp gprop "ladder ? [
+        pprop "ladder ? :current
+        queue "todo ?
+      ]
+    ]
+  ]
+  output "false
+end
+
+; Follow the parents from the goal back to the start.
+to pathto :wd
+  localmake "parent gprop "ladder :wd
+  if equalp :parent "start [output (list :wd)]
+  output lput :wd pathto :parent
+end
+
+; Rails, then a rung with a word on it for every step of the path.
+; The first word of the path sits on the bottom rung.
+to drawladder :path
+  clearscreen hideturtle setbackground [235 245 255]
+  localmake "n count :path
+  localmake "gap 60
+  if :n > 8 [make "gap 480 / (:n - 1)]   ; long ladders get closer rungs
+  localmake "bottom 0 - (:gap * (:n - 1)) / 2 - 20
+  setpensize 8 setpencolor 8
+  foreach [-110 110] [penup setxy ? :bottom - 40 pendown setxy ? :bottom + :gap * (:n - 1) + 40]
+  setlabelheight 26
+  for [i 1 :n] [
+    localmake "y :bottom + :gap * (:i - 1)
+    setpensize 6 setpencolor 9
+    penup setxy -110 :y pendown setxy 110 :y
+    localmake "wd item :i :path
+    localmake "prev ifelse :i = 1 [:wd] [item :i - 1 :path]
+    ; write the word letter by letter so the changed letter can be red
+    for [k 1 count :wd] [
+      penup setxy -38 + 20 * (:k - 1) :y + 6
+      setpencolor ifelse equalp item :k :wd item :k :prev [1] [4]
+      label uppercase item :k :wd
+    ]
+  ]
+end
+
+to solve :from :goal
+  if not search :from :goal [print (sentence [No ladder from] :from [to] :goal) stop]
+  localmake "path pathto :goal
+  print (sentence :from [to] :goal [in] (count :path) - 1 [steps:] :path)
+  drawladder :path
+end
+
+solve "head "tail
+solve "fish "gold
+solve "cold "warm

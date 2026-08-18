@@ -1,0 +1,119 @@
+; ============================================================
+; TITLE:    Word Search Maker
+; CATEGORY: Words & Text
+; LEVEL:    Advanced
+; TAGS:     mdarray, random, puzzles, grids, label
+; SUMMARY:  Hides a list of words in a 12 by 12 grid of letters, fills the gaps with random letters, draws the puzzle and then reveals the answers.
+; ============================================================
+;
+; WHAT IT DOES
+;   Builds a brand new word search puzzle every time. Each word is
+;   tried at random spots and in random directions (across, down and
+;   diagonally) until it fits without clashing with letters already
+;   placed. Shared letters are allowed when they match. The empty
+;   squares get random letters, the grid is drawn, and after a few
+;   seconds a colored line is drawn through every hidden word.
+;
+; HOW TO USE
+;   Press Run and hunt for the words listed in the command center
+;   before the answers appear. Change the word list at the bottom to
+;   make a puzzle about your favorite topic.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MDARRAY for a two-dimensional grid, MDITEM and MDSETITEM
+;   * a direction as a pair of steps [drow dcol]
+;   * checking first, writing second: test every square, then place
+;   * giving up after many tries so the program can never hang
+;
+; THINGS TO TRY
+;   * Allow words to run backwards by adding [0 -1] and [-1 0]
+;   * Make the grid 15 by 15 (change :size and the cell width)
+;   * Print the grid as text so it can be copied onto paper
+; ============================================================
+
+make "size 12
+make "cell 40
+make "letters "abcdefghijklmnopqrstuvwxyz
+
+; Across, down, diagonal down-right and diagonal up-right.
+make "directions [[0 1] [1 0] [1 1] [-1 1]]
+
+; Can the word go here? Every square must be inside the grid and must be
+; empty or already hold the same letter.
+to fitsp :wd :row :col :dir
+  if emptyp :wd [output "true]
+  if or :row < 1 :row > :size [output "false]
+  if or :col < 1 :col > :size [output "false]
+  localmake "here mditem (list :row :col) :grid
+  if not or emptyp :here equalp :here first :wd [output "false]
+  output fitsp butfirst :wd :row + first :dir :col + last :dir :dir
+end
+
+to place :wd :row :col :dir
+  if emptyp :wd [stop]
+  mdsetitem (list :row :col) :grid first :wd
+  place butfirst :wd :row + first :dir :col + last :dir :dir
+end
+
+; Try up to 200 random positions. Remember where each word went so the
+; answers can be drawn later.
+to hide :wd
+  repeat 200 [
+    localmake "dir pick :directions
+    localmake "row (random 1 :size)
+    localmake "col (random 1 :size)
+    if fitsp :wd :row :col :dir [
+      place :wd :row :col :dir
+      queue "answers (list :row :col :dir count :wd)
+      stop
+    ]
+  ]
+  print (sentence [Could not fit] :wd)
+end
+
+; Screen position of the middle of a square.
+to cellx :col
+  output (:col - 0.5 - :size / 2) * :cell
+end
+to celly :row
+  output (:size / 2 - :row + 0.5) * :cell
+end
+
+to drawgrid
+  clearscreen hideturtle setbackground [250 250 240]
+  setlabelheight 22 setpencolor 1
+  for [r 1 :size] [
+    for [c 1 :size] [
+      if emptyp mditem (list :r :c) :grid [mdsetitem (list :r :c) :grid pick :letters]
+      penup setxy (cellx :c) - 7 (celly :r) - 8
+      label uppercase mditem (list :r :c) :grid
+    ]
+  ]
+end
+
+; A thick line from the first letter of a word to its last letter.
+to markanswer :answer :color
+  localmake "row item 1 :answer
+  localmake "col item 2 :answer
+  localmake "dir item 3 :answer
+  localmake "len (item 4 :answer) - 1
+  penup setxy cellx :col celly :row
+  setpencolor :color setpensize 6 pendown
+  setxy cellx :col + :len * last :dir celly :row + :len * first :dir
+  penup
+end
+
+to makepuzzle :words
+  make "grid mdarray (list :size :size)
+  make "answers []
+  foreach :words [hide lowercase ?]
+  drawgrid
+  print [Find these words:]
+  print :words
+  wait 300
+  foreach :answers [markanswer ? item 1 + remainder # 6 [4 2 14 5 3 10]]
+  print [The answers are marked.]
+end
+
+makepuzzle [turtle logo pencolor forward repeat recursion list word ~
+  sentence first]

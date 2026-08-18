@@ -1,0 +1,73 @@
+; ============================================================
+; TITLE:    Backwards Talk
+; CATEGORY: Words & Text
+; LEVEL:    Beginner
+; TAGS:     recursion, reverse, words, sentences, lput
+; SUMMARY:  Reverses letters, words and whole sentences three different ways with small recursive procedures.
+; ============================================================
+;
+; WHAT IT DOES
+;   Takes a sentence and prints it backwards in three ways:
+;     1. the words in reverse order    (dog lazy the)
+;     2. every word spelled backwards  (eht yzal god)
+;     3. both at once, like a mirror   (god yzal eht)
+;   Then it asks you for sentences of your own.
+;
+; HOW TO USE
+;   Press Run. When asked, type a sentence and press Enter.
+;   Type quit or just press Enter to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * recursion on a word: last letter first, then the rest
+;   * recursion on a list: the same idea with SENTENCE instead of WORD
+;   * how words and lists are alike in Logo (FIRST, BUTFIRST, LAST
+;     and BUTLAST work on both)
+;
+; THINGS TO TRY
+;   * Logo has a REVERSE primitive. Check that it agrees with BACKWORD
+;   * Write SWAPENDS that swaps only the first and last letters
+;   * Print just the words that read the same forwards and backwards
+; ============================================================
+
+; Spell one word backwards. The last letter goes first, followed by
+; the rest of the word (BUTLAST) spelled backwards.
+to backword :wd
+  if emptyp :wd [output "]
+  output word last :wd backword butlast :wd
+end
+
+; Exactly the same shape as BACKWORD, but for a list of words.
+; Compare the two procedures line by line.
+to backsentence :sent
+  if emptyp :sent [output []]
+  output sentence last :sent backsentence butlast :sent
+end
+
+; Keep the order of the words but spell each one backwards.
+to mirrorwords :sent
+  if emptyp :sent [output []]
+  output sentence backword first :sent mirrorwords butfirst :sent
+end
+
+to showall :sent
+  print (sentence [Original:] :sent)
+  print (sentence [Words reversed:] backsentence :sent)
+  print (sentence [Each word:] mirrorwords :sent)
+  ; the full mirror is just the other two ideas combined
+  print (sentence [Full mirror:] backsentence mirrorwords :sent)
+  print []
+end
+
+; Ask for a sentence and show it backwards, over and over.
+to askloop
+  print [Type a sentence, or quit to stop:]
+  localmake "line readlist
+  if emptyp :line [print [!eybdooG] stop]
+  if equalp :line [quit] [print [!eybdooG] stop]
+  showall :line
+  askloop
+end
+
+showall [the quick brown fox jumps over the lazy dog]
+showall [stressed desserts]
+askloop

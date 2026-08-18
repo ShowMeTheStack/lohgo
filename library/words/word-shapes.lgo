@@ -1,0 +1,92 @@
+; ============================================================
+; TITLE:    Word Shapes
+; CATEGORY: Words & Text
+; LEVEL:    Beginner
+; TAGS:     recursion, butfirst, butlast, patterns, label
+; SUMMARY:  Makes triangles and diamonds out of a word by chopping letters off one at a time, in the command center and on the screen.
+; ============================================================
+;
+; WHAT IT DOES
+;   Takes a word such as TURTLE and prints shapes made from it:
+;     TURTLE          T
+;     URTLE           TU
+;     RTLE            TUR
+;     TLE             TURT  ...
+;   Then it draws a diamond of the word on the turtle screen, each
+;   row in its own color.
+;
+; HOW TO USE
+;   Press Run and type a word when asked (or just press Enter).
+;   You can also type   downhill "elephant   or   uphill "logo
+;
+; CONCEPTS YOU WILL LEARN
+;   * BUTFIRST and BUTLAST to make a word one letter shorter
+;   * printing BEFORE or AFTER the recursive call, and why it matters
+;   * the same recursion drawing pictures with LABEL
+;
+; THINGS TO TRY
+;   * Swap the two lines in UPHILL and see what happens
+;   * Make a shape that chops letters off both ends at once
+;   * Make the colors fade from dark at the top to light at the bottom
+; ============================================================
+
+; Print the word, then the same thing for the word without its first
+; letter. The print happens BEFORE the recursive call, so the long
+; line comes first.
+to downhill :wd
+  if emptyp :wd [stop]
+  print :wd
+  downhill butfirst :wd
+end
+
+; Here the print happens AFTER the recursive call. The shortest piece
+; gets printed first, so the shape grows instead of shrinking.
+to uphill :wd
+  if emptyp :wd [stop]
+  uphill butlast :wd
+  print :wd
+end
+
+; Draw a diamond: the top half grows, the bottom half shrinks. :row
+; counts lines so each one goes a little lower down the screen.
+to drawrow :text :row
+  localmake "half (count :text) * 7    ; about half a letter width per character
+  penup setxy 0 - :half 230 - :row * 28
+  setpencolor item 1 + remainder :row 7 [1 13 5 4 14 6 2]
+  label :text
+end
+
+to diamondtop :wd :n :row
+  if :n > count :wd [stop]
+  drawrow uppercase spread first.n :n :wd :row
+  diamondtop :wd :n + 1 :row + 1
+end
+
+to diamondbottom :wd :n :row
+  if :n < 1 [stop]
+  drawrow uppercase spread first.n :n :wd :row
+  diamondbottom :wd :n - 1 :row + 1
+end
+
+; The first n letters of a word.
+to first.n :n :wd
+  if :n = 0 [output "]
+  output word first :wd first.n :n - 1 butfirst :wd
+end
+
+; Put a space between letters so the diamond looks wider and even.
+to spread :wd
+  if emptyp butfirst :wd [output :wd]
+  output (word first :wd char 32 spread butfirst :wd)
+end
+
+print [Type a word for the shapes, or press Enter for TURTLE:]
+make "line readlist
+make "w ifelse emptyp :line ["turtle] [first :line]
+if numberp :w [make "w "turtle]
+print [Downhill:] downhill :w
+print [Uphill:] uphill :w
+clearscreen hideturtle setbackground [250 245 255]
+setlabelheight 22
+diamondtop :w 1 0
+diamondbottom :w (count :w) - 1 count :w

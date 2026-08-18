@@ -1,0 +1,82 @@
+; ============================================================
+; TITLE:    Acrostic Name Poem
+; CATEGORY: Words & Text
+; LEVEL:    Beginner
+; TAGS:     acrostic, poem, filter, pick, label
+; SUMMARY:  Asks for your name and writes an acrostic poem down the screen, one describing word for each letter.
+; ============================================================
+;
+; WHAT IT DOES
+;   An acrostic is a poem where the first letters of each line spell a
+;   word when you read down. Type your name and the program picks a
+;   friendly word for every letter, then draws the poem with the big
+;   first letters in rainbow colors.
+;
+; HOW TO USE
+;   Press Run and type your name in the command center. Run it again
+;   to get a different poem: the words are picked at random.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FILTER to find every word that starts with a given letter
+;   * PICK to choose one item at random from a list
+;   * walking through a word letter by letter with FOR and ITEM
+;   * LABEL and SETLABELHEIGHT to write text on the turtle screen
+;
+; THINGS TO TRY
+;   * Add more words to the word bank so poems vary more
+;   * Make a word bank of animals instead and write a zoo acrostic
+;   * Center each line by working out how wide it will be
+; ============================================================
+
+make "wordbank [amazing artistic adventurous brave bright bubbly ~
+  cheerful clever curious daring dazzling energetic eager friendly funny ~
+  fearless generous gentle happy helpful honest imaginative inventive ~
+  jolly joyful kind keen lively loyal lucky magical mighty neat nice ~
+  noble outgoing optimistic playful patient quick quirky radiant ~
+  remarkable smart sunny sparkly thoughtful terrific unique upbeat ~
+  vivid valiant warm witty wonderful youthful yummy ~
+  zany zippy zesty]
+
+; All the words in the bank that begin with this letter.
+to wordsfor :letter
+  output filter [equalp first ? lowercase :letter] :wordbank
+end
+
+; Choose a word for the letter, or just repeat the letter if the bank
+; has nothing (for example a digit in the name).
+to choose :letter
+  localmake "choices wordsfor :letter
+  if emptyp :choices [output :letter]
+  output pick :choices
+end
+
+; Draw one line: a big colored capital, then the rest of the word.
+to poemline :y :wd :color
+  penup setxy -120 :y
+  setpencolor :color setlabelheight 40
+  label uppercase first :wd
+  setxy -85 :y
+  setpencolor 0 setlabelheight 28
+  label butfirst :wd
+end
+
+to acrostic :name
+  clearscreen hideturtle setbackground [255 252 240]
+  localmake "colors [4 14 6 2 1 13 5 3 12 10]
+  localmake "n count :name
+  ; spread the lines so the whole poem sits in the middle of the screen
+  localmake "gap 50
+  if :n > 10 [make "gap 500 / :n]
+  localmake "top (:gap * (:n - 1)) / 2
+  for [i 1 :n] [
+    localmake "wd choose item :i :name
+    print word uppercase first :wd butfirst :wd
+    poemline :top - :gap * (:i - 1) - 15 :wd item 1 + remainder :i - 1 10 :colors
+  ]
+end
+
+print [What is your name?]
+make "answer readlist
+ifelse emptyp :answer [make "who "Logo] [make "who first :answer]
+print []
+acrostic :who

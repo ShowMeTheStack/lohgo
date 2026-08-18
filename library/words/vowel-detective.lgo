@@ -1,0 +1,100 @@
+; ============================================================
+; TITLE:    Vowel Detective
+; CATEGORY: Words & Text
+; LEVEL:    Beginner
+; TAGS:     counting, vowels, words, filter, circles
+; SUMMARY:  Counts the letters, words and vowels in a sentence you type and draws a bubble for each vowel sized by how often it appears.
+; ============================================================
+;
+; WHAT IT DOES
+;   Asks you for a sentence, then reports how many words, letters,
+;   vowels and consonants it has and which word is the longest.
+;   Five colored bubbles, one for each of a e i o u, grow bigger the
+;   more times that vowel shows up.
+;
+; HOW TO USE
+;   Press Run and type a sentence in the command center. If you just
+;   press Enter, a famous sentence is used instead.
+;
+; CONCEPTS YOU WILL LEARN
+;   * COUNT on words and on lists
+;   * FILTER with MEMBERP to pick out the letters you care about
+;   * joining all the words of a sentence into one long word
+;   * using a number you computed to size a drawing
+;
+; THINGS TO TRY
+;   * Count the letter y as a vowel too (add a sixth bubble)
+;   * Find a sentence with no letter e in it at all
+;   * Make the bubble for the most common vowel flash with a WAIT loop
+; ============================================================
+
+; Glue all the words together so we can look at letters only.
+to allletters :sent
+  if emptyp :sent [output "]
+  output word first :sent allletters butfirst :sent
+end
+
+; Keep only real letters, so digits and punctuation are not counted.
+to onlyletters :wd
+  output filter [memberp lowercase ? "abcdefghijklmnopqrstuvwxyz] :wd
+end
+
+; How many times does a single letter appear in a word?
+to howmany :letter :wd
+  output count filter [equalp lowercase ? :letter] :wd
+end
+
+; Find the longest word by comparing each word with the best so far.
+to longest :sent
+  if emptyp butfirst :sent [output first :sent]
+  localmake "rest longest butfirst :sent
+  if (count onlyletters first :sent) >= (count onlyletters :rest) [output first :sent]
+  output :rest
+end
+
+; A solid circle of radius :r around the turtle. FILLED fills the
+; shape the turtle walks, so we walk a 36-sided polygon, which looks
+; round enough, and come back to the middle.
+to disc :r
+  penup forward :r right 90
+  repeat 36 [forward 2 * :r * sin 5 right 10]
+  left 90 back :r
+end
+
+; One bubble: a filled circle whose radius depends on the count,
+; with the vowel written in the middle and the count underneath.
+to bubble :x :vowel :n :color
+  localmake "r 12 + 8 * :n
+  if :r > 70 [make "r 70]
+  penup setxy :x 20
+  setpencolor :color
+  setheading 0
+  filled :color [disc :r]
+  setpencolor 7 setlabelheight 24
+  setxy :x - 7 10 label :vowel
+  setpencolor 0 setlabelheight 16
+  setxy :x - 5 -80 label :n
+end
+
+to report :sent
+  localmake "letters onlyletters allletters :sent
+  localmake "vowels filter [memberp lowercase ? "aeiou] :letters
+  print (sentence [Words:] count :sent)
+  print (sentence [Letters:] count :letters)
+  print (sentence [Vowels:] count :vowels)
+  print (sentence [Consonants:] (count :letters) - (count :vowels))
+  print (sentence [Longest word:] longest :sent)
+  clearscreen hideturtle
+  setbackground [250 248 235]
+  penup setxy -150 160 setpencolor 0 setlabelheight 18
+  label [How many of each vowel?]
+  localmake "colors [4 14 2 1 5]
+  foreach "aeiou [
+    bubble -280 + 140 * (# - 1) ? howmany ? :vowels item # :colors
+  ]
+end
+
+print [Type a sentence for the vowel detective, then press Enter:]
+make "line readlist
+if emptyp :line [make "line [the quick brown fox jumps over the lazy dog]]
+report :line

@@ -1,0 +1,65 @@
+; ============================================================
+; TITLE:    Word Spiral
+; CATEGORY: Words & Text
+; LEVEL:    Beginner
+; TAGS:     label, spiral, letters, color, foreach
+; SUMMARY:  Writes a sentence letter by letter along a growing spiral, with each letter a little bigger and a different color.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle walks a spiral from the middle of the screen outwards.
+;   After every step it writes the next letter of a sentence, so the
+;   words curl around like the shell of a snail. Letters get bigger as
+;   the spiral grows, and the colors cycle through the palette.
+;
+; HOW TO USE
+;   Press Run. Change the sentence on the last line to spiral your own
+;   words, for example   spiral [happy birthday to you]
+;
+; CONCEPTS YOU WILL LEARN
+;   * walking through the letters of a word with FOREACH
+;   * a spiral: turn the same amount each time, but walk further
+;   * LABEL writes at the turtle's position, PENUP keeps the path hidden
+;   * counter variables that grow a little on every pass
+;
+; THINGS TO TRY
+;   * Turn 20 degrees instead of 25 for a looser spiral
+;   * Put the pen down to see the path the turtle follows
+;   * Make the letters shrink instead, starting from the outside
+; ============================================================
+
+; Glue the words of the sentence together with a dot between them, so
+; you can still see where each word ends.
+to joinup :sent
+  if emptyp butfirst :sent [output first :sent]
+  output (word first :sent ". joinup butfirst :sent)
+end
+
+to spiral :sent
+  clearscreen hideturtle setbackground 0
+  penup
+  localmake "text joinup :sent
+  localmake "stepsize 8
+  localmake "n 0
+  foreach :text [
+    make "n :n + 1
+    setpencolor 1 + remainder :n 14
+    ; letters are a little taller than the step, so they nearly touch
+    localmake "size :stepsize + 3
+    setlabelheight :size
+    ; LABEL draws from the bottom left corner of the letter, so shift
+    ; back a little to center it on the spiral path, then come back.
+    localmake "here pos
+    setxy (xcor - :size / 3) (ycor - :size / 3)
+    label ?
+    setpos :here
+    forward :stepsize
+    right 25
+    ; both the steps and the letters grow as we spiral outwards
+    make "stepsize :stepsize + 0.3
+    wait 2
+  ]
+end
+
+spiral [once upon a time a little turtle walked around and around in circles ~
+  writing every letter of this sentence as it went until it reached the edge]

@@ -1,0 +1,107 @@
+; ============================================================
+; TITLE:    Numbers in Words
+; CATEGORY: Words & Text
+; LEVEL:    Advanced
+; TAGS:     recursion, numbers, english, item, quotient, remainder
+; SUMMARY:  Spells out any whole number up to the billions in English words, such as 2026 becoming "two thousand twenty six".
+; ============================================================
+;
+; WHAT IT DOES
+;   Turns numbers into the words you would say out loud:
+;     7         seven
+;     42        forty two
+;     115       one hundred fifteen
+;     2026      two thousand twenty six
+;     1000001   one million one
+;   The trick is that big numbers are built from small ones. 345,678 is
+;   "three hundred forty five" THOUSAND "six hundred seventy eight",
+;   and the same procedure handles both halves.
+;
+; HOW TO USE
+;   Press Run and type numbers in the command center. Type quit or
+;   press Enter on an empty line to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * QUOTIENT and REMAINDER to split a number into parts
+;   * ITEM to look up words in a list (the 7th item of ONES is seven)
+;   * recursion that works on numbers instead of words
+;   * checking input with NUMBERP before using it
+;
+; THINGS TO TRY
+;   * Add "and" the British way: one hundred AND fifteen
+;   * Make it handle negative numbers ("minus twelve")
+;   * Write ordinals: first, second, third, twenty first
+; ============================================================
+
+make "ones [one two three four five six seven eight nine ten eleven ~
+  twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen]
+make "tens [ten twenty thirty forty fifty sixty seventy eighty ninety]
+
+; Numbers below one hundred. 1 to 19 have their own names; above that
+; we say the tens word and then the ones word if there is one.
+; QUOTIENT 42 10 is 4.2, so INT is needed to keep just the 4.
+to small :n
+  if :n = 0 [output []]
+  if :n < 20 [output item :n :ones]
+  output sentence item int quotient :n 10 :tens small remainder :n 10
+end
+
+; Numbers below one thousand.
+to hundreds :n
+  if :n < 100 [output small :n]
+  output (sentence item int quotient :n 100 :ones "hundred small remainder :n 100)
+end
+
+; Peel off the biggest group (billions, then millions, then thousands)
+; and let the same procedure name what is left over.
+to spell :n
+  if :n = 0 [output [zero]]
+  output spellgroups :n [[1000000000 billion] [1000000 million] [1000 thousand]]
+end
+
+to spellgroups :n :groups
+  if emptyp :groups [output hundreds :n]
+  localmake "size first first :groups
+  localmake "name last first :groups
+  localmake "big int quotient :n :size
+  localmake "rest :n - :big * :size
+  if :big = 0 [output spellgroups :rest butfirst :groups]
+  output (sentence hundreds :big :name spellgroups :rest butfirst :groups)
+end
+
+; A banner on the turtle screen for the latest number.
+to banner :n
+  clearscreen hideturtle setbackground [240 248 255]
+  setpencolor [30 60 120] setpensize 3
+  penup setxy -380 -60 pendown
+  repeat 2 [forward 160 right 90 forward 760 right 90]
+  penup setxy -360 50 setlabelheight 40 label :n
+  ; long names get smaller letters so they still fit in the frame
+  setxy -360 -20 setpencolor [200 60 40]
+  setlabelheight ifelse (count spell :n) > 9 [12] [20]
+  label spell :n
+end
+
+; Check the number in two stages: the comparisons would cause an error
+; if they ran on a word like "hello", so they only run after NUMBERP.
+to validp :n
+  if not numberp :n [output "false]
+  output (and :n >= 0 :n < 1000000000000 :n = int :n)
+end
+
+to askloop
+  print [Type a whole number, or quit:]
+  localmake "line readlist
+  if or emptyp :line equalp :line [quit] [stop]
+  localmake "n first :line
+  ifelse validp :n [
+    print (sentence :n "= spell :n)
+    banner :n
+  ] [print [Please type a whole number from 0 up to 999999999999.]]
+  askloop
+end
+
+foreach [0 7 13 42 100 115 999 2026 45000 1000001 123456789] ~
+  [print (sentence ? "= spell ?)]
+banner 2026
+askloop

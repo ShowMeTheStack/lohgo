@@ -1,0 +1,108 @@
+; ============================================================
+; TITLE:    Rhyme Finder
+; CATEGORY: Words & Text
+; LEVEL:    Intermediate
+; TAGS:     rhymes, words, recursion, butlast, poems
+; SUMMARY:  Finds words that rhyme by comparing their endings from the last vowel sound, then writes silly two-line rhymes.
+; ============================================================
+;
+; WHAT IT DOES
+;   Two words usually rhyme when they end the same way from their last
+;   vowel onwards: c-AT and h-AT, n-IGHT and k-NIGHT, b-OAT and c-OAT.
+;   The program cuts off that "rhyme ending", finds every word in its
+;   list with the same ending, and uses them to write little poems.
+;   English spelling is famously odd, so it is fooled sometimes:
+;   "though" and "tough" look alike but do not sound alike.
+;
+; HOW TO USE
+;   Press Run. Type a word to find its rhymes; quit or Enter stops.
+;   You can also type   print rhymeending "starlight
+;
+; CONCEPTS YOU WILL LEARN
+;   * working from the END of a word with LAST and BUTLAST
+;   * a procedure with two phases: skip consonants, then collect vowels
+;   * FILTER to gather matching words, REMOVE to drop the word itself
+;
+; THINGS TO TRY
+;   * Add more words to the list so more rhymes are found
+;   * Treat y at the end of a word as a vowel (happy, snappy)
+;   * Fix a spelling trap: make "ough" words never rhyme with each other
+; ============================================================
+
+make "rhymebank [cat hat bat mat sat flat chat that rat night light kite ~
+  bright fight knight might sight white bite boat coat goat float note ~
+  wrote tree free see bee three me knee sea tea fun sun run bun one ~
+  done ton day play say may away grey stay way hop top stop shop drop ~
+  mop cake bake lake make snake take shake rain train brain chain plane ~
+  dog frog log fog jog bog star car far jar bar guitar moon soon spoon ~
+  june tune balloon though tough]
+
+to vowelp :ch
+  output memberp :ch "aeiou
+end
+
+; Walk back from the end of the word. First keep consonants (the tail
+; after the last vowel), then keep the vowels in front of them, and
+; stop at the first consonant before those vowels.
+; A silent e (snake, tune) does not make its own sound, so we find the
+; ending of the word without it and put the e back: snak -> ak -> ake.
+to rhymeending :wd
+  if (count :wd) < 2 [output :wd]
+  if and equalp last :wd "e not vowelp last butlast :wd ~
+    [output word rhymeending butlast :wd "e]
+  output vowelpart butlast :wd last :wd
+end
+
+; Phase one: still collecting the consonants at the end.
+to vowelpart :rest :ending
+  if emptyp :rest [output :ending]
+  if vowelp first :ending [output vowelrun :rest :ending]
+  output vowelpart butlast :rest word last :rest :ending
+end
+
+; Phase two: we have reached the vowels; take every vowel in a row.
+to vowelrun :rest :ending
+  if emptyp :rest [output :ending]
+  if not vowelp last :rest [output :ending]
+  output vowelrun butlast :rest word last :rest :ending
+end
+
+to rhymesof :wd
+  localmake "end rhymeending lowercase :wd
+  output remove lowercase :wd filter [equalp rhymeending ? :end] :rhymebank
+end
+
+to showrhymes :wd
+  localmake "found rhymesof :wd
+  ifelse emptyp :found ~
+    [print (sentence [Nothing in my list rhymes with] :wd)] ~
+    [print (sentence :wd [rhymes with] :found)]
+end
+
+; A two line poem: two random rhyming words dropped into fill-in lines.
+to couplet :wd
+  localmake "found rhymesof :wd
+  if emptyp :found [stop]
+  localmake "one pick :found
+  ; pick the second word from the others so it differs from the first
+  localmake "others remove :one :found
+  localmake "two ifelse emptyp :others [:one] [pick :others]
+  print (sentence [I once saw a] :wd [beside a big] :one)
+  print (sentence [and it smiled at me, then it ate a] :two)
+  print []
+end
+
+to askloop
+  print [Type a word to rhyme, or quit:]
+  localmake "line readlist
+  if or emptyp :line equalp :line [quit] [stop]
+  showrhymes first :line
+  askloop
+end
+
+foreach [cat night boat tree moon] [showrhymes ?]
+print []
+print [Two silly poems:]
+couplet "goat
+couplet "snake
+askloop

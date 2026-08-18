@@ -1,0 +1,95 @@
+; ============================================================
+; TITLE:    Anagram Families
+; CATEGORY: Words & Text
+; LEVEL:    Intermediate
+; TAGS:     anagrams, sorting, words, property lists, beforep
+; SUMMARY:  Sorts the letters of each word to find anagrams, then groups a word list into families that share the same letters.
+; ============================================================
+;
+; WHAT IT DOES
+;   Two words are anagrams when they use exactly the same letters,
+;   like "listen" and "silent". If you sort the letters of each word
+;   into alphabetical order, anagrams end up with the same "key":
+;   both become "eilnst". The program uses that trick to check pairs
+;   of words and to sort a whole word list into anagram families.
+;
+; HOW TO USE
+;   Press Run and read the results. Then type your own pairs:
+;     anagramp "dusty "study
+;     print letterkey "banana
+;
+; CONCEPTS YOU WILL LEARN
+;   * insertion sort on the letters of a word, using BEFOREP
+;   * using a computed word as a property list name (a quick lookup table)
+;   * PUSH to grow a list stored under a name
+;   * FILTER and FOREACH over a list of words
+;
+; THINGS TO TRY
+;   * Add more words to the list in MAIN and find bigger families
+;   * Ignore capital letters by sending every word through LOWERCASE
+;   * Print only the families with three or more members
+; ============================================================
+
+; Put one letter into a word whose letters are already in order.
+; BEFOREP "a "b is true because a comes before b in the alphabet.
+to insertletter :ch :sorted
+  if emptyp :sorted [output :ch]
+  if beforep :ch first :sorted [output word :ch :sorted]
+  output word first :sorted insertletter :ch butfirst :sorted
+end
+
+; Sort all the letters of a word. "listen" -> "eilnst"
+to letterkey :wd
+  if emptyp :wd [output "]
+  output insertletter first :wd letterkey butfirst :wd
+end
+
+to anagramp :a :b
+  if equalp :a :b [output "false]   ; a word is not its own anagram
+  output equalp letterkey lowercase :a letterkey lowercase :b
+end
+
+to checkpair :a :b
+  ifelse anagramp :a :b ~
+    [print (sentence :a "and :b [are anagrams. Both sort to] letterkey lowercase :a)] ~
+    [print (sentence :a "and :b [are not anagrams.])]
+end
+
+; Group a word list into families. Each family lives on the property
+; list called "families" under its key. The list "keys" remembers the
+; keys in the order we first met them, so the output is tidy.
+to families :words
+  make "keys []
+  foreach :words [
+    localmake "k letterkey ?
+    if emptyp gprop "families :k [queue "keys :k]
+    pprop "families :k lput ? gprop "families :k
+  ]
+end
+
+to showfamilies
+  localmake "found 0
+  foreach :keys [
+    localmake "fam gprop "families ?
+    if (count :fam) > 1 [
+      make "found :found + 1
+      print (sentence (word :found ".) :fam)
+    ]
+  ]
+  print (sentence :found [families found among the words.])
+end
+
+to main
+  checkpair "listen "silent
+  checkpair "night "thing
+  checkpair "apple "paper
+  checkpair "Dormitory "dirtyroom
+  print []
+  print [Anagram families:]
+  families [stop pots tops spot opts post least steal tales stale ~
+            slate teals cat act tea eat ate dog god apple heart earth hater ~
+            angel glean angle below elbow bowel state taste]
+  showfamilies
+end
+
+main

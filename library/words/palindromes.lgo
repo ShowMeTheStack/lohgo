@@ -1,0 +1,95 @@
+; ============================================================
+; TITLE:    Palindrome Rainbows
+; CATEGORY: Words & Text
+; LEVEL:    Beginner
+; TAGS:     palindrome, recursion, words, arc, label
+; SUMMARY:  Checks whether words and phrases read the same backwards and draws rainbow arcs joining the matching letters.
+; ============================================================
+;
+; WHAT IT DOES
+;   Tests a list of words and phrases to see which are palindromes
+;   (racecar, "never odd or even"), printing the answer for each.
+;   Then it draws one phrase across the screen with an arc joining
+;   each letter to its partner at the other end. Partners that match
+;   get a colored arc; partners that do not match get a grey one.
+;
+; HOW TO USE
+;   Press Run. Afterwards try commands like
+;     print palindromep "level
+;     drawpairs "rotator
+;
+; CONCEPTS YOU WILL LEARN
+;   * comparing FIRST and LAST letters, then recursing on the middle
+;   * BUTFIRST and BUTLAST to trim a word from both ends
+;   * FILTER on a word to throw away spaces and punctuation
+;   * ARC and LABEL to make a picture out of text
+;
+; THINGS TO TRY
+;   * drawpairs "palindrome to see what a non-palindrome looks like
+;   * Add your own phrases to the list in MAIN
+;   * Make PALINDROMEP count how many letters it compared
+; ============================================================
+
+; Keep only letters and digits, all in lowercase, so that
+; "Never odd, or even!" turns into "neveroddoreven".
+to cleanup :text
+  localmake "joined reduce [word ?1 ?2] fput " :text
+  output lowercase filter [memberp lowercase ? "abcdefghijklmnopqrstuvwxyz0123456789] :joined
+end
+
+; The heart of the program. A word is a palindrome when its first and
+; last letters match AND the part in the middle is a palindrome too.
+; Words of length 0 or 1 are always palindromes; that stops the recursion.
+to palindromep :wd
+  if (count :wd) < 2 [output "true]
+  if not equalp first :wd last :wd [output "false]
+  output palindromep butfirst butlast :wd
+end
+
+; Accept either a single word or a list of words.
+to check :text
+  if wordp :text [make "text (list :text)]
+  ifelse palindromep cleanup :text ~
+    [print (sentence :text [is a palindrome.])] ~
+    [print (sentence :text [is not a palindrome.])]
+end
+
+; Lay the letters out in a row and join letter i to letter n+1-i with
+; a half circle. The arcs nest inside each other like a rainbow.
+to drawpairs :text
+  if wordp :text [make "text (list :text)]
+  localmake "letters cleanup :text
+  localmake "n count :letters
+  localmake "gap 360 / :n
+  if :gap > 40 [make "gap 40]
+  localmake "left 0 - (:gap * (:n - 1) / 2)
+  setlabelheight 20
+  ; the letters themselves
+  for [i 1 :n] [
+    penup setxy (:left + :gap * (:i - 1)) - 6 -40
+    setpencolor 0 label item :i :letters
+  ]
+  ; the arcs: only the first half of the letters need one each
+  setpensize 3
+  for [i 1 int :n / 2] [
+    localmake "j :n + 1 - :i
+    localmake "x1 :left + :gap * (:i - 1)
+    localmake "x2 :left + :gap * (:j - 1)
+    penup setxy (:x1 + :x2) / 2 -10
+    setheading 270
+    ifelse equalp item :i :letters item :j :letters ~
+      [setpencolor 1 + remainder :i 14] [setpencolor 15]
+    pendown arc 180 (:x2 - :x1) / 2
+  ]
+  penup setxy -150 -100 setpencolor 0 setlabelheight 16
+  label (sentence :text [palindrome?] palindromep :letters)
+end
+
+to main
+  foreach [racecar level lohgo [never odd or even] [step on no pets] ~
+           [a man a plan a canal panama] [hello world] noon] [check ?]
+  clearscreen hideturtle
+  drawpairs [Was it a car or a cat I saw]
+end
+
+main
