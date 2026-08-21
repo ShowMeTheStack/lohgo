@@ -1,0 +1,91 @@
+; ============================================================
+; TITLE:    Ice Cream Queue
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Beginner
+; TAGS:     queue, dequeue, lists, simulation, animation
+; SUMMARY:  Children join a line at an ice cream van and are served in the order they arrived, shown with QUEUE and DEQUEUE.
+; ============================================================
+;
+; WHAT IT DOES
+;   A queue is a line of people waiting their turn. New people join
+;   at the back, and the person at the front is served first. The
+;   turtle draws the van and the line of children as colored heads
+;   with names. Some ticks a new child arrives, some ticks the
+;   person at the front gets an ice cream and walks away.
+;
+; HOW TO USE
+;   Press Run and watch. The command center reports who joined and
+;   who was served. Change the list of names at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * QUEUE adds a thing to the END of a list kept in a variable
+;   * DEQUEUE removes and outputs the FIRST thing
+;   * first in, first out (FIFO), the opposite of a stack
+;   * using RANDOM to make a simple simulation
+;
+; THINGS TO TRY
+;   * Make children arrive more often than they are served. What
+;     happens to the length of the line?
+;   * Give each child a favorite flavor with a two-item list.
+; ============================================================
+
+make "line []
+make "waiting [Ava Ben Cleo Dev Emi Finn Gia Hal]
+make "served 0
+
+; The van sits on the left; the line grows toward the right.
+to drawvan
+  penup setxy -380 -60 setheading 90 pendown
+  filled "salmon [repeat 2 [fd 120 lt 90 fd 90 lt 90]]
+  penup setxy -360 -20 setpencolor "white label [ICE CREAM]
+  setxy -350 -75 setpencolor "black pendown arc 360 12
+  penup setxy -290 -75 pendown arc 360 12 penup
+end
+
+; Each child is a head with a body line and a name underneath.
+to drawchild :name :x :color
+  penup setxy :x -30 setpencolor :color setpensize 3
+  pendown arc 360 14
+  penup setxy :x -44 setheading 180 pendown fd 40
+  setpensize 1 penup setxy :x - 14 -110 setpencolor "black
+  label :name
+end
+
+to drawscene
+  clean
+  drawvan
+  localmake "x -220
+  foreach :line [
+    drawchild ? :x item 1 + remainder # 6 [blue red forest purple orange magenta]
+    make "x :x + 60
+  ]
+  penup setxy -380 150 setpencolor "black
+  label (sentence [In line:] count :line [   Served:] :served)
+end
+
+to arrive
+  if emptyp :waiting [stop]
+  ; QUEUE puts the newcomer at the BACK of the line.
+  queue "line first :waiting
+  print (sentence first :waiting [joins the line.])
+  make "waiting butfirst :waiting
+end
+
+to serve
+  if emptyp :line [stop]
+  ; DEQUEUE takes whoever is at the FRONT, the one who waited longest.
+  print (sentence dequeue "line [gets an ice cream!])
+  make "served :served + 1
+end
+
+to simulate
+  until [and emptyp :waiting emptyp :line] [
+    ifelse (random 3) = 0 [serve] [ifelse emptyp :waiting [serve] [arrive]]
+    drawscene
+    wait 30
+  ]
+  print [Everyone has an ice cream. The van drives away.]
+end
+
+clearscreen hideturtle
+simulate

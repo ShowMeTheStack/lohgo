@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Dice Histogram
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Beginner
+; TAGS:     arrays, counting, random, bar chart, tally
+; SUMMARY:  Rolls two dice hundreds of times, tallies each total in an array and draws the results as a growing bar chart.
+; ============================================================
+;
+; WHAT IT DOES
+;   When you roll two dice, totals from 2 to 12 are possible, but
+;   they are not equally likely. The program keeps one counter for
+;   each total in an array whose first index is 2, rolls the dice
+;   500 times, and redraws the chart every 50 rolls so you can watch
+;   the famous hill shape appear, highest at 7.
+;
+; HOW TO USE
+;   Press Run and watch the bars grow. Change ROLLS for more rolls.
+;
+; CONCEPTS YOU WILL LEARN
+;   * an ARRAY used as a row of tally counters
+;   * starting an array at index 2 with (ARRAY 11 2)
+;   * ITEM and SETITEM to add one to a counter
+;   * scaling bars so the chart always fits
+;
+; THINGS TO TRY
+;   * Roll three dice. How many counters do you need now?
+;   * Print which total came up most often.
+;   * Compare with one die rolled twice as often.
+; ============================================================
+
+make "rolls 500
+
+; (ARRAY 11 2) makes 11 slots numbered 2 to 12, one for each total,
+; so the total itself can be used as the index.
+make "tally (array 11 2)
+for [t 2 12] [setitem :t :tally 0]
+
+to roll
+  output (1 + random 6) + (1 + random 6)
+end
+
+to bump :total
+  setitem :total :tally 1 + item :total :tally
+end
+
+; The tallest bar is scaled to 380 steps, so the chart always fits.
+to drawchart :done
+  clean
+  localmake "biggest reduce [ifelse ?1 > ?2 [?1] [?2]] arraytolist :tally
+  if :biggest = 0 [make "biggest 1]
+  for [t 2 12] [
+    localmake "h 380 * (item :t :tally) / :biggest
+    localmake "x -330 + 60 * (:t - 2)
+    penup setxy :x -220 setheading 90
+    setpencolor ifelse :t = 7 ["red] ["blue]
+    pendown filled pencolor [repeat 2 [fd 44 lt 90 fd :h lt 90]]
+    penup setxy :x + 12 -245 setpencolor "black label :t
+    setxy :x + 8 -212 + :h label item :t :tally
+  ]
+  penup setxy -330 230
+  label (sentence [Two dice, rolled] :done [times])
+end
+
+clearscreen hideturtle
+repeat :rolls / 50 [
+  repeat 50 [bump roll]
+  drawchart 50 * repcount
+  wait 20
+]
+print sentence [Final tallies from 2 to 12:] arraytolist :tally

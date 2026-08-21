@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Emergency Room
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Intermediate
+; TAGS:     priority queue, sorted insert, lists, simulation
+; SUMMARY:  A priority queue keeps patients sorted by how urgent they are, so the doctor always sees the most urgent one next.
+; ============================================================
+;
+; WHAT IT DOES
+;   In an ordinary queue, whoever comes first is served first. In an
+;   emergency room, a broken leg goes before a sore thumb even if it
+;   arrived later. Each patient is a pair [urgency name], and the
+;   waiting list is always kept sorted with the highest urgency at
+;   the front. The turtle draws the waiting room after every event.
+;
+; HOW TO USE
+;   Press Run. The events list at the bottom says who arrives and
+;   when the doctor is free. Edit it to tell a different story.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a priority queue built from a sorted list
+;   * a recursive insert that finds the right spot
+;   * patients with equal urgency still keep arrival order
+;   * running a list of events with FOREACH and CASE
+;
+; THINGS TO TRY
+;   * Add a second doctor who serves the same queue.
+;   * Raise every waiting patient's urgency by one each turn, so
+;     nobody waits forever. This is called aging.
+; ============================================================
+
+make "waiting []
+
+; Put a patient in place. We walk past everyone whose urgency is
+; greater OR EQUAL, so a newcomer goes behind others of the same level.
+to pqinsert :p :list
+  if emptyp :list [output (list :p)]
+  if (first :p) > (first first :list) [output fput :p :list]
+  output fput first :list pqinsert :p butfirst :list
+end
+
+to arrive :urgency :name
+  make "waiting pqinsert (list :urgency :name) :waiting
+  print (sentence :name [arrives with urgency] :urgency)
+end
+
+to treat
+  if emptyp :waiting [print [The doctor has a cup of tea.] stop]
+  localmake "p first :waiting
+  make "waiting butfirst :waiting
+  print (sentence [The doctor sees] last :p)
+end
+
+; Urgency 5 is red and 1 is green, so the room reads at a glance.
+to urgencycolor :u
+  output item :u [[90 190 90] [170 210 60] [240 200 40] [240 130 40] [220 50 50]]
+end
+
+to drawroom
+  clean
+  penup setxy -360 250 setpencolor "black
+  label [Waiting room, next patient on the left]
+  localmake "x -360
+  foreach :waiting [
+    penup setxy :x 200 setheading 90
+    filled urgencycolor first ? [repeat 2 [fd 100 rt 90 fd 60 rt 90]]
+    setpencolor "black setxy :x + 10 170 label last ?
+    setxy :x + 10 150 label sentence "level first ?
+    make "x :x + 110
+  ]
+end
+
+to run.events :events
+  foreach :events [
+    case first ? [
+      [[arrive] arrive item 2 ? item 3 ?]
+      [[treat] treat]
+    ]
+    drawroom
+    wait 40
+  ]
+end
+
+clearscreen hideturtle
+run.events [
+  [arrive 2 Ola] [arrive 1 Pip] [arrive 4 Quin] [treat]
+  [arrive 5 Rosa] [arrive 2 Sid] [arrive 3 Tam] [treat]
+  [arrive 4 Uma] [treat] [treat] [treat] [treat] [treat] [treat]
+]

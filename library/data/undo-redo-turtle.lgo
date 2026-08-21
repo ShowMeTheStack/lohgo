@@ -1,0 +1,98 @@
+; ============================================================
+; TITLE:    Undo and Redo
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Intermediate
+; TAGS:     stack, undo, redo, keyboard, run
+; SUMMARY:  Drive the turtle with keys and use two stacks to undo and redo your moves, just like a text editor does.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every move you make is pushed onto a HISTORY stack as a small
+;   Logo instruction list such as [fd 30]. Pressing U pops the last
+;   move and pushes it onto a REDO stack, then the picture is redrawn
+;   from the history. Pressing R pops from REDO and does the move
+;   again. Making a fresh move empties REDO, which is exactly what
+;   your word processor does too.
+;
+; HOW TO USE
+;   Click the turtle world first so it hears the keyboard.
+;   F = forward, L = turn left, T = turn right,
+;   U = undo, R = redo, C = change color, Q = quit.
+;
+; CONCEPTS YOU WILL LEARN
+;   * two stacks working together
+;   * storing instructions as data, then running them with RUN
+;   * redrawing a picture by replaying a list
+;   * READCHAR for single key presses
+;
+; THINGS TO TRY
+;   * Add a B key that moves backward.
+;   * Print the history after each key to watch the stack.
+;   * Make U undo two moves at once.
+; ============================================================
+
+make "history []
+make "redo []
+make "colors [blue red forest purple orange]
+
+; Redraw from scratch. The history keeps the NEWEST move first, so we
+; replay it reversed to repeat the moves in the order they happened.
+to replay
+  clearscreen
+  setpensize 3 setpencolor "blue
+  foreach reverse :history [run ?]
+  showturtle
+end
+
+; A brand new move: do it, remember it, and forget any redo moves,
+; because they belonged to a different future.
+to domove :instr
+  run :instr
+  push "history :instr
+  make "redo []
+end
+
+to undo
+  if emptyp :history [print [Nothing to undo.] stop]
+  push "redo pop "history
+  replay
+end
+
+to redo
+  if emptyp :redo [print [Nothing to redo.] stop]
+  localmake "instr pop "redo
+  run :instr
+  push "history :instr
+end
+
+; Turn the key into a move. CASE compares without caring about case,
+; so f and F both work.
+to handle :key
+  case :key [
+    [[f] domove [fd 30]]
+    [[l] domove [lt 45]]
+    [[t] domove [rt 45]]
+    [[c] domove (list "setpencolor quoted pick :colors)]
+    [[u] undo]
+    [[r] redo]
+  ]
+end
+
+to play
+  print [Click the turtle world first, then press keys.]
+  print [F forward, L left, T right, C color, U undo, R redo, Q quit]
+  forever [
+    localmake "key readchar
+    if emptyp :key [print [No more keys.] stop]
+    if equalp lowercase :key "q [
+      print (sentence [You made] count :history [moves.])
+      stop
+    ]
+    handle lowercase :key
+  ]
+end
+
+; A little starting drawing so there is something to undo right away.
+replay
+foreach [[fd 60] [rt 90] [fd 60] [rt 90] [fd 60]] [domove ?]
+play

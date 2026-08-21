@@ -1,0 +1,105 @@
+; ============================================================
+; TITLE:    Address Book on Disk
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Intermediate
+; TAGS:     files, records, readlist, openwrite, openread, sorting
+; SUMMARY:  Saves a list of contact records to a file on the virtual disk, reads them back in a later run, and lets you add more.
+; ============================================================
+;
+; WHAT IT DOES
+;   Variables vanish when you close the studio, but a file stays on
+;   the disk. Each contact is a record list [name town phone], and
+;   the book is saved with one record per line in the file
+;   /projects/contacts.txt. When the program starts it loads the
+;   file if it exists, so contacts you added last time come back.
+;
+; HOW TO USE
+;   Press Run. Type a new contact as three words, for example
+;     Nina Leeds 555-0199
+;   or type list to see the book sorted by name, or done to save
+;   and stop. Run the program again and your contacts are still there.
+;
+; CONCEPTS YOU WILL LEARN
+;   * OPENWRITE, SETWRITE and PRINT to save lines to a file
+;   * OPENREAD, SETREAD, READLIST and EOFP to load them again
+;   * FILEP to check a file exists before reading it
+;   * sorting records by one field with BEFOREP
+;
+; THINGS TO TRY
+;   * Add a search command that prints everyone in one town.
+;   * Delete the file with ERASEFILE to start a fresh book.
+; ============================================================
+
+make "file "/projects/contacts.txt
+make "book []
+
+; Reading a file: point READLIST at the file with SETREAD, read lines
+; until EOFP says the end is reached, then point it back at the
+; keyboard with SETREAD [] and close the file.
+to loadbook
+  if not filep :file [
+    make "book [[Ada Paris 555-0101] [Joe Lima 555-0142] [Kim Oslo 555-0175]]
+    print [No saved book yet, starting with three sample contacts.]
+    stop
+  ]
+  openread :file
+  setread :file
+  make "book []
+  while [not eofp] [
+    localmake "line readlist
+    if not emptyp :line [make "book lput :line :book]
+  ]
+  setread []
+  close :file
+  print (sentence [Loaded] count :book [contacts from] :file)
+end
+
+; Writing works the same way: PRINT goes to the file while SETWRITE
+; points at it. Each record becomes one line.
+to savebook
+  openwrite :file
+  setwrite :file
+  foreach :book [print ?]
+  setwrite []
+  close :file
+  print (sentence [Saved] count :book [contacts to] :file)
+end
+
+; Insertion sort on the name, which is the first item of each record.
+to byname :records
+  if emptyp :records [output []]
+  output insertrec first :records byname butfirst :records
+end
+
+to insertrec :r :sorted
+  if emptyp :sorted [output (list :r)]
+  if beforep first :r first first :sorted [output fput :r :sorted]
+  output fput first :sorted insertrec :r butfirst :sorted
+end
+
+to listbook
+  foreach byname :book [
+    print (sentence word # ". first ? [lives in] item 2 ? [with phone] last ?)
+  ]
+end
+
+to session
+  forever [
+    print [Type name town phone, or list, or done:]
+    localmake "in readlist
+    if emptyp :in [savebook stop]
+    if equalp first :in "done [savebook stop]
+    ifelse equalp first :in "list [listbook] [
+      ifelse equalp count :in 3 [
+        make "book lput :in :book
+        print sentence first :in [added.]
+      ] [
+        print [Please type exactly three words, like: Nina Leeds 555-0199]
+      ]
+    ]
+  ]
+end
+
+loadbook
+listbook
+session

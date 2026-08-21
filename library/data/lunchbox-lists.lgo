@@ -1,0 +1,72 @@
+; ============================================================
+; TITLE:    Lunchbox Lists
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Beginner
+; TAGS:     lists, first, last, fput, lput, butfirst, item, count
+; SUMMARY:  Packs and unpacks a lunchbox to show the basic list commands, drawing the list as a row of boxes after every step.
+; ============================================================
+;
+; WHAT IT DOES
+;   A list is a row of things in order. The program starts with an
+;   empty lunchbox and uses one list command per step: FPUT puts food
+;   at the front, LPUT at the back, BUTFIRST and BUTLAST take food
+;   off the ends, ITEM peeks at one place. After every step the list
+;   is drawn as a row of boxes, one row lower each time, with the
+;   command that made it written on the left.
+;
+; HOW TO USE
+;   Press Run and read the picture from top to bottom. Each row is
+;   the lunchbox after the command written beside it.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FPUT and LPUT add to the front and the back
+;   * BUTFIRST and BUTLAST give the list without one end
+;   * FIRST, LAST, ITEM and COUNT look without changing anything
+;   * lists are never changed in place: MAKE stores the new one
+;
+; THINGS TO TRY
+;   * Add a step that uses REVERSE.
+;   * Use MEMBERP to check whether there is an apple in the box.
+;   * What does FIRST of an empty lunchbox do? Try it and read the error.
+; ============================================================
+
+make "lunch []
+make "row 0
+
+; Draw the list as boxes. CMD is the command text shown on the left.
+to drawlunch :cmd
+  localmake "y 250 - 62 * :row
+  penup setxy -390 :y - 22 setpencolor "purple label :cmd
+  localmake "x -50
+  if emptyp :lunch [penup setxy :x :y - 22 setpencolor "grey label [empty]]
+  foreach :lunch [
+    penup setxy :x :y setheading 90 setpencolor "blue pendown
+    repeat 2 [fd 100 rt 90 fd 34 rt 90]
+    penup setxy :x + 8 :y - 22 setpencolor "black label ?
+    make "x :x + 108
+  ]
+  make "row :row + 1
+end
+
+; Run one step: show it, run it, and draw the result. The step is
+; given as a list of Logo words so we can both print it and RUN it.
+to stepdo :instruction
+  run :instruction
+  print (sentence :instruction [->] :lunch)
+  drawlunch :instruction
+end
+
+clearscreen hideturtle
+setlabelheight 15
+drawlunch [start]
+stepdo [make "lunch fput "sandwich :lunch]
+stepdo [make "lunch lput "apple :lunch]
+stepdo [make "lunch fput "juice :lunch]
+stepdo [make "lunch lput "cookie :lunch]
+stepdo [make "lunch butfirst :lunch]
+stepdo [make "lunch butlast :lunch]
+stepdo [make "lunch lput "carrot :lunch]
+print sentence [FIRST gives] first :lunch
+print sentence [LAST gives] last :lunch
+print sentence [ITEM 2 gives] item 2 :lunch
+print sentence [COUNT gives] count :lunch

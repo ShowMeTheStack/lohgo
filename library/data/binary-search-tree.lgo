@@ -1,0 +1,114 @@
+; ============================================================
+; TITLE:    Binary Search Tree
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Advanced
+; TAGS:     binary tree, recursion, nested lists, search, drawing
+; SUMMARY:  Builds a binary search tree out of nested lists, draws it with the turtle and highlights the path of a search.
+; ============================================================
+;
+; WHAT IT DOES
+;   A tree node is a list of three things: [value left right]. The
+;   left and right parts are smaller trees, or [] when nothing is
+;   there. Smaller numbers go left and bigger numbers go right, so
+;   finding a number only needs one trip down from the top. The
+;   program inserts numbers one by one, draws the finished tree, and
+;   then rings in orange the nodes it visits while searching.
+;
+; HOW TO USE
+;   Press Run. Change the numbers in the variable called values, or
+;   the number given to SEARCHFOR at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * representing a tree with nested lists
+;   * recursive insert that builds a NEW tree instead of changing one
+;   * drawing a tree by halving the horizontal gap at each level
+;   * why searching a tree is fast: each step throws away half
+;
+; THINGS TO TRY
+;   * Insert the numbers already sorted. What shape is the tree now?
+;   * Write TREEHEIGHT that outputs the number of levels.
+;   * Search for a number that is not in the tree.
+; ============================================================
+
+make "values [50 30 70 20 40 60 85 10 35 45 65 90 80]
+
+; Small helpers make the rest of the code read like the idea.
+to node :v :l :r
+  output (list :v :l :r)
+end
+to value :t
+  output item 1 :t
+end
+to leftof :t
+  output item 2 :t
+end
+to rightof :t
+  output item 3 :t
+end
+
+; Insert outputs a new tree. If the tree is empty the new number
+; becomes a leaf; otherwise we rebuild the node with one side changed.
+to insert :n :t
+  if emptyp :t [output node :n [] []]
+  if :n < value :t [output node value :t insert :n leftof :t rightof :t]
+  output node value :t leftof :t insert :n rightof :t
+end
+
+; Lines first, discs second. Later drawing covers earlier drawing,
+; so each disc is painted over the ends of its lines and the lines
+; seem to run right up to its edge. GAP halves at each level so the
+; branches never cross.
+to drawlines :t :x :y :gap
+  if emptyp :t [stop]
+  foreach (list leftof :t rightof :t) [
+    if not emptyp ? [
+      localmake "cx ifelse # = 1 [:x - :gap] [:x + :gap]
+      setpencolor "grey penup setxy :x :y pendown
+      setxy :cx :y - 80
+      drawlines ? :cx :y - 80 :gap / 2
+    ]
+  ]
+end
+
+to drawnodes :t :x :y :gap
+  if emptyp :t [stop]
+  circlenode value :t :x :y
+  drawnodes leftof :t :x - :gap :y - 80 :gap / 2
+  drawnodes rightof :t :x + :gap :y - 80 :gap / 2
+end
+
+to circlenode :v :x :y
+  penup setxy :x :y setheading 0
+  ; we walk a 24 sided polygon that is round enough to look like
+  ; a circle, and FILLED paints its inside
+  fd 18 rt 90
+  filled "blue [repeat 24 [fd 4.7 rt 15]]
+  penup setxy :x - 4 * count :v :y - 5 setpencolor "white
+  label :v
+end
+
+; A thick orange ring marks a node the search passes through.
+to ring :x :y
+  penup setxy :x :y setpencolor "orange setpensize 5
+  arc 360 22
+  setpensize 1
+end
+
+; Walk down the tree, coloring every node we pass through.
+to searchfor :n :t :x :y :gap
+  if emptyp :t [print (sentence :n [is not in the tree.]) stop]
+  ring :x :y
+  wait 30
+  if :n = value :t [print (sentence [Found] :n [at depth] (250 - :y) / 80) stop]
+  ifelse :n < value :t ~
+    [searchfor :n leftof :t :x - :gap :y - 80 :gap / 2] ~
+    [searchfor :n rightof :t :x + :gap :y - 80 :gap / 2]
+end
+
+clearscreen hideturtle
+make "tree []
+foreach :values [make "tree insert ? :tree]
+show :tree
+drawlines :tree 0 250 180
+drawnodes :tree 0 250 180
+searchfor 45 :tree 0 250 180

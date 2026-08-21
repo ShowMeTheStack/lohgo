@@ -1,0 +1,122 @@
+; ============================================================
+; TITLE:    Shop Inventory
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Intermediate
+; TAGS:     property lists, readlist, commands, inventory, interactive
+; SUMMARY:  A small shop keeps stock and prices on property lists, and you run it by typing commands such as sell 3 apples.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every product is a name with two properties: stock (how many are
+;   on the shelf) and price (in cents). You type short commands and
+;   the shop updates its records, refuses to sell what it does not
+;   have, and keeps track of the money in the till. A shelf picture
+;   in the turtle world is redrawn after each command.
+;
+; HOW TO USE
+;   Type a command in the command center and press Enter:
+;     list              show everything
+;     sell 3 apples     sell some
+;     buy 10 pears      put more on the shelf
+;     price pears 90    change a price
+;     quit              close the shop
+;
+; CONCEPTS YOU WILL LEARN
+;   * property lists as records with several fields
+;   * reading a command with READLIST and taking it apart with ITEM
+;   * checking input before trusting it with NUMBERP and MEMBERP
+;   * keeping running totals in a global variable
+;
+; THINGS TO TRY
+;   * Add a "new" command that adds a product the shop never had.
+;   * Warn when the stock of something drops below 3.
+; ============================================================
+
+make "products [apples pears plums lemons]
+make "till 0
+
+to stock :p :n :cents
+  pprop :p "stock :n
+  pprop :p "price :cents
+end
+
+; Money is kept in whole cents so sums never get rounding errors;
+; DOLLARS turns cents into text only when it is time to show it.
+to dollars :cents
+  output word "$ form :cents / 100 1 2
+end
+
+to listall
+  foreach :products [
+    print (sentence ? [-] gprop ? "stock [on the shelf at] dollars gprop ? "price)
+  ]
+  print sentence [Money in the till:] dollars :till
+end
+
+to sell :n :p
+  if :n > gprop :p "stock [print (sentence [Sorry, only] gprop :p "stock :p [left.]) stop]
+  pprop :p "stock (gprop :p "stock) - :n
+  make "till :till + :n * gprop :p "price
+  print (sentence [Sold] :n :p [for] dollars :n * gprop :p "price)
+end
+
+to buy :n :p
+  pprop :p "stock :n + gprop :p "stock
+  print (sentence [The shelf now has] gprop :p "stock :p)
+end
+
+; Check the command has the right shape before acting on it.
+to obey :cmd
+  localmake "verb first :cmd
+  if equalp :verb "list [listall stop]
+  if not equalp count :cmd 3 [print [I did not understand. Try: sell 3 apples] stop]
+  localmake "a item 2 :cmd
+  localmake "b item 3 :cmd
+  if equalp :verb "price [
+    ifelse and memberp :a :products numberp :b ~
+      [pprop :a "price :b print [Price changed.]] ~
+      [print [Try: price pears 90]]
+    stop
+  ]
+  if not numberp :a [print [The amount must be a number.] stop]
+  if :a < 1 [print [The amount must be 1 or more.] stop]
+  if not memberp :b :products [print (sentence [We do not sell] :b) stop]
+  if equalp :verb "sell [sell :a :b stop]
+  if equalp :verb "buy [buy :a :b stop]
+  print [Commands: list, sell, buy, price, quit]
+end
+
+to drawshelf
+  clean
+  localmake "x -300
+  foreach :products [
+    ; bars are 4 steps per item, but never taller than the screen
+    localmake "h 4 * gprop ? "stock
+    if :h > 340 [make "h 340]
+    penup setxy :x -150 setheading 0
+    filled item # [red green purple yellow] [repeat 2 [fd :h rt 90 fd 80 rt 90]]
+    setpencolor "black setxy :x + 10 -175 label ?
+    setxy :x + 25 -140 + :h label gprop ? "stock
+    make "x :x + 150
+  ]
+  penup setxy -300 220 label sentence [Till:] dollars :till
+end
+
+to shop
+  forever [
+    drawshelf
+    print [Command? list, sell 3 apples, buy 5 pears, price plums 70, quit]
+    localmake "cmd readlist
+    if emptyp :cmd [stop]
+    if equalp first :cmd "quit [print [The shop is closed. Goodbye!] listall stop]
+    obey :cmd
+  ]
+end
+
+clearscreen hideturtle
+stock "apples 30 45
+stock "pears 12 80
+stock "plums 20 60
+stock "lemons 8 35
+listall
+shop

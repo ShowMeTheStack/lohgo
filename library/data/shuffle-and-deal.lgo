@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    Shuffle and Deal
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Intermediate
+; TAGS:     arrays, shuffle, cards, crossmap, random
+; SUMMARY:  Builds a 52 card deck with CROSSMAP, shuffles it fairly inside an array, and deals and draws a five card hand.
+; ============================================================
+;
+; WHAT IT DOES
+;   A card is a list like [Q hearts]. CROSSMAP pairs every rank with
+;   every suit to make the deck in one line. The deck is copied into
+;   an array and shuffled with the Fisher-Yates method: walk from the
+;   last card to the first, swapping each card with a random card at
+;   or before it. Every order of the deck is equally likely. Then
+;   five cards are dealt and drawn on a green table.
+;
+; HOW TO USE
+;   Press Run. Run it again for a new hand. RERANDOM with a number
+;   at the bottom makes the same shuffle happen every time.
+;
+; CONCEPTS YOU WILL LEARN
+;   * CROSSMAP builds every combination of two lists
+;   * LISTTOARRAY and ARRAYTOLIST switch between the two kinds of data
+;   * swapping two array items with SETITEM
+;   * why the simple "swap with any card" shuffle is unfair
+;
+; THINGS TO TRY
+;   * Deal four hands of five and draw them in four rows.
+;   * Count how many hearts are in the hand with FILTER.
+;   * Shuffle the deck a second time and see that it changes again.
+; ============================================================
+
+make "ranks [A 2 3 4 5 6 7 8 9 10 J Q K]
+make "suits [hearts diamonds clubs spades]
+
+to newdeck
+  output (crossmap [list ?1 ?2] :ranks :suits)
+end
+
+; Fisher-Yates: position i swaps with a random position from 1 to i.
+; Working inside an array lets us swap in place, which a list cannot do.
+; If instead every card swapped with ANY of the 52 places, there would
+; be 52 to the power 52 ways for the swaps to go, which cannot divide
+; evenly among the 52 factorial possible orders, so some orders would
+; come up more often than others.
+to shuffle :cards
+  localmake "a listtoarray :cards
+  localmake "n count :cards
+  for [i :n 2 -1] [
+    localmake "j 1 + random :i
+    localmake "temp item :i :a
+    setitem :i :a item :j :a
+    setitem :j :a :temp
+  ]
+  output arraytolist :a
+end
+
+; Hearts and diamonds are red. The suit is drawn as a simple symbol
+; label using its first letter, plus the rank in the corner.
+to drawcard :card :x :y
+  localmake "red memberp last :card [hearts diamonds]
+  penup setxy :x :y setheading 90
+  filled "white [repeat 2 [fd 100 rt 90 fd 150 rt 90]]
+  setpencolor "black pendown
+  repeat 2 [fd 100 rt 90 fd 150 rt 90]
+  penup
+  setpencolor ifelse :red ["red] ["black]
+  setlabelheight 22
+  setxy :x + 8 :y - 26 label first :card
+  setxy :x + 70 :y - 140 label first :card
+  setlabelheight 14
+  setxy :x + 20 :y - 80 label last :card
+end
+
+to table
+  penup setxy -380 280 setheading 90
+  filled [20 110 50] [repeat 2 [fd 760 rt 90 fd 560 rt 90]]
+end
+
+clearscreen hideturtle
+make "deck shuffle newdeck
+print sentence [Cards in the deck:] count :deck
+print sentence [The top three cards:] (list item 1 :deck item 2 :deck item 3 :deck)
+make "hand []
+repeat 5 [make "hand lput pop "deck :hand]
+print sentence [Your hand:] :hand
+print sentence [Cards left in the deck:] count :deck
+; Later drawing covers earlier drawing, so the green table goes in
+; first and the cards are dealt on top of it.
+table
+foreach :hand [drawcard ? -300 + 125 * (# - 1) 80 wait 20]
+penup setxy -300 -120 setpencolor "white
+label sentence [Hearts in your hand:] count filter [equalp last ? "hearts] :hand

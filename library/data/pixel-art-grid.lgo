@@ -1,0 +1,83 @@
+; ============================================================
+; TITLE:    Pixel Art Grid
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Beginner
+; TAGS:     mdarray, grid, arrays, pixel art, colors
+; SUMMARY:  Stores a little picture in a two dimensional array of color numbers and paints it square by square.
+; ============================================================
+;
+; WHAT IT DOES
+;   Pictures on a screen are grids of tiny colored squares. Here the
+;   grid is an MDARRAY with 10 rows and 10 columns. Each box holds a
+;   color number. The picture starts as rows of digits, the program
+;   copies them into the array, then paints the array, then paints a
+;   mirror image next to it by reading the columns backward.
+;
+; HOW TO USE
+;   Press Run. To make your own picture, change the rows in
+;   the variable called rows. 0 is black, 4 red, 6 yellow, 7 white.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MDARRAY [rows columns] makes a grid
+;   * MDSETITEM and MDITEM use a [row column] list as the address
+;   * nested FOR loops visit every cell
+;   * a word like 0440 is also a list of characters you can ITEM
+;
+; THINGS TO TRY
+;   * Draw your initials or a space invader.
+;   * Make the squares smaller and the grid bigger.
+;   * Paint the picture upside down by counting rows backward.
+; ============================================================
+
+; Each row is a word of digits. 9 means "leave empty" so the background
+; shows through.
+make "rows [
+  9994499449
+  9944444444
+  9444744444
+  9444444444
+  9444444444
+  9944444449
+  9994444499
+  9999444999
+  9999949999
+  9999999999
+]
+
+make "size 10
+make "grid mdarray (list :size :size)
+
+; Copy the digits into the array. ITEM :c of a word gives one digit.
+to loadgrid
+  for [r 1 10] [
+    for [c 1 10] [
+      mdsetitem (list :r :c) :grid item :c item :r :rows
+    ]
+  ]
+end
+
+; Paint one square with its top left corner at (x, y).
+to pixel :x :y :color
+  if :color = 9 [stop]
+  penup setxy :x :y setheading 90
+  filled :color [repeat 4 [fd 24 rt 90]]
+end
+
+; MIRROR = true reads each row from the right end, which flips it.
+to paint :left :mirror
+  for [r 1 10] [
+    for [c 1 10] [
+      localmake "col ifelse :mirror [11 - :c] [:c]
+      pixel :left + 24 * (:c - 1) 150 - 24 * (:r - 1) mditem (list :r :col) :grid
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [230 240 255]
+loadgrid
+paint -300 "false
+paint 60 "true
+penup setxy -300 -150 setpencolor "black
+label [The grid, and the same grid read backward]
+print sentence [Color in row 3, column 4 is] mditem [3 4] :grid

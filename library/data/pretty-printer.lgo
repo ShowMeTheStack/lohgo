@@ -1,0 +1,96 @@
+; ============================================================
+; TITLE:    Nested Data Pretty Printer
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Advanced
+; TAGS:     nested lists, recursion, records, json, formatting
+; SUMMARY:  Prints deeply nested lists as neatly indented records, in the style of JSON, and fetches values by following a path of keys.
+; ============================================================
+;
+; WHAT IT DOES
+;   Real programs pass around data in layers: a school has classes,
+;   a class has a teacher and pupils, a pupil has a name and scores.
+;   Here a record is a list that starts with the word "record"
+;   followed by key and value pairs, and anything else is a plain
+;   list or a single word. PRETTY walks the structure recursively,
+;   adding two spaces of indent for each level, so a long tangled
+;   list becomes easy to read. GETPATH digs out one value.
+;
+; HOW TO USE
+;   Press Run. First the raw list is shown with SHOW, then the tidy
+;   version. Add another pupil to the data and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * recursion over nested data of different kinds
+;   * telling words, records and plain lists apart with tests
+;   * passing an indent string down the recursion
+;   * following a path of keys, like school.classes.1.teacher
+;
+; THINGS TO TRY
+;   * Make PRETTY print short lists of numbers on a single line.
+;   * Write SETPATH that outputs a copy with one value changed.
+; ============================================================
+
+make "school [record
+  name Hilltop
+  founded 1987
+  classes [
+    [record teacher [Ms Patel] room 4
+       pupils [[record name Ana scores [8 9 7]]
+               [record name Ben scores [6 10 9]]]]
+    [record teacher [Mr Okafor] room 7
+       pupils [[record name Cy scores [10 10 8]]]]]]
+
+; AND works out all its inputs before deciding, so we cannot ask for
+; FIRST of an empty list inside it. Separate IFs stop early instead.
+to recordp :x
+  if not listp :x [output "false]
+  if emptyp :x [output "false]
+  output equalp first :x "record
+end
+
+; TYPE prints without a newline; PRINT ends the line.
+to pretty :x :indent
+  if wordp :x [print :x stop]
+  if recordp :x [prettyrecord butfirst :x :indent stop]
+  print "|[|
+  foreach :x [type word :indent "|  | pretty ? word :indent "|  |]
+  print word :indent "|]|
+end
+
+to prettyrecord :pairs :indent
+  print "|{|
+  while [not emptyp :pairs] [
+    type (word :indent "|  | first :pairs "|: |)
+    localmake "v first butfirst :pairs
+    ; A list of words, such as a name, reads best on one line.
+    ifelse and listp :v not memberp "true map [listp ?] :v ~
+      [show :v] ~
+      [pretty :v word :indent "|  |]
+    make "pairs butfirst butfirst :pairs
+  ]
+  print word :indent "|}|
+end
+
+; Find a key inside a record's pairs.
+to lookupkey :key :pairs
+  if emptyp :pairs [output []]
+  if equalp first :pairs :key [output first butfirst :pairs]
+  output lookupkey :key butfirst butfirst :pairs
+end
+
+; A path is a list of keys and numbers. Numbers pick an item from a
+; plain list, words pick a field from a record.
+to getpath :path :data
+  if emptyp :path [output :data]
+  if numberp first :path [output getpath butfirst :path item first :path :data]
+  output getpath butfirst :path lookupkey first :path butfirst :data
+end
+
+print [The raw data, all on one line:]
+show :school
+print []
+print [The same data, pretty printed:]
+pretty :school "
+print []
+print sentence [Teacher of class 2:] getpath [classes 2 teacher] :school
+print sentence [Ben's scores:] getpath [classes 1 pupils 2 scores] :school

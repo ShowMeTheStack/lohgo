@@ -1,0 +1,99 @@
+; ============================================================
+; TITLE:    Sparse Starfield
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Advanced
+; TAGS:     sparse array, property lists, memory, grids, dot
+; SUMMARY:  Stores a huge 1000 by 1000 sky by remembering only the cells that hold a star, then draws it and answers questions about it.
+; ============================================================
+;
+; WHAT IT DOES
+;   A full 1000 by 1000 grid would need a million boxes, but the sky
+;   has only a few hundred stars. A sparse array remembers just the
+;   cells that are not empty. Here each star is stored on a property
+;   list whose property name is made from its row and column, like
+;   r12c40. Asking for any other cell gives 0, as if it were there.
+;   The program scatters stars, draws them, and counts stars inside
+;   a box.
+;
+; HOW TO USE
+;   Press Run. Change HOWMANY to put more stars in the sky. The
+;   numbers printed show how much memory the sparse version saves.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a sparse array: store only what is not empty
+;   * building keys with WORD so one plist can act like a table
+;   * a default value for missing entries
+;   * PLIST to list everything that is stored
+;
+; THINGS TO TRY
+;   * Make SKYSET with brightness 0 remove the star with REMPROP.
+;   * Draw a constellation by joining the five brightest stars.
+; ============================================================
+
+make "howmany 300
+
+; The key for a cell is a word such as r12c40.
+to cellkey :row :col
+  output (word "r :row "c :col)
+end
+
+; Each stored value is a list [row col brightness]. Keeping the row
+; and column inside the value means we never have to pick the key
+; word apart again when we want to draw the star.
+to skyset :row :col :brightness
+  pprop "sky cellkey :row :col (list :row :col :brightness)
+end
+
+; Missing cells come back from GPROP as the empty list. We turn that
+; into 0 so the sky behaves like a full grid filled with zeros.
+to skyget :row :col
+  localmake "v gprop "sky cellkey :row :col
+  if emptyp :v [output 0]
+  output item 3 :v
+end
+
+; PLIST "sky is [key value key value ...], so we keep just the values.
+to stars
+  localmake "pl plist "sky
+  localmake "out []
+  while [not emptyp :pl] [
+    make "out fput first butfirst :pl :out
+    make "pl butfirst butfirst :pl
+  ]
+  output :out
+end
+
+to drawsky
+  foreach stars [
+    star (item 2 ?) * 0.8 - 400 300 - (item 1 ?) * 0.6 item 3 ?
+  ]
+end
+
+to star :x :y :b
+  setpencolor item :b [[90 90 140] [150 150 200] [210 210 240] [255 255 180] [255 255 255]]
+  setpensize :b + 1
+  dot list :x :y
+end
+
+; Count the stars inside a rectangle of rows and columns. INBOX? can
+; see :r1 and the others because Logo uses dynamic scope: a procedure
+; sees the inputs of the procedure that called it. We test the
+; few hundred stored stars instead of the ten thousand cells in the
+; box, which is the whole point of a sparse array.
+to countbox :r1 :r2 :c1 :c2
+  output count filter [inbox? ?] stars
+end
+
+to inbox? :s
+  output (and (item 1 :s) >= :r1 (item 1 :s) <= :r2 (item 2 :s) >= :c1 (item 2 :s) <= :c2)
+end
+
+clearscreen hideturtle
+setbackground [10 10 40]
+(rerandom 2026)
+repeat :howmany [skyset 1 + random 999 1 + random 999 1 + random 5]
+print sentence [A full grid would store this many cells:] 1000 * 1000
+print sentence [The sparse sky stores only:] count stars
+print sentence [Brightness at row 500, column 500:] skyget 500 500
+print sentence [Stars in rows 1-100, columns 1-100:] countbox 1 100 1 100
+drawsky

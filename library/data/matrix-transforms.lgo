@@ -1,0 +1,98 @@
+; ============================================================
+; TITLE:    Matrix Transforms
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Advanced
+; TAGS:     mdarray, matrix, multiplication, geometry, arrays
+; SUMMARY:  Builds 2 by 2 matrices with MDARRAY, multiplies them, and uses them to stretch, shear and spin a little house.
+; ============================================================
+;
+; WHAT IT DOES
+;   A house is stored as a list of corner points. A 2 by 2 matrix can
+;   move every point at once: it can scale, shear, mirror or rotate
+;   the shape. Four copies of the house are drawn, each changed by a
+;   different matrix, and the last one uses the PRODUCT of two
+;   matrices, which does both jobs in one step.
+;
+; HOW TO USE
+;   Press Run. The matrices are printed in the command center next
+;   to the picture they made. Change the numbers in the MAKEMATRIX
+;   calls at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MDARRAY makes a table of rows and columns
+;   * MDITEM [row col] reads, MDSETITEM [row col] writes
+;   * matrix times point, and matrix times matrix
+;   * keeping shapes as data so they can be transformed
+;
+; THINGS TO TRY
+;   * Make a mirror matrix: -1 0 0 1.
+;   * Multiply in the other order and see that the result changes.
+;   * Add a third row and column so the matrix can also slide shapes.
+; ============================================================
+
+make "house [[0 0] [60 0] [60 50] [30 80] [0 50] [0 0]]
+
+; Build a 2 by 2 matrix from four numbers given row by row.
+to makematrix :a :b :c :d
+  localmake "m mdarray [2 2]
+  mdsetitem [1 1] :m :a  mdsetitem [1 2] :m :b
+  mdsetitem [2 1] :m :c  mdsetitem [2 2] :m :d
+  output :m
+end
+
+; Each new x is row 1 of the matrix dotted with the point,
+; and each new y is row 2 dotted with the point.
+to transform :m :p
+  localmake "x first :p
+  localmake "y last :p
+  output list (mditem [1 1] :m) * :x + (mditem [1 2] :m) * :y ~
+              (mditem [2 1] :m) * :x + (mditem [2 2] :m) * :y
+end
+
+; Matrix product: entry [i j] is row i of A times column j of B.
+to matmul :a :b
+  localmake "c mdarray [2 2]
+  for [i 1 2] [
+    for [j 1 2] [
+      mdsetitem (list :i :j) :c ~
+        (mditem (list :i 1) :a) * (mditem (list 1 :j) :b) + ~
+        (mditem (list :i 2) :a) * (mditem (list 2 :j) :b)
+    ]
+  ]
+  output :c
+end
+
+to showmatrix :name :m
+  print (sentence :name [=] (form mditem [1 1] :m 6 2) (form mditem [1 2] :m 6 2))
+  print (sentence (word map [char 32] :name char 32 char 32) (form mditem [2 1] :m 6 2) (form mditem [2 2] :m 6 2))
+end
+
+; Draw a shape with every point pushed through the matrix, then
+; shifted to the spot (cx, cy) on the screen.
+to drawshape :shape :m :cx :cy :color :title
+  setpencolor "grey penup
+  setxy :cx - 80 :cy pendown setxy :cx + 120 :cy
+  penup setxy :cx :cy - 60 pendown setxy :cx :cy + 130
+  setpencolor :color setpensize 3 penup
+  foreach :shape [
+    localmake "p transform :m ?
+    setxy :cx + first :p :cy + last :p
+    pendown
+  ]
+  setpensize 1 penup setxy :cx - 70 :cy - 90 setpencolor "black
+  label :title
+end
+
+clearscreen hideturtle
+make "stretch makematrix 1.6 0 0 0.8
+make "shear makematrix 1 0.6 0 1
+make "spin makematrix cos 30 (minus sin 30) sin 30 cos 30
+make "both matmul :spin :stretch
+showmatrix "stretch :stretch
+showmatrix "shear :shear
+showmatrix "spin :spin
+showmatrix "both :both
+drawshape :house makematrix 1 0 0 1 -280 80 "blue [Original]
+drawshape :house :stretch 70 80 "red [Stretch]
+drawshape :house :shear -280 -170 "forest [Shear]
+drawshape :house :both 70 -170 "purple [Spin times stretch]

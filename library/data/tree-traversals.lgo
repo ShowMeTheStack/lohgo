@@ -1,0 +1,102 @@
+; ============================================================
+; TITLE:    Tree Traversals
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Intermediate
+; TAGS:     trees, recursion, preorder, inorder, postorder, breadth first
+; SUMMARY:  Visits the nodes of an arithmetic expression tree in four different orders and numbers each visit on the drawing.
+; ============================================================
+;
+; WHAT IT DOES
+;   The tree holds the sum (3 + 4) * (10 - 2) with the operators on
+;   the inside and the numbers on the leaves. A traversal is a plan
+;   for visiting every node exactly once. Preorder visits a node
+;   before its children, inorder between them, postorder after them,
+;   and level order goes row by row using a queue. Four small copies
+;   of the tree are drawn, each with its visiting order in red.
+;
+; HOW TO USE
+;   Press Run. Compare the four printed orders with the pictures.
+;   Notice that inorder gives back the sum the way you write it,
+;   and postorder is the order a calculator would use.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a tree as nested lists [label left right]
+;   * three recursive traversals that differ by one line
+;   * level order traversal with QUEUE and DEQUEUE
+;   * computing the value of the expression with recursion
+;
+; THINGS TO TRY
+;   * Make a bigger expression tree and check its value.
+;   * Write a traversal that visits right before left.
+; ============================================================
+
+make "expr [* [+ [3 [] []] [4 [] []]] [- [10 [] []] [2 [] []]]]
+
+; Each traversal outputs the labels as a list in visiting order.
+to preorder :t
+  if emptyp :t [output []]
+  output (sentence first :t preorder item 2 :t preorder item 3 :t)
+end
+
+to inorder :t
+  if emptyp :t [output []]
+  output (sentence inorder item 2 :t first :t inorder item 3 :t)
+end
+
+to postorder :t
+  if emptyp :t [output []]
+  output (sentence postorder item 2 :t postorder item 3 :t first :t)
+end
+
+; Level order cannot use simple recursion: we need to finish a whole
+; row before going deeper, so we keep waiting subtrees in a queue.
+to levelorder :t
+  localmake "waiting (list :t)
+  localmake "seen []
+  while [not emptyp :waiting] [
+    localmake "n dequeue "waiting
+    make "seen lput first :n :seen
+    if not emptyp item 2 :n [queue "waiting item 2 :n]
+    if not emptyp item 3 :n [queue "waiting item 3 :n]
+  ]
+  output :seen
+end
+
+to evaluate :t
+  if emptyp item 2 :t [output first :t]
+  output run (list evaluate item 2 :t first :t evaluate item 3 :t)
+end
+
+; Draw the tree at (x, y). ORDER is the visiting list; we look up where
+; this node's label sits in that list to print its visit number.
+to drawtree :t :x :y :gap :order
+  if emptyp :t [stop]
+  foreach [2 3] [
+    if not emptyp item ? :t [
+      localmake "cx ifelse ? = 2 [:x - :gap] [:x + :gap]
+      setpencolor "grey penup setxy :x :y pendown setxy :cx :y - 50
+      drawtree item ? :t :cx :y - 50 :gap / 2 :order
+    ]
+  ]
+  penup setxy :x - 6 :y - 5 setpencolor "blue label first :t
+  setxy :x + 10 :y + 6 setpencolor "red label position first :t :order
+end
+
+to position :x :l
+  if equalp :x first :l [output 1]
+  output 1 + position :x butfirst :l
+end
+
+to panel :name :order :x :y
+  drawtree :expr :x :y 80 :order
+  penup setxy :x - 80 :y - 150 setpencolor "black label :name
+  print sentence word :name ": :order
+end
+
+clearscreen hideturtle
+setlabelheight 16
+panel "Preorder preorder :expr -200 260
+panel "Inorder inorder :expr 200 260
+panel "Postorder postorder :expr -200 -20
+panel "Levelorder levelorder :expr 200 -20
+print sentence [The expression is worth] evaluate :expr

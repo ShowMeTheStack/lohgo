@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Venn Diagram Sets
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Beginner
+; TAGS:     sets, union, intersection, difference, filter, venn
+; SUMMARY:  Treats lists as sets, works out union, intersection and difference, and places every member in the right part of a Venn diagram.
+; ============================================================
+;
+; WHAT IT DOES
+;   Two classes listed their favorite fruits. A set is a collection
+;   where each thing appears once and order does not matter, and a
+;   Logo list can play that part. The program prints the classic set
+;   operations and then draws two overlapping circles with each fruit
+;   written in the region where it belongs.
+;
+; HOW TO USE
+;   Press Run. Edit the two lists at the bottom and run it again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MEMBERP asks "is this thing in the set?"
+;   * FILTER builds intersection and difference in one line each
+;   * REMDUP removes repeats, which turns any list into a set
+;   * placing labels with SETXY in a loop
+;
+; THINGS TO TRY
+;   * Add a third circle and a third class.
+;   * Write SUBSETP that says whether every member of one set is in
+;     another.
+; ============================================================
+
+to union :a :b
+  output remdup sentence :a :b
+end
+
+to intersect :a :b
+  output filter [memberp ? :b] :a
+end
+
+; Things in A that are not in B.
+to minusset :a :b
+  output filter [not memberp ? :b] :a
+end
+
+; Write the members of a set in a column starting at (x, y).
+to column :set :x :y :color
+  setpencolor :color
+  foreach :set [
+    penup setxy :x :y label ?
+    make "y :y - 22
+  ]
+end
+
+to circleat :x :y :r :color
+  penup setxy :x :y setpencolor :color setpensize 3
+  pendown arc 360 :r
+  setpensize 1
+end
+
+to venn :a :b :nameA :nameB
+  circleat -90 0 170 "blue
+  circleat 90 0 170 "red
+  penup setxy -220 190 setpencolor "blue label :nameA
+  setxy 120 190 setpencolor "red label :nameB
+  column minusset :a :b -210 60 "blue
+  column intersect :a :b -25 60 "purple
+  column minusset :b :a 120 60 "red
+end
+
+make "classA remdup [apple mango banana kiwi grape apple]
+make "classB [banana cherry grape peach lime]
+
+print sentence [Class A likes:] :classA
+print sentence [Class B likes:] :classB
+print sentence [Union, liked by either class:] union :classA :classB
+print sentence [Intersection, liked by both:] intersect :classA :classB
+print sentence [Only class A:] minusset :classA :classB
+print sentence [Only class B:] minusset :classB :classA
+clearscreen hideturtle
+setlabelheight 16
+venn :classA :classB [Class A] [Class B]

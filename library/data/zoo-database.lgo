@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Zoo Database
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Intermediate
+; TAGS:     property lists, pprop, gprop, database, queries
+; SUMMARY:  Stores facts about zoo animals in property lists and answers questions such as which animals eat meat.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every animal gets its own property list: a name that carries
+;   labeled facts, such as legs 4 or food meat. The program fills in
+;   the zoo, prints a report card for each animal, then answers a few
+;   database style questions and draws a bar chart of weights.
+;
+; HOW TO USE
+;   Press Run. Read the answers in the command center and look at
+;   the chart in the turtle world. Add your own animals in FILLZOO.
+;
+; CONCEPTS YOU WILL LEARN
+;   * PPROP name property value stores a fact
+;   * GPROP name property gets it back
+;   * PLIST shows every fact about one name
+;   * writing small query procedures with FILTER
+;
+; THINGS TO TRY
+;   * Add a property called home and ask which animals live in water.
+;   * Write HEAVIEST that outputs the animal with the largest weight.
+;   * Use REMPROP when an animal leaves the zoo.
+; ============================================================
+
+make "animals []
+
+; One procedure call stores a whole animal, and also remembers its
+; name in a list, because Logo has no easy way to ask "which plists
+; have a food property?" We keep our own index instead.
+to addanimal :name :legs :food :kg
+  pprop :name "legs :legs
+  pprop :name "food :food
+  pprop :name "kg :kg
+  make "animals lput :name :animals
+end
+
+to fillzoo
+  addanimal "lion 4 "meat 190
+  addanimal "penguin 2 "fish 30
+  addanimal "giraffe 4 "leaves 800
+  addanimal "parrot 2 "seeds 1
+  addanimal "crocodile 4 "meat 450
+  addanimal "otter 4 "fish 10
+end
+
+to reportcard :name
+  print (sentence uppercase :name [has] gprop :name "legs [legs, eats] ~
+        gprop :name "food [and weighs] gprop :name "kg [kg.])
+end
+
+; A general question: which animals have this value for this property?
+to whohas :prop :value
+  output filter [equalp gprop ? :prop :value] :animals
+end
+
+to totalkg
+  output reduce "sum map [gprop ? "kg] :animals
+end
+
+; Bars are scaled so the heaviest animal reaches 220 steps.
+to weightchart
+  localmake "biggest reduce [ifelse ?1 > ?2 [?1] [?2]] map [gprop ? "kg] :animals
+  localmake "x -300
+  foreach :animals [
+    localmake "h 220 * (gprop ? "kg) / :biggest
+    penup setxy :x -200 setheading 0 pendown
+    filled item # [4 0 14 6 10 8] [repeat 2 [fd :h rt 90 fd 60 rt 90]]
+    penup setxy :x -225 setpencolor "black label ?
+    setxy :x -190 + :h label gprop ? "kg
+    make "x :x + 100
+  ]
+  penup setxy -300 220 label [Weight of each animal in kg]
+end
+
+fillzoo
+foreach :animals [reportcard ?]
+print []
+print sentence [Meat eaters:] whohas "food "meat
+print sentence [Two legged animals:] whohas "legs 2
+print sentence [Everything we know about the otter:] plist "otter
+print sentence [Total weight of the zoo in kg:] totalkg
+clearscreen hideturtle
+weightchart

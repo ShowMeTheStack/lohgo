@@ -1,0 +1,104 @@
+; ============================================================
+; TITLE:    Linked List Boxes
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Intermediate
+; TAGS:     linked list, arrays, pointers, setitem, drawing
+; SUMMARY:  Builds a linked list from two-slot arrays, draws it as boxes and arrows, then inserts and deletes cells by changing links.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each cell is an array {value next}. The next slot holds another
+;   cell, or the empty list when the chain ends. This is how Logo
+;   lists work inside the computer. The program draws the chain,
+;   slips a new cell into the middle by changing ONE link, and
+;   removes a cell by making its neighbor skip over it.
+;
+; HOW TO USE
+;   Press Run and compare the three rows of boxes from top to bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ARRAY and SETITEM make a cell you can change later
+;   * following links with a WHILE loop
+;   * inserting and deleting without copying the whole list
+;   * why FPUT is quick but LPUT has to walk to the end
+;
+; THINGS TO TRY
+;   * Write APPENDCELL that walks to the last cell and links a new one.
+;   * Make the list circular by pointing the last cell at the first.
+;     What would DRAWCHAIN do then?
+; ============================================================
+
+; A cell is a two slot array: item 1 is the value, item 2 is the link.
+to cell :value :next
+  localmake "c array 2
+  setitem 1 :c :value
+  setitem 2 :c :next
+  output :c
+end
+
+; Build the chain from the back, so each new cell can point to the
+; one we just made.
+to buildchain :values
+  localmake "head []
+  foreach reverse :values [make "head cell ? :head]
+  output :head
+end
+
+; Draw boxes from left to right by following the links.
+to drawchain :head :y :title
+  localmake "x -360
+  penup setxy -360 :y + 40 setpencolor "black label :title
+  localmake "c :head
+  while [not emptyp :c] [
+    drawbox :x :y item 1 :c
+    if not emptyp item 2 :c [drawarrow :x + 80 :y - 15]
+    make "x :x + 115
+    make "c item 2 :c
+  ]
+  penup setxy :x - 10 :y - 20 setpencolor "red label "nil
+end
+
+to drawbox :x :y :value
+  penup setxy :x :y setheading 90 setpencolor "blue pendown
+  filled [210 230 255] [repeat 2 [fd 90 rt 90 fd 30 rt 90]]
+  repeat 2 [fd 90 rt 90 fd 30 rt 90]
+  penup fd 60 rt 90 pendown fd 30
+  penup setxy :x + 8 :y - 21 setpencolor "black label :value
+  setxy :x + 75 :y - 15 setpencolor "red pendown setxy :x + 75 :y - 16
+end
+
+to drawarrow :x :y
+  penup setxy :x - 5 :y setheading 90 setpencolor "red pendown
+  fd 40 lt 150 fd 8 bk 8 rt 300 fd 8
+end
+
+; Find the cell holding a value by walking the chain.
+to findcell :head :value
+  localmake "c :head
+  while [not emptyp :c] [
+    if equalp item 1 :c :value [output :c]
+    make "c item 2 :c
+  ]
+  output []
+end
+
+; Inserting after a cell changes just one link: the new cell takes
+; over the old link, then the old cell points at the new one.
+to insertafter :head :value :newvalue
+  localmake "c findcell :head :value
+  setitem 2 :c cell :newvalue item 2 :c
+end
+
+; Deleting the cell after this one: skip over it.
+to deleteafter :head :value
+  localmake "c findcell :head :value
+  setitem 2 :c item 2 item 2 :c
+end
+
+clearscreen hideturtle
+make "list1 buildchain [ant bee cat dog]
+drawchain :list1 200 [Start: four cells]
+insertafter :list1 "bee "bat
+drawchain :list1 40 [Insert bat after bee: one link changed]
+deleteafter :list1 "cat
+drawchain :list1 -120 [Delete the cell after cat: cat skips over it]

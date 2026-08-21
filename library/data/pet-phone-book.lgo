@@ -1,0 +1,83 @@
+; ============================================================
+; TITLE:    Pet Phone Book
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Beginner
+; TAGS:     association list, lookup, lists, readlist, interactive
+; SUMMARY:  Keeps pet names and their owners in an association list, a list of little pairs, and lets you look them up.
+; ============================================================
+;
+; WHAT IT DOES
+;   An association list is a list whose members are pairs, like
+;   [[Rex Sam] [Tiger Mia]]. The first item of each pair is the key
+;   and the second is the value. The program prints the book, looks
+;   up pets you type, and adds new pets you tell it about.
+;
+; HOW TO USE
+;   Type a pet name in the command center and press Enter. If the
+;   pet is new, you are asked for its owner. Type quit to finish.
+;
+; CONCEPTS YOU WILL LEARN
+;   * lists of lists as a tiny database
+;   * FIND with a template to search for a key
+;   * FPUT to add a new pair at the front
+;   * FILTER to delete a pair
+;
+; THINGS TO TRY
+;   * Store three things per pet: name, owner and kind of animal.
+;   * Add a "forget" command that uses FORGET to remove a pet.
+;   * Print the book sorted by owner.
+; ============================================================
+
+make "book [[Rex Sam] [Tiger Mia] [Bubbles Leo] [Nibbles Ava]]
+
+; FIND runs the template on each pair and outputs the first pair for
+; which it says true. If nothing matches, FIND outputs the empty list.
+to lookup :pet
+  output find [equalp first ? :pet] :book
+end
+
+to remember :pet :owner
+  make "book fput (list :pet :owner) :book
+end
+
+; FILTER keeps every pair whose key is NOT the pet, so the pair vanishes.
+to forget :pet
+  make "book filter [not equalp first ? :pet] :book
+end
+
+to showbook
+  print [--- The pet phone book ---]
+  foreach :book [print (sentence first ? [belongs to] last ?)]
+  print []
+end
+
+to ask.owner :pet
+  print sentence [Who owns] word :pet "?
+  localmake "answer readlist
+  if emptyp :answer [stop]
+  remember :pet first :answer
+  print (sentence [Saved.] :pet [belongs to] first :answer)
+end
+
+to chat
+  forever [
+    print [Type a pet name, or quit:]
+    localmake "line readlist
+    if emptyp :line [stop]
+    localmake "pet first :line
+    if equalp :pet "quit [showbook stop]
+    localmake "pair lookup :pet
+    ifelse emptyp :pair [
+      print (sentence [I do not know] :pet [yet.])
+      ask.owner :pet
+    ] [
+      print (sentence :pet [belongs to] last :pair)
+    ]
+  ]
+end
+
+showbook
+forget "Nibbles
+print [Nibbles moved away, so the book now has:]
+showbook
+chat

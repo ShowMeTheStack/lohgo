@@ -1,0 +1,124 @@
+; ============================================================
+; TITLE:    Subway Map Search
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Advanced
+; TAGS:     graph, adjacency list, breadth first search, queue, plists
+; SUMMARY:  Stores a small subway map as an adjacency list, runs breadth first search from one station and colors each station by how many stops away it is.
+; ============================================================
+;
+; WHAT IT DOES
+;   A graph is a set of places joined by connections. Each station
+;   has a position and a list of neighbors, both kept on its property
+;   list. Breadth first search starts at one station, visits all its
+;   neighbors, then all THEIR neighbors, and so on, using a queue to
+;   remember who is next. That finds the fewest stops to every other
+;   station, and the program also prints the route to one of them.
+;
+; HOW TO USE
+;   Press Run. Change START and GOAL at the bottom to other station
+;   names, or add stations and tracks in BUILDMAP.
+;
+; CONCEPTS YOU WILL LEARN
+;   * an adjacency list: each node lists the nodes it touches
+;   * breadth first search with QUEUE and DEQUEUE
+;   * remembering where each node was reached from, to rebuild a path
+;   * coloring nodes by distance
+;
+; THINGS TO TRY
+;   * Swap the queue for a stack with PUSH and POP. The search still
+;     reaches everyone, but the stop counts are no longer the fewest.
+;   * Add a track that makes a shortcut and watch the colors change.
+; ============================================================
+
+make "stations []
+
+to station :name :x :y
+  pprop :name "x :x
+  pprop :name "y :y
+  pprop :name "next []
+  make "stations lput :name :stations
+end
+
+; Tracks run both ways, so each end gets the other as a neighbor.
+to track :a :b
+  pprop :a "next lput :b gprop :a "next
+  pprop :b "next lput :a gprop :b "next
+end
+
+to buildmap
+  foreach [[Park -300 150] [Mill -150 200] [Dock -320 -60] [Fair -140 40]
+           [Hill 20 210] [Bank 20 -10] [Zoo -160 -170] [Lake 180 120]
+           [Port 200 -100] [Moor 330 30]] [apply "station ?]
+  foreach [[Park Mill] [Park Dock] [Mill Fair] [Mill Hill] [Dock Fair]
+           [Dock Zoo] [Fair Bank] [Hill Lake] [Bank Port] [Zoo Port]
+           [Lake Moor] [Port Moor]] [apply "track ?]
+end
+
+; The search writes two facts on each station it reaches:
+; dist (number of stops) and from (the station before it).
+to breadthfirst :start
+  foreach :stations [remprop ? "dist remprop ? "from]
+  pprop :start "dist 0
+  localmake "todo (list :start)
+  while [not emptyp :todo] [
+    localmake "here dequeue "todo
+    foreach gprop :here "next [
+      if emptyp gprop ? "dist [
+        pprop ? "dist 1 + gprop :here "dist
+        pprop ? "from :here
+        queue "todo ?
+      ]
+    ]
+  ]
+end
+
+; Walk the from links backward from the goal, putting each one in front.
+to route :goal
+  if emptyp gprop :goal "from [output (list :goal)]
+  output lput :goal route gprop :goal "from
+end
+
+to place :s
+  penup setxy gprop :s "x gprop :s "y
+end
+
+; Tracks run from station to station. The map is drawn first and the
+; stations after, because later drawing covers earlier drawing: each
+; disc covers the ends of its tracks.
+to drawmap
+  setpencolor "grey setpensize 4
+  foreach :stations [
+    localmake "s ?
+    foreach gprop :s "next [
+      place :s
+      pendown
+      setxy gprop ? "x gprop ? "y
+      penup
+    ]
+  ]
+  setpensize 1
+end
+
+to drawstations
+  localmake "colors [[220 40 40] [240 140 30] [230 200 30] [60 170 70] [50 110 220] [140 70 200]]
+  foreach :stations [
+    place ? setheading 0 fd 14 rt 90
+    filled item 1 + gprop ? "dist :colors [repeat 20 [fd 4.4 rt 18]]
+    place ? setpencolor "black
+    setxy xcor - 18 ycor + 20 label ?
+    setxy xcor + 14 ycor - 26 setpencolor "white label gprop ? "dist
+  ]
+end
+
+clearscreen hideturtle
+buildmap
+make "start "Park
+make "goal "Moor
+breadthfirst :start
+drawmap
+drawstations
+print (sentence [Stops needed to reach each station from] word :start ":)
+foreach :stations [print (sentence word ? ": gprop ? "dist)]
+print sentence [Fewest stops route:] route :goal
+penup setxy -380 -270 setpencolor "black
+label (sentence [Red is the start. Route:] route :goal)

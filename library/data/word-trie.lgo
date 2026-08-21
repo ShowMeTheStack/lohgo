@@ -1,0 +1,111 @@
+; ============================================================
+; TITLE:    Word Trie
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Advanced
+; TAGS:     trie, prefix tree, recursion, nested lists, autocomplete
+; SUMMARY:  Stores words in a prefix tree where shared beginnings are kept only once, draws the tree and suggests completions for a prefix.
+; ============================================================
+;
+; WHAT IT DOES
+;   Words like car, cart and cat all begin with ca. A trie keeps that
+;   shared beginning once and branches only where the words differ.
+;   Each node is a list [end children], where END is true if a word
+;   finishes here, and CHILDREN is a list of [letter node] pairs.
+;   The program builds a trie, draws it with one letter per circle
+;   (gold circles mark word endings) and lists every word that
+;   starts with a given prefix, the trick behind autocomplete.
+;
+; HOW TO USE
+;   Press Run. Change the word list, or the prefixes at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a tree whose branches are labeled with letters
+;   * recursion on words with FIRST and BUTFIRST
+;   * rebuilding nested lists instead of changing them
+;   * walking every path of a tree to collect results
+;
+; THINGS TO TRY
+;   * Add COUNTNODES and compare it with the total letters in all words.
+;   * Store a number at each end node to count how often a word was added.
+; ============================================================
+
+make "words [car cart cat dog do dot cub]
+
+to emptynode
+  output [false []]
+end
+
+; Find the child node for a letter, or [] if there is none.
+to child :letter :node
+  localmake "pair find [equalp first ? :letter] last :node
+  if emptyp :pair [output []]
+  output last :pair
+end
+
+; Insert outputs a new node. When the word is used up, this node marks
+; the end of a word. If there is no child for the first letter yet, a
+; new branch goes on the end. Otherwise MAP rebuilds the children,
+; replacing only the matching one, so branches keep their order.
+to insertword :w :node
+  if emptyp :w [output list "true last :node]
+  localmake "kids last :node
+  if emptyp child first :w :node [
+    output list first :node lput (list first :w insertword butfirst :w emptynode) :kids
+  ]
+  output list first :node map [growbranch ? :w] :kids
+end
+
+to growbranch :pair :w
+  if not equalp first :pair first :w [output :pair]
+  output list first :pair insertword butfirst :w last :pair
+end
+
+; Every word below this node, each with PREFIX stuck on the front.
+to wordsbelow :node :prefix
+  localmake "found ifelse first :node [(list :prefix)] [[]]
+  foreach last :node [
+    make "found sentence :found wordsbelow last ? word :prefix first ?
+  ]
+  output :found
+end
+
+to complete :prefix :node
+  if emptyp :prefix [output wordsbelow :node "]
+  localmake "c child first :prefix :node
+  if emptyp :c [output []]
+  output map [word first :prefix ?] complete butfirst :prefix :c
+end
+
+; Count the leaves so each subtree gets a fair share of the width.
+to leaves :node
+  if emptyp last :node [output 1]
+  output reduce "sum map [leaves last ?] last :node
+end
+
+; Draw the children of a node spread across the strip from LEFT to
+; LEFT + WIDTH, one row lower, each child getting width for its leaves.
+to drawnode :node :x :y :left :width
+  localmake "unit :width / leaves :node
+  foreach last :node [
+    localmake "w :unit * leaves last ?
+    localmake "cx :left + :w / 2
+    penup setxy :x :y - 16 setpencolor "grey pendown setxy :cx :y - 64
+    drawletter first ? first last ? :cx :y - 80
+    drawnode last ? :cx :y - 80 :left :w
+    make "left :left + :w
+  ]
+end
+
+to drawletter :letter :isend :x :y
+  penup setxy :x :y setheading 90 setpencolor ifelse :isend [[230 170 0]] ["blue]
+  setpensize 3 pendown arc 360 16 setpensize 1
+  penup setxy :x - 5 :y - 6 setpencolor "black label :letter
+end
+
+clearscreen hideturtle
+make "trie emptynode
+foreach :words [make "trie insertword ? :trie]
+penup setxy -8 254 setpencolor "black label "*
+drawnode :trie 0 260 -380 760
+foreach [ca do c z] [print (sentence [Words starting with] word ? ": complete ? :trie)]
+print sentence [Every word in the trie:] wordsbelow :trie "

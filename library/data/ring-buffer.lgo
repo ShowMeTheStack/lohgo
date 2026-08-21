@@ -1,0 +1,108 @@
+; ============================================================
+; TITLE:    Ring Buffer
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Intermediate
+; TAGS:     circular buffer, arrays, modulo, queue, animation
+; SUMMARY:  A fixed size array bent into a circle stores the latest temperature readings, overwriting the oldest one when it is full.
+; ============================================================
+;
+; WHAT IT DOES
+;   A weather station keeps only the last 8 readings. Instead of
+;   shifting every value along when a new one arrives, it writes into
+;   the next slot of an 8 slot array and wraps from slot 8 back to
+;   slot 1. Two arrows show where the next reading goes (write) and
+;   where the oldest reading is (read). The slots are drawn as a
+;   ring so the wrapping is easy to see.
+;
+; HOW TO USE
+;   Press Run and watch twelve readings arrive. After the eighth one
+;   the buffer is full and new readings replace the oldest.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ARRAY with a fixed size
+;   * MODULO to wrap an index around
+;   * keeping a count so full and empty can be told apart
+;   * drawing positions around a circle with SIN and COS
+;
+; THINGS TO TRY
+;   * Make the buffer bigger. Only one number needs to change.
+;   * Add TAKE that removes the oldest reading and moves the read arrow.
+;   * Color each slot by its temperature, blue for cold, red for hot.
+; ============================================================
+
+make "size 8
+make "buf array :size
+make "writeat 1
+make "used 0
+
+; The slot after slot k, wrapping from the last slot back to 1.
+to nextslot :k
+  output 1 + modulo :k :size
+end
+
+to add :reading
+  setitem :writeat :buf :reading
+  make "writeat nextslot :writeat
+  if :used < :size [make "used :used + 1]
+end
+
+; The oldest reading sits USED slots behind the write position.
+to readat
+  output 1 + modulo (:writeat - 1 - :used) :size
+end
+
+; Read the stored values from oldest to newest.
+to contents.in.order
+  localmake "out []
+  localmake "k readat
+  repeat :used [
+    make "out lput item :k :buf :out
+    make "k nextslot :k
+  ]
+  output :out
+end
+
+; Slot k sits at an angle around the ring, slot 1 at the top.
+to slotpos :k :r
+  localmake "a 360 * (:k - 1) / :size
+  output list :r * sin :a :r * cos :a
+end
+
+to drawring
+  clean
+  for [k 1 :size] [
+    localmake "p slotpos :k 150
+    penup setpos :p setpencolor "blue
+    setxy xcor - 30 ycor + 20 setheading 90 pendown
+    repeat 2 [fd 60 rt 90 fd 40 rt 90]
+    penup setpos slotpos :k 150 setxy xcor - 12 ycor - 6
+    setpencolor "black
+    if not emptyp item :k :buf [label item :k :buf]
+    penup setpos slotpos :k 205 setxy xcor - 4 ycor - 6
+    setpencolor "grey label :k
+  ]
+  ; The two arrows have different lengths so that both stay readable
+  ; when the buffer is full and they point at the same slot.
+  arrow :writeat "red [write] 105
+  if :used > 0 [arrow readat "forest [read] 60]
+  penup setxy -380 -270 setpencolor "black
+  label sentence [Oldest to newest:] contents.in.order
+end
+
+; Point from the middle toward a slot.
+to arrow :k :color :name :len
+  penup home setpencolor :color setpensize 3
+  setheading towards slotpos :k 150
+  pendown fd :len lt 150 fd 12 bk 12 rt 300 fd 12 bk 12 lt 150
+  setpensize 1 penup
+  setxy xcor - 20 ycor - 30 label :name
+end
+
+clearscreen hideturtle
+drawring
+foreach [14 15 17 18 16 13 12 11 10 12 15 19] [
+  add ?
+  print (sentence [Reading] ? [stored. Buffer holds:] contents.in.order)
+  drawring
+  wait 40
+]

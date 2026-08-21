@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Stack of Plates
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Beginner
+; TAGS:     stack, push, pop, lists, animation
+; SUMMARY:  Plates are pushed onto a stack and popped off again, and the turtle draws the pile after every move.
+; ============================================================
+;
+; WHAT IT DOES
+;   A stack works like a pile of plates in a kitchen: you can only
+;   put a new plate on the top, and you can only take the top plate
+;   off. The program pushes five colored plates, then pops three,
+;   redrawing the pile each time so you can watch it grow and shrink.
+;
+; HOW TO USE
+;   Press Run and watch the turtle world. The command center prints
+;   each PUSH and POP and what the stack list looks like.
+;
+; CONCEPTS YOU WILL LEARN
+;   * PUSH adds a thing to the front of a list kept in a variable
+;   * POP removes the front thing and outputs it
+;   * the front of the list is the "top" of the stack
+;   * last in, first out (LIFO)
+;
+; THINGS TO TRY
+;   * Push more plates. What happens when the pile reaches the top?
+;   * Try to POP from an empty stack and read the error message.
+;   * Change DRAWPLATE so plates are drawn as ellipses.
+; ============================================================
+
+; The whole stack lives in one variable. An empty list means no plates.
+make "plates []
+
+; Draw one plate as a filled rectangle with its color name on it.
+to drawplate :color :y
+  penup setxy -90 :y pendown
+  setheading 90 setpencolor "black
+  filled :color [repeat 2 [fd 180 rt 90 fd 24 rt 90]]
+  penup setxy -20 :y - 17
+  setpencolor "white
+  label :color
+end
+
+; Redraw the whole pile. The stack list keeps the top plate FIRST,
+; so we reverse it to draw from the bottom of the pile upward.
+to drawstack
+  clean
+  setpencolor "black setpensize 4
+  penup setxy -120 -200 pendown setheading 90 fd 240
+  setpensize 1
+  localmake "y -200
+  foreach reverse :plates [
+    drawplate ? :y + 24
+    make "y :y + 28
+  ]
+  penup setxy -150 230 setpencolor "black
+  label (sentence [Plates on the stack:] count :plates)
+end
+
+to addplate :color
+  push "plates :color
+  print (sentence [push] :color [->] :plates)
+  drawstack
+  wait 40
+end
+
+to takeplate
+  ; POP outputs the top plate AND removes it from the variable.
+  localmake "top pop "plates
+  print (sentence [pop gives] :top [->] :plates)
+  drawstack
+  wait 40
+end
+
+clearscreen hideturtle
+setlabelheight 16
+drawstack
+foreach [red orange forest purple blue] [addplate ?]
+repeat 3 [takeplate]
+print (sentence [The plate on top now is] first :plates)

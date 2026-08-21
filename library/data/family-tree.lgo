@@ -1,0 +1,124 @@
+; ============================================================
+; TITLE:    Family Tree
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Intermediate
+; TAGS:     property lists, recursion, family tree, queries, drawing
+; SUMMARY:  Records parents and children on property lists, answers questions like who are my cousins, and draws three generations.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each person has a property list holding their parents, their
+;   children and their generation. From just those facts, small
+;   procedures work out grandparents, siblings and cousins. Then the
+;   turtle draws the family with lines from each parent pair down to
+;   their children.
+;
+; HOW TO USE
+;   Press Run. Read the answers in the command center. Use BIRTH to
+;   add new people and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * property lists as records about people
+;   * following links between records, like a database join
+;   * MAP.SE to collect results from many people into one list
+;   * REMDUP and REMOVE to tidy the answers
+;
+; THINGS TO TRY
+;   * Write AUNTS, the siblings of your parents.
+;   * Add a fourth generation and make the drawing taller.
+; ============================================================
+
+make "people []
+
+to person :name :gen
+  pprop :name "gen :gen
+  pprop :name "parents []
+  pprop :name "kids []
+  make "people lput :name :people
+end
+
+; A birth links the child to both parents and both parents to the child.
+to birth :child :mum :dad
+  person :child 1 + gprop :mum "gen
+  pprop :child "parents (list :mum :dad)
+  pprop :mum "kids lput :child gprop :mum "kids
+  pprop :dad "kids lput :child gprop :dad "kids
+end
+
+to parents :p
+  output gprop :p "parents
+end
+
+to grandparents :p
+  output map.se [parents ?] parents :p
+end
+
+; Siblings share a parent. Taking the kids of the first parent and
+; removing yourself is enough in this family.
+to siblings :p
+  if emptyp parents :p [output []]
+  output remove :p gprop first parents :p "kids
+end
+
+; Cousins: children of your parents' siblings.
+to cousins :p
+  localmake "uncles map.se [siblings ?] parents :p
+  output remdup map.se [gprop ? "kids] :uncles
+end
+
+to buildfamily
+  ; The order people are added is the order they appear in a row,
+  ; so Raj comes before Mia and Ella after Tom to keep lines short.
+  person "Rose 0 person "Arthur 0
+  person "Raj 1
+  birth "Mia "Rose "Arthur
+  birth "Tom "Rose "Arthur
+  person "Ella 1
+  birth "Leo "Mia "Raj
+  birth "Zoe "Mia "Raj
+  birth "Kit "Ella "Tom
+end
+
+; People are drawn row by row, one row per generation.
+to drawfamily
+  foreach [0 1 2] [
+    localmake "gen ?
+    localmake "row filter [equalp gprop ? "gen :gen] :people
+    localmake "x 0 - 70 * ((count :row) - 1)
+    foreach :row [
+      pprop ? "x :x
+      pprop ? "y 180 - 170 * :gen
+      make "x :x + 140
+    ]
+  ]
+  ; each line runs from the bottom edge of a parent box to the top
+  ; edge of the child box
+  setpencolor "grey setpensize 2
+  foreach :people [
+    localmake "kid ?
+    foreach parents :kid [
+      penup setxy gprop ? "x (gprop ? "y) - 15
+      pendown setxy gprop :kid "x (gprop :kid "y) + 15
+    ]
+  ]
+  setpensize 1
+  foreach :people [namebox ?]
+end
+
+to namebox :p
+  penup setxy (gprop :p "x) - 45 (gprop :p "y) + 15 setheading 90
+  setpencolor item 1 + gprop :p "gen [purple blue forest]
+  pendown repeat 2 [fd 90 rt 90 fd 30 rt 90]
+  penup setxy (gprop :p "x) - 5 * count :p (gprop :p "y) - 5
+  label :p
+end
+
+buildfamily
+print sentence [Grandparents of Leo:] grandparents "Leo
+print sentence [Siblings of Leo:] siblings "Leo
+print sentence [Cousins of Leo:] cousins "Leo
+print sentence [Cousins of Kit:] cousins "Kit
+print sentence [Children of Mia:] gprop "Mia "kids
+clearscreen hideturtle
+setlabelheight 16
+drawfamily

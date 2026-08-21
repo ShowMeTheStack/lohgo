@@ -1,0 +1,91 @@
+; ============================================================
+; TITLE:    Hash Table Buckets
+; CATEGORY: Lists & Data Structures
+; LEVEL:    Advanced
+; TAGS:     hash table, arrays, ascii, buckets, collisions
+; SUMMARY:  Builds a hash table from an array of buckets, shows where each word lands and draws the chains that form when words collide.
+; ============================================================
+;
+; WHAT IT DOES
+;   A hash function turns a word into a number. Using that number as
+;   an array index lets us jump straight to the right bucket instead
+;   of searching a long list. Sometimes two words land in the same
+;   bucket, a collision, so each bucket holds a short list of
+;   [key value] pairs. The turtle draws the array down the left and
+;   the chain of pairs in each bucket to the right.
+;
+; HOW TO USE
+;   Press Run. Try a different number of buckets in NBUCKETS, or the
+;   simpler hash SIMPLEHASH, and see how the chains change.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ASCII turns a character into a number
+;   * a hash function mixes those numbers with MODULO
+;   * an ARRAY of lists, one list per bucket
+;   * collisions and why a good hash spreads words out evenly
+;
+; THINGS TO TRY
+;   * Use SIMPLEHASH in HASHPUT and HASHGET and compare the picture.
+;   * Count the longest chain, and grow the table when it gets long.
+; ============================================================
+
+make "nbuckets 11
+make "table array :nbuckets
+
+; Adding up the letter codes is simple, but "act" and "cat" then land
+; in the same bucket because the order of letters is lost.
+to simplehash :w
+  output 1 + modulo reduce "sum map [ascii ?] :w :nbuckets
+end
+
+; Multiplying by 31 before adding each letter makes the order matter.
+; MODULO at every step keeps the number small.
+to hash :w
+  localmake "h 0
+  foreach lowercase :w [make "h modulo :h * 31 + ascii ? 1000003]
+  output 1 + modulo :h :nbuckets
+end
+
+to clearbuckets
+  for [i 1 :nbuckets] [setitem :i :table []]
+end
+
+; Replace an old pair with the same key, or add a new pair.
+to hashput :key :value
+  localmake "b hash :key
+  localmake "chain filter [not equalp first ? :key] item :b :table
+  setitem :b :table fput (list :key :value) :chain
+end
+
+to hashget :key
+  localmake "pair find [equalp first ? :key] item hash :key :table
+  if emptyp :pair [output [not found]]
+  output last :pair
+end
+
+to drawtable
+  for [i 1 :nbuckets] [
+    localmake "y 250 - 45 * (:i - 1)
+    penup setxy -380 :y setheading 90 setpencolor "blue pendown
+    repeat 2 [fd 40 rt 90 fd 30 rt 90]
+    penup setxy -370 :y - 21 setpencolor "black label :i
+    localmake "x -320
+    foreach item :i :table [
+      penup setxy :x - 20 :y - 15 setpencolor "grey pendown setxy :x :y - 15
+      penup setxy :x :y setpencolor "forest pendown
+      repeat 2 [fd 110 rt 90 fd 30 rt 90]
+      penup setxy :x + 6 :y - 21 setpencolor "black
+      label (word first ? "= last ?)
+      make "x :x + 130
+    ]
+  ]
+end
+
+clearscreen hideturtle
+clearbuckets
+foreach [[cat 4] [act 9] [dog 2] [owl 7] [eel 1] [bee 3] [ant 5] ~
+         [fox 6] [yak 8] [emu 2] [hen 5] [gnu 4] [elk 1] [bat 2]] ~
+        [hashput first ? last ?]
+hashput "cat 10
+foreach [cat act gnu bat cow] [print (sentence ? [is in bucket] hash ? [and has value] hashget ?)]
+drawtable
