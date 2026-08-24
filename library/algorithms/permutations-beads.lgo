@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Permutation Beads
+; CATEGORY: Algorithms
+; LEVEL:    Intermediate
+; TAGS:     permutations, recursion, lists, counting
+; SUMMARY:  Generates every ordering of four colored beads with a short recursive procedure and lays all 24 strings out on the screen.
+; ============================================================
+;
+; WHAT IT DOES
+;   PERMS takes a list and outputs a list of every way to order it.
+;   Four colors give 4 x 3 x 2 x 1 = 24 orderings. Each one is drawn as
+;   a string of beads, in a grid of 6 columns and 4 rows. Each row of
+;   six strings shares the same first bead, while the other three beads
+;   are shuffled into all their six orders behind it.
+;
+; HOW TO USE
+;   Press Run. Change :beads to three colors (6 strings) or keep four.
+;   Five colors make 120 strings, which is too many to draw at this size.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the recursive idea: pick a first item, then permute the rest
+;   * MAP and MAP.SE to build lists of lists
+;   * REMOVE to take one item out of a list
+;
+; THINGS TO TRY
+;   * Print PERMS [a b c] and check the six answers by hand.
+;   * Use PERMS on a list of letters such as [t e a] and join each
+;     answer with (APPLY "WORD ?) to see every jumbled spelling.
+; ============================================================
+
+make "beads [red yellow cyan magenta]
+
+; Every ordering of a list. For each item x: take x out, find every
+; ordering of what is left, and stick x on the front of each one.
+; MAP.SE joins the little lists of answers into one big list.
+to perms :items
+  if emptyp butfirst :items [output (list :items)]
+  output map.se [[x] map [[rest] fput :x :rest] perms remove :x :items] :items
+end
+
+; One string of beads, starting at x y and going right.
+to bead.string :x :y :colors
+  setpencolor "#808890 setpensize 2
+  penup setxy :x :y pendown setxy :x + 28 * ((count :colors) - 1) :y
+  setpensize 22
+  foreach :colors [
+    setpencolor ?
+    dot (list :x + 28 * (# - 1) :y)
+  ]
+  setpensize 1
+end
+
+to lay.out :all
+  localmake "k 0
+  foreach :all [
+    localmake "col remainder :k 6
+    localmake "row int :k / 6
+    bead.string -340 + :col * 125 180 - :row * 110 ?
+    make "k :k + 1
+    wait 10
+  ]
+end
+
+clearscreen hideturtle
+setbackground "#1a1a22
+make "all perms :beads
+lay.out :all
+print (sentence count :all [different orderings of] count :beads [beads.])
+print [The first three orderings are:]
+repeat 3 [show item repcount :all]

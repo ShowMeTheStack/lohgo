@@ -1,0 +1,90 @@
+; ============================================================
+; TITLE:    Binary Search Halving
+; CATEGORY: Algorithms
+; LEVEL:    Intermediate
+; TAGS:     searching, arrays, divide and conquer, logarithm
+; SUMMARY:  Finds a number in a sorted row by checking the middle and throwing away half the row each time.
+; ============================================================
+;
+; WHAT IT DOES
+;   Twenty sorted numbers sit in a row of boxes. To find a target, the
+;   program looks at the middle box (yellow). If the target is smaller,
+;   the right half goes gray and is never looked at again; if bigger,
+;   the left half goes gray. The blue part still in play halves every
+;   step. Three targets are searched for, and one of them is missing.
+;
+; HOW TO USE
+;   Press Run and watch the command center as well as the boxes.
+;   Change the TARGETS list at the bottom to search for other numbers.
+;
+; CONCEPTS YOU WILL LEARN
+;   * why the row must be sorted for this to work
+;   * keeping a range with two variables, :lo and :hi
+;   * that 20 boxes need at most 5 checks, because 2^5 = 32 > 20
+;
+; THINGS TO TRY
+;   * Make the row 1000 numbers long (without drawing) and count the
+;     checks. Compare with linear search.
+;   * Write the search as a recursive procedure instead of a loop.
+; ============================================================
+
+; Make a sorted row by adding a small random jump each time.
+to sorted.row
+  make "row array 20
+  localmake "v 0
+  for [i 1 20] [
+    make "v :v + 1 + random 6
+    setitem :i :row :v
+  ]
+end
+
+to paint :lo :hi :mid
+  clean
+  for [i 1 20] [
+    localmake "x -380 + (:i - 1) * 38
+    localmake "c cond [[[:i = :mid] "#f0d030] [[and :i >= :lo :i <= :hi] "#3c78d8] [else "#3a3a44]]
+    penup setxy :x 0 setheading 0 pendown
+    filled :c [repeat 4 [forward 34 right 90]]
+    penup setxy :x + 6 11
+    setpencolor ifelse :i = :mid ["black] ["white]
+    label item :i :row
+    ; the index under each box
+    penup setxy :x + 10 -20 setpencolor "#9090a0
+    label :i
+  ]
+  wait 40
+end
+
+to binary.search :target
+  localmake "lo 1
+  localmake "hi 20
+  localmake "checks 0
+  print (sentence [Looking for] :target)
+  while [:lo <= :hi] [
+    localmake "mid int (:lo + :hi) / 2
+    make "checks :checks + 1
+    paint :lo :hi :mid
+    localmake "here item :mid :row
+    if :here = :target [
+      print (sentence [found it in box] :mid [after] :checks [checks])
+      stop
+    ]
+    ifelse :target < :here [
+      print (sentence :target [<] :here [so drop the right half])
+      make "hi :mid - 1
+    ] [
+      print (sentence :target [>] :here [so drop the left half])
+      make "lo :mid + 1
+    ]
+  ]
+  paint 1 0 0
+  print (sentence [not there, and we knew after only] :checks [checks])
+end
+
+clearscreen hideturtle
+setbackground "#18181e
+setlabelheight 15
+sorted.row
+print sentence [The row:] arraytolist :row
+make "targets (list item 14 :row item 3 :row 0)
+foreach :targets [binary.search ?  wait 30]

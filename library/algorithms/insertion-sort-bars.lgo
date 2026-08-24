@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Insertion Sort Lift and Slide
+; CATEGORY: Algorithms
+; LEVEL:    Intermediate
+; TAGS:     sorting, arrays, animation, shifting
+; SUMMARY:  Insertion sort lifts one bar out of the row and slides it left until it fits, like sorting cards in your hand.
+; ============================================================
+;
+; WHAT IT DOES
+;   The left part of the row (gold) is always sorted. The next bar is
+;   lifted up and drawn floating above the row in orange. Taller gold
+;   bars shift one place right to make room, and the floating bar moves
+;   left until it reaches the gap where it belongs, then drops in.
+;
+; HOW TO USE
+;   Press Run and watch. Change :n and :delay near the top of the code.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the "hole" trick: shift values instead of swapping them
+;   * a WHILE loop with two conditions joined by AND
+;   * why AND with a list input only checks the second part when needed
+;
+; THINGS TO TRY
+;   * Start with a row that is already sorted. How much work is left?
+;   * Start with a row sorted backwards. Which case is the worst?
+;   * Print the number of shifts at the end.
+; ============================================================
+
+make "n 14
+make "delay 5
+
+to fresh.row
+  make "row array :n
+  for [i 1 :n] [setitem :i :row 15 + random 200]
+end
+
+; Draw a single bar of height :h at slot :slot, standing on :base.
+to slab :slot :h :base :colr
+  localmake "w 560 / :n
+  penup setxy -280 + (:slot - 1) * :w :base setheading 0 pendown
+  filled :colr [repeat 2 [forward :h right 90 forward :w - 6 right 90]]
+end
+
+; :sorted.to tells how many bars at the left are already sorted.
+; :hole is the empty slot, and :held is the height of the lifted bar
+; (0 when nothing is lifted).
+to scene :sorted.to :hole :held
+  clean
+  for [i 1 :n] [
+    if not :i = :hole [
+      ifelse :i <= :sorted.to [slab :i item :i :row -220 "#e0b030] [slab :i item :i :row -220 "#607080]
+    ]
+  ]
+  if :held > 0 [slab :hole :held 20 "orange]
+  wait :delay
+end
+
+to insertion.sort
+  for [k 2 :n] [
+    localmake "held item :k :row
+    localmake "hole :k
+    scene :k - 1 :hole :held
+    ; Slide left while the bar to the left of the hole is taller.
+    ; The second test is a list, so AND only runs it when :hole > 1,
+    ; which stops us from asking for item 0.
+    while [and :hole > 1 [(item :hole - 1 :row) > :held]] [
+      setitem :hole :row item :hole - 1 :row
+      make "hole :hole - 1
+      scene :k :hole :held
+    ]
+    setitem :hole :row :held
+    scene :k 0 0
+  ]
+end
+
+clearscreen hideturtle
+setbackground "#202028
+fresh.row
+insertion.sort
+print [All the bars are in order.]

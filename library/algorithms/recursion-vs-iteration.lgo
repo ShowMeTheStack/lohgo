@@ -1,0 +1,98 @@
+; ============================================================
+; TITLE:    Recursion Versus Iteration
+; CATEGORY: Algorithms
+; LEVEL:    Intermediate
+; TAGS:     recursion, iteration, timing, fibonacci, charts
+; SUMMARY:  Times two ways of computing Fibonacci numbers with TIMEMILLI and draws a chart showing one of them exploding.
+; ============================================================
+;
+; WHAT IT DOES
+;   Fibonacci numbers go 1, 1, 2, 3, 5, 8, 13, ... where each number is
+;   the sum of the two before it. FIB.REC follows that rule directly with
+;   recursion. FIB.LOOP walks forward with two variables. Both give the
+;   same answers, but FIB.REC recomputes the same small cases over and
+;   over. The chart shows the time each one takes for n = 12 to 24: red
+;   bars for recursion, green bars for the loop.
+;
+; HOW TO USE
+;   Press Run and wait a few seconds for the timings. Results depend on
+;   how fast your computer is, so your bars will differ a little.
+;
+; CONCEPTS YOU WILL LEARN
+;   * TIMEMILLI to measure how long something takes
+;   * counting calls to see why recursion can be slow
+;   * that a clear solution is not always a fast one
+;
+; THINGS TO TRY
+;   * Add a counter to FIB.REC. How many calls does n = 24 make?
+;   * Write FIB.MEMO, which stores answers in an array and looks them
+;     up before recomputing. Add it to the chart in blue.
+; ============================================================
+
+to fib.rec :n
+  if :n < 3 [output 1]
+  output (fib.rec :n - 1) + (fib.rec :n - 2)
+end
+
+to fib.loop :n
+  localmake "a 1
+  localmake "b 1
+  repeat :n - 2 [
+    localmake "next :a + :b
+    make "a :b
+    make "b :next
+  ]
+  output :b
+end
+
+; How many milliseconds does running :instr take? We run it :times
+; times and divide, because one fast run can be too quick to measure.
+to time.it :instr :times
+  localmake "start timemilli
+  repeat :times [ignore run :instr]
+  output (timemilli - :start) / :times
+end
+
+to bar :x :h :colr
+  penup setxy :x -200 setheading 0 pendown
+  if :h < 1 [make "h 1]
+  filled :colr [repeat 2 [forward :h right 90 forward 18 right 90]]
+end
+
+to axes
+  setpencolor "#9098a8
+  penup setxy -330 -200 pendown setxy 340 -200
+  penup setxy -330 -200 pendown setxy -330 250
+  penup setxy -320 255 label [milliseconds, scaled to fit]
+end
+
+to race
+  localmake "results []
+  for [n 12 24] [
+    localmake "slow time.it (list "fib.rec :n) 3
+    localmake "fast time.it (list "fib.loop :n) 200
+    if not (fib.rec :n) = (fib.loop :n) [print [The two methods disagree!]]
+    print (sentence [n =] :n [fib =] fib.loop :n [recursion:] round :slow [ms   loop:] form :fast 1 2 [ms])
+    make "results lput (list :n :slow :fast) :results
+  ]
+  ; scale so the tallest red bar is 420 steps high
+  localmake "top max.of map [item 2 ?] :results
+  if :top = 0 [make "top 1]
+  foreach :results [
+    localmake "x -320 + (# - 1) * 50
+    bar :x 420 * (item 2 ?) / :top "#e04848
+    bar :x + 20 420 * (item 3 ?) / :top "#40c060
+    setpencolor "white penup setxy :x + 6 -222 label first ?
+  ]
+end
+
+to max.of :lst
+  output reduce [ifelse ?1 > ?2 [?1] [?2]] :lst
+end
+
+clearscreen hideturtle
+setbackground "#16181e
+setlabelheight 14
+axes
+print [Timing... this takes a few seconds.]
+race

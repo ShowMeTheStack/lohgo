@@ -1,0 +1,86 @@
+; ============================================================
+; TITLE:    Shell Sort Gaps
+; CATEGORY: Algorithms
+; LEVEL:    Intermediate
+; TAGS:     sorting, arrays, insertion sort, animation
+; SUMMARY:  Shell sort runs insertion sort on bars that are far apart first, coloring each interleaved group so you can see them.
+; ============================================================
+;
+; WHAT IT DOES
+;   Thirty bars are sorted with gaps of 15, 7, 3 and finally 1. With a
+;   gap of 7, bars 1, 8, 15, 22, 29 form one group, bars 2, 9, 16, 23, 30
+;   another, and so on. Each group gets its own color and is sorted by
+;   insertion sort on its own. Long jumps early on move short bars a
+;   long way left quickly, so the last pass with gap 1 has little to do.
+;   The two bars being compared are drawn white.
+;
+; HOW TO USE
+;   Press Run. The current gap is written at the top left.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MODULO to sort items into groups
+;   * an insertion sort that steps by :gap instead of by 1
+;   * a WHILE loop that halves a number until it reaches 1
+;
+; THINGS TO TRY
+;   * Try the gap sequence 13, 4, 1 by changing NEXT.GAP.
+;   * Count comparisons and compare with plain insertion sort.
+; ============================================================
+
+make "n 30
+make "delay 2
+
+to random.bars
+  make "v array :n
+  for [i 1 :n] [setitem :i :v 10 + random 230]
+end
+
+; The list has 15 colors (eight, then seven repeated), one for each
+; possible remainder when the biggest gap, 15, is used.
+to group.color :i :gap
+  output item 1 + modulo :i :gap [#e05050 #e0a030 #d0d040 #50c060 #40b0d0 #5070e0 #a060d0 #e070b0 #e05050 #e0a030 #d0d040 #50c060 #40b0d0 #5070e0 #a060d0]
+end
+
+to show.row :gap :a :b
+  clean
+  localmake "w 660 / :n
+  for [i 1 :n] [
+    penup setxy -330 + (:i - 1) * :w -200 setheading 0 pendown
+    localmake "c ifelse or :i = :a :i = :b ["white] [group.color :i :gap]
+    filled :c [repeat 2 [forward item :i :v right 90 forward :w - 3 right 90]]
+  ]
+  penup setxy -330 200 setpencolor "white
+  label sentence [gap] :gap
+  wait :delay
+end
+
+to next.gap :gap
+  output int :gap / 2
+end
+
+to shell.sort
+  localmake "gap next.gap :n
+  while [:gap >= 1] [
+    ; an insertion sort over every group at once
+    for [i :gap + 1 :n] [
+      localmake "j :i
+      show.row :gap :j - :gap :j
+      while [and :j > :gap [(item :j - :gap :v) > (item :j :v)]] [
+        localmake "t item :j :v
+        setitem :j :v item :j - :gap :v
+        setitem :j - :gap :v :t
+        make "j :j - :gap
+        if :j > :gap [show.row :gap :j - :gap :j]
+      ]
+    ]
+    make "gap next.gap :gap
+  ]
+  show.row 1 0 0
+end
+
+clearscreen hideturtle
+setbackground "#16161c
+setlabelheight 22
+random.bars
+shell.sort
+print [Shell sort done.]

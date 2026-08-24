@@ -1,0 +1,87 @@
+; ============================================================
+; TITLE:    Bubble Sort Bars
+; CATEGORY: Algorithms
+; LEVEL:    Beginner
+; TAGS:     sorting, arrays, animation, loops
+; SUMMARY:  Watch bubble sort push the tallest bars to the right, one swap at a time.
+; ============================================================
+;
+; WHAT IT DOES
+;   Twenty bars of random height appear in a row. Bubble sort walks
+;   along the row comparing neighbors. The two bars being compared turn
+;   yellow, and if the left one is taller they swap places. After each
+;   pass the tallest unsorted bar has "bubbled" to the end and turns green.
+;
+; HOW TO USE
+;   Press Run and watch. Change the number in "make "size 20" near the
+;   top of the code for more or fewer bars, or change :delay to slow it down.
+;
+; CONCEPTS YOU WILL LEARN
+;   * storing numbers in an ARRAY and changing them with SETITEM
+;   * nested FOR loops
+;   * swapping two values with a temporary variable
+;   * drawing filled rectangles with FILLED
+;
+; THINGS TO TRY
+;   * Count the swaps and print the total at the end.
+;   * Stop early when a whole pass makes no swaps. How much faster is it
+;     on a list that is already nearly sorted?
+;   * Make the bars sort from tallest to shortest instead.
+; ============================================================
+
+make "size 20
+make "delay 4
+
+; Fill an array with random heights between 10 and 250.
+to make.bars :n
+  make "bars array :n
+  for [i 1 :n] [setitem :i :bars 10 + random 241]
+end
+
+; One bar is a filled rectangle standing on the line y = -200.
+; The width of every bar depends on how many there are, so the row
+; always fits across the screen.
+to draw.bar :i :colr
+  localmake "w 640 / :size
+  penup
+  setxy -320 + (:i - 1) * :w -200
+  setheading 0
+  pendown
+  filled :colr [repeat 2 [forward item :i :bars  right 90  forward :w - 2  right 90]]
+end
+
+; Redraw everything. Bars from :done onwards are already in their final
+; place, so they get a different color. :a and :b are being compared.
+to show.bars :a :b :done
+  clean
+  for [i 1 :size] [
+    ifelse or :i = :a :i = :b [draw.bar :i "yellow] [
+      ifelse :i >= :done [draw.bar :i "#32cd32] [draw.bar :i "#4682b4]]
+  ]
+  wait :delay
+end
+
+to swap :a :b
+  localmake "temp item :a :bars
+  setitem :a :bars item :b :bars
+  setitem :b :bars :temp
+end
+
+; Each pass compares neighbors from the left up to the last unsorted bar.
+; After pass number p, the last p bars are in place, which is why the
+; inner loop gets one step shorter every time.
+to bubble.sort
+  for [pass 1 :size - 1] [
+    for [j 1 :size - :pass] [
+      show.bars :j :j + 1 :size - :pass + 2
+      if (item :j :bars) > (item :j + 1 :bars) [swap :j :j + 1]
+    ]
+  ]
+  show.bars 0 0 1
+end
+
+clearscreen hideturtle
+setbackground "black
+make.bars :size
+bubble.sort
+print [Bubble sort finished.]

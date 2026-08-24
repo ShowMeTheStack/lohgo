@@ -1,0 +1,102 @@
+; ============================================================
+; TITLE:    Merge Sort Bars
+; CATEGORY: Algorithms
+; LEVEL:    Advanced
+; TAGS:     sorting, recursion, divide and conquer, arrays, animation
+; SUMMARY:  Merge sort splits the row in halves, sorts each half, then zips the halves together, shown with animated bars.
+; ============================================================
+;
+; WHAT IT DOES
+;   Thirty-two bars are sorted by merge sort. A bracket under the row
+;   shows which slice is being merged right now. Bars in that slice are
+;   light blue and the bar just written back is pink. Small slices are
+;   merged first, then bigger and bigger ones, until one merge covers
+;   the whole row.
+;
+; HOW TO USE
+;   Press Run. Try :n as a power of two (8, 16, 32, 64) for the neatest
+;   brackets, though any size works.
+;
+; CONCEPTS YOU WILL LEARN
+;   * divide and conquer: a big job made of two half-size jobs
+;   * recursion with a range of indexes (lo and hi)
+;   * merging two sorted lists using FIRST and BUTFIRST
+;
+; THINGS TO TRY
+;   * Print lo and hi each time MERGE.RANGE is called to see the order
+;     of the recursive calls.
+;   * Change the comparison so it sorts tallest first.
+;   * Count comparisons and compare with bubble sort for 32 bars.
+; ============================================================
+
+make "n 32
+make "delay 2
+
+to random.row
+  make "a array :n
+  for [i 1 :n] [setitem :i :a 8 + random 240]
+end
+
+to bar.at :i :colr
+  localmake "w 640 / :n
+  penup setxy -320 + (:i - 1) * :w -180 setheading 0 pendown
+  filled :colr [repeat 2 [forward item :i :a right 90 forward :w - 2 right 90]]
+end
+
+; Draw all bars, the active range in blue, and a bracket under it.
+to frame :lo :hi :hot
+  clean
+  for [i 1 :n] [
+    ifelse :i = :hot [bar.at :i "#ff5a8c] [
+      ifelse and :i >= :lo :i <= :hi [bar.at :i "#7fd0ff] [bar.at :i "#5a6a7a]]
+  ]
+  if :lo > 0 [
+    localmake "w 640 / :n
+    setpencolor "white setpensize 2
+    penup setxy -320 + (:lo - 1) * :w -190 pendown
+    sety -200 setx -320 + :hi * :w - 2 sety -190
+    setpensize 1
+  ]
+  wait :delay
+end
+
+; Copy a slice of the array into an ordinary list.
+to slice :lo :hi
+  if :lo > :hi [output []]
+  output fput item :lo :a slice :lo + 1 :hi
+end
+
+; Merge two sorted lists into one sorted list. Whichever list has the
+; smaller first item gives it up; when one runs out, the other is
+; simply stuck on the end.
+to merge :xs :ys
+  if emptyp :xs [output :ys]
+  if emptyp :ys [output :xs]
+  if (first :xs) <= (first :ys) [output fput first :xs merge butfirst :xs :ys]
+  output fput first :ys merge :xs butfirst :ys
+end
+
+; Sort a[lo..hi]. A slice of one bar is already sorted, so that is
+; where the recursion stops.
+to merge.range :lo :hi
+  if :lo >= :hi [stop]
+  localmake "mid int (:lo + :hi) / 2
+  merge.range :lo :mid
+  merge.range :mid + 1 :hi
+  localmake "merged merge slice :lo :mid slice :mid + 1 :hi
+  ; write the merged list back, one bar at a time, so we can watch
+  localmake "k :lo
+  foreach :merged [
+    setitem :k :a ?
+    frame :lo :hi :k
+    make "k :k + 1
+  ]
+end
+
+clearscreen hideturtle
+setbackground "#14181e
+random.row
+frame 0 0 0
+merge.range 1 :n
+frame 0 0 0
+print [Merge sort done.]

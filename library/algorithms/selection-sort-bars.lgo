@@ -1,0 +1,94 @@
+; ============================================================
+; TITLE:    Selection Sort Rainbow
+; CATEGORY: Algorithms
+; LEVEL:    Beginner
+; TAGS:     sorting, arrays, animation, color
+; SUMMARY:  Selection sort hunts for the shortest bar and moves it to the front, turning a jumble of colors into a rainbow.
+; ============================================================
+;
+; WHAT IT DOES
+;   Sixteen bars are colored by their height, so a sorted row looks
+;   like a smooth rainbow. Selection sort scans the unsorted part of the
+;   row; a white marker shows where it is looking and a red outline shows
+;   the smallest bar found so far. When the scan ends, that smallest bar
+;   swaps into the next place at the front.
+;
+; HOW TO USE
+;   Press Run. Change :numbars or :delay near the top of the code.
+;
+; CONCEPTS YOU WILL LEARN
+;   * finding the smallest value in part of an array
+;   * remembering a position (an index) instead of a value
+;   * choosing a color from a number with an [r g b] list
+;
+; THINGS TO TRY
+;   * Count how many comparisons are made. Does it change if the bars
+;     start already sorted? (Compare that with bubble sort.)
+;   * Search for the largest bar instead and put it at the end.
+; ============================================================
+
+make "numbars 16
+make "delay 3
+
+to new.heights
+  make "bars array :numbars
+  for [i 1 :numbars] [setitem :i :bars 20 + random 230]
+end
+
+; Height 20 is red, height 250 is violet. The red part fades out while
+; the blue part grows, giving a simple rainbow-ish ramp.
+to height.color :h
+  localmake "t (:h - 20) / 230
+  output (list 255 * (1 - :t) 200 * sin (180 * :t) 255 * :t)
+end
+
+; Draw bar number :i. If :ring is true, outline it in red as well.
+to bar :i :ring
+  localmake "w 600 / :numbars
+  localmake "x -300 + (:i - 1) * :w
+  localmake "h item :i :bars
+  penup setxy :x -200 setheading 0
+  filled height.color :h [repeat 2 [forward :h right 90 forward :w - 4 right 90]]
+  if :ring [
+    setpencolor "red setpensize 3 pendown
+    repeat 2 [forward :h right 90 forward :w - 4 right 90]
+    setpensize 1
+  ]
+end
+
+; A small white triangle under the bar being looked at.
+to marker :i
+  localmake "w 600 / :numbars
+  penup setxy -300 + (:i - 0.5) * :w - 2 -210 setheading 0
+  filled "white [right 150 forward 20 right 120 forward 20 right 120 forward 20]
+end
+
+to picture :look :smallest
+  clean
+  for [i 1 :numbars] [bar :i :i = :smallest]
+  if :look > 0 [marker :look]
+  wait :delay
+end
+
+; For every position from the left, find the smallest bar in the rest
+; of the row and swap it into that position. The front part grows by
+; one sorted bar each time round the outer loop.
+to selection.sort
+  for [pos 1 :numbars - 1] [
+    localmake "best :pos
+    for [j :pos + 1 :numbars] [
+      picture :j :best
+      if (item :j :bars) < (item :best :bars) [make "best :j]
+    ]
+    localmake "temp item :pos :bars
+    setitem :pos :bars item :best :bars
+    setitem :best :bars :temp
+  ]
+  picture 0 0
+end
+
+clearscreen hideturtle
+setbackground [20 20 40]
+new.heights
+selection.sort
+print [Sorted: shortest bar on the left, tallest on the right.]

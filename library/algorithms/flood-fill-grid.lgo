@@ -1,0 +1,101 @@
+; ============================================================
+; TITLE:    Flood Fill Ripple
+; CATEGORY: Algorithms
+; LEVEL:    Intermediate
+; TAGS:     flood fill, grid, queue, breadth-first search, mdarray
+; SUMMARY:  Paint pours out from one cell of a grid and spreads around walls, colored by how many steps it took to arrive.
+; ============================================================
+;
+; WHAT IT DOES
+;   A 24 by 16 grid is scattered with dark wall cells. Paint starts in
+;   the middle and flows into empty neighbors (up, down, left, right),
+;   one ring at a time, like a ripple. The color shifts from yellow to
+;   deep red as the paint gets further from the start. Cells that the
+;   paint can never reach stay dark.
+;
+; HOW TO USE
+;   Press Run. Change :wall.chance (out of 100) for more or fewer walls.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a 2D grid stored in an MDARRAY and read with MDITEM
+;   * QUEUE and DEQUEUE: first in, first out
+;   * breadth-first search, the idea behind paint bucket tools
+;
+; THINGS TO TRY
+;   * Use PUSH and POP instead of QUEUE and DEQUEUE. The paint still
+;     covers the same cells, but in a very different order. Why?
+;   * Allow diagonal moves as well.
+; ============================================================
+
+make "cols 24
+make "rows 16
+make "cell 28
+make "wall.chance 28
+
+; Each grid square holds "wall, "empty, or a number: the distance from
+; the start once paint has arrived.
+to make.grid
+  make "grid mdarray (list :cols :rows)
+  for [x 1 :cols] [for [y 1 :rows] [
+    mdsetitem (list :x :y) :grid ifelse (random 100) < :wall.chance ["wall] ["empty]
+  ]]
+end
+
+to cell.corner :x :y
+  output (list -336 + (:x - 1) * :cell -224 + (:y - 1) * :cell)
+end
+
+to paint.cell :x :y :colr
+  penup setpos cell.corner :x :y setheading 0 pendown
+  filled :colr [repeat 4 [forward :cell - 2 right 90]]
+end
+
+; Yellow at distance 0, sliding to dark red by distance 30.
+to ripple.color :d
+  localmake "t ifelse :d > 30 [1] [:d / 30]
+  output (list 255 230 * (1 - :t) + 20 40 * (1 - :t))
+end
+
+; Walls are gray and empty cells a very dark gray. Later drawing covers
+; earlier drawing, so the paint poured in later simply covers an empty
+; cell.
+to draw.grid
+  for [x 1 :cols] [for [y 1 :rows] [
+    paint.cell :x :y ifelse (mditem (list :x :y) :grid) = "wall ["#50505c] ["#1c1c22]
+  ]]
+end
+
+; A neighbor can be painted if it is inside the grid and still empty.
+to try.cell :x :y :d
+  if or :x < 1 :x > :cols [stop]
+  if or :y < 1 :y > :rows [stop]
+  if not (mditem (list :x :y) :grid) = "empty [stop]
+  mdsetitem (list :x :y) :grid :d
+  paint.cell :x :y ripple.color :d
+  queue "waiting (list :x :y)
+end
+
+to flood :sx :sy
+  make "waiting []
+  try.cell :sx :sy 0
+  while [not emptyp :waiting] [
+    localmake "here dequeue "waiting
+    localmake "x first :here
+    localmake "y last :here
+    localmake "d 1 + mditem :here :grid
+    try.cell :x + 1 :y :d
+    try.cell :x - 1 :y :d
+    try.cell :x :y + 1 :d
+    try.cell :x :y - 1 :d
+    wait 1
+  ]
+end
+
+clearscreen hideturtle
+setbackground "black
+make.grid
+; make sure the starting cell is open
+mdsetitem (list :cols / 2 :rows / 2) :grid "empty
+draw.grid
+flood :cols / 2 :rows / 2
+print [The paint has gone everywhere it can reach.]

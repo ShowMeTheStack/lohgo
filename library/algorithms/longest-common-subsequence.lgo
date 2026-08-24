@@ -1,0 +1,102 @@
+; ============================================================
+; TITLE:    Longest Common Subsequence
+; CATEGORY: Algorithms
+; LEVEL:    Advanced
+; TAGS:     dynamic programming, words, mdarray, backtracking
+; SUMMARY:  Fills a dynamic programming grid to find the longest string of letters two words share in the same order.
+; ============================================================
+;
+; WHAT IT DOES
+;   Two words are written along the top and the left side of a grid.
+;   Cell (i, j) holds the length of the longest common subsequence of
+;   the first i letters of one word and the first j letters of the
+;   other. Cells where the letters match are tinted green. Once the grid
+;   is full, the program walks back from the bottom right corner,
+;   outlining the cells it passes in yellow, and spells out the answer.
+;
+; HOW TO USE
+;   Press Run. Change :top.word and :side.word (up to 12 letters each).
+;   ALGORITHM and LOGARITHM share 7 letters in order, LORITHM.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a two-dimensional table built with (MDARRAY [rows cols] 0)
+;   * filling each cell from the cells above and to the left
+;   * walking back through the table to rebuild the answer
+;
+; THINGS TO TRY
+;   * Try your first name and a friend's first name.
+;   * Change it to find the longest common substring, letters that must
+;     be side by side. Only the match rule needs to change.
+; ============================================================
+
+make "top.word "ALGORITHM
+make "side.word "LOGARITHM
+make "size 36
+
+; The top left corner of cell (i, j); row i, column j, both from 0.
+to corner :i :j
+  output (list -((count :top.word) + 2) * :size / 2 + (:j + 1) * :size ~
+               ((count :side.word) + 2) * :size / 2 - (:i + 1) * :size)
+end
+
+to box :i :j :colr
+  penup setpos corner :i :j setheading 90 pendown
+  filled :colr [repeat 4 [forward :size - 3 right 90]]
+end
+
+to write.at :i :j :text :colr
+  localmake "c corner :i :j
+  penup setxy (first :c) + :size / 2 - 7 (last :c) - :size / 2 - 6
+  setpencolor :colr label :text
+end
+
+to fill.grid
+  localmake "m count :side.word
+  localmake "n count :top.word
+  make "len (mdarray (list :m + 1 :n + 1) 0)
+  for [j 1 :n] [write.at -1 :j item :j :top.word "#f0c040]
+  for [i 1 :m] [write.at :i -1 item :i :side.word "#f0c040]
+  for [i 0 :m] [for [j 0 :n] [
+    localmake "v 0
+    if and :i > 0 :j > 0 [
+      ifelse (item :i :side.word) = (item :j :top.word) [
+        make "v 1 + mditem (list :i - 1 :j - 1) :len
+      ] [
+        make "v max2 mditem (list :i - 1 :j) :len mditem (list :i :j - 1) :len
+      ]
+    ]
+    mdsetitem (list :i :j) :len :v
+    ifelse and :i > 0 [and :j > 0 [(item :i :side.word) = (item :j :top.word)]] ~
+      [box :i :j "#2e6e48] [box :i :j "#2a2e3a]
+    write.at :i :j :v "white
+    wait 2
+  ]]
+end
+
+to max2 :a :b
+  ifelse :a > :b [output :a] [output :b]
+end
+
+; Start at the bottom right. A match on a diagonal step is part of the
+; answer; otherwise step toward whichever neighbor holds the bigger number.
+to walk.back :i :j
+  if or :i = 0 :j = 0 [output "]
+  setpencolor "#ffe040 setpensize 3
+  penup setpos corner :i :j setheading 90 pendown
+  repeat 4 [forward :size - 3 right 90]
+  setpensize 1
+  wait 8
+  if (item :i :side.word) = (item :j :top.word) [
+    output word walk.back :i - 1 :j - 1 item :i :side.word
+  ]
+  if (mditem (list :i - 1 :j) :len) >= (mditem (list :i :j - 1) :len) [output walk.back :i - 1 :j]
+  output walk.back :i :j - 1
+end
+
+clearscreen hideturtle
+setbackground "#14161c
+setlabelheight 18
+fill.grid
+make "answer walk.back count :side.word count :top.word
+print (sentence :top.word [and] :side.word [share] :answer)
+print (sentence [That is] count :answer [letters long.])

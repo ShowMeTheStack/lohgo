@@ -1,0 +1,127 @@
+; ============================================================
+; TITLE:    Dijkstra's Shortest Path
+; CATEGORY: Algorithms
+; LEVEL:    Advanced
+; TAGS:     graphs, shortest path, property lists, greedy
+; SUMMARY:  Finds the cheapest route between towns on a small road map, showing Dijkstra's algorithm settle one town at a time.
+; ============================================================
+;
+; WHAT IT DOES
+;   Eight towns, A to H, are joined by roads with lengths written on
+;   them. Starting from A, the program keeps a best-known distance for
+;   every town (shown above it, ? means unknown yet). Each round it
+;   settles the unsettled town with the smallest distance (it turns
+;   green) and checks whether going through it gives shorter routes to
+;   its neighbors. Orange roads show the best route found to each town.
+;   At the end, the route from A to H is drawn thick and printed.
+;
+; HOW TO USE
+;   Press Run. Change :goal, or the numbers in the ROADS list, and run
+;   again. Each road is written as [town town length].
+;
+; CONCEPTS YOU WILL LEARN
+;   * property lists: GPROP and PPROP store facts about each town
+;   * a greedy algorithm that is still guaranteed to be right
+;   * following "previous" links backwards to rebuild a path
+;
+; THINGS TO TRY
+;   * Make one road length very large and watch the route change.
+;   * Add a ninth town I with a couple of roads.
+; ============================================================
+
+make "towns [A B C D E F G H]
+make "roads [[A B 4] [A C 2] [B C 5] [B D 10] [C E 3] [E D 4] [D F 11] [E G 6] [G F 2] [F H 3] [G H 9] [B F 15]]
+make "goal "H
+
+; Where each town is drawn.
+to place.towns
+  foreach [[A -320 0] [B -160 160] [C -160 -150] [D 20 60] [E 0 -150] [F 180 140] [G 170 -110] [H 330 20]] [
+    pprop first ? "xy butfirst ?
+  ]
+end
+
+; Neighbors of town t, as a list of [town length] pairs.
+to neighbors :t
+  localmake "out []
+  foreach :roads [
+    if (item 1 ?) = :t [make "out lput (list item 2 ? item 3 ?) :out]
+    if (item 2 ?) = :t [make "out lput (list item 1 ? item 3 ?) :out]
+  ]
+  output :out
+end
+
+to road :a :b :colr :thick
+  setpencolor :colr setpensize :thick
+  penup setpos gprop :a "xy pendown setpos gprop :b "xy
+end
+
+; Draw roads, then the orange "best route" links, then the towns.
+to draw.map :path
+  clean
+  foreach :roads [
+    road item 1 ? item 2 ? "#5a6070 2
+    localmake "p gprop item 1 ? "xy
+    localmake "q gprop item 2 ? "xy
+    penup setxy ((first :p) + (first :q)) / 2 + 4 ((last :p) + (last :q)) / 2 + 4
+    setpencolor "#c0c8d8 label item 3 ?
+  ]
+  foreach :towns [
+    if not emptyp gprop ? "prev [road ? gprop ? "prev "orange 4]
+  ]
+  if not emptyp :path [
+    foreach butfirst :path [road ? item # :path "#ff4060 8]
+  ]
+  foreach :towns [
+    setpensize 36
+    setpencolor ifelse (gprop ? "done) = "true ["#30b060] ["#3870d0]
+    dot gprop ? "xy
+    setpensize 1 setpencolor "white
+    penup setpos gprop ? "xy setxy xcor - 6 ycor - 7 label ?
+    setxy xcor - 4 ycor + 28
+    label ifelse numberp gprop ? "dist [gprop ? "dist] ["?]
+  ]
+  wait 45
+end
+
+; The unsettled town with the smallest known distance, or [] if none.
+to closest
+  localmake "best []
+  foreach :towns [
+    if and numberp gprop ? "dist [not (gprop ? "done) = "true] [
+      if or emptyp :best [(gprop ? "dist) < (gprop :best "dist)] [make "best ?]
+    ]
+  ]
+  output :best
+end
+
+to dijkstra :start
+  foreach :towns [pprop ? "dist [] pprop ? "prev [] pprop ? "done "false]
+  pprop :start "dist 0
+  localmake "t closest
+  while [not emptyp :t] [
+    pprop :t "done "true
+    foreach neighbors :t [
+      localmake "trial (gprop :t "dist) + last ?
+      if or (not numberp gprop first ? "dist) [:trial < gprop first ? "dist] [
+        pprop first ? "dist :trial
+        pprop first ? "prev :t
+      ]
+    ]
+    draw.map []
+    make "t closest
+  ]
+end
+
+to path.to :t
+  if emptyp :t [output []]
+  output lput :t path.to gprop :t "prev
+end
+
+clearscreen hideturtle
+setbackground "#16181f
+setlabelheight 16
+place.towns
+dijkstra "A
+make "route path.to :goal
+draw.map :route
+print (sentence [Shortest route from A to] :goal [is] :route [with length] gprop :goal "dist)

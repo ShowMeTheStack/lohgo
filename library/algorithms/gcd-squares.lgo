@@ -1,0 +1,82 @@
+; ============================================================
+; TITLE:    GCD with Squares
+; CATEGORY: Algorithms
+; LEVEL:    Beginner
+; TAGS:     gcd, euclid, recursion, number, geometry
+; SUMMARY:  Euclid's greatest common divisor algorithm drawn as a rectangle cut into the biggest squares that fit.
+; ============================================================
+;
+; WHAT IT DOES
+;   A rectangle that is A wide and B tall is filled with squares. Each
+;   time, the biggest square that fits is cut off one end, and the same
+;   thing happens to the leftover rectangle. When the leftover is itself
+;   a square, its side is the greatest common divisor of A and B: the
+;   biggest number that divides both of them exactly.
+;
+; HOW TO USE
+;   Press Run to see three examples. Change the pairs in the list at the
+;   bottom, for example [36 20] or [55 34].
+;
+; CONCEPTS YOU WILL LEARN
+;   * Euclid's algorithm, more than 2000 years old
+;   * a recursive procedure that both draws and calculates
+;   * the faster REMAINDER version of the same idea
+;
+; THINGS TO TRY
+;   * Try two neighbors from the Fibonacci numbers, like 34 and 21.
+;     Why do you get so many squares?
+;   * Try two numbers where one divides the other, like 30 and 10.
+; ============================================================
+
+; The short version, using remainder. gcd 12 8 -> gcd 8 4 -> gcd 4 0.
+to gcd :a :b
+  if :b = 0 [output :a]
+  output gcd :b remainder :a :b
+end
+
+; Draw a square of side :s (in turtle steps) with its corner at x y.
+to square.at :x :y :s :colr
+  penup setxy :x :y setheading 0 pendown
+  filled :colr [repeat 4 [forward :s right 90]]
+  setpencolor "white
+  repeat 4 [forward :s right 90]
+end
+
+; Cut squares off a w by h rectangle whose lower left corner is x y.
+; :k is the scale: turtle steps per unit.
+to cut :x :y :w :h :k :n
+  if or :w = 0 :h = 0 [stop]
+  localmake "colr item 1 + remainder :n 6 [#e8664a #f2b134 #68b04f #3d9ad1 #8e6cc9 #e06fa6]
+  ifelse :w >= :h [
+    square.at :x :y :h * :k :colr
+    wait 20
+    cut :x + :h * :k :y :w - :h :h :k :n + 1
+  ] [
+    square.at :x :y :w * :k :colr
+    wait 20
+    cut :x :y + :w * :k :w :h - :w :k :n + 1
+  ]
+end
+
+; Pick a scale so the rectangle fits in a 700 by 460 area, then center it.
+to show.gcd :a :b
+  clean
+  localmake "k min.of 700 / :a 460 / :b
+  cut -:a * :k / 2 -:b * :k / 2 - 20 :a :b :k 0
+  localmake "g gcd :a :b
+  penup setxy -150 260 setpencolor "white
+  label (sentence [GCD of] :a [and] :b [is] :g)
+  print (sentence [The greatest common divisor of] :a [and] :b [is] :g)
+end
+
+to min.of :x :y
+  ifelse :x < :y [output :x] [output :y]
+end
+
+clearscreen hideturtle
+setbackground "#1e1e26
+setlabelheight 22
+foreach [[21 13] [24 15] [40 16]] [
+  show.gcd first ? last ?
+  wait 90
+]

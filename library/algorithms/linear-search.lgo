@@ -1,0 +1,99 @@
+; ============================================================
+; TITLE:    Linear Search Walk
+; CATEGORY: Algorithms
+; LEVEL:    Beginner
+; TAGS:     searching, lists, input, turtle
+; SUMMARY:  The turtle walks along a row of numbered boxes, checking each one until it finds the number you asked for.
+; ============================================================
+;
+; WHAT IT DOES
+;   Fourteen boxes with random numbers are drawn across the screen. You
+;   type a number and the turtle visits the boxes from left to right.
+;   Boxes it has checked go gray. If it finds your number the box turns
+;   green; if it reaches the end, it tells you the number is not there.
+;
+; HOW TO USE
+;   Press Run, then type a number between 1 and 50 in the command center
+;   and press Enter. Type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * linear search: the simplest search there is
+;   * READLIST, and checking that the answer really is a number
+;   * counting the steps a search takes
+;
+; THINGS TO TRY
+;   * Sort the boxes first. Can the turtle stop early when it passes a
+;     bigger number than the one it wants?
+;   * What is the most steps a search can ever take with 14 boxes?
+; ============================================================
+
+to make.boxes
+  make "boxes []
+  repeat 14 [make "boxes lput 1 + random 50 :boxes]
+end
+
+; Draw one box: :state is "new, "checked or "found.
+to box :i :state
+  localmake "x -350 + (:i - 1) * 50
+  penup setxy :x 0 setheading 0 pendown
+  filled (item 1 + position :state [new checked found] [#3a78d8 #555560 #30b050]) ~
+    [repeat 4 [forward 44 right 90]]
+  penup setxy :x + 10 14 setpencolor "white
+  label item :i :boxes
+end
+
+; Where a word sits in a list, so we can pick a matching color.
+to position :w :lst
+  if :w = first :lst [output 0]
+  output 1 + position :w butfirst :lst
+end
+
+; Everything before :upto has been checked; :hit is the found box or 0.
+to draw.row :upto :hit
+  clean
+  for [i 1 14] [
+    box :i cond [[[:i = :hit] "found] [[:i < :upto] "checked] [else "new]]
+  ]
+end
+
+to search :target
+  for [i 1 14] [
+    draw.row :i 0
+    showturtle
+    penup setxy -328 + (:i - 1) * 50 -20 setheading 0
+    wait 15
+    if (item :i :boxes) = :target [
+      draw.row :i :i
+      print (sentence [Found] :target [in box] :i [after] :i ifelse :i = 1 ["check.] ["checks.])
+      stop
+    ]
+  ]
+  draw.row 15 0
+  print (sentence :target [is not in any box. That took all 14 checks.])
+end
+
+; Keep asking until a sensible answer arrives. An empty answer means
+; the input has run out, so we treat it like quit.
+to ask.number
+  print [Which number should the turtle look for? Type quit to stop.]
+  localmake "answer readlist
+  if emptyp :answer [output "quit]
+  localmake "w first :answer
+  if :w = "quit [output "quit]
+  if numberp :w [output :w]
+  print [Please type a number, like 17.]
+  output ask.number
+end
+
+clearscreen
+setbackground "#202030
+setlabelheight 18
+make.boxes
+draw.row 1 0
+make "goal ask.number
+while [not :goal = "quit] [
+  search :goal
+  make "goal ask.number
+]
+hideturtle
+print [Goodbye!]

@@ -1,0 +1,96 @@
+; ============================================================
+; TITLE:    Sieve of Eratosthenes
+; CATEGORY: Algorithms
+; LEVEL:    Beginner
+; TAGS:     primes, arrays, loops, number grid
+; SUMMARY:  Finds all the prime numbers up to 100 by crossing out multiples on a colorful hundred square.
+; ============================================================
+;
+; WHAT IT DOES
+;   The numbers 1 to 100 are written in a 10 by 10 grid. Starting at 2,
+;   the first number not yet crossed out is a prime: it gets a gold
+;   frame, and all of its multiples are shaded in that prime's own
+;   color. Multiples of 2 go blue, of 3 green, of 5 purple, of 7 orange.
+;   Whatever is never shaded is prime.
+;
+; HOW TO USE
+;   Press Run and watch the grid fill in. Change :delay to go faster or
+;   slower.
+;
+; CONCEPTS YOU WILL LEARN
+;   * an array of "true / "false flags, one per number
+;   * a FOR loop that counts in steps: [m 4 100 2] gives 4, 6, 8, ...
+;   * why we only need primes up to 10, the square root of 100
+;
+; THINGS TO TRY
+;   * Make the grid 20 by 10 to find the primes up to 200.
+;   * Count the primes in each row. Do they get rarer?
+; ============================================================
+
+make "delay 3
+
+; Number k sits in row (k-1)/10 from the top, column (k-1) mod 10.
+to cell.corner :k
+  output (list -250 + 50 * remainder :k - 1 10 230 - 50 * int (:k - 1) / 10)
+end
+
+to write.number :k
+  setpencolor "white
+  penup setpos cell.corner :k
+  setxy xcor + (ifelse :k < 10 [19] [ifelse :k < 100 [14] [10]]) ycor - 31
+  label :k
+end
+
+to write.numbers
+  for [k 1 100] [write.number :k]
+end
+
+; Later drawing covers earlier drawing, so the shading would hide the
+; number. We write the number again on top of the shading.
+to shade :k :colr
+  penup setpos cell.corner :k setheading 90 pendown
+  filled :colr [repeat 4 [forward 48 right 90]]
+  write.number :k
+end
+
+to frame :k
+  setpencolor "#ffd040 setpensize 3
+  penup setpos cell.corner :k setheading 90 pendown
+  repeat 4 [forward 48 right 90]
+  setpensize 1
+end
+
+; Only 2, 3, 5 and 7 ever shade anything when we stop at 100.
+to prime.color :p
+  output case :p [[[2] "#2f70c8] [[3] "#3a9a50] [[5] "#8050b0] [else "#b06a28]]
+end
+
+to sieve
+  make "crossed array 100
+  for [k 1 100] [setitem :k :crossed "false]
+  shade 1 "#404048
+  for [p 2 100] [
+    if not item :p :crossed [
+      frame :p
+      ; Any multiple smaller than p times p was already crossed out by
+      ; a smaller prime, so start there. Above 10, nothing is left to do.
+      if :p * :p <= 100 [
+        for [m :p * :p 100 :p] [
+          if not item :m :crossed [
+            setitem :m :crossed "true
+            shade :m prime.color :p
+            wait :delay
+          ]
+        ]
+      ]
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground "#14141a
+setlabelheight 18
+write.numbers
+sieve
+print [Primes up to 100:]
+print filter [not item ? :crossed] iseq 2 100

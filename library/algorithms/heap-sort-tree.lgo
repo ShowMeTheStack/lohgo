@@ -1,0 +1,125 @@
+; ============================================================
+; TITLE:    Heap Sort Tree and Bars
+; CATEGORY: Algorithms
+; LEVEL:    Advanced
+; TAGS:     sorting, heap, binary tree, arrays, animation
+; SUMMARY:  Shows the same array twice, as a binary tree and as bars, while heap sort builds a max-heap and pulls out the biggest value again and again.
+; ============================================================
+;
+; WHAT IT DOES
+;   An array of 15 numbers is drawn as a tree at the top and as bars at
+;   the bottom. Item 1 is the root, and item k has children 2k and 2k+1.
+;   First the array is turned into a max-heap: every parent is bigger
+;   than its children. Then the root (the biggest) is swapped to the end,
+;   the heap shrinks by one, and the new root sinks down to its place.
+;   Finished values turn green in both pictures.
+;
+; HOW TO USE
+;   Press Run. :delay controls the speed.
+;
+; CONCEPTS YOU WILL LEARN
+;   * how an array can store a tree with no pointers at all
+;   * the sift-down step, written as a recursive procedure
+;   * LOG10 and INT to find the depth of a node in the tree
+;
+; THINGS TO TRY
+;   * Make it a min-heap so the result comes out in reverse order.
+;   * Change :n to 31 for a deeper tree (shrink the circles first).
+; ============================================================
+
+make "n 15
+make "delay 15
+
+to setup.values
+  make "heap array :n
+  for [i 1 :n] [setitem :i :heap 10 + random 90]
+end
+
+; Where node k sits in the tree: depth d holds 2^d nodes spread evenly.
+to node.pos :k
+  localmake "d int (log10 :k) / (log10 2)
+  localmake "across :k - power 2 :d
+  localmake "gap 760 / power 2 :d
+  output (list -380 + :gap * (:across + 0.5) 250 - 70 * :d)
+end
+
+to node.color :k :size :hot
+  if memberp :k :hot [output "orange]
+  if :k > :size [output "#40c060]
+  output "#5080d0
+end
+
+; :size is how much of the array is still a heap. :hot is a list of
+; the one or two positions being swapped right now.
+to draw.all :size :hot
+  clean
+  ; Edges go from rim to rim, so they never cross the circles.
+  setpencolor "#808890
+  ; FOR counts downward when the end is smaller than the start, so
+  ; guard it: a heap of 0 or 1 nodes has no edges.
+  if :size > 1 [for [k 2 :size] [
+    penup setpos node.pos int :k / 2
+    setheading towards node.pos :k
+    forward 17 pendown
+    forward (distance node.pos :k) - 17
+  ]]
+  ; A DOT is a filled circle as wide as the pen, so a fat pen makes
+  ; a round node in one step.
+  setpensize 34
+  for [k 1 :n] [
+    setpencolor node.color :k :size :hot
+    dot node.pos :k
+  ]
+  setpensize 1
+  setpencolor "white
+  for [k 1 :n] [
+    penup setxy (first node.pos :k) - 8 (last node.pos :k) - 5
+    label item :k :heap
+  ]
+  for [k 1 :n] [
+    penup setxy -300 + (:k - 1) * 40 -280 setheading 0 pendown
+    filled node.color :k :size :hot [repeat 2 [forward 1.8 * item :k :heap right 90 forward 34 right 90]]
+  ]
+  wait :delay
+end
+
+to swap.items :x :y
+  localmake "t item :x :heap
+  setitem :x :heap item :y :heap
+  setitem :y :heap :t
+end
+
+; Let the value at k sink until it is bigger than both children.
+; Only nodes up to :size belong to the heap.
+to sift.down :k :size
+  localmake "big :k
+  localmake "l 2 * :k
+  localmake "r :l + 1
+  if and :l <= :size [(item :l :heap) > (item :big :heap)] [make "big :l]
+  if and :r <= :size [(item :r :heap) > (item :big :heap)] [make "big :r]
+  if :big = :k [stop]
+  draw.all :size (list :k :big)
+  swap.items :k :big
+  sift.down :big :size
+end
+
+to heap.sort
+  ; Build the heap from the last parent back up to the root.
+  for [k int :n / 2 1] [sift.down :k :n]
+  draw.all :n []
+  ; Move the biggest to the end, shrink, repair.
+  for [last.spot :n 2] [
+    draw.all :last.spot (list 1 :last.spot)
+    swap.items 1 :last.spot
+    sift.down 1 :last.spot - 1
+  ]
+  draw.all 0 []
+end
+
+clearscreen hideturtle
+setbackground "#181820
+setlabelheight 14
+setup.values
+draw.all :n []
+heap.sort
+print arraytolist :heap

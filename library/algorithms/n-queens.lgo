@@ -1,0 +1,106 @@
+; ============================================================
+; TITLE:    Eight Queens Backtracking
+; CATEGORY: Algorithms
+; LEVEL:    Advanced
+; TAGS:     backtracking, recursion, chess, lists
+; SUMMARY:  Places eight chess queens so that none can attack another, showing every try and every backtrack on the board.
+; ============================================================
+;
+; WHAT IT DOES
+;   Queens go on the board one column at a time, from left to right. In
+;   each column the program tries the rows from bottom to top, skipping
+;   any square a queen already on the board could attack (same row or
+;   same diagonal). If a column has no safe square, it backtracks: the
+;   queen in the previous column moves up to its next safe row. The
+;   orange queen is the one being tried. When all eight fit, the program
+;   also counts every solution there is, without drawing.
+;
+; HOW TO USE
+;   Press Run. Set :n to 4, 5 or 6 to watch a smaller puzzle, and raise
+;   :delay to slow the search down.
+;
+; CONCEPTS YOU WILL LEARN
+;   * backtracking: try, and undo when you hit a dead end
+;   * a recursive procedure that outputs "true or "false
+;   * describing the board as a simple list of row numbers
+;
+; THINGS TO TRY
+;   * Count how many queens get placed (and removed) before success.
+;   * Start the search with the first queen in row 4. Is it faster?
+;   * Why are there no solutions for :n = 2 or 3?
+; ============================================================
+
+make "n 8
+make "delay 1
+make "sq 60
+
+; The board is a list: item k is the row of the queen in column k.
+; [1 5] means a queen at column 1 row 1 and one at column 2 row 5.
+
+; Can a queen go at column (count :placed)+1, row :row?
+to safe? :placed :row
+  localmake "col 1 + count :placed
+  foreach :placed [
+    if ? = :row [output "false]
+    if (abs ? - :row) = (abs # - :col) [output "false]
+  ]
+  output "true
+end
+
+to square.corner :col :row
+  output (list -:n * :sq / 2 + (:col - 1) * :sq -:n * :sq / 2 + (:row - 1) * :sq)
+end
+
+; Draw the board, the placed queens, and optionally the queen being tried.
+to show.board :placed :trying.col :trying.row
+  clean
+  for [c 1 :n] [for [r 1 :n] [
+    penup setpos square.corner :c :r setheading 0 pendown
+    filled ifelse even? :c + :r ["#6b4a2e] ["#e8d2a8] [repeat 4 [forward :sq right 90]]
+  ]]
+  foreach :placed [queen # ? "#f2c230]
+  if :trying.col > 0 [queen :trying.col :trying.row "#ff7a1a]
+  wait :delay
+end
+
+to even? :k
+  output 0 = remainder :k 2
+end
+
+; A queen is a big round token with a Q on it. DOT draws on top of the
+; board, which FILLED would not do here.
+to queen :col :row :colr
+  localmake "c square.corner :col :row
+  localmake "x (first :c) + :sq / 2
+  localmake "y (last :c) + :sq / 2
+  setpensize :sq - 14 setpencolor :colr dot (list :x :y)
+  setpensize 1 setpencolor "black
+  penup setxy :x - 8 :y - 9 label "Q
+end
+
+; Try to finish the board. Outputs the full list, or [] at a dead end.
+to place :placed :draw?
+  if (count :placed) = :n [output :placed]
+  for [row 1 :n] [
+    if :draw? [show.board :placed 1 + count :placed :row]
+    if safe? :placed :row [
+      localmake "done place lput :row :placed :draw?
+      if not emptyp :done [output :done]
+    ]
+  ]
+  output []
+end
+
+; Same search, but count every complete board instead of stopping.
+to count.all :placed
+  if (count :placed) = :n [output 1]
+  output reduce "sum fput 0 map [ifelse safe? :placed ? [count.all lput ? :placed] [0]] iseq 1 :n
+end
+
+clearscreen hideturtle
+setbackground "#202020
+setlabelheight 24
+make "answer place [] "true
+show.board :answer 0 0
+print (sentence [First solution, row for each column:] :answer)
+print (sentence [Number of solutions for] :n [queens:] count.all [])

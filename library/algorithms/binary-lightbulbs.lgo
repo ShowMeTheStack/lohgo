@@ -1,0 +1,102 @@
+; ============================================================
+; TITLE:    Binary Light Bulbs
+; CATEGORY: Algorithms
+; LEVEL:    Beginner
+; TAGS:     binary, number bases, recursion, input
+; SUMMARY:  Converts numbers between decimal and binary and shows the answer as a row of eight light bulbs.
+; ============================================================
+;
+; WHAT IT DOES
+;   Eight bulbs stand for 128, 64, 32, 16, 8, 4, 2 and 1. Type a
+;   decimal number from 0 to 255 and the bulbs that add up to it light
+;   up yellow. Type a binary number with a b on the end, like 1011b, and
+;   you get it back in decimal. The command center shows the working.
+;
+; HOW TO USE
+;   Press Run, then type answers in the command center. Type quit to end.
+;
+; CONCEPTS YOU WILL LEARN
+;   * dividing by 2 again and again to find binary digits
+;   * a recursive procedure that builds a word with WORD
+;   * walking along a word with FIRST and BUTFIRST to read it back
+;
+; THINGS TO TRY
+;   * Add a ninth bulb for 256 and allow numbers up to 511.
+;   * Make a version for base 3, with bulbs that can be off, dim or bright.
+; ============================================================
+
+; Binary digits of n. The last digit is n's remainder after dividing by
+; 2; the rest are the binary digits of half of n.
+to to.binary :n
+  if :n < 2 [output :n]
+  output word to.binary int :n / 2 remainder :n 2
+end
+
+; Read a binary word from the left: every new digit doubles what we had
+; so far and adds itself.
+to from.binary :bits :sofar
+  if emptyp :bits [output :sofar]
+  output from.binary butfirst :bits 2 * :sofar + first :bits
+end
+
+; Pad on the left with zeros until the word is 8 digits long.
+to eight.digits :bits
+  if (count :bits) >= 8 [output :bits]
+  output eight.digits word 0 :bits
+end
+
+to bulbs :bits
+  clean
+  for [i 1 8] [
+    localmake "x -315 + (:i - 1) * 90
+    setpensize 64
+    setpencolor ifelse (item :i :bits) = 1 ["#ffe040] ["#40404c]
+    dot (list :x 20)
+    setpensize 1
+    setpencolor "white
+    penup setxy :x - 6 -40 label item :i :bits
+    penup setxy :x - 14 80 setpencolor "#a0a0b0 label power 2 8 - :i
+  ]
+end
+
+; Is :w a word of 0s and 1s ending in b?
+to binary.word? :w
+  if (count :w) < 2 [output "false]
+  if not (last :w) = "b [output "false]
+  output emptyp filter [not memberp ? [0 1]] butlast :w
+end
+
+to handle :w
+  if binary.word? :w [
+    localmake "value from.binary butlast :w 0
+    ifelse :value > 255 [print [That needs more than eight bulbs.]] [
+      bulbs eight.digits butlast :w
+      print (sentence butlast :w [in binary is] :value [in decimal])
+    ]
+    stop
+  ]
+  if and numberp :w [:w = int :w] [
+    if or :w < 0 :w > 255 [print [Please stay between 0 and 255.] stop]
+    bulbs eight.digits to.binary :w
+    print (sentence :w [in decimal is] to.binary :w [in binary])
+    stop
+  ]
+  print [I did not understand that. Try 37 or 100101b.]
+end
+
+; The main loop lives in a procedure so that STOP can end it.
+to converter
+  forever [
+    print [Type a number 0 to 255, a binary number like 1011b, or quit:]
+    localmake "reply readlist
+    if emptyp :reply [stop]
+    if (first :reply) = "quit [print [Bye!] stop]
+    handle first :reply
+  ]
+end
+
+clearscreen hideturtle
+setbackground "#14141c
+setlabelheight 18
+bulbs "00000000
+converter

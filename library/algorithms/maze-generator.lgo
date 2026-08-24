@@ -1,0 +1,118 @@
+; ============================================================
+; TITLE:    Maze Generator
+; CATEGORY: Algorithms
+; LEVEL:    Advanced
+; TAGS:     maze, depth-first search, stack, backtracking, mdarray
+; SUMMARY:  Carves a perfect maze out of a grid with a randomized depth-first search, knocking down walls as it goes.
+; ============================================================
+;
+; WHAT IT DOES
+;   The screen starts as a grid of closed cells. A digger starts in the
+;   bottom left cell, picks a random neighbor it has not visited, knocks
+;   down the wall between them and moves in. When it gets stuck it backs
+;   up along its own trail (kept on a stack) until it finds a cell with
+;   unvisited neighbors. When the stack is empty, every cell has been
+;   reached exactly one way: there is one path between any two cells.
+;
+; HOW TO USE
+;   Press Run. Each run makes a new maze. Change :cols, :rows and :size
+;   (keep :cols times :size under 760 and :rows times :size under 560).
+;
+; CONCEPTS YOU WILL LEARN
+;   * depth-first search with an explicit stack (PUSH and POP)
+;   * PENERASE to rub out lines that are already drawn
+;   * a visited flag for every cell, kept in an MDARRAY
+;
+; THINGS TO TRY
+;   * Use QUEUE and DEQUEUE instead of PUSH and POP. What kind of maze
+;     appears now?
+;   * Draw your own path through the finished maze with the mouse or
+;     the arrow keys.
+; ============================================================
+
+make "cols 18
+make "rows 13
+make "size 40
+
+to left.edge
+  output -:cols * :size / 2
+end
+
+to bottom.edge
+  output -:rows * :size / 2
+end
+
+to draw.grid
+  setpencolor "#e8e0c8 setpensize 4
+  for [c 0 :cols] [
+    penup setxy left.edge + :c * :size bottom.edge
+    pendown sety bottom.edge + :rows * :size
+  ]
+  for [r 0 :rows] [
+    penup setxy left.edge bottom.edge + :r * :size
+    pendown setx left.edge + :cols * :size
+  ]
+end
+
+; Rub out the wall between cell (c1,r1) and its neighbor (c2,r2).
+; x and y are the lower left corner of whichever cell is further right
+; or further up, and the shared wall runs along its left or bottom side.
+; The erased line stops short of the corners so the grid posts survive.
+to knock :c1 :r1 :c2 :r2
+  localmake "x left.edge + :size * (max2 :c1 :c2) - :size
+  localmake "y bottom.edge + :size * (max2 :r1 :r2) - :size
+  penerase setpensize 6
+  ifelse :c1 = :c2 [
+    penup setxy :x + 5 :y pendown setx :x + :size - 5
+  ] [
+    penup setxy :x :y + 5 pendown sety :y + :size - 5
+  ]
+  penpaint
+end
+
+to max2 :a :b
+  ifelse :a > :b [output :a] [output :b]
+end
+
+; Unvisited neighbors of cell (c, r), as a list of [c r] pairs.
+to fresh.neighbors :c :r
+  localmake "out []
+  foreach (list (list :c + 1 :r) (list :c - 1 :r) (list :c :r + 1) (list :c :r - 1)) [
+    if and and (first ?) >= 1 (first ?) <= :cols and (last ?) >= 1 (last ?) <= :rows [
+      if not mditem ? :seen [make "out fput ? :out]
+    ]
+  ]
+  output :out
+end
+
+to dig
+  make "seen mdarray (list :cols :rows)
+  for [c 1 :cols] [for [r 1 :rows] [mdsetitem (list :c :r) :seen "false]]
+  make "trail []
+  mdsetitem [1 1] :seen "true
+  push "trail [1 1]
+  while [not emptyp :trail] [
+    localmake "here first :trail
+    localmake "options fresh.neighbors first :here last :here
+    ifelse emptyp :options [
+      ignore pop "trail
+    ] [
+      localmake "next pick :options
+      knock first :here last :here first :next last :next
+      mdsetitem :next :seen "true
+      push "trail :next
+      wait 1
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground "#283040
+draw.grid
+dig
+; mark the entrance and the exit
+setpensize 16
+setpencolor "#40d070 dot (list left.edge + :size / 2 bottom.edge + :size / 2)
+setpencolor "#f05050 dot (list left.edge + :cols * :size - :size / 2 bottom.edge + :rows * :size - :size / 2)
+setpensize 1
+print [The maze is ready. Green is the start, red is the finish.]

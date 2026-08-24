@@ -1,0 +1,92 @@
+; ============================================================
+; TITLE:    Pizza Combinations
+; CATEGORY: Algorithms
+; LEVEL:    Intermediate
+; TAGS:     combinations, recursion, lists, counting
+; SUMMARY:  Lists every way to choose 3 toppings out of 5 and bakes a little pizza for each one.
+; ============================================================
+;
+; WHAT IT DOES
+;   The pizza shop has five toppings but each pizza gets exactly three.
+;   CHOOSE works out every possible set of three, where order does not
+;   matter (olive, ham, corn is the same pizza as corn, olive, ham). It
+;   finds 10 of them and draws each pizza with its toppings scattered on
+;   top, with the names underneath.
+;
+; HOW TO USE
+;   Press Run. Change :pick to 2 or 4 and run again. Can you guess how
+;   many pizzas there will be before you look?
+;
+; CONCEPTS YOU WILL LEARN
+;   * the two-way split: each item is either in the set or not
+;   * recursion that outputs a list of lists
+;   * how combinations differ from permutations
+;
+; THINGS TO TRY
+;   * Print CHOOSE [a b c d e f] 2 and count the answers. The formula
+;     is n x (n-1) / 2 for pairs.
+;   * Add a sixth topping and draw 20 pizzas with 3 toppings each.
+; ============================================================
+
+make "toppings [ham olive corn pepper mushroom]
+make "pick 3
+
+; All the ways to choose k items from a list. Look at the first item:
+; either it is in the set (choose k-1 more from the rest) or it is not
+; (choose all k from the rest). The answer is both groups together.
+to choose :items :k
+  if :k = 0 [output [[]]]
+  if (count :items) < :k [output []]
+  localmake "with map [fput first :items ?] choose butfirst :items :k - 1
+  output sentence :with choose butfirst :items :k
+end
+
+to topping.color :t
+  output item 1 + position :t :toppings [#e87890 #303030 #f0d020 #40b040 #c8b090]
+end
+
+to position :t :lst
+  if :t = first :lst [output 0]
+  output 1 + position :t butfirst :lst
+end
+
+; A pizza: golden crust, tomato sauce, then a ring of topping dots.
+to pizza :x :y :set
+  setpensize 112 setpencolor "#d9a050 dot (list :x :y)
+  setpensize 96 setpencolor "#c83c28 dot (list :x :y)
+  setpensize 14
+  foreach :set [
+    localmake "t ?
+    setpencolor topping.color :t
+    ; three dots of each topping, 120 degrees apart. Each topping is
+    ; turned a little further round, and alternate toppings sit nearer
+    ; the middle, so no two dots land on top of each other.
+    localmake "p position :t :toppings
+    localmake "r 20 + 16 * remainder :p 2
+    repeat 3 [
+      localmake "angle 120 * repcount + 24 * :p
+      dot (list :x + :r * sin :angle :y + :r * cos :angle)
+    ]
+  ]
+  setpensize 1 setpencolor "white
+  penup setxy :x - 55 :y - 72
+  label :set
+end
+
+; Pizzas go in rows of five. # is the position in the menu (1, 2, 3...)
+; so # - 1 counts from 0, which makes the row and column sums simple.
+to bake :menu
+  foreach :menu [
+    localmake "col remainder # - 1 5
+    localmake "row int (# - 1) / 5
+    pizza -300 + 150 * :col 150 - 170 * :row ?
+    wait 15
+  ]
+end
+
+clearscreen hideturtle
+setbackground "#2a2420
+setlabelheight 11
+make "menu choose :toppings :pick
+bake :menu
+print (sentence [There are] count :menu [different pizzas with] :pick [toppings each.])

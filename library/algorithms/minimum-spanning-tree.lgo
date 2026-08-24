@@ -1,0 +1,103 @@
+; ============================================================
+; TITLE:    Minimum Spanning Tree
+; CATEGORY: Algorithms
+; LEVEL:    Advanced
+; TAGS:     graphs, greedy, prim, arrays, geometry
+; SUMMARY:  Connects scattered houses with the shortest possible total length of cable, using Prim's algorithm.
+; ============================================================
+;
+; WHAT IT DOES
+;   Twenty houses are placed at random. Any house may be wired to any
+;   other, and cable costs its length. Prim's algorithm grows a network
+;   from house 1: at each step it adds the shortest cable that joins a
+;   house already connected to one that is not. The result links every
+;   house with no loops and the smallest total length possible.
+;   Connected houses turn green; the newest cable flashes white.
+;
+; HOW TO USE
+;   Press Run. Each run uses new houses. Change :houses for more.
+;
+; CONCEPTS YOU WILL LEARN
+;   * Prim's greedy algorithm for a minimum spanning tree
+;   * keeping a "best distance so far" array and updating it
+;   * DISTANCE between the turtle and a point
+;
+; THINGS TO TRY
+;   * Draw every possible cable faintly first. How many are there for
+;     20 houses? (Hint: 20 times 19, halved.)
+;   * Start from a different house. Is the total length the same?
+; ============================================================
+
+make "houses 20
+
+to place.houses
+  make "spot array :houses
+  for [i 1 :houses] [setitem :i :spot (list (random -340 340) (random -240 240))]
+end
+
+to gap :i :j
+  penup setpos item :i :spot
+  output distance item :j :spot
+end
+
+; A little house: square body with a triangle roof, outlined in
+; orange. A connected house is also filled in green. FILLED draws the
+; orange outline again on top of the green, so it stays visible.
+to house :i :solid
+  localmake "p item :i :spot
+  setpencolor "#e0a040
+  penup setxy (first :p) - 8 (last :p) - 7 setheading 0 pendown
+  ifelse :solid [filled "#40c070 [house.shape]] [house.shape]
+end
+
+to house.shape
+  repeat 4 [forward 14 right 90]
+  forward 14 right 30
+  repeat 3 [forward 14 right 120]
+  left 30 back 14
+end
+
+to prim
+  ; best.d holds, for each house not yet joined, the shortest cable to
+  ; the network; best.from says which network house that cable comes from.
+  make "joined array :houses
+  make "best.d array :houses
+  make "best.from array :houses
+  for [i 1 :houses] [setitem :i :joined "false setitem :i :best.d gap 1 :i setitem :i :best.from 1]
+  setitem 1 :joined "true
+  house 1 "true
+  localmake "total 0
+  repeat :houses - 1 [
+    ; pick the unjoined house with the shortest cable
+    localmake "pick 0
+    for [i 1 :houses] [
+      if not item :i :joined [
+        if or :pick = 0 [(item :i :best.d) < (item :pick :best.d)] [make "pick :i]
+      ]
+    ]
+    localmake "from item :pick :best.from
+    setpensize 4 setpencolor "white
+    penup setpos item :from :spot pendown setpos item :pick :spot
+    wait 20
+    setpencolor "#40c070
+    penup setpos item :from :spot pendown setpos item :pick :spot
+    setpensize 1
+    make "total :total + item :pick :best.d
+    setitem :pick :joined "true
+    house :pick "true
+    ; the new house may offer shorter cables to the others
+    for [i 1 :houses] [
+      if not item :i :joined [
+        localmake "d gap :pick :i
+        if :d < item :i :best.d [setitem :i :best.d :d setitem :i :best.from :pick]
+      ]
+    ]
+  ]
+  print (sentence [Total cable length:] round :total)
+end
+
+clearscreen hideturtle
+setbackground "#1a1d24
+place.houses
+for [i 1 :houses] [house :i "false]
+prim

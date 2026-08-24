@@ -1,0 +1,105 @@
+; ============================================================
+; TITLE:    Convex Hull Gift Wrap
+; CATEGORY: Algorithms
+; LEVEL:    Advanced
+; TAGS:     geometry, convex hull, cross product, lists
+; SUMMARY:  Wraps a rubber band around a cloud of random points using the gift wrapping (Jarvis march) algorithm.
+; ============================================================
+;
+; WHAT IT DOES
+;   Thirty random dots are scattered on the screen. Starting from the
+;   leftmost dot, the turtle looks for the next dot such that every
+;   other dot lies on the same side of the line to it, as if wrapping
+;   paper around the outside. Thin gray lines show each candidate as it is
+;   tried, and the chosen edge is drawn in gold. When the wrap returns to
+;   the start, the hull is complete and its corner dots are circled.
+;
+; HOW TO USE
+;   Press Run. Change :how.many for more dots. Each run uses new
+;   random dots.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the cross product: one number that tells left turn from right turn
+;   * points stored as [x y] lists
+;   * a loop that ends when it comes back to where it started
+;
+; THINGS TO TRY
+;   * Place the dots in a circle with a few inside it. Which dots end
+;     up on the hull?
+;   * Count how many candidate checks are made. Gift wrapping does
+;     about n times h checks, where h is the number of hull corners.
+; ============================================================
+
+make "how.many 30
+
+to scatter
+  make "points []
+  repeat :how.many [
+    make "points fput (list (random -300 300) (random -220 220)) :points
+  ]
+end
+
+; Positive if a -> b -> c turns left (counterclockwise), negative if it
+; turns right, zero if the three points are in a straight line.
+to cross :a :b :c
+  output ((first :b) - (first :a)) * ((last :c) - (last :a)) - ~
+         ((last :b) - (last :a)) * ((first :c) - (first :a))
+end
+
+to leftmost :pts
+  localmake "best first :pts
+  foreach :pts [if (first ?) < (first :best) [make "best ?]]
+  output :best
+end
+
+to segment :a :b :colr :w
+  setpencolor :colr setpensize :w
+  penup setpos :a pendown setpos :b
+end
+
+to draw.dots
+  setpencolor "#d0d8e8 setpensize 8
+  foreach :points [dot ?]
+  setpensize 1
+end
+
+; From the current corner, start with any candidate and replace it
+; whenever some other point lies to its right. The survivor has every
+; point on its left, so it is the next corner going counterclockwise.
+to next.corner :here
+  localmake "cand first :points
+  if :cand = :here [make "cand item 2 :points]
+  foreach :points [
+    if not ? = :here [
+      if (cross :here :cand ?) < 0 [
+        make "cand ?
+        segment :here :cand "#5a6478 1
+        wait 2
+      ]
+    ]
+  ]
+  output :cand
+end
+
+to gift.wrap
+  localmake "start leftmost :points
+  localmake "here :start
+  make "hull (list :start)
+  do.until [
+    localmake "next next.corner :here
+    segment :here :next "#ffc830 3
+    draw.dots
+    make "hull lput :next :hull
+    make "here :next
+  ] [:here = :start]
+end
+
+clearscreen hideturtle
+setbackground "#12141a
+scatter
+draw.dots
+gift.wrap
+; circle the corners
+setpencolor "orange
+foreach butlast :hull [penup setpos ? pendown ellipse 20 20]
+print (sentence [The hull has] (count :hull) - 1 [corners out of] :how.many [points.])

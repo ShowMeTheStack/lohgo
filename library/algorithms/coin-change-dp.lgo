@@ -1,0 +1,107 @@
+; ============================================================
+; TITLE:    Coin Change Table
+; CATEGORY: Algorithms
+; LEVEL:    Intermediate
+; TAGS:     dynamic programming, arrays, greedy, input
+; SUMMARY:  Fills a table of the fewest coins needed for every amount, and shows where the greedy "biggest coin first" idea goes wrong.
+; ============================================================
+;
+; WHAT IT DOES
+;   In this made-up country the coins are worth 1, 3 and 4. You type an
+;   amount and the program fills a table, cell by cell, with the fewest
+;   coins that make every amount from 0 up to yours. Each cell is worked
+;   out from cells already filled: try each coin, look up what is left,
+;   add one. Then it prints the coins it used and compares them with the
+;   greedy method, which grabs the biggest coin it can every time.
+;
+; HOW TO USE
+;   Press Run and type an amount from 1 to 31. Try 6: greedy uses
+;   4 + 1 + 1, but 3 + 3 is better. Type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * dynamic programming: solve small cases first, reuse the answers
+;   * an array that starts at 0 with (ARRAY n 0)
+;   * remembering which choice was best, so the answer can be rebuilt
+;
+; THINGS TO TRY
+;   * Change :coins to [1 5 10 25]. Does greedy ever lose now?
+;   * Count how many ways there are to make each amount instead.
+; ============================================================
+
+make "coins [1 3 4]
+
+; Cell k of the table, two rows of 16.
+to cell :k :value :colr
+  localmake "x -360 + (remainder :k 16) * 45
+  localmake "y 120 - (int :k / 16) * 110
+  penup setxy :x :y setheading 0 pendown
+  filled :colr [repeat 2 [forward 60 right 90 forward 40 right 90]]
+  setpencolor "#a0a8b8 penup setxy :x + 4 :y + 64 setlabelheight 12 label :k
+  setpencolor "white penup setxy :x + 12 :y + 20 setlabelheight 20 label :value
+end
+
+to fill.table :amount
+  clean
+  make "best (array :amount + 1 0)
+  make "used (array :amount + 1 0)
+  setitem 0 :best 0
+  setitem 0 :used 0
+  cell 0 0 "#3a3f4c
+  for [k 1 :amount] [
+    setitem :k :best 999
+    foreach :coins [
+      if and ? <= :k [1 + (item :k - ? :best) < item :k :best] [
+        setitem :k :best 1 + item :k - ? :best
+        setitem :k :used ?
+      ]
+    ]
+    cell :k item :k :best item (item :k :best) [#2f9e5a #3c78d8 #8a5ad0 #d0703c #c04060 #c04060 #c04060 #c04060 #c04060 #c04060]
+    wait 6
+  ]
+end
+
+; Walk back through the table: use the remembered coin, then look at
+; what is left.
+to coins.for :k
+  if :k = 0 [output []]
+  output fput item :k :used coins.for :k - item :k :used
+end
+
+; Greedy: always take the biggest coin that still fits.
+to greedy :k
+  if :k = 0 [output []]
+  localmake "c last filter [? <= :k] :coins
+  output fput :c greedy :k - :c
+end
+
+; Prints something like  Best: 3 + 3 uses 2 coins
+to report :title :pile
+  print (sentence :title reduce [(sentence ?1 "+ ?2)] :pile [uses] count :pile ~
+    ifelse (count :pile) = 1 ["coin] ["coins])
+end
+
+to ask.amount
+  print [Type an amount from 1 to 31, or quit:]
+  localmake "r readlist
+  if emptyp :r [output "quit]
+  if (first :r) = "quit [output "quit]
+  if numberp first :r [
+    if and (first :r) >= 1 [and (first :r) <= 31 [(first :r) = int first :r]] [output first :r]
+  ]
+  print [That is not a whole number from 1 to 31.]
+  output ask.amount
+end
+
+to play
+  localmake "n ask.amount
+  if :n = "quit [print [Goodbye.] stop]
+  fill.table :n
+  report [Best: ] coins.for :n
+  report [Greedy:] greedy :n
+  if (count greedy :n) > (count coins.for :n) [print [Greedy needs more coins this time!]]
+  play
+end
+
+clearscreen hideturtle
+setbackground "#16181e
+play

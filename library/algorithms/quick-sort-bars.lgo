@@ -1,0 +1,104 @@
+; ============================================================
+; TITLE:    Quicksort Partitions
+; CATEGORY: Algorithms
+; LEVEL:    Advanced
+; TAGS:     sorting, recursion, partition, arrays, animation
+; SUMMARY:  Quicksort picks a pivot bar and splits the row into smaller and bigger bars, then repeats on each side.
+; ============================================================
+;
+; WHAT IT DOES
+;   The last bar of the slice being worked on is the pivot, drawn red.
+;   A scan runs from left to right. Bars found to be smaller than the
+;   pivot are swapped into a growing green zone at the left of the slice;
+;   the rest stay purple. At the end the pivot swaps into the gap between
+;   the two zones, where it will stay forever (it turns white). Then the
+;   same thing happens to the left zone and to the right zone.
+;
+; HOW TO USE
+;   Press Run. Change :n or :delay. Try "make "worst "true" to start with
+;   a row that is already sorted and see why the pivot choice matters.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the Lomuto partition scheme
+;   * recursion on two sub-ranges of one array
+;   * keeping several pieces of state (lo, hi, store, scan) straight
+;
+; THINGS TO TRY
+;   * Use the middle bar as the pivot: swap it with the last bar first.
+;   * Count the swaps for random rows and for sorted rows.
+; ============================================================
+
+make "n 24
+make "delay 3
+make "worst "false
+
+to build.row
+  make "h array :n
+  for [i 1 :n] [
+    ifelse :worst [setitem :i :h 10 * :i] [setitem :i :h 10 + random 230]
+  ]
+  ; :final remembers which bars have reached their sorted home
+  make "final array :n
+  for [i 1 :n] [setitem :i :final "false]
+end
+
+to column :i :colr
+  localmake "w 600 / :n
+  penup setxy -300 + (:i - 1) * :w -170 setheading 0 pendown
+  filled :colr [repeat 2 [forward item :i :h right 90 forward :w - 3 right 90]]
+end
+
+; Color code: white = final, red = pivot, green = smaller than pivot,
+; yellow = the bar being scanned, purple = everything else in the slice,
+; dark gray = outside the slice.
+to view :lo :hi :store :scan
+  clean
+  for [i 1 :n] [
+    column :i cond [
+      [[item :i :final] "white]
+      [[:i = :hi] "red]
+      [[:i = :scan] "yellow]
+      [[and :i >= :lo :i < :store] "#3cc864]
+      [[and :i >= :lo :i < :hi] "#9a5ad8]
+      [else "#404850]
+    ]
+  ]
+  wait :delay
+end
+
+to swap.bars :x :y
+  localmake "t item :x :h
+  setitem :x :h item :y :h
+  setitem :y :h :t
+end
+
+; Put the pivot into its final place and output that place.
+to partition :lo :hi
+  localmake "pivot item :hi :h
+  localmake "store :lo
+  for [j :lo :hi - 1] [
+    view :lo :hi :store :j
+    if (item :j :h) < :pivot [
+      swap.bars :store :j
+      make "store :store + 1
+    ]
+  ]
+  swap.bars :store :hi
+  setitem :store :final "true
+  output :store
+end
+
+to quicksort :lo :hi
+  if :lo > :hi [stop]
+  if :lo = :hi [setitem :lo :final "true stop]
+  localmake "p partition :lo :hi
+  quicksort :lo :p - 1
+  quicksort :p + 1 :hi
+end
+
+clearscreen hideturtle
+setbackground "#101418
+build.row
+quicksort 1 :n
+view 0 0 0 0
+print [Quicksort finished.]
