@@ -1,0 +1,107 @@
+; ============================================================
+; TITLE:    Maze Solver by Backtracking
+; CATEGORY: Recursion
+; LEVEL:    Advanced
+; TAGS:     recursion, backtracking, search, maze, arrays
+; SUMMARY:  Finds the way through a maze by trying each direction in turn and backing up from dead ends, coloring the cells as it explores.
+; ============================================================
+;
+; WHAT IT DOES
+;   The maze is written as rows of text: # is a wall, S the start and
+;   E the exit. SOLVE stands on a cell and asks: is the exit reachable
+;   from here? It marks the cell yellow so it never walks in circles,
+;   and then asks the same question of the cell below, to the right,
+;   above and to the left, in that order. If one of them says yes, this
+;   cell is on the path and turns green. If none do, it is a dead end:
+;   it turns grey and SOLVE outputs false, which sends the search back
+;   to the cell it came from. That going back is called backtracking.
+;
+; HOW TO USE
+;   1. Press Run and watch the search. Slow it down with the speed
+;      slider if it is too quick.
+;   2. Put a breakpoint on the dead end line,
+;        paint :row :col 15
+;      and run. The Call Stack now lists every SOLVE between the start
+;      and this dead end: it is exactly the path being tried. Click
+;      them to see :row and :col.
+;   3. Press F5 to reach the next dead end, and see how much of the
+;      stack is still the same.
+;
+; CONCEPTS YOU WILL LEARN
+;   * backtracking search with recursion
+;   * marking visited places so the search cannot loop forever
+;   * a two dimensional array (MDARRAY) as a map
+;
+; THINGS TO TRY
+;   * Change the order of the four directions (it is down, right, up,
+;     left now). Does it find the same path? Does it explore more?
+;   * Edit the maze rows to make your own. Keep every row the same length.
+;   * Remove the line that marks a cell as tried. What happens? (Stop!)
+; ============================================================
+
+make "maze [
+  ###############
+  #S..#.....#...#
+  #.#.#.###.#.#.#
+  #.#...#...#.#.#
+  #.#####.###.#.#
+  #.....#.#...#.#
+  #####.#.#.###.#
+  #...#.#...#...#
+  #.#.#.#####.###
+  #.#...#......E#
+  ###############
+]
+make "rows count :maze
+make "cols count first :maze
+make "size 40
+
+; Copy the text into an array so cells can be changed: "tried marks a
+; cell we have already stepped on.
+to load.maze
+  make "grid mdarray (list :rows :cols)
+  for [r 1 :rows] [
+    for [c 1 :cols] [
+      mdsetitem (list :r :c) :grid item :c item :r :maze
+      if equalp item :c item :r :maze "# [paint :r :c [40 50 110]]
+      if equalp item :c item :r :maze "E [paint :r :c 4]
+    ]
+  ]
+end
+
+to solve :row :col
+  localmake "here mditem (list :row :col) :grid
+  if equalp :here "# [output "false]
+  if equalp :here "tried [output "false]
+  if equalp :here "E [output "true]
+  mdsetitem (list :row :col) :grid "tried
+  paint :row :col 6
+  wait 4
+  ; Try down, right, up, left. The first yes is good enough.
+  if solve :row + 1 :col [paint :row :col 10 output "true]
+  if solve :row :col + 1 [paint :row :col 10 output "true]
+  if solve :row - 1 :col [paint :row :col 10 output "true]
+  if solve :row :col - 1 [paint :row :col 10 output "true]
+  ; Nothing worked from here: a dead end. Grey it out and go back.
+  paint :row :col 15
+  wait 4
+  output "false
+end
+
+; Color one cell. Row 1 is at the top, so y goes DOWN as the row grows.
+; A cell can be painted more than once (yellow, then green or grey),
+; and each new coat covers the one before. The square is walked with
+; the pen up, so it gets no border line.
+to paint :row :col :color
+  localmake "x (:col - 1) * :size - :cols * :size / 2
+  localmake "y :rows * :size / 2 - (:row - 1) * :size
+  penup setxy :x :y setheading 90
+  filled :color [repeat 4 [forward :size right 90]]
+end
+
+clearscreen hideturtle
+load.maze
+; S is in row 2, column 2
+ifelse solve 2 2 [print [Found the way out! The green cells are the path.]] [
+  print [There is no way out of this maze.]
+]

@@ -1,0 +1,68 @@
+; ============================================================
+; TITLE:    Recursive Spirals
+; CATEGORY: Recursion
+; LEVEL:    Beginner
+; TAGS:     recursion, spirals, drawing, stop rule, color
+; SUMMARY:  Draws four colorful spirals with one short procedure that draws a single line and then calls itself with a shorter one.
+; ============================================================
+;
+; WHAT IT DOES
+;   SPIRAL draws one line, turns, and then asks itself to draw the rest
+;   of the spiral with a slightly shorter line. The stop rule says:
+;   when the line is shorter than 2 steps, stop. Four spirals are
+;   drawn with different turning angles, one in each corner, and the
+;   pen color changes as the lines get shorter.
+;
+; HOW TO USE
+;   1. Press Run and watch. Move the speed slider to the left to slow
+;      the turtle down so you can see each line being added.
+;   2. Put a breakpoint on the line  fd :size  inside SPIRAL and run.
+;      Each time you press F5 one more line appears, and :size in the
+;      Variables panel is a little smaller.
+;   3. After many presses, open the Call Stack. It is very tall: none
+;      of the SPIRALs finish until the very last, tiny one stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a stop rule that tests the size, not a counter
+;   * changing more than one input on each recursive call
+;   * tail recursion: the recursive call is the very last thing
+;
+; THINGS TO TRY
+;   * Try angles like 89, 90, 121, 160 or 170 in the last lines.
+;   * Make the line shrink by 1 instead of by 4 percent. What changes?
+;   * Make it GROW instead and add a stop rule for when it gets too big.
+; ============================================================
+
+; Each call: one line in a color picked from the size, a turn, then the
+; rest of the spiral, which is the same picture made 4 percent smaller.
+to spiral :size :angle
+  if :size < 2 [stop]
+  setpencolor colorfor :size
+  fd :size
+  rt :angle
+  spiral :size * 0.96 :angle
+end
+
+; Big lines get a cool blue, small ones a warm red: the color slides
+; smoothly between them as the size shrinks.
+to colorfor :size
+  localmake "t :size / 130
+  if :t > 1 [make "t 1]
+  output (list 255 * (1 - :t) 80 255 * :t)
+end
+
+; Start each spiral at a point chosen so that it sits roughly in the
+; middle of its own quarter of the screen.
+to spiral.at :x :y :angle
+  penup setxy :x :y setheading 0 pendown
+  spiral 130 :angle
+end
+
+clearscreen hideturtle
+setbackground 0
+setpensize 2
+; Angles a little past 90, 120, 72 and 144 make the polygons twist
+spiral.at -258 85 92
+spiral.at 162 85 123
+spiral.at -290 -215 74
+spiral.at 179 -215 146

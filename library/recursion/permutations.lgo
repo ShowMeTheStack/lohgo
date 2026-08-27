@@ -1,0 +1,82 @@
+; ============================================================
+; TITLE:    Every Possible Order
+; CATEGORY: Recursion
+; LEVEL:    Intermediate
+; TAGS:     recursion, permutations, lists, anagrams, map
+; SUMMARY:  Lists every way to arrange some items, and uses it to find anagrams of a word and to seat friends at a table.
+; ============================================================
+;
+; WHAT IT DOES
+;   How many ways can three friends stand in a line? To find them all,
+;   pick who goes first, then line up the other two in every possible
+;   way. Lining up the other two is the same problem, only smaller.
+;   PERMS outputs a list of all the orders. The program prints them for
+;   a short list, counts them for longer ones, and finds all the
+;   arrangements of the letters in a word.
+;
+; HOW TO USE
+;   1. Press Run and read the results.
+;   2. Put a breakpoint on the first line of PERMS,
+;        if emptyp :items [output [[]]]
+;      and run with F5. In the Call Stack, PERMS and WITH.FIRST take
+;      turns: each PERMS has a list one item shorter than the one
+;      before. Press F5 and watch :items and :choice in the Variables
+;      panel.
+;   3. Try changing the word given to ANAGRAMS at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * building every arrangement by choosing a first item
+;   * MAP and FPUT to put the chosen item in front of many lists
+;   * removing just one copy of an item, and REMDUP for repeated answers
+;
+; THINGS TO TRY
+;   * Compare the counts with the factorials in factorial.lgo. Then add
+;     7 and 8 to the list of sizes and notice how long it takes.
+;   * Try print anagrams "boot. Why do some answers appear twice?
+;   * Make a list of four colors and draw a striped flag for each order.
+; ============================================================
+
+; The only way to arrange nothing is the empty arrangement, so the
+; base case outputs a list holding one empty list. Getting this right
+; is what makes everything above it work.
+to perms :items
+  if emptyp :items [output [[]]]
+  output map.se [with.first ? :items] :items
+end
+
+; All the orders that start with :choice. Take :choice out, arrange
+; what is left in every way, and put :choice back on the front of each.
+; REMOVE takes out every copy, so for letters that repeat we remove
+; just the first one with WITHOUT.
+to with.first :choice :items
+  output map [fput :choice ?] perms without :choice :items
+end
+
+to without :x :items
+  if emptyp :items [output []]
+  if equalp :x first :items [output butfirst :items]
+  output fput first :items without :x butfirst :items
+end
+
+to anagrams :w
+  ; turn the word into a list of letters, permute, glue back together
+  output map [apply "word ?] perms letters :w
+end
+
+to letters :w
+  if emptyp :w [output []]
+  output fput first :w letters butfirst :w
+end
+
+print [Three friends can stand in a line in these ways:]
+foreach perms [Ana Ben Cy] [print ?]
+print []
+foreach [1 2 3 4 5 6] [
+  print (sentence ? [items can be arranged in] count perms iseq 1 ? [ways])
+]
+print []
+print [All the orders of the letters in "tea:]
+print anagrams "tea
+print [The letters of "boot, with the doubled o, give repeats.]
+print [REMDUP throws the copies away:]
+print remdup anagrams "boot

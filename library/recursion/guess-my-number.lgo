@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    I Can Guess Your Number
+; CATEGORY: Recursion
+; LEVEL:    Intermediate
+; TAGS:     recursion, binary search, input, halving, number line
+; SUMMARY:  You think of a number from 1 to 100 and the computer finds it in at most seven guesses by halving the range with each recursive call.
+; ============================================================
+;
+; WHAT IT DOES
+;   Think of a whole number from 1 to 100. The computer guesses the
+;   middle of the numbers that are still possible. You answer higher,
+;   lower or yes. Each answer throws away half of the possibilities,
+;   and FINDIT calls itself on the half that is left. A number line on
+;   the screen shows the range shrinking, one bar per guess.
+;
+; HOW TO USE
+;   1. Press Run and think of a number. Answer each guess in the
+;      command box with  h  (your number is higher),  l  (lower) or
+;      y  (yes, that's it), then press Enter.
+;   2. Put a breakpoint on the line  localmake "guess int (:low + :high) / 2
+;      and run. In the Variables panel watch :low and :high close in on
+;      your number. The Call Stack holds one FINDIT per guess so far.
+;   3. Try to catch it out by changing your mind halfway. It notices.
+;
+; CONCEPTS YOU WILL LEARN
+;   * binary search: halving a range again and again
+;   * a recursive procedure driven by the user's answers
+;   * checking input and asking again when it does not make sense
+;
+; THINGS TO TRY
+;   * Change the range to 1 to 1000. How many guesses at most now?
+;   * Make the computer guess at random within the range instead of
+;     the middle. Does it take more guesses on average?
+;   * Swap roles: write a program where YOU guess and it answers.
+; ============================================================
+
+; :low and :high are the smallest and largest numbers still possible.
+to findit :low :high :tries
+  if :low > :high [
+    print [Hmm, that cannot be right. Did you change your number?]
+    stop
+  ]
+  localmake "guess int (:low + :high) / 2
+  bar :low :high :guess :tries
+  localmake "answer ask.answer :guess
+  if :answer = "y [
+    print (sentence [Got it! Your number is] :guess [and I needed] :tries [guesses.])
+    stop
+  ]
+  ; Throw away the guess and everything on the wrong side of it.
+  if :answer = "h [findit :guess + 1 :high :tries + 1 stop]
+  findit :low :guess - 1 :tries + 1
+end
+
+; Keep asking until the answer is h, l or y. Only the first letter
+; counts, so "higher" and "yes" work too.
+to ask.answer :guess
+  print (sentence [Is it] (word :guess "?) [Type h for higher, l for lower, y for yes:])
+  localmake "reply readword
+  if not emptyp :reply [
+    localmake "c lowercase first :reply
+    if memberp :c [h l y] [output :c]
+  ]
+  print [Please answer with h, l or y.]
+  output ask.answer :guess
+end
+
+; Draw the range still in play as a bar on a number line from 1 to 100,
+; one row lower for each guess, with the guess written above the bar.
+to bar :low :high :guess :tries
+  localmake "y 180 - 50 * :tries
+  localmake "c item 1 + remainder :tries 6 [1 2 13 14 4 5]
+  setpencolor :c setpensize 14
+  penup setxy xfor :low :y pendown setxy xfor :high :y
+  setpencolor 0 setpensize 1
+  penup setxy (xfor :guess) - 8 :y + 12
+  label :guess
+  penup setxy -390 :y - 6
+  label (word "guess "| | :tries)
+end
+
+; Turn a number from 1 to 100 into an x position on the screen.
+to xfor :n
+  output -300 + (:n - 1) * 6.4
+end
+
+clearscreen hideturtle
+setlabelheight 14
+; the number line itself
+penup setxy xfor 1 230 pendown setxy xfor 100 230
+foreach [1 25 50 75 100] [penup setxy (xfor ?) - 6 240 label ?]
+print [Think of a whole number from 1 to 100. I will guess it.]
+findit 1 100 1

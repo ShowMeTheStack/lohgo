@@ -1,0 +1,61 @@
+; ============================================================
+; TITLE:    Power by Halves
+; CATEGORY: Recursion
+; LEVEL:    Beginner
+; TAGS:     recursion, powers, multiplication, efficiency
+; SUMMARY:  Raises a number to a power two ways, one multiplication at a time and by halving the exponent, and counts the work.
+; ============================================================
+;
+; WHAT IT DOES
+;   2 to the power 10 means ten 2s multiplied together.
+;   SLOWPOWER uses the rule  b^n = b x b^(n-1), so it needs n steps.
+;   FASTPOWER notices that b^10 = b^5 x b^5. Work out b^5 once and
+;   square it. When the exponent is odd, peel off one b first. Each
+;   step halves the exponent, so even b^1000 takes only a few steps.
+;   Both versions print an indented line for each call they make.
+;
+; HOW TO USE
+;   1. Press Run and compare the two traces.
+;   2. Put a breakpoint on the first line of FASTPOWER,
+;        if :n = 0 [output 1]
+;      run with F5, and keep pressing F5. In the Variables panel watch
+;      :n go 13, 6, 3, 1, 0. Halving reaches 0 very quickly.
+;   3. Do the same in SLOWPOWER and count the presses.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a recursive rule with a base case of n = 0
+;   * splitting a problem in half instead of shrinking it by one
+;   * EVEN and ODD with REMAINDER
+;
+; THINGS TO TRY
+;   * Change the numbers in the last lines: try 3 to the 20.
+;   * How many steps does fastpower need for 2 to the 1000? Count them,
+;     do not print the answer (it is too big).
+; ============================================================
+
+; Each level of the trace is indented two more spaces than the last.
+to slowpower :b :n :indent
+  print (word :indent :b "^ :n)
+  if :n = 0 [output 1]
+  output :b * slowpower :b :n - 1 word :indent "|  |
+end
+
+to fastpower :b :n :indent
+  print (word :indent :b "^ :n)
+  if :n = 0 [output 1]
+  ; HALF is the answer for half the exponent, found only ONCE.
+  ; Calling fastpower twice here would throw away all the savings.
+  localmake "half fastpower :b int :n / 2 word :indent "|  |
+  if (remainder :n 2) = 0 [output :half * :half]
+  ; odd exponent: one extra b is left over
+  output :b * :half * :half
+end
+
+print [Slow way, one multiplication per step:]
+print sentence [Answer:] slowpower 2 13 "
+print []
+print [Fast way, halving the exponent:]
+print sentence [Answer:] fastpower 2 13 "
+print []
+print [Check with the built-in POWER:]
+print power 2 13

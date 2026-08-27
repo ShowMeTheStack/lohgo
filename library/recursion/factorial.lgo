@@ -1,0 +1,72 @@
+; ============================================================
+; TITLE:    Factorial, Step by Step
+; CATEGORY: Recursion
+; LEVEL:    Beginner
+; TAGS:     recursion, output, debugger, multiplication
+; SUMMARY:  Computes factorials with a procedure that outputs a value, and prints how each answer is built from the one below it.
+; ============================================================
+;
+; WHAT IT DOES
+;   The factorial of 5, written 5!, is 5 x 4 x 3 x 2 x 1 = 120.
+;   Notice that 5! is just 5 x 4!. FACT uses that idea: to find the
+;   factorial of n it asks for the factorial of n - 1 and multiplies.
+;   SHOWFACT does the same thing but prints a line on the way down
+;   and another on the way back up, so you can see the two halves.
+;
+; HOW TO USE
+;   1. Press Run and read the table and the indented trace.
+;   2. Put a breakpoint (click the margin) on the line
+;        output :n * fact :n - 1
+;      and press F5. Open Call Stack and press F5 a few more times:
+;      FACT 5 calls FACT 4 calls FACT 3 ... each one is stuck on this
+;      same line, waiting for an answer.
+;   3. Now remove that breakpoint and put one on the line
+;        if :n = 0 [output 1]
+;      Right-click the dot and choose "Stop only when..." and type
+;        :n = 0
+;      Run again. The stack is at its deepest. Press Step (F11) slowly
+;      and watch each FACT get its answer and disappear from the stack.
+;
+; CONCEPTS YOU WILL LEARN
+;   * OUTPUT hands a value back to whoever called the procedure
+;   * the base case (0! is 1) stops the recursion
+;   * work done before the recursive call versus after it
+;
+; THINGS TO TRY
+;   * Print fact 20. Then fact 25. Numbers grow very fast.
+;   * Write a procedure TRIANGLE :n that adds n + (n-1) + ... + 1 the
+;     same way. What should its base case output?
+; ============================================================
+
+; 0! is defined as 1. That makes the rule n! = n x (n-1)! work all
+; the way down, and gives the recursion somewhere to stop.
+to fact :n
+  if :n = 0 [output 1]
+  output :n * fact :n - 1
+end
+
+; The same calculation, but it prints what it is doing. :indent grows
+; by two spaces at each level so the printout shows the nesting.
+to showfact :n :indent
+  localmake "answer 0
+  print (word :indent "fact "| | :n "| ?|)
+  ifelse :n = 0 [
+    make "answer 1
+  ] [
+    make "answer :n * showfact :n - 1 word :indent "|  |
+  ]
+  print (word :indent "fact "| | :n "| = | :answer)
+  output :answer
+end
+
+to table :upto
+  for [i 0 :upto] [
+    print (sentence (word :i "!) "= fact :i)
+  ]
+end
+
+print [A table of factorials]
+table 10
+print []
+print [Watch fact 5 go down and come back up:]
+print showfact 5 "

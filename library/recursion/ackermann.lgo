@@ -1,0 +1,77 @@
+; ============================================================
+; TITLE:    The Ackermann Function
+; CATEGORY: Recursion
+; LEVEL:    Advanced
+; TAGS:     recursion, nested recursion, growth, call stack depth
+; SUMMARY:  Explores a famous function whose recursion feeds its own answer back into itself, counting calls and measuring how deep the stack goes.
+; ============================================================
+;
+; WHAT IT DOES
+;   The Ackermann function takes two numbers m and n:
+;     A(0, n) = n + 1
+;     A(m, 0) = A(m - 1, 1)
+;     A(m, n) = A(m - 1, A(m, n - 1))
+;   The last rule is the strange one: the inner call's answer becomes
+;   an INPUT of the outer call. The answers stay small for a while and
+;   then grow faster than any power. This program prints a table for
+;   small inputs, how many calls each one took and how deep the call
+;   stack got. Only tiny inputs are safe: A(4, 1) already needs
+;   nearly three billion calls.
+;
+; HOW TO USE
+;   1. Press Run and look at the table.
+;   2. Put a breakpoint on the line
+;        output ack :m - 1 ack :m :n - 1
+;      and choose "Stop only when..." with  :depth > 6  in the right-click
+;      menu of the red dot. Run. Open the Call Stack and click down
+;      through it: m and n jump around in a way that is hard to predict.
+;   3. Add watches for  :calls  and  :deepest  and press F5 a few times.
+;
+; CONCEPTS YOU WILL LEARN
+;   * nested recursion, where a recursive call is the input to another
+;   * using global counters to measure what a procedure does
+;   * why some correct programs are still impossible to run
+;
+; THINGS TO TRY
+;   * Find a formula for A(1, n) and A(2, n) from the table.
+;   * Try ack 3 6. Try ack 3 7 if you are patient.
+;   * Do NOT try ack 4 1 unless you want to press Stop.
+; ============================================================
+
+make "calls 0
+make "depth 0
+make "deepest 0
+
+; :depth counts how many ACK calls are unfinished right now. It goes
+; up on the way in and down on the way out, and :deepest remembers the
+; highest it has been.
+to ack :m :n
+  make "calls :calls + 1
+  make "depth :depth + 1
+  if :depth > :deepest [make "deepest :depth]
+  localmake "answer ack.rule :m :n
+  make "depth :depth - 1
+  output :answer
+end
+
+; The three rules, one per line, exactly as written in the comment above.
+to ack.rule :m :n
+  if :m = 0 [output :n + 1]
+  if :n = 0 [output ack :m - 1 1]
+  output ack :m - 1 ack :m :n - 1
+end
+
+; Prints the answer in a fixed-width column so the table lines up.
+to try :m :n
+  make "calls 0
+  make "deepest 0
+  localmake "a ack :m :n
+  print (sentence (word "|A(| :m ", :n "|)|) "= (form :a 5 0) "| | ~
+    (form :calls 8 0) [calls, stack depth] :deepest)
+end
+
+print [m and n, the answer, how many calls, how deep]
+for [m 0 3] [
+  for [n 0 4] [try :m :n]
+  print []
+]

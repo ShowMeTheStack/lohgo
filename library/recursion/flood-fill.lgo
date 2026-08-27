@@ -1,0 +1,112 @@
+; ============================================================
+; TITLE:    Flood Fill by Recursion
+; CATEGORY: Recursion
+; LEVEL:    Advanced
+; TAGS:     recursion, flood fill, grids, arrays, paint bucket
+; SUMMARY:  Shows how a paint bucket tool works: a cell paints itself and then asks its four neighbors to do the same, spreading until it meets walls.
+; ============================================================
+;
+; WHAT IT DOES
+;   The screen is a grid of square cells. Some cells are walls: a ring
+;   and a square box inside it. FLOOD is the paint bucket. Asked to
+;   paint a cell, it gives up if the cell is off the grid, is a wall,
+;   or is already painted. Otherwise it paints the cell and then calls
+;   FLOOD on the cells above, to the right, below and to the left. The
+;   color leaks outward like water until walls stop it.
+;   The first flood starts between the ring and the box, so it paints a
+;   doughnut and never gets into the box. A second flood fills the box.
+;
+; HOW TO USE
+;   1. Press Run and watch the paint spread. The pattern it makes shows
+;      the order of the recursive calls: it runs up in a straight line
+;      first, because "up" is tried first.
+;   2. Put a breakpoint on the line  paint.cell :row :col :color
+;      and run. Press F5 a few times, then open the Call Stack. Each
+;      FLOOD there is a cell still waiting to try its other neighbors.
+;   3. Add a watch for  :painted  and continue. The deepest the stack
+;      gets is printed at the end.
+;
+; CONCEPTS YOU WILL LEARN
+;   * four-way recursion on a grid
+;   * the three stop rules: off the grid, a wall, already done
+;   * MDARRAY and MDITEM for a two dimensional map
+;
+; THINGS TO TRY
+;   * Change the order of the four FLOOD calls and see the new pattern.
+;   * Add the four diagonal neighbors. Can the paint now slip between
+;     wall cells that only touch at their corners?
+;   * Make a gap in the box (change one wall cell) and run again.
+; ============================================================
+
+make "rows 24
+make "cols 32
+make "cell 22
+make "painted 0
+make "depth 0
+make "deepest 0
+
+; Mark the walls. The middle of the grid is between cells, at column
+; 16.5 and row 12.5. Cells about 10.5 away from it form a ring. Cells
+; that are 4.5 away across OR up and down (whichever is bigger) form
+; the sides of a square box.
+to build.walls
+  make "grid mdarray (list :rows :cols)
+  for [r 1 :rows] [
+    for [c 1 :cols] [
+      localmake "dx :c - 16.5
+      localmake "dy :r - 12.5
+      localmake "d sqrt (:dx * :dx + :dy * :dy)
+      ifelse or (abs (:d - 10.5)) < 0.75 (max abs :dx abs :dy) = 4.5 [
+        mdsetitem (list :r :c) :grid "wall
+        paint.cell :r :c [40 40 60]
+      ] [
+        mdsetitem (list :r :c) :grid "empty
+      ]
+    ]
+  ]
+end
+
+to max :a :b
+  ifelse :a > :b [output :a] [output :b]
+end
+
+to flood :row :col :color
+  ; the three stop rules
+  if or :row < 1 :row > :rows [stop]
+  if or :col < 1 :col > :cols [stop]
+  if not equalp mditem (list :row :col) :grid "empty [stop]
+  mdsetitem (list :row :col) :grid "painted
+  make "painted :painted + 1
+  make "depth :depth + 1
+  if :depth > :deepest [make "deepest :depth]
+  paint.cell :row :col :color
+  wait 1
+  flood :row - 1 :col :color
+  flood :row :col + 1 :color
+  flood :row + 1 :col :color
+  flood :row :col - 1 :color
+  make "depth :depth - 1
+end
+
+; Paint one cell with thick strokes. Strokes always land on top of the
+; picture, which is what we want when coloring cells one by one.
+to paint.cell :row :col :color
+  localmake "x (:col - 1) * :cell - :cols * :cell / 2
+  localmake "y :rows * :cell / 2 - (:row - 1) * :cell
+  setpencolor :color setpensize 5
+  for [k 3 20 4] [
+    penup setxy :x + 3 :y - :k
+    pendown setxy :x + :cell - 3 :y - :k
+  ]
+  penup
+end
+
+clearscreen hideturtle
+setbackground [235 235 225]
+build.walls
+flood 12 23 [70 150 230]
+print (sentence [The doughnut took] :painted [cells, and the stack was] :deepest [calls deep at most.])
+make "painted 0
+make "deepest 0
+flood 12 16 [240 120 60]
+print (sentence [The box took] :painted [cells, and the stack was] :deepest [calls deep at most.])

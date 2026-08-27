@@ -1,0 +1,68 @@
+; ============================================================
+; TITLE:    Reverse a Word
+; CATEGORY: Recursion
+; LEVEL:    Beginner
+; TAGS:     recursion, words, letters, input
+; SUMMARY:  Turns words back to front with a short recursive procedure and lets you type your own words to flip.
+; ============================================================
+;
+; WHAT IT DOES
+;   To reverse "turtle, reverse "urtle and put the "t on the end.
+;   That is the whole idea of BACKWARDS. The word gets one letter
+;   shorter at each call until it is empty, and an empty word reversed
+;   is still empty. The program shows some examples, then asks you for
+;   words to reverse until you type quit.
+;
+; HOW TO USE
+;   1. Press Run. Type a word in the command box and press Enter.
+;      Type quit to finish.
+;   2. To look inside, put a breakpoint on the line
+;        output word backwards butfirst :w first :w
+;      and press F5. In the Variables panel :w is the whole word. Press
+;      F5 again and again: :w loses its first letter each time.
+;   3. In the Call Stack, click each BACKWARDS from the newest to the
+;      oldest. Each one is waiting to stick its own first letter on the
+;      end of the answer it gets back.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FIRST and BUTFIRST work on words as well as lists
+;   * WORD glues letters together
+;   * reading input with READWORD in a loop
+;
+; THINGS TO TRY
+;   * Write SHOUTY :w that puts a - between every letter: t-u-r-t-l-e.
+;   * Reverse a whole sentence word by word, using a list instead.
+;   * Type racecar. What is special about it? (See palindromes.lgo.)
+; ============================================================
+
+to backwards :w
+  if emptyp :w [output "]
+  output word backwards butfirst :w first :w
+end
+
+; Shows each step of the unfolding as a little equation, so a reader without
+; the debugger can still see the pattern.
+to explain :w
+  ; a single letter is its own reverse, so the explanation ends there
+  if emptyp butfirst :w [print (sentence "backwards :w "= :w) stop]
+  print (sentence "backwards :w "= "backwards (butfirst :w) "+ first :w)
+  explain butfirst :w
+end
+
+to ask.for.words
+  print []
+  print [Type a word to reverse, or quit to stop:]
+  localmake "w readword
+  if equalp :w "quit [print [Bye!] stop]
+  ; an empty line gives an empty word: ask again
+  ifelse emptyp :w [print [That was empty.]] [
+    print (sentence :w "-> backwards :w)
+  ]
+  ask.for.words
+end
+
+foreach [turtle logo stressed drawer] [print (sentence ? "-> backwards ?)]
+print []
+print [How it works for "logo:]
+explain "logo
+ask.for.words

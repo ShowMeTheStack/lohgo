@@ -1,0 +1,115 @@
+; ============================================================
+; TITLE:    Lists Inside Lists
+; CATEGORY: Recursion
+; LEVEL:    Intermediate
+; TAGS:     recursion, nested lists, flatten, depth, drawing
+; SUMMARY:  Flattens a nested list, measures how deep it goes and counts its words, then draws it as boxes inside boxes.
+; ============================================================
+;
+; WHAT IT DOES
+;   A list can hold other lists: [a [b c] [d [e f]] g]. Many questions
+;   about such a list have the same shape of answer: deal with the
+;   first item (which might be a word or a whole list) and then deal
+;   with the rest. Three procedures do this:
+;     FLATTEN  outputs all the words in one plain list
+;     DEPTH    outputs how many lists deep the nesting goes
+;     LEAVES   counts the words, however deeply they are buried
+;   Finally the list is drawn as nested boxes, one color per level,
+;   using two more recursive procedures to work out sizes.
+;
+; HOW TO USE
+;   1. Press Run. Read the answers and look at the boxes.
+;   2. Put a breakpoint on the last line of FLATTEN,
+;        output sentence flatten first :x flatten butfirst :x
+;      and run. In the Variables panel :x is sometimes a word and
+;      sometimes a list. In the Call Stack you can see recursion going
+;      INTO a sublist (first :x) as well as ALONG the list (butfirst).
+;   3. Change the list at the bottom of the file and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * tree recursion over nested lists: into the first, along the rest
+;   * WORDP and LISTP to tell the two kinds of item apart
+;   * computing sizes recursively before drawing
+;
+; THINGS TO TRY
+;   * Write HOWMANYLISTS :x that counts the lists, not the words.
+;   * Predict, then check: show depth []  and  show depth [[]].
+;   * Draw your own list: [[[deep]] middle [[a b] [c [d]]]].
+; ============================================================
+
+to flatten :x
+  if emptyp :x [output []]
+  if wordp :x [output (list :x)]
+  output sentence flatten first :x flatten butfirst :x
+end
+
+; A word has depth 0. A list is one deeper than its deepest item.
+to depth :x
+  if wordp :x [output 0]
+  if emptyp :x [output 1]
+  output max (1 + depth first :x) depth butfirst :x
+end
+
+to leaves :x
+  if emptyp :x [output 0]
+  if wordp :x [output 1]
+  output (leaves first :x) + leaves butfirst :x
+end
+
+to max :a :b
+  ifelse :a > :b [output :a] [output :b]
+end
+
+; ---- drawing ----------------------------------------------------
+; Every box has 10 steps of space around its contents, and each letter
+; of a word is about 12 steps wide at label height 18.
+to wide :x
+  if wordp :x [output 12 * count :x]
+  if emptyp :x [output 20]
+  output 10 + reduce "sum map [10 + wide ?] :x
+end
+
+to tall :x
+  if wordp :x [output 22]
+  if emptyp :x [output 22]
+  output 20 + reduce "max map [tall ?] :x
+end
+
+; Draw :x with its bottom left corner at :left :bottom. :level picks
+; the color, so each level of nesting gets its own.
+to boxes :x :left :bottom :level
+  if wordp :x [
+    penup setxy :left :bottom + 3 setpencolor 0
+    label :x stop
+  ]
+  frame :left :bottom wide :x tall :x item 1 + remainder :level 5 [4 1 10 13 14]
+  ; the children sit side by side inside the frame
+  localmake "x0 :left + 10
+  foreach :x [
+    boxes ? :x0 :bottom + 10 :level + 1
+    make "x0 :x0 + 10 + wide ?
+  ]
+end
+
+to frame :left :bottom :w :h :color
+  setpencolor :color setpensize 2
+  penup setxy :left :bottom pendown
+  setxy :left + :w :bottom
+  setxy :left + :w :bottom + :h
+  setxy :left :bottom + :h
+  setxy :left :bottom
+  setpensize 1
+end
+
+to study :x
+  show :x
+  print sentence [flattened:] flatten :x
+  print sentence [depth:] depth :x
+  print sentence [words:] leaves :x
+  print []
+  clearscreen hideturtle
+  setlabelheight 18
+  boxes :x (wide :x) / -2 (tall :x) / -2 0
+end
+
+study [[a b] the [cat [sat [on]] [the] mat] [[[deep]]]]

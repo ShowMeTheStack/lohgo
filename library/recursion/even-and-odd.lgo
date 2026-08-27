@@ -1,0 +1,83 @@
+; ============================================================
+; TITLE:    Even and Odd Talk to Each Other
+; CATEGORY: Recursion
+; LEVEL:    Intermediate
+; TAGS:     mutual recursion, predicates, call stack, sequences
+; SUMMARY:  Two procedures that each call the other decide whether a number is even, and then produce Hofstadter's Female and Male sequences.
+; ============================================================
+;
+; WHAT IT DOES
+;   Is 7 even? Only if 6 is odd. Is 6 odd? Only if 5 is even. And so
+;   on down to 0, which is even. ISEVEN asks ISODD, and ISODD asks
+;   ISEVEN, passing the question back and forth with a number one
+;   smaller each time. This is mutual recursion: neither procedure
+;   calls itself directly, but together they recurse.
+;   The second part uses the same trick for two number sequences
+;   invented by Douglas Hofstadter, where each one is defined using
+;   the other.
+;
+; HOW TO USE
+;   1. Press Run and read the conversation that is printed.
+;   2. Put a breakpoint on the  output isodd :n - 1  line in ISEVEN and
+;      run. Open the Call Stack and press F5 a few times. The stack is a
+;      ladder that alternates ISEVEN, ISODD, ISEVEN, ISODD.
+;   3. Click down the stack and watch :n count up as you go older.
+;
+; CONCEPTS YOU WILL LEARN
+;   * mutual recursion between two procedures
+;   * predicates that output true or false
+;   * every recursion needs a way to reach a stopping case
+;
+; THINGS TO TRY
+;   * Ask iseven 2000. How tall does the stack get?
+;   * What happens with iseven -1? Add a rule that handles negative
+;     numbers by making them positive first.
+;   * Make three procedures that pass a number around in a circle to
+;     find the remainder after dividing by 3.
+; ============================================================
+
+; 0 is even. Any other number is even when the number before it is odd.
+to iseven :n
+  if :n = 0 [output "true]
+  output isodd :n - 1
+end
+
+; 0 is not odd. Any other number is odd when the number before it is even.
+to isodd :n
+  if :n = 0 [output "false]
+  output iseven :n - 1
+end
+
+; The same pair, but they print the conversation. :pad is the indent.
+to talk.even :n :pad
+  if :n = 0 [print (word :pad "|0 is even. Yes!|) output "true]
+  print (word :pad "|Is | :n "| even? Ask whether | :n - 1 "| is odd.|)
+  output talk.odd :n - 1 word :pad "| |
+end
+
+to talk.odd :n :pad
+  if :n = 0 [print (word :pad "|0 is not odd. No!|) output "false]
+  print (word :pad "|Is | :n "| odd? Ask whether | :n - 1 "| is even.|)
+  output talk.even :n - 1 word :pad "| |
+end
+
+; Hofstadter's sequences: F(0) = 1, M(0) = 0, and then
+;   F(n) = n - M(F(n - 1))      M(n) = n - F(M(n - 1))
+to female :n
+  if :n = 0 [output 1]
+  output :n - male female :n - 1
+end
+
+to male :n
+  if :n = 0 [output 0]
+  output :n - female male :n - 1
+end
+
+print [A conversation between ISEVEN and ISODD:]
+print sentence [So is 5 even?] talk.even 5 "
+print []
+foreach [0 1 8 13 100] [print (sentence ? [is even:] iseven ? [and odd:] isodd ?)]
+print []
+print [Hofstadter's Female and Male sequences:]
+print sentence "F: map [female ?] iseq 0 15
+print sentence "M: map [male ?] iseq 0 15

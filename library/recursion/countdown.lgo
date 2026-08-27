@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Countdown to Liftoff
+; CATEGORY: Recursion
+; LEVEL:    Beginner
+; TAGS:     recursion, debugger, call stack, stop rule
+; SUMMARY:  A procedure that counts down by calling itself with a smaller number, drawing a rocket at liftoff.
+; ============================================================
+;
+; WHAT IT DOES
+;   COUNTDOWN prints 10, 9, 8 ... 1 and then "Liftoff!". It never uses
+;   REPEAT or FOR. Instead it prints one number and asks a fresh copy of
+;   itself to count down from one less. When the number reaches 0 the
+;   last copy draws a rocket and stops.
+;
+; HOW TO USE
+;   1. Press Run once and read the printout.
+;   2. Click in the margin next to the line  print :n  inside COUNTDOWN.
+;      A red dot appears.
+;   3. Press Run (F5). The program stops before printing 10.
+;      Open the Variables panel: :n is 10.
+;   4. Press F5 again. Now :n is 9. Open the Call Stack panel: there are
+;      TWO countdowns listed. The first one has not finished; it is waiting
+;      for the second one. Keep pressing F5 and watch the stack grow.
+;   5. Click an older line in the Call Stack. Its own :n is still there,
+;      untouched. Every copy of the procedure keeps its own :n.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a procedure that calls itself (recursion)
+;   * the stop rule (base case) that ends the chain
+;   * every call has its own private copy of its inputs
+;
+; THINGS TO TRY
+;   * Change countdown 10 to countdown 3 or countdown 25.
+;   * Delete the stop rule line and run it. What goes wrong? (Press Stop.)
+;   * Make it count down by 2. Which stop rule do you need now?
+; ============================================================
+
+; The stop rule comes FIRST. If it were after the recursive call,
+; the procedure would call itself forever before ever checking.
+to countdown :n
+  if :n = 0 [liftoff stop]
+  print :n
+  ; a short pause so you can feel the count
+  wait 15
+  countdown :n - 1
+end
+
+; Draws a little rocket with a flame, then flies it upward.
+to liftoff
+  print "Liftoff!
+  penup setxy 0 -200 setheading 0 pendown
+  rocket
+  repeat 30 [
+    clean
+    penup fd 12 pendown
+    rocket
+    wait 2
+  ]
+end
+
+; The rocket is drawn from its bottom middle and returns there, facing
+; up again, so it can be redrawn anywhere just by moving the turtle first.
+to rocket
+  ; the body: up the left side, a pointed nose, down the right side
+  setpencolor 15
+  filled 15 [lt 90 fd 15 rt 90 fd 70 rt 30 fd 30 rt 120 fd 30 rt 30 fd 70 rt 90 fd 15 rt 90]
+  ; The window is drawn AFTER the body. Later drawing covers earlier
+  ; drawing, so the thing that should end up on top has to come last.
+  penup fd 38 pendown
+  setpencolor 11
+  filled 11 [rt 45 repeat 4 [fd 10 lt 90] lt 45]
+  penup bk 38 pendown
+  ; the flame hangs below the body
+  setpencolor 14
+  filled 14 [rt 90 fd 10 rt 111.8 fd 26.9 rt 136.4 fd 26.9 rt 111.8 fd 10 lt 90]
+end
+
+clearscreen hideturtle
+setbackground [10 10 40]
+countdown 10

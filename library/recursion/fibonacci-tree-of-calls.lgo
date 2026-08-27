@@ -1,0 +1,102 @@
+; ============================================================
+; TITLE:    Fibonacci and Its Tree of Calls
+; CATEGORY: Recursion
+; LEVEL:    Intermediate
+; TAGS:     recursion, fibonacci, double recursion, counting, tree
+; SUMMARY:  Computes Fibonacci numbers the slow, natural way and draws the tree of calls that the computation makes.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each Fibonacci number is the sum of the two before it:
+;   0 1 1 2 3 5 8 13 21 ... FIB follows that rule directly, so every
+;   call makes TWO more calls. The program counts how many calls that
+;   adds up to, and then draws the calls for fib 5 as a tree. Each
+;   circle is one call, labeled with its input. You can see fib 3 and
+;   fib 2 being worked out again and again.
+;
+; HOW TO USE
+;   1. Press Run. Read the printed table, then look at the tree.
+;   2. Put a breakpoint on the line
+;        output (fib :n - 1) + (fib :n - 2)
+;      Right-click the red dot, choose "Stop only when...", and type
+;        :n = 2
+;      Run with F5. Look at the Call Stack: how did we get down to 2?
+;      Press F5 again. It stops at :n = 2 again, through a different
+;      path. Count how many times you land there for fib 6.
+;   3. In the Watch panel add  :calls  and see it climb as you continue.
+;
+; CONCEPTS YOU WILL LEARN
+;   * double recursion (a procedure calling itself twice)
+;   * why the obvious recursive answer can be very slow
+;   * drawing a tree shape that mirrors the calls
+;
+; THINGS TO TRY
+;   * Change the table to go up to 22. Notice the pause near the end.
+;   * Try drawing the tree for 6 (change calltree 5 to calltree 6 and
+;     make the circles smaller).
+;   * See fibonacci-remembered.lgo for a way to make it fast.
+; ============================================================
+
+make "calls 0
+
+to fib :n
+  make "calls :calls + 1
+  if :n < 2 [output :n]
+  output (fib :n - 1) + (fib :n - 2)
+end
+
+to table :upto
+  for [i 1 :upto] [
+    make "calls 0
+    localmake "f fib :i
+    print (sentence "fib :i "= :f [needed] :calls [calls])
+  ]
+end
+
+; Draw the call tree. The turtle sits on the circle for call :n.
+; Its two children go below, spread apart by :spread steps. The
+; spread halves at each level so the branches do not overlap.
+to calltree :n :spread
+  if :n < 2 [node :n stop]
+  child :n - 1 (minus :spread) :spread
+  child :n - 2 :spread :spread
+  node :n
+end
+
+; Walk to a child position, draw its subtree, and walk back, so the
+; turtle is in the same place it started. That "come back home" habit
+; is what makes recursive drawings work.
+to child :k :dx :spread
+  localmake "here pos
+  localmake "target (list xcor + :dx ycor - 85)
+  ; draw the line only BETWEEN the two circles, not across them
+  setpencolor 15
+  setheading towards :target
+  localmake "d distance :target
+  penup fd 11 pendown fd :d - 22 penup fd 11 pendown
+  setheading 0
+  calltree :k :spread / 2
+  penup setpos :here pendown
+end
+
+to node :n
+  ; base cases are green, calls that recurse are orange
+  ifelse :n < 2 [setpencolor 10] [setpencolor 14]
+  ; walk round a circle of radius 11 from its bottom point
+  penup bk 11 pendown
+  filled pencolor [lt 90 repeat 36 [fd 1.92 rt 10] rt 90]
+  ; nudge left and down so the number sits in the middle
+  penup fd 11 lt 90 fd 4 rt 90 bk 6 pendown
+  setpencolor 0
+  label :n
+  penup fd 6 rt 90 fd 4 lt 90 pendown
+end
+
+print [Fibonacci numbers and how many calls they cost]
+table 18
+clearscreen hideturtle
+setlabelheight 14
+penup setxy 40 200 pendown
+calltree 5 200
+penup setxy -190 -240 setpencolor 0
+label [Each circle is one call to FIB. Green ones stop at once.]

@@ -1,0 +1,85 @@
+; ============================================================
+; TITLE:    Palindrome Peeler
+; CATEGORY: Recursion
+; LEVEL:    Beginner
+; TAGS:     recursion, words, palindromes, input, predicates
+; SUMMARY:  Checks whether words and whole sentences read the same backwards by peeling matching letters off both ends.
+; ============================================================
+;
+; WHAT IT DOES
+;   "racecar" reads the same both ways. To check, compare the first and
+;   last letters. If they differ, it is not a palindrome. If they match,
+;   peel them both off and check what is left, "aceca", the same way.
+;   A word with one letter or none is always a palindrome: that is the
+;   stop rule. The program shows the peeling, then lets you type your
+;   own words or sentences. Spaces, commas and capitals are ignored, so
+;   "Never odd or even" counts.
+;
+; HOW TO USE
+;   1. Press Run. When asked, type a word or sentence in the command box
+;      and press Enter. Type quit to finish.
+;   2. Put a breakpoint on the line
+;        output ispal butfirst butlast :w
+;      Run, and watch :w in the Variables panel lose a letter from each
+;      end every time you press F5.
+;   3. In the Call Stack, the oldest call holds the whole word.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FIRST, LAST, BUTFIRST and BUTLAST on words
+;   * a recursive predicate that outputs true or false
+;   * cleaning up input with another small recursive procedure
+;
+; THINGS TO TRY
+;   * Try: step on no pets / a man a plan a canal panama / logo
+;   * Make PEEL also print how many letters were compared.
+;   * Write a version that checks palindromes of WORDS, so that
+;     [fall leaves after leaves fall] counts.
+; ============================================================
+
+to ispal :w
+  if (count :w) < 2 [output "true]
+  if not equalp first :w last :w [output "false]
+  output ispal butfirst butlast :w
+end
+
+; The same check, printing each layer as it is peeled away.
+to peel :w :pad
+  if (count :w) < 2 [print (word :pad :w "|  nothing left to compare: yes!|) stop]
+  ifelse equalp first :w last :w [
+    print (word :pad :w "|  ends match: | first :w)
+    peel butfirst butlast :w word :pad "| |
+  ] [
+    print (word :pad :w "|  | first :w "| is not | last :w "|: no.|)
+  ]
+end
+
+; Keep only letters and digits, in lowercase. "Never odd, or even!"
+; becomes "neveroddoreven".
+to tidy :w
+  if emptyp :w [output "]
+  if memberp lowercase first :w "abcdefghijklmnopqrstuvwxyz0123456789 [
+    output word lowercase first :w tidy butfirst :w
+  ]
+  output tidy butfirst :w
+end
+
+to try.phrase
+  print []
+  print [Type a word or sentence, or quit to stop:]
+  localmake "line readlist
+  if equalp :line [quit] [print [Goodbye.] stop]
+  localmake "w tidy apply "word :line
+  ifelse emptyp :w [print [There were no letters in that.]] [
+    peel :w "
+  ]
+  try.phrase
+end
+
+peel "racecar "
+print []
+peel "rotator "
+print []
+peel "rocket "
+print []
+print (sentence [Is "Never odd, or even!" a palindrome?] ispal tidy "|Never odd, or even!|)
+try.phrase

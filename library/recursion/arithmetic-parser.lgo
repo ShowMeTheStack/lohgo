@@ -1,0 +1,150 @@
+; ============================================================
+; TITLE:    A Calculator That Reads Like You Do
+; CATEGORY: Recursion
+; LEVEL:    Advanced
+; TAGS:     recursion, parsing, grammar, recursive descent, catch
+; SUMMARY:  A recursive descent parser that works out sums like [3 + 4 * 2] or [(1 + 2) * -3] with the right order of operations, showing which rule handles each part.
+; ============================================================
+;
+; WHAT IT DOES
+;   How does a computer know that 3 + 4 * 2 is 11 and not 14? It
+;   follows a grammar, a set of rules that call each other:
+;     an EXPRESSION is a term, then any number of  + term  or  - term
+;     a TERM is a factor, then any number of  * factor  or  / factor
+;     a FACTOR is a number, or  - factor , or ( expression )
+;   A factor can hold a whole expression in parentheses, so the rules
+;   are recursive. Multiplication sits one level deeper than addition,
+;   so it happens first. A trace shows the rules at work, then you can
+;   type your own sums.
+;
+; HOW TO USE
+;   1. Press Run and read the trace for  2 * (3 + 4) .
+;   2. Type sums at the prompt, with or without spaces:  7-2-1  or
+;      (8 + 4) / 3 * 2 . Type quit to finish.
+;   3. Put a breakpoint on  if numberp :t [output :t]  in PARSE.FACTOR
+;      and run. Read the Call Stack from the bottom: expression, term,
+;      factor, and inside ( ) it all starts again. Watch :tokens shrink.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a grammar turned into procedures, one per rule
+;   * indirect recursion: EXPR calls TERM calls FACTOR calls EXPR
+;   * CATCH and THROW to escape from deep inside on a mistake
+;   * a tiny .MACRO, DEEPER, that makes a local variable for its caller
+;
+; THINGS TO TRY
+;   * Add ^ for powers as a new level between TERM and FACTOR.
+;   * Type 2 * (3 + 4 with the ) missing. Find the line that notices.
+;   * Why does 7 - 2 - 1 give 4 and not 6? Which procedure decides?
+; ============================================================
+
+make "pad "
+
+; READLIST gives [3+4*2] as one word, so split words into numbers and signs.
+to tokenize :words
+  if emptyp :words [output []]
+  output sentence split.word first :words " tokenize butfirst :words
+end
+
+to split.word :w :num
+  if emptyp :w [output finish.num :num]
+  localmake "c first :w
+  if memberp :c "0123456789. [output split.word butfirst :w word :num :c]
+  if memberp :c "|+-*/()| [output (sentence finish.num :num (list :c) split.word butfirst :w ")]
+  oops (sentence [I don't understand] :w)
+end
+
+to finish.num :num
+  if emptyp :num [output []]
+  output (list :num)
+end
+
+to parse.expr
+  deeper
+  note "expression
+  output expr.more parse.term
+end
+
+; "Then any number of + term" is recursion too: :left is the value so far.
+to expr.more :left
+  if emptyp :tokens [output :left]
+  if not memberp first :tokens [+ -] [output :left]
+  localmake "op take
+  localmake "right parse.term
+  if :op = "+ [output expr.more :left + :right]
+  output expr.more :left - :right
+end
+
+to parse.term
+  deeper
+  note "term
+  output term.more parse.factor
+end
+
+to term.more :left
+  if emptyp :tokens [output :left]
+  if not memberp first :tokens [* /] [output :left]
+  localmake "op take
+  localmake "right parse.factor
+  if :op = "* [output term.more :left * :right]
+  if :right = 0 [oops [You cannot divide by zero.]]
+  output term.more :left / :right
+end
+
+to parse.factor
+  deeper
+  note "factor
+  if emptyp :tokens [oops [The sum stops too early.]]
+  localmake "t take
+  if numberp :t [output :t]
+  if :t = "- [output minus parse.factor]
+  if not equalp :t "|(| [oops (sentence [Did not expect] :t)]
+  localmake "inside parse.expr
+  if not equalp (ifelse emptyp :tokens ["] [take]) "|)| [oops [A closing ) is missing.]]
+  output :inside
+end
+
+to take
+  localmake "t first :tokens
+  make "tokens butfirst :tokens
+  output :t
+end
+
+; DEEPER makes a LOCAL :pad, two spaces longer, in its caller. By dynamic
+; scope everything called from there sees it, until the caller returns.
+.macro deeper
+  output [localmake "pad word :pad "|  |]
+end
+
+to note :rule
+  if :tracing [print (sentence (word :pad :rule) [sees] :tokens)]
+end
+
+to oops :message
+  make "problem :message
+  throw "syntax
+end
+
+to calculate :input
+  make "problem []
+  catch "syntax [
+    make "tokens tokenize :input
+    if emptyp :tokens [oops [There is nothing to work out.]]
+    localmake "answer parse.expr
+    if not emptyp :tokens [oops (sentence [Unexpected] first :tokens)]
+    print (sentence :input "= :answer)
+  ]
+  if not emptyp :problem [print (sentence :input [-> Oops!] :problem)]
+end
+
+to ask.sums
+  print [Type a sum like 3 + 4 * 2, or quit to stop:]
+  localmake "line readlist
+  if equalp :line [quit] [print [Goodbye.] stop]
+  calculate :line
+  ask.sums
+end
+
+print "|How the rules take turns on 2 * (3 + 4):|
+make "tracing "true calculate [2 * (3 + 4)] make "tracing "false
+foreach [[3 + 4 * 2] [(3 + 4) * 2] [7 - 2 - 1] [-(2 + 3) * -4] [10 / (5 - 5)]] [calculate ?]
+ask.sums

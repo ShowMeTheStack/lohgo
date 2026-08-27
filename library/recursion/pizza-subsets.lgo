@@ -1,0 +1,76 @@
+; ============================================================
+; TITLE:    Pizza Toppings and Coin Sums
+; CATEGORY: Recursion
+; LEVEL:    Intermediate
+; TAGS:     recursion, subsets, lists, choices, search
+; SUMMARY:  Lists every possible choice of pizza toppings by deciding yes or no for each one, then finds which coins add up to an amount.
+; ============================================================
+;
+; WHAT IT DOES
+;   With the toppings [cheese olives ham], you can order any SELECTION
+;   of them, including none or all. For the first topping there are
+;   two choices, leave it off or put it on, and in both cases the rest
+;   of the toppings can be chosen in every possible way. So SUBSETS
+;   finds the subsets of the rest once, and outputs them twice: once as
+;   they are, and once with the first topping added to each.
+;   The second part uses the same yes or no idea to find every handful
+;   of coins from a purse that adds up to exactly some amount.
+;
+; HOW TO USE
+;   1. Press Run and read the menu and the coin answers.
+;   2. Put a breakpoint on the line
+;        localmake "without subsets butfirst :items
+;      and run. Press F5 a few times: each SUBSETS on the Call Stack
+;      holds one fewer topping.
+;   3. In COINSUM, set a breakpoint on  if :target = 0 [print :chosen stop]
+;      with the condition  :target = 0  and the debugger stops only when
+;      an answer has just been found. Look at :chosen.
+;   4. Change the purse or the amount at the end of the file.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a yes/no choice for each item gives 2 x 2 x 2 ... possibilities
+;   * reusing one recursive result twice instead of computing it again
+;   * searching by recursion and printing answers as they are found
+;
+; THINGS TO TRY
+;   * Add a fifth topping. How many orders are there now? A sixth?
+;   * Only print orders with exactly two toppings, using FILTER.
+;   * Change COINSUM so it counts the answers instead of printing them.
+; ============================================================
+
+to subsets :items
+  if emptyp :items [output [[]]]
+  localmake "without subsets butfirst :items
+  output sentence :without map [fput first :items ?] :without
+end
+
+; Print the orders as a numbered menu. An empty list means plain pizza.
+to menu :toppings
+  localmake "n 0
+  foreach subsets :toppings [
+    make "n :n + 1
+    ifelse emptyp ? [print (sentence (word :n ".) [plain dough])] [
+      print (sentence (word :n ".) [pizza with] ?)
+    ]
+  ]
+end
+
+; Try to make :target from the coins still in :purse. :chosen holds the
+; coins picked so far, so when :target reaches 0 it is an answer.
+to coinsum :purse :target :chosen
+  if :target = 0 [print :chosen stop]
+  if emptyp :purse [stop]
+  if :target < 0 [stop]
+  ; YES: use the first coin
+  coinsum butfirst :purse :target - first :purse lput first :purse :chosen
+  ; NO: skip it
+  coinsum butfirst :purse :target :chosen
+end
+
+print [Every pizza you can order:]
+menu [cheese olives ham mushroom]
+print []
+print (sentence count subsets [a b c d e f] [ways to choose from six toppings])
+print []
+print [Coins from the purse [50 25 20 10 5 2 1] that make 37:]
+coinsum [50 25 20 10 5 2 1] 37 []

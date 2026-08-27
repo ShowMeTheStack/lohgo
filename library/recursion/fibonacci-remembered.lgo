@@ -1,0 +1,85 @@
+; ============================================================
+; TITLE:    Fibonacci That Remembers
+; CATEGORY: Recursion
+; LEVEL:    Intermediate
+; TAGS:     recursion, memoization, property lists, speed
+; SUMMARY:  Makes the recursive Fibonacci procedure fast by writing each answer into a property list the first time it is found.
+; ============================================================
+;
+; WHAT IT DOES
+;   The plain recursive FIB works out the same small answers again and
+;   again (see fibonacci-tree-of-calls.lgo). MEMOFIB keeps a notebook:
+;   a property list called "fibnotes. Before doing any work it looks in
+;   the notebook. If the answer is there it outputs it at once. If not,
+;   it works it out, writes it down, and then outputs it.
+;   The program races the two versions and prints how many calls and
+;   how many milliseconds each one needed.
+;
+; HOW TO USE
+;   1. Press Run and compare the two races.
+;   2. Put a breakpoint on the line
+;        pprop "fibnotes :n :answer
+;      and run. Open the Watch panel and add  plist "fibnotes
+;      Each time you press F5, one more answer is written down. Notice
+;      the order: fib 2 is saved first, then 3, then 4. The deepest
+;      call finishes first.
+;   3. Look at the Call Stack at that moment: it is only as tall as :n,
+;      not the huge bushy tree of the slow version.
+;
+; CONCEPTS YOU WILL LEARN
+;   * memoization: remembering answers to avoid repeated work
+;   * property lists with PPROP, GPROP and PLIST
+;   * measuring speed with TIMEMILLI
+;
+; THINGS TO TRY
+;   * Raise the race to fib 24 for the slow version. Be patient.
+;   * Ask for memofib 90. The slow version would never finish, and the
+;     answer is so big that Logo switches to e+ notation to print it.
+;   * Print plist "fibnotes after a run to see the whole notebook.
+;   * Put a ; in front of the ERPL line and run twice. The second
+;     memofib race needs only one call. Why?
+; ============================================================
+
+make "calls 0
+
+; The slow, forgetful version, for comparison.
+to slowfib :n
+  make "calls :calls + 1
+  if :n < 2 [output :n]
+  output (slowfib :n - 1) + (slowfib :n - 2)
+end
+
+; The remembering version. GPROP outputs the empty list when nothing
+; has been stored, so EMPTYP tells us whether we have seen :n before.
+to memofib :n
+  make "calls :calls + 1
+  if :n < 2 [output :n]
+  localmake "saved gprop "fibnotes :n
+  if not emptyp :saved [output :saved]
+  localmake "answer (memofib :n - 1) + (memofib :n - 2)
+  pprop "fibnotes :n :answer
+  output :answer
+end
+
+; Runs one version, timing it and counting its calls. The procedure
+; to run is passed in by name, so the same race works for both.
+to race :name :n
+  make "calls 0
+  localmake "start timemilli
+  localmake "result invoke :name :n
+  localmake "took timemilli - :start
+  print (sentence :name :n "= :result)
+  print (sentence "|   | :calls [calls,] :took [milliseconds])
+end
+
+; Start each run with an empty notebook, otherwise the race is unfair.
+erpl "fibnotes
+print [The race, fib 22 both ways:]
+race "slowfib 22
+race "memofib 22
+print []
+print [The remembering version can go much further:]
+race "memofib 70
+print []
+print [Some of what is written in the notebook:]
+foreach [10 20 30 40] [print (sentence "fib ? "= gprop "fibnotes ?)]

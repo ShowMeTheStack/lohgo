@@ -1,0 +1,75 @@
+; ============================================================
+; TITLE:    Down and Back Up
+; CATEGORY: Recursion
+; LEVEL:    Beginner
+; TAGS:     recursion, call stack, order, staircase
+; SUMMARY:  Shows that code after a recursive call runs on the way back up, with a printout and a staircase the turtle climbs down and up.
+; ============================================================
+;
+; WHAT IT DOES
+;   DOWNUP prints a word, calls itself with the word one letter
+;   shorter, and then prints the word AGAIN. The second print has to
+;   wait until every deeper call has finished, so the words come out
+;   shrinking and then growing:  hello ello llo lo o lo llo ello hello.
+;   STAIRS does the same with the turtle: it walks down a step in blue
+;   before the recursive call, and back up a step in red after it.
+;
+; HOW TO USE
+;   1. Press Run and look at the printout and the drawing.
+;   2. Put a breakpoint on the SECOND print in DOWNUP, the line just
+;      after  downup butfirst :w  and run with F5.
+;      Look at the Call Stack: it is as tall as it will ever get. The
+;      smallest word, o, is about to be printed the second time.
+;   3. Press F5 again and watch the stack shrink by one each time.
+;   4. Slide the speed slider to the left and run again to watch the
+;      turtle go down the blue steps and up the red ones.
+;
+; CONCEPTS YOU WILL LEARN
+;   * instructions before the recursive call run on the way down
+;   * instructions after it run on the way back up, in reverse order
+;   * every unfinished call is remembered on the call stack
+;
+; THINGS TO TRY
+;   * Delete the second print. Then delete the first one instead.
+;   * Make STAIRS turn a little at each step to make a spiral stair.
+;   * Change the starting word to your name.
+; ============================================================
+
+to downup :w
+  print :w
+  if emptyp butfirst :w [stop]
+  downup butfirst :w
+  print :w
+end
+
+; :n steps to go. Each step is drawn in blue on the way down; the
+; matching step back up is drawn in red, slightly to one side so you
+; can see both paths.
+to stairs :n
+  if :n = 0 [
+    ; the bottom of the stairs: mark it with a yellow dot
+    setpencolor 6
+    filled 6 [repeat 12 [fd 3 rt 30]]
+    stop
+  ]
+  setpencolor 1
+  rt 90 fd 50 rt 90 fd 35 lt 180
+  stairs :n - 1
+  setpencolor 4
+  ; climb back a little above and to the right of the blue path
+  penup rt 90 fd 5 lt 90 fd 5 pendown
+  fd 35 lt 90 fd 50 lt 90
+  ; now facing down: turn to face up again, and step back to the
+  ; left, so the caller finds the turtle exactly where it left it
+  rt 180
+  penup bk 5 lt 90 fd 5 rt 90 pendown
+end
+
+print [The word goes down and comes back up:]
+downup "hello
+clearscreen hideturtle
+setpensize 3
+penup setxy -175 130 setheading 0 pendown
+stairs 7
+penup setxy -200 170 setpencolor 0
+label [Blue going down, red coming back up]

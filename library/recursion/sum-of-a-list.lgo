@@ -1,0 +1,79 @@
+; ============================================================
+; TITLE:    Adding Up a List
+; CATEGORY: Recursion
+; LEVEL:    Beginner
+; TAGS:     recursion, lists, first, butfirst, sum
+; SUMMARY:  Adds up a list of numbers by splitting it into its first item and the rest, and stacks colored blocks to show the running total.
+; ============================================================
+;
+; WHAT IT DOES
+;   To add up [4 7 2 9 5], take the first number, 4, and add it to the
+;   total of the rest, [7 2 9 5]. The total of the rest is found the
+;   same way. The total of an empty list is 0, and that is where it
+;   stops. TOTAL does exactly that. TOWER draws each number as a block
+;   stacked on the blocks of the rest of the list, so the height of the
+;   tower is the sum.
+;
+; HOW TO USE
+;   1. Press Run. The total is printed and the tower is drawn.
+;   2. Put a breakpoint on the line
+;        output (first :numbers) + total butfirst :numbers
+;      and press F5 a few times. In the Variables panel :numbers gets
+;      shorter each time. In the Call Stack each TOTAL is holding on to
+;      a longer list.
+;   3. Use Step Out (Shift+F11) to finish one TOTAL at a time and see
+;      the answers come back: 5, 14, 16, 23, 27.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FIRST and BUTFIRST to take a list apart
+;   * the empty list as a base case
+;   * the same recursive pattern used for adding and for drawing
+;
+; THINGS TO TRY
+;   * Change the list in the last lines to your own numbers.
+;   * Write BIGGEST :numbers that outputs the largest number in a list.
+;     Hint: compare the first number with the biggest of the rest.
+;   * Write HOWMANY :list that counts the items without using COUNT.
+; ============================================================
+
+to total :numbers
+  if emptyp :numbers [output 0]
+  output (first :numbers) + total butfirst :numbers
+end
+
+; Draws the blocks from the bottom up. Each call draws one block for
+; the first number, then moves up and lets the next call stack the
+; rest on top. The colors cycle through the palette by list length.
+to tower :numbers
+  if emptyp :numbers [stop]
+  block first :numbers 1 + remainder count :numbers 14
+  penup fd 12 * first :numbers pendown
+  tower butfirst :numbers
+end
+
+; One block, :units tall. Twelve turtle steps per unit.
+to block :units :color
+  localmake "h 12 * :units
+  setpencolor :color
+  filled :color [repeat 2 [fd :h rt 90 fd 80 rt 90]]
+  setpencolor 0
+  repeat 2 [fd :h rt 90 fd 80 rt 90]
+  ; write the number inside the block
+  penup fd :h / 2 - 5 rt 90 fd 35 lt 90
+  label :units
+  bk :h / 2 - 5 rt 90 bk 35 lt 90 pendown
+end
+
+to show.total :numbers
+  clearscreen hideturtle
+  setlabelheight 14
+  print (sentence [The total of] :numbers [is] total :numbers)
+  penup setxy -40 -250 setheading 0 pendown
+  tower :numbers
+  ; the turtle is now at the top of the tower
+  penup rt 90 fd 100 lt 90 bk 8 pendown
+  setpencolor 4
+  label (sentence [total =] total :numbers)
+end
+
+show.total [4 7 2 9 5]

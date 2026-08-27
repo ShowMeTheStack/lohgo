@@ -1,0 +1,97 @@
+; ============================================================
+; TITLE:    Counting in Binary
+; CATEGORY: Recursion
+; LEVEL:    Intermediate
+; TAGS:     recursion, binary, numbers, animation, lights
+; SUMMARY:  Writes every binary number of a given length by recursion, converts numbers to binary, and flashes the count on a row of lights.
+; ============================================================
+;
+; WHAT IT DOES
+;   Computers count with only two digits, 0 and 1. Every 3 digit binary
+;   number is either a 0 followed by a 2 digit binary number, or a 1
+;   followed by one. ALLBITS uses exactly that rule to print the
+;   numbers from 000 to 111 in order.
+;   TOBINARY goes the other way: the last binary digit of 13 is
+;   remainder 13 2, which is 1, and the digits before it are the binary
+;   for 13 / 2 (rounded down), which is 6. Then a row of eight lights
+;   counts up from 0 to 40 so you can watch the bits change.
+;
+; HOW TO USE
+;   1. Press Run. Read the printout, then watch the lights.
+;   2. Put a breakpoint on the line
+;        allbits :n - 1 word :sofar 0
+;      Run, and press F5 repeatedly. Watch :sofar in the Variables
+;      panel grow one digit at a time, and the Call Stack show how many
+;      digits are still to be chosen.
+;   3. For TOBINARY, put a breakpoint on its OUTPUT line and look at :n
+;      in each call on the Call Stack: 13, 6, 3, 1.
+;
+; CONCEPTS YOU WILL LEARN
+;   * recursion that builds up an answer in an extra input (:sofar)
+;   * the binary place-value system
+;   * converting between number bases with QUOTIENT and REMAINDER
+;
+; THINGS TO TRY
+;   * Change allbits 3 " to allbits 4 ". How many lines now?
+;   * Make ALLBITS count in base 3, using the digits 0, 1 and 2.
+;   * Write FROMBINARY that turns "1101 back into 13.
+; ============================================================
+
+; :n digits still to choose; :sofar holds the digits chosen so far.
+to allbits :n :sofar
+  if :n = 0 [print :sofar stop]
+  allbits :n - 1 word :sofar 0
+  allbits :n - 1 word :sofar 1
+end
+
+to tobinary :n
+  if :n < 2 [output :n]
+  output word tobinary int :n / 2 remainder :n 2
+end
+
+; Pad a binary word with zeros on the left until it has :width digits.
+to padded :bits :width
+  if (count :bits) >= :width [output :bits]
+  output padded word 0 :bits :width
+end
+
+; Draw the eight lights for :n, with the value of each place written
+; above its bulb. A lit bulb is yellow, an unlit one brown.
+to lights :n
+  localmake "bits padded tobinary :n 8
+  localmake "x -280
+  localmake "places [128 64 32 16 8 4 2 1]
+  foreach :bits [
+    bulb :x ifelse ? = 1 [6] [8]
+    setpencolor 15
+    penup setxy :x - 15 30
+    label item # :places
+    make "x :x + 80
+  ]
+  setpencolor 7
+  penup setxy -60 -120
+  label (sentence :n "= :bits)
+end
+
+; A filled circle of radius 30 centered at :x, -30. Walking a circle
+; with RT turns from the left edge puts the center to the right.
+to bulb :x :color
+  penup setxy :x - 30 -30 setheading 0
+  setpencolor :color
+  pendown
+  filled :color [repeat 36 [fd 5.24 rt 10]]
+end
+
+print [All the three digit binary numbers:]
+allbits 3 "
+print []
+foreach [5 13 64 100 255] [print (sentence ? [in binary is] tobinary ?)]
+
+clearscreen hideturtle
+setbackground [20 20 50]
+setlabelheight 24
+for [i 0 40] [
+  clean
+  lights :i
+  wait 20
+]

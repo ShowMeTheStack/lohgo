@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Euclid's Squares
+; CATEGORY: Recursion
+; LEVEL:    Beginner
+; TAGS:     recursion, gcd, euclid, rectangles, number theory
+; SUMMARY:  Finds the greatest common divisor of two numbers by cutting squares off a rectangle, the way Euclid described it over two thousand years ago.
+; ============================================================
+;
+; WHAT IT DOES
+;   Take a rectangle 45 wide and 33 tall. Cut off the biggest square
+;   you can, 33 by 33. A rectangle 12 by 33 is left. Do the same to
+;   that one, and keep going. When what is left is itself a square, its
+;   side is the greatest common divisor (GCD) of 45 and 33: the biggest
+;   number that divides both. Here that is 3.
+;   TILE does the cutting and draws each square in a new color. GCD
+;   below it is the short form, using REMAINDER to cut off many
+;   squares at once.
+;
+; HOW TO USE
+;   1. Press Run and look at the picture and the printout.
+;   2. Put a breakpoint on the first line of TILE,
+;        if :w = :h [square :x :y :w output :w]
+;      and run. Press F5 again and again. In the Variables panel :w
+;      and :h get smaller each time, and a new square appears.
+;   3. Change the numbers in the last line, for example to 34 21 or
+;      30 12, and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a recursive procedure that both draws and outputs a value
+;   * the same problem getting smaller in a different way each time
+;   * Euclid's algorithm, one of the oldest algorithms still in use
+;
+; THINGS TO TRY
+;   * What happens with 13 by 8, two Fibonacci numbers? And 34 by 21?
+;   * What picture do you get when one number divides the other?
+;   * Use the GCD to write SIMPLIFY that turns 15/21 into 5/7.
+; ============================================================
+
+; Draw a square of side :s (in units) with its lower left corner at
+; :x :y. :scale turns units into turtle steps.
+to square :x :y :s
+  localmake "c item 1 + remainder :squares 6 [4 14 6 10 1 13]
+  make "squares :squares + 1
+  penup setxy :x * :scale :y * :scale setheading 0 pendown
+  setpencolor :c
+  filled :c [repeat 4 [fd :s * :scale rt 90]]
+  setpencolor 0 setpensize 2
+  repeat 4 [fd :s * :scale rt 90]
+  setpensize 1
+end
+
+; The rectangle is :w wide and :h tall, lower left corner at :x :y.
+to tile :x :y :w :h
+  if :w = :h [square :x :y :w output :w]
+  ifelse :w > :h [
+    ; wide: cut a square off the left, keep the rest on the right
+    square :x :y :h
+    output tile :x + :h :y :w - :h :h
+  ] [
+    ; tall: cut a square off the bottom, keep the rest on top
+    square :x :y :w
+    output tile :x :y + :w :w :h - :w
+  ]
+end
+
+; Euclid's rule written with REMAINDER: gcd of a and b is the same as
+; the gcd of b and what is left over when a is divided by b.
+to gcd :a :b
+  if :b = 0 [output :a]
+  output gcd :b remainder :a :b
+end
+
+to show.euclid :w :h
+  clearscreen hideturtle
+  make "squares 0
+  ; pick a scale so the rectangle fills about 600 by 440 steps
+  make "scale 600 / :w
+  if :h * :scale > 440 [make "scale 440 / :h]
+  ; start so that the whole rectangle is centered
+  localmake "g tile (:w / -2) (:h / -2) :w :h
+  print (sentence [Cutting squares off a] :w [by] :h [rectangle ends with a square of side] :g)
+  print (sentence :squares [squares were cut.])
+end
+
+foreach [[45 33] [100 75] [17 5] [144 89]] [
+  print (sentence [gcd of] first ? [and] last ? [is] gcd first ? last ?)
+]
+print []
+show.euclid 45 33

@@ -1,0 +1,91 @@
+; ============================================================
+; TITLE:    A Tree and Its Stop Rule
+; CATEGORY: Recursion
+; LEVEL:    Intermediate
+; TAGS:     recursion, trees, fractal, stop rule, state
+; SUMMARY:  Grows a branching tree where every branch is a smaller tree, with leaves at the tips and a careful explanation of why the turtle must come home.
+; ============================================================
+;
+; WHAT IT DOES
+;   A tree is a trunk with two smaller trees growing out of its top.
+;   Each of those is a trunk with two smaller trees, and so on. TREE
+;   draws that idea literally. Without a stop rule it would go on
+;   forever, drawing branches too tiny to see. The stop rule here says:
+;   when a branch would be shorter than 6 steps, draw a leaf instead.
+;   The branches get thinner and greener as they get smaller.
+;
+; HOW TO USE
+;   1. Press Run.
+;   2. Put a breakpoint on the stop rule line,
+;        if :size < 6 [leaf stop]
+;      right-click the red dot, choose "Stop only when..." and type
+;        :size < 6
+;      Run. The turtle is at the tip of a twig. Open the Call Stack and
+;      count the TREEs: that is how many branches lie between the trunk
+;      and this leaf.
+;   3. Remove it and put a breakpoint on the LAST line of TREE,
+;        back :size
+;      Turn on the condition  :size > 60  so it only stops for big
+;      branches, and watch the turtle return down the trunk.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the stop rule (base case) and what happens without one
+;   * the state-transparent rule: a recursive drawing must put the turtle
+;     back exactly where and how it found it (position, heading, pen)
+;   * using inputs to control color and thickness
+;
+; THINGS TO TRY
+;   * Change the stop rule to :size < 20 and then to :size < 2.
+;   * Make the angle different on each side (20 left, 35 right).
+;   * Use (random 15) + 20 as the angle for a wilder tree.
+;   * Delete the  back :size  line. Why does everything break?
+; ============================================================
+
+to tree :size
+  ; THE STOP RULE: too small to be a branch, so be a leaf and stop.
+  if :size < 6 [leaf stop]
+  branch.pen :size
+  fd :size
+  ; Left subtree. 30 degrees left, 75 percent the size.
+  lt 30
+  tree :size * 0.75
+  ; Right subtree. Turn 60 so we end up 30 to the right of straight.
+  rt 60
+  tree :size * 0.68
+  ; Face straight up again, then walk back down this branch. Now the
+  ; turtle is exactly where our caller left it, facing the same way.
+  lt 30
+  ; The subtrees changed the pen (the leaves are thin and green), so
+  ; set it back before retracing this branch. That is part of putting
+  ; things back the way we found them.
+  branch.pen :size
+  back :size
+end
+
+; :t is 1 for the trunk and near 0 for twigs, so the color slides from
+; bark brown down to fresh green, and the pen gets thinner.
+to branch.pen :size
+  localmake "t :size / 110
+  setpensize :size / 7
+  setpencolor (list 60 + 50 * :t 160 - 110 * :t 40 - 20 * :t)
+end
+
+; A little green leaf: two arcs back to back. It also leaves the turtle
+; as it found it, which is why it fits into the stop rule so easily.
+to leaf
+  setpensize 1
+  setpencolor (list 40 + random 80 150 + random 80 40)
+  filled pencolor [rt 25 repeat 10 [fd 1.2 lt 5] lt 130 repeat 10 [fd 1.2 lt 5] lt 155]
+end
+
+to ground
+  setpencolor [90 60 30]
+  penup setxy -400 -260 setheading 90 pendown
+  filled [110 80 40] [fd 800 rt 90 fd 40 rt 90 fd 800 rt 90 fd 40 rt 90]
+end
+
+clearscreen hideturtle
+setbackground [200 230 255]
+ground
+penup setxy 0 -260 setheading 0 pendown
+tree 110

@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    Towers of Hanoi in Text
+; CATEGORY: Recursion
+; LEVEL:    Intermediate
+; TAGS:     recursion, hanoi, lists, puzzles, call stack
+; SUMMARY:  Solves the Towers of Hanoi recursively and prints the three pegs as rows of text after every move.
+; ============================================================
+;
+; WHAT IT DOES
+;   There are three pegs, A, B and C. A tower of discs sits on A, the
+;   biggest at the bottom. Move the whole tower to C, one disc at a
+;   time, never putting a bigger disc on a smaller one.
+;   The trick: to move 4 discs from A to C, first move the top 3 out of
+;   the way onto B, then move the big disc to C, then move the 3 from
+;   B onto C. Moving 3 discs is the same puzzle, only smaller.
+;   Each peg is kept as a list of disc sizes, top disc first, and the
+;   pegs are printed after each move so you can follow along.
+;
+; HOW TO USE
+;   1. Press Run and scroll through the moves in the text window.
+;   2. Put a breakpoint on the line  movedisc :from :to  and run.
+;      Open the Call Stack. Every HANOI on it is in the middle of its
+;      own three-part plan. Click each one and look at :n, :from and
+;      :to in the Variables panel.
+;   3. Add a watch for  :moves  and press F5 to step move by move.
+;
+; CONCEPTS YOU WILL LEARN
+;   * solving a big problem by trusting the same procedure on smaller ones
+;   * lists as stacks with FIRST, BUTFIRST and FPUT
+;   * THING and MAKE with a name held in a variable
+;
+; THINGS TO TRY
+;   * Change start.puzzle 4 to 3 or 5. How many moves does each need?
+;     Can you find the pattern?
+;   * Make it say which disc is moving, not just which pegs.
+;   * Add a check in MOVEDISC that complains if a big disc ever lands
+;     on a smaller one. (It never will!)
+; ============================================================
+
+; Each peg is a global variable named A, B or C holding a list,
+; for example [1 2 3 4] means disc 1 (the smallest) is on top.
+to start.puzzle :n
+  make "a iseq 1 :n
+  make "b []
+  make "c []
+  make "moves 0
+  print (sentence [Start with] :n [discs on peg A.])
+  show.pegs
+  hanoi :n "a "c "b
+  print (sentence [Finished in] :moves [moves.])
+end
+
+; Move :n discs from peg :from to peg :to, using :spare to park them.
+to hanoi :n :from :to :spare
+  if :n = 0 [stop]
+  hanoi :n - 1 :from :spare :to
+  movedisc :from :to
+  hanoi :n - 1 :spare :to :from
+end
+
+; Take the top disc off one peg and put it on another. :from holds
+; the NAME of the peg, so THING :from gets the list stored there.
+to movedisc :from :to
+  localmake "disc first thing :from
+  make :from butfirst thing :from
+  make :to fput :disc thing :to
+  make "moves :moves + 1
+  print (sentence (word "Move "| | :moves ":) "disc :disc [from] uppercase :from [to] uppercase :to)
+  show.pegs
+end
+
+to show.pegs
+  peg "A :a
+  peg "B :b
+  peg "C :c
+  print []
+end
+
+; A disc of size 3 prints as ===3===, so bigger discs look wider. The
+; list is reversed so the bottom disc comes first, on the left: each
+; peg looks like a tower lying on its side.
+to peg :name :discs
+  type word :name "|: |
+  foreach reverse :discs [type (word bar ? ? bar ? "| |)]
+  print "
+end
+
+to bar :n
+  if :n = 0 [output "]
+  output word "= bar :n - 1
+end
+
+start.puzzle 4

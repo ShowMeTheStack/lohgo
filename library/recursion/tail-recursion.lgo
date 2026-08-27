@@ -1,0 +1,92 @@
+; ============================================================
+; TITLE:    Tail Recursion or Not?
+; CATEGORY: Recursion
+; LEVEL:    Advanced
+; TAGS:     recursion, tail recursion, accumulator, loops, call stack
+; SUMMARY:  Compares a recursion that leaves work waiting on the stack with one that carries its answer along, and shows the second is really a loop.
+; ============================================================
+;
+; WHAT IT DOES
+;   Two ways to add 1 + 2 + ... + n:
+;   ADDUP is NOT tail recursive. After the recursive call comes back it
+;   still has to add :n, so every call must wait on the stack with
+;   unfinished work.
+;   ADDUP.ACC is tail recursive. It carries the running total in an
+;   extra input, the "accumulator". The recursive call is the very last
+;   thing it does, and its answer is passed straight back up unchanged.
+;   That means nothing really needs to wait, and the procedure can be
+;   rewritten as a plain WHILE loop, ADDUP.LOOP, which is the third
+;   version. The printed traces show the difference.
+;
+; HOW TO USE
+;   1. Press Run and compare the two traces.
+;   2. Put a breakpoint on the first line of TRACE.ADDUP (the one that
+;      starts  if :n = 0 ). Right-click the dot, choose "Stop only
+;      when..." and type  :n = 0 . Run. The stack is at its deepest.
+;      Now press Step Out (Shift+F11) again and again. Each time, one
+;      call leaves the stack AFTER doing an addition, and a new
+;      "finally adds" line appears in the text window.
+;   3. Do the same on the first line of TRACE.ACC. This time Step Out
+;      prints nothing and the same answer just travels back up: no
+;      work was waiting. Berkeley Logo notices this and does not keep
+;      those calls on the stack at all. This studio keeps them, so
+;      that you can look at them.
+;
+; CONCEPTS YOU WILL LEARN
+;   * pending work on the call stack
+;   * accumulators that carry partial answers forward
+;   * why a tail recursive procedure is the same as a loop
+;
+; THINGS TO TRY
+;   * Write FACT.ACC :n :product, a tail recursive factorial.
+;   * Write a tail recursive BACKWARDS :w :sofar that reverses a word.
+;   * Try addup 20000 and addup.acc 20000 0. Both work here, but the
+;     first must keep 20000 unfinished additions in memory.
+; ============================================================
+
+; Not tail recursive: the + happens after the recursive call returns.
+to addup :n
+  if :n = 0 [output 0]
+  output :n + addup :n - 1
+end
+
+; Tail recursive: the total travels down with the calls.
+to addup.acc :n :total
+  if :n = 0 [output :total]
+  output addup.acc :n - 1 :total + :n
+end
+
+; The same steps as ADDUP.ACC with the recursion turned into a loop.
+; The inputs :n and :total simply become variables that get updated.
+to addup.loop :n
+  localmake "total 0
+  while [:n > 0] [
+    make "total :total + :n
+    make "n :n - 1
+  ]
+  output :total
+end
+
+; Traced copies, with the indentation showing how deep we are.
+to trace.addup :n :pad
+  if :n = 0 [print (word :pad "|addup 0 = 0, now go back up|) output 0]
+  print (word :pad "|addup | :n "| = | :n "| + addup | :n - 1 "| ...waiting|)
+  localmake "answer :n + trace.addup :n - 1 word :pad "| |
+  print (word :pad "|addup | :n "| finally adds | :n "| and gives | :answer)
+  output :answer
+end
+
+to trace.acc :n :total :pad
+  if :n = 0 [print (word :pad "|nothing left, the answer is | :total) output :total]
+  print (word :pad "|addup.acc | :n "| | :total "|  passes on | :n - 1 "| and | :total + :n)
+  output trace.acc :n - 1 :total + :n word :pad "| |
+end
+
+print [NOT tail recursive. Work piles up, then is done on the way back:]
+ignore trace.addup 5 "
+print []
+print [Tail recursive. The answer is ready at the bottom:]
+ignore trace.acc 5 0 "
+print []
+print [All three versions agree:]
+print (sentence addup 100 addup.acc 100 0 addup.loop 100)
