@@ -1,0 +1,85 @@
+; ============================================================
+; TITLE:    Bouncing Ball
+; CATEGORY: Science & Simulation
+; LEVEL:    Beginner
+; TAGS:     physics, gravity, energy, animation, bounce
+; SUMMARY:  A ball drops, bounces and loses a little energy with every bounce until it rolls to a stop.
+; ============================================================
+;
+; WHAT IT DOES
+;   A red ball falls from high up on the left and bounces along the
+;   floor, leaving a dotted trail. Every bounce is lower than the one
+;   before, because some of the ball's energy turns into sound and heat
+;   when it squashes against the floor.
+;
+; HOW TO USE
+;   Press Run and watch. The height of each hop is printed.
+;   Change BOUNCINESS near the bottom (try 0.95 or 0.5) and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * gravity changes speed a little bit every moment
+;   * flipping the sign of a number to make something turn around
+;   * multiplying by a number less than 1 to make something shrink
+;   * WAIT for smooth animation
+;
+; THINGS TO TRY
+;   * Make the floor a trampoline with BOUNCINESS above 1. What happens?
+;   * Change GRAVITY to 0.2 for a Moon ball.
+;   * Give the trail a new color after every bounce.
+; ============================================================
+
+make "floor -250
+
+to draw.floor
+  setpc 8 setpensize 6
+  penup setxy -400 :floor - 3 pendown setx 400
+  setpensize 1
+end
+
+to bounce.ball
+  ; x and y are where the ball is, vy is how fast it moves up or down.
+  localmake "x -360
+  localmake "y 250
+  localmake "vy 0
+  localmake "bounces 0
+  penup setxy :x :y
+  showturtle
+  ; Keep going until the ball is too tired to bounce, or rolls off.
+  while [:x < 390] [
+    ; At the very top of a hop the ball is still rising, but gravity is
+    ; about to use up the last of that upward speed.
+    if and :vy > 0 :vy <= :gravity [
+      make "bounces :bounces + 1
+      print (sentence [Hop] :bounces [reached] round (:y - :floor - 10) [steps high])
+    ]
+    ; gravity makes the ball fall faster every tick
+    make "vy :vy - :gravity
+    make "y :y + :vy
+    make "x :x + 1.5
+    ; Hit the floor? Put the ball back on top of it and send it up again,
+    ; but slower: BOUNCINESS keeps only part of the speed.
+    if :y < :floor + 10 [
+      make "y :floor + 10
+      make "vy (minus :vy) * :bounciness
+      ; A real ball stops hopping when the bounces get tiny and just
+      ; rolls. Without this line it would keep making hops too small to see.
+      if :vy < 2 [make "vy 0]
+    ]
+    setxy :x :y
+    ; leave a dot every few steps so the path stays visible
+    if 0 = remainder round :x 6 [dot pos]
+    wait 1
+  ]
+end
+
+make "gravity 0.6
+make "bounciness 0.8
+
+clearscreen
+setbackground [230 240 255]
+draw.floor
+setshape "circle
+setpc 4
+bounce.ball
+hideturtle
+print [The ball has rolled away.]

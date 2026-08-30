@@ -1,0 +1,99 @@
+; ============================================================
+; TITLE:    Day and Night
+; CATEGORY: Science & Simulation
+; LEVEL:    Beginner
+; TAGS:     astronomy, sun, moon, animation, color
+; SUMMARY:  The sun rises, crosses the sky and sets while the sky changes color, then the moon and stars come out.
+; ============================================================
+;
+; WHAT IT DOES
+;   A little house stands on the grass. Over one pretend day the sun
+;   climbs up from the left, crosses the sky and sets on the right.
+;   The sky goes from dark blue to light blue, turns orange at sunset,
+;   and goes dark. Then the moon follows the same path and stars come
+;   out. A clock in the corner shows the hour. The day repeats forever.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to finish.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the sun seems to move because the Earth spins once a day
+;   * SETBACKGROUND with [red green blue] lists to color the sky
+;   * SIN and COS to move something along a curved path
+;   * IFELSE to choose between day and night
+;
+; THINGS TO TRY
+;   * Make the day last longer than the night, like in summer.
+;   * Add a light in the window that turns on at night.
+;   * Make the sun bigger when it is low in the sky, as it looks.
+; ============================================================
+
+; The sky color for each hour from 0 (midnight) to 23.
+to sky.color :hour
+  if :hour < 5 [output [10 10 40]]
+  if :hour < 7 [output [250 150 90]]
+  if :hour < 18 [output [120 190 250]]
+  if :hour < 20 [output [240 120 60]]
+  output [10 10 40]
+end
+
+; The sun (by day) or moon (by night) rides a half circle across the sky.
+; At hour 6 it is on the left horizon, at 12 straight up, at 18 on the right.
+to sky.spot :hour
+  localmake "angle (:hour - 6) * 15
+  output list -330 * cos :angle -120 + 330 * sin :angle
+end
+
+to draw.ground
+  ; the grass: one very thick line across the bottom
+  setpc [60 140 50] setpensize 200
+  penup setxy -400 -220 pendown setx 400 penup
+  ; The house, then its roof and door on top of it.
+  penup setxy -40 -110 setheading 0
+  filled [200 60 50] [repeat 2 [fd 60 rt 90 fd 80 rt 90]]
+  penup setxy -50 -50
+  filled [100 50 30] [setxy 0 -15 setxy 50 -50 setxy -50 -50]
+  ; a yellow door, drawn as one thick line
+  setpc [240 200 80] setpensize 16
+  penup setxy 0 -102 pendown sety -80 penup
+end
+
+to draw.stars
+  setpc 7 setpensize 2
+  ; RERANDOM with a seed makes RANDOM give the same numbers every time,
+  ; so the stars stay in their places from frame to frame.
+  (rerandom 42)
+  repeat 50 [penup setxy (random 800) - 400 (random 400) - 100 dot pos]
+end
+
+to show.hour :hour
+  localmake "h int :hour
+  setpc 7 setlabelheight 22
+  penup setxy 280 260
+  ; put a 0 in front of one-digit hours, like a digital clock
+  localmake "shown ifelse :h < 10 [word 0 :h] [:h]
+  label word :shown "|:00|
+end
+
+to one.day
+  for [tenth 0 239] [
+    localmake "hour :tenth / 10
+    clean
+    setbackground sky.color :hour
+    ifelse and :hour >= 6 :hour < 18 [
+      ; daytime: the sun
+      setpc [255 220 0] setpensize 60 penup setpos sky.spot :hour dot pos
+    ] [
+      ; night time: stars and the moon. Adding 12 hours puts the moon
+      ; on the same path the sun used during the day.
+      draw.stars
+      setpc [240 240 220] setpensize 40 penup setpos sky.spot :hour + 12 dot pos
+    ]
+    draw.ground
+    show.hour :hour
+    wait 3
+  ]
+end
+
+clearscreen hideturtle
+forever [one.day]

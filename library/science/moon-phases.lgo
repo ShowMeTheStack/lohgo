@@ -1,0 +1,111 @@
+; ============================================================
+; TITLE:    Phases of the Moon
+; CATEGORY: Science & Simulation
+; LEVEL:    Intermediate
+; TAGS:     astronomy, moon, phases, geometry, light
+; SUMMARY:  Shows the Moon at eight places around the Earth from above, and below draws how each one looks from the ground.
+; ============================================================
+;
+; WHAT IT DOES
+;   Sunlight comes from the left. At the top you see the Earth from
+;   high above its north pole, with the Moon at eight points of its
+;   monthly trip. The Sun always lights the left half of the Moon. But
+;   from the Earth we see different amounts of that lit half, and that
+;   is what the bottom row shows: new moon, crescent, quarter, gibbous,
+;   full, and back again. The numbers match the two views up.
+;
+; HOW TO USE
+;   Press Run and compare the top picture with the bottom row.
+;   Number 3 is the first quarter: half lit, on the right side.
+;
+; CONCEPTS YOU WILL LEARN
+;   * why the Moon has phases (it is not the Earth's shadow!)
+;   * drawing a shape line by line, using SQRT to find each width
+;   * COS to place the edge between light and dark
+;   * ARC with a thick pen to shade half of a circle
+;
+; THINGS TO TRY
+;   * Draw 12 phases instead of 8 by changing the step to 30 degrees.
+;   * Show the view from the southern hemisphere: lit side flipped.
+;   * Animate one moon going through all the phases in turn.
+; ============================================================
+
+make "names [[new] [waxing crescent] [first quarter] [waxing gibbous] ~
+             [full] [waning gibbous] [last quarter] [waning crescent]]
+make "lit [240 235 200]
+make "dark [60 60 75]
+
+to draw.sunlight
+  setpc [255 220 80] setpensize 2
+  for [y -10 230 40] [
+    penup setxy -390 :y pendown setx -230
+    ; a little arrowhead
+    setheading 90 lt 150 fd 8 back 8 rt 300 fd 8 penup
+  ]
+  setpc 7 setlabelheight 14
+  penup setxy -390 250 label [sunlight]
+end
+
+; The view from above. :phase is 0 for new moon up to 315.
+to draw.orbit.moon :phase :number
+  setheading 270 - :phase
+  penup setxy 0 110 fd 110
+  setpc :dark setpensize 30 dot pos
+  ; light up the half that faces the sun (the left half)
+  setheading 180 setpc :lit setpensize 8
+  pendown arc 180 4 arc 180 11 penup
+  setpc 7 setlabelheight 14
+  setheading 270 - :phase fd 28 setheading 0
+  back 6 label :number
+end
+
+to draw.earth
+  penup setxy 0 110
+  setpc [40 110 220] setpensize 44 dot pos
+  ; night side, facing away from the sun
+  setheading 0 setpc [10 25 60] setpensize 11
+  pendown arc 180 5 arc 180 16 penup
+  ; the Moon's path around the Earth
+  setpc [90 90 120] setpensize 1
+  pendown arc 360 110 penup
+end
+
+; How the moon looks from Earth, drawn as thin horizontal lines.
+; At each height y the moon is w wide on each side of the middle,
+; and the line between light and dark is at w times a cosine.
+to draw.phase.icon :x :y :phase :r
+  for [dy (minus :r) :r 2] [
+    localmake "w sqrt (:r * :r - :dy * :dy)
+    setpc :dark setpensize 2
+    penup setxy :x - :w :y + :dy pendown setx :x + :w
+    setpc :lit
+    ifelse :phase <= 180 [
+      ; waxing: the right side is lit, growing leftward
+      penup setx :x + :w * cos :phase pendown setx :x + :w
+    ] [
+      ; waning: the left side is lit, shrinking toward the left
+      penup setx :x - :w pendown setx :x - :w * cos :phase
+    ]
+    penup
+  ]
+end
+
+to draw.bottom.row
+  for [k 0 7] [
+    localmake "x -315 + :k * 90
+    draw.phase.icon :x -170 :k * 45 28
+    setpc 7 setlabelheight 14
+    penup setxy :x - 5 -128 label :k + 1
+    setlabelheight 12
+    localmake "name item :k + 1 :names
+    penup setxy :x - 28 -220 label first :name
+    if (count :name) > 1 [penup setxy :x - 28 -236 label last :name]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [10 10 30]
+draw.sunlight
+draw.earth
+for [k 0 7] [draw.orbit.moon :k * 45 :k + 1]
+draw.bottom.row

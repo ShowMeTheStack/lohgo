@@ -1,0 +1,83 @@
+; ============================================================
+; TITLE:    Coin Flips
+; CATEGORY: Science & Simulation
+; LEVEL:    Beginner
+; TAGS:     probability, random, bar chart, statistics
+; SUMMARY:  Flips a coin 1000 times, growing a bar for heads and a bar for tails, and reports how close to half each one gets.
+; ============================================================
+;
+; WHAT IT DOES
+;   Two bars grow side by side, one for heads and one for tails, as a
+;   pretend coin is flipped 1000 times. After 10 flips the bars can
+;   look very different. After 1000 flips they are almost the same
+;   height. The text window shows the percentage of heads at 10, 100
+;   and 1000 flips.
+;
+; HOW TO USE
+;   Press Run and watch the bars race. Run it again: the early results
+;   change a lot from run to run, the final ones hardly at all.
+;
+; CONCEPTS YOU WILL LEARN
+;   * RANDOM 2 gives 0 or 1, like the two sides of a coin
+;   * the law of large numbers: more tries, closer to the true chance
+;   * growing a bar by drawing a short thick line each time
+;
+; THINGS TO TRY
+;   * Make an unfair coin: count heads when RANDOM 10 is less than 6.
+;   * Flip 5000 times instead of 1000 (make the bars grow slower).
+;   * Add a third bar for a coin landing on its edge, 1 time in 100.
+; ============================================================
+
+make "heads 0
+make "tails 0
+make "bar.width 110
+make "base -200
+make "scale 0.8          ; each flip adds 0.8 steps to its bar
+
+to draw.labels
+  setpc 0 setlabelheight 20
+  penup setxy -150 :base - 35 label [HEADS]
+  setxy 70 :base - 35 label [TAILS]
+  setpensize 2
+  penup setxy -250 :base pendown setx 250
+  ; a line at half of 1000 flips, where a fair coin should end up
+  setpc 15 setpensize 1
+  penup setxy -250 :base + 500 * :scale pendown setx 250
+  penup setxy 255 :base + 500 * :scale - 6 label [500]
+end
+
+; Grow a bar by one flip: a thin line straight across the top of
+; the bar. Hundreds of these lines stacked up make a solid bar.
+; The bar's left edge is at :x and it already holds :n flips.
+to grow.bar :x :n :color
+  setpc :color setpensize 2
+  penup setxy :x :base + :n * :scale
+  pendown setx :x + :bar.width
+  penup
+end
+
+to report :flips
+  print (sentence :flips [flips:] :heads [heads,] :tails [tails, so] ~
+    round 100 * :heads / :flips [percent heads])
+end
+
+to flip.coins :flips
+  for [f 1 :flips] [
+    ifelse 0 = random 2 [
+      make "heads :heads + 1
+      grow.bar -180 :heads 4
+    ] [
+      make "tails :tails + 1
+      grow.bar 40 :tails 1
+    ]
+    if memberp :f [10 100 1000] [report :f]
+    ; slow down at the start, so you can watch the first few flips
+    if :f < 30 [wait 10]
+    if 0 = remainder :f 5 [wait 1]
+  ]
+end
+
+clearscreen hideturtle
+setbackground 7
+draw.labels
+flip.coins 1000

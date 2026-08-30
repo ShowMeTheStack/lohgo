@@ -1,0 +1,115 @@
+; ============================================================
+; TITLE:    The Water Cycle
+; CATEGORY: Science & Simulation
+; LEVEL:    Intermediate
+; TAGS:     earth science, weather, animation, water cycle
+; SUMMARY:  An animated picture of evaporation, condensation, precipitation and collection, repeating forever.
+; ============================================================
+;
+; WHAT IT DOES
+;   The sun warms the sea and little drops of water vapor float up.
+;   High in the cold air they gather into a cloud (condensation). The
+;   wind blows the cloud over the mountain, where it rains
+;   (precipitation). The rain runs down a river back into the sea
+;   (collection), and the cycle starts again. A label at the top names
+;   each stage as it happens.
+;
+; HOW TO USE
+;   Press Run and watch a few cycles. Press Stop when you are done.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the four stages of the water cycle
+;   * animation by redrawing the whole scene each frame with CLEAN
+;   * a frame counter that decides which stage is shown
+;   * using REMAINDER to make things move in a loop
+;
+; THINGS TO TRY
+;   * Make the cloud bigger, or make it rain harder (more drops).
+;   * Add a second cloud that follows the first one.
+;   * Add snow on the mountain top when it rains.
+; ============================================================
+
+; The scene that does not move. Later drawing covers earlier drawing,
+; so the big filled shapes are drawn first in each frame and the moving
+; things go on top of them.
+to draw.land
+  setheading 0
+  ; the sea on the right
+  penup setxy 0 -300
+  filled [40 90 200] [setxy 0 -150 setxy 400 -150 setxy 400 -300 setxy 0 -300]
+  ; the mountain
+  penup setxy -380 -150
+  filled [110 100 90] [setxy -200 80 setxy -30 -150 setxy -380 -150]
+  ; the grassy ground
+  penup setxy -400 -300
+  filled [70 150 60] [setxy -400 -150 setxy 0 -150 setxy 0 -300 setxy -400 -300]
+  ; the sun
+  setpc [255 210 0] setpensize 70 penup setxy 300 220 dot pos
+end
+
+; A cloud is a bunch of overlapping round white blobs.
+to draw.cloud :x :y :puff
+  if :puff < 1 [stop]
+  setpc 7
+  foreach [[-40 0] [0 12] [40 0] [-20 -10] [20 -10]] [
+    setpensize :puff penup setxy :x + first ? :y + last ? dot pos
+  ]
+end
+
+to say :words
+  setpc 0 penup setxy -380 260 setlabelheight 22 label :words
+end
+
+; Frame 0 to 599 of one cycle.
+to draw.frame :f
+  clean
+  draw.land
+  ; EVAPORATION: vapor rises from the sea while the cloud builds up
+  if :f < 200 [
+    say [Evaporation: the sun warms the sea]
+    setpc [200 220 255] setpensize 5
+    for [k 0 9] [
+      ; each drop rises at its own place, starting at a different time
+      localmake "height remainder (:f * 2 + :k * 37) 300
+      ; SIN makes each drop sway a little from side to side as it rises
+      localmake "x 40 + :k * 35 + 8 * sin (:height * 3)
+      penup setxy :x :height - 150
+      dot pos
+    ]
+    draw.cloud 200 170 :f / 5
+  ]
+  ; CONDENSATION: the full cloud is blown over the mountain
+  if and :f >= 200 :f < 350 [
+    say [Condensation: vapor makes a cloud]
+    draw.cloud 200 - (:f - 200) * 2.7 170 40
+  ]
+  ; PRECIPITATION: it rains, and the cloud shrinks as it empties
+  if and :f >= 350 :f < 500 [
+    say [Precipitation: rain falls]
+    localmake "left (500 - :f) / 150
+    draw.cloud -205 170 10 + 30 * :left
+    setpc [120 160 255] setpensize 2 setheading 190
+    repeat 14 [
+      penup setxy -260 + random 110 150 - random 230
+      pendown fd 10
+    ]
+  ]
+  ; COLLECTION: water runs down the river back into the sea
+  if :f >= 350 [
+    if :f >= 500 [say [Collection: rivers carry it back to the sea]]
+    setpc [40 90 200] setpensize 6
+    penup setxy -150 -40 pendown setxy -60 -120 setxy 0 -160
+    ; little white ripples sliding down the river show it flowing
+    setpc 7 setpensize 2
+    repeat 4 [
+      localmake "t remainder (:f + repcount * 15) 60
+      penup setxy -150 + :t * 1.5 -40 - :t * 1.33 dot pos
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground [150 200 255]
+forever [
+  for [f 0 599] [draw.frame :f wait 2]
+]

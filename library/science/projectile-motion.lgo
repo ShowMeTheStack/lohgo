@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    Projectile Motion
+; CATEGORY: Science & Simulation
+; LEVEL:    Intermediate
+; TAGS:     physics, gravity, motion, simulation, graph
+; SUMMARY:  Launches balls at seven different angles with the same speed and traces their curved paths under gravity.
+; ============================================================
+;
+; WHAT IT DOES
+;   A cannon on the left fires seven balls one after another, at 15,
+;   25, 35, 45, 55, 65 and 75 degrees. Each ball leaves a colored
+;   trail. You can see that 45 degrees goes the farthest, and that
+;   pairs like 35 and 55 land in almost the same spot.
+;
+; HOW TO USE
+;   Press Run and watch. The distances are printed in the text window.
+;   Change SPEED or GRAVITY at the bottom of the file and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * splitting a velocity into across (x) and up (y) parts with COS and SIN
+;   * simulating motion in small time steps: position changes by
+;     velocity, velocity changes by gravity
+;   * WHILE loops that stop when something happens (the ball lands)
+;
+; THINGS TO TRY
+;   * Set GRAVITY to 1.6 (about the Moon) and see how far the balls fly.
+;   * Add air resistance: multiply :vx and :vy by 0.995 every step.
+;   * Launch from a cliff by starting the ball higher than the ground.
+; ============================================================
+
+; The ground is a line near the bottom of the world. The cannon sits
+; at its left end.
+make "groundy -250
+make "startx -380
+
+to draw.ground
+  setpc 10 setpensize 3
+  penup setxy -400 :groundy pendown setx 400
+  setpensize 1
+end
+
+; FLY.BALL follows one ball from launch until it touches the ground.
+; Each pass through the loop is one small tick of time (:dt).
+to fly.ball :angle :color
+  localmake "x :startx
+  localmake "y :groundy
+  ; Split the launch speed into a sideways part and an upward part.
+  localmake "vx :speed * cos :angle
+  localmake "vy :speed * sin :angle
+  ; remember the highest point so the label can go on top of the curve
+  localmake "top :y
+  localmake "topx :x
+  penup setxy :x :y pendown
+  setpc :color setpensize 2
+  ; The ball keeps going while it is above the ground, or still rising.
+  do.while [
+    make "x :x + :vx * :dt
+    make "y :y + :vy * :dt
+    ; Gravity only pulls down, so only the up-and-down speed changes.
+    make "vy :vy - :gravity * :dt
+    setxy :x max :y :groundy
+    if :y > :top [make "top :y make "topx :x]
+  ] [:y > :groundy]
+  print (sentence [Angle] :angle [lands] round (:x - :startx) [steps away])
+  ; Labels at the landing spots would sit on top of each other, because
+  ; paired angles land together. The top of each curve is free.
+  penup setxy :topx - 8 :top + 6 label :angle
+end
+
+to max :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+to fire.all
+  localmake "colors [4 14 8 2 3 1 13]
+  localmake "angles [15 25 35 45 55 65 75]
+  ; FOREACH walks through the angles; # tells us which one we are on,
+  ; so we can pick the matching color.
+  foreach :angles [fly.ball ? item # :colors]
+end
+
+; The world is measured in turtle steps and time in ticks, so these
+; numbers are not meters and seconds, but the shapes come out the same.
+make "speed 80
+make "gravity 9.8
+make "dt 0.05
+
+clearscreen hideturtle
+setbackground 7
+draw.ground
+setlabelheight 12
+fire.all
+print [Which two angles landed closest together?]

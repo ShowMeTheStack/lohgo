@@ -1,0 +1,101 @@
+; ============================================================
+; TITLE:    Planet Orbits
+; CATEGORY: Science & Simulation
+; LEVEL:    Advanced
+; TAGS:     gravity, orbits, newton, multiple turtles, property lists
+; SUMMARY:  Three planets and a comet circle a sun, moved only by Newton's law of gravity in tiny time steps.
+; ============================================================
+;
+; WHAT IT DOES
+;   A yellow sun sits in the middle of a starry sky. Three planets
+;   and a comet, each one its own turtle, trace out their orbits.
+;   Nobody tells them to go round in circles: every tick the sun pulls
+;   each one a little, and the curved paths appear by themselves.
+;   The comet starts too slow for a circle, so it dives close to the
+;   sun, whips around fast and swings far out again.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop when you have seen enough.
+;   Try changing the starting speeds in the MAKE.BODY lines.
+;
+; CONCEPTS YOU WILL LEARN
+;   * Newton's law: the pull gets weaker with distance squared
+;   * stepping a simulation: speed changes position, force changes speed
+;   * property lists as little records (PPROP and GPROP)
+;   * several turtles, one per object, with SETTURTLE
+;
+; THINGS TO TRY
+;   * Give a planet the speed SQRT (:gm / radius) for a perfect circle.
+;   * Make the comet a little faster and see whether it escapes.
+;   * Make :dt bigger. When does the simulation stop being accurate?
+; ============================================================
+
+; GM is the strength of the sun's gravity (G times the sun's mass).
+make "gm 40000
+make "dt 0.05
+make "bodies []
+
+; Each body is a property list holding its turtle number, position
+; and velocity. A property list is like a card with labeled boxes.
+to make.body :name :turtleno :color :x :y :vx :vy
+  pprop :name "turtle :turtleno
+  pprop :name "x :x  pprop :name "y :y
+  pprop :name "vx :vx  pprop :name "vy :vy
+  make "bodies lput :name :bodies
+  setturtle :turtleno
+  penup setxy :x :y setpc :color setpensize 2
+  setshape "circle showturtle pendown
+end
+
+; One small step of time for one body.
+to move.body :name
+  localmake "x gprop :name "x
+  localmake "y gprop :name "y
+  localmake "r2 :x * :x + :y * :y
+  localmake "r sqrt :r2
+  ; The pull is GM divided by distance squared, aimed at the sun.
+  ; Dividing x and y by r turns them into a direction one step long.
+  localmake "pull :gm / :r2
+  localmake "ax (minus :pull) * :x / :r
+  localmake "ay (minus :pull) * :y / :r
+  ; Change the speed first and then the position (the Euler-Cromer
+  ; method). Doing it the other way round makes orbits slowly spiral out.
+  localmake "vx (gprop :name "vx) + :ax * :dt
+  localmake "vy (gprop :name "vy) + :ay * :dt
+  pprop :name "vx :vx  pprop :name "vy :vy
+  pprop :name "x :x + :vx * :dt
+  pprop :name "y :y + :vy * :dt
+  setturtle gprop :name "turtle
+  setxy gprop :name "x gprop :name "y
+end
+
+to draw.sky
+  setbackground 0
+  setpc 7
+  repeat 120 [penup setxy (random 800) - 400 (random 600) - 300 dot pos]
+  ; The sun: 36 short sides make a circle of radius 25. Starting 25 to
+  ; the left of the middle and heading up keeps it centered.
+  penup setxy -25 0 setheading 0 pendown
+  setpc 14 setpensize 1
+  filled 6 [repeat 36 [fd 4.4 rt 10]]
+  penup setxy 0 0 hideturtle
+end
+
+to run.sky :ticks
+  repeat :ticks [
+    foreach :bodies [move.body ?]
+    wait 1
+  ]
+end
+
+clearscreen
+setturtle 0
+draw.sky
+; name, turtle, color, starting x and y, starting vx and vy
+; For a circle the speed is SQRT (:gm / radius): 20 for radius 100.
+make.body "mercury 1 15 100 0 0 20
+make.body "earth 2 1 180 0 0 14.9
+make.body "mars 3 4 0 -260 12.4 0
+; The comet is much slower than a circle at this distance would need.
+make.body "comet 4 11 -330 0 0 -6
+run.sky 4000

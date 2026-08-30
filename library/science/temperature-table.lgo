@@ -1,0 +1,100 @@
+; ============================================================
+; TITLE:    Temperature Table
+; CATEGORY: Science & Simulation
+; LEVEL:    Beginner
+; TAGS:     temperature, conversion, table, thermometer, input
+; SUMMARY:  Prints a Celsius to Fahrenheit table, draws a thermometer, then converts any temperature you type.
+; ============================================================
+;
+; WHAT IT DOES
+;   First it prints a neat table that goes from -20 to 100 degrees
+;   Celsius in steps of 10, with the Fahrenheit value next to each.
+;   Then it draws a thermometer with both scales marked side by side.
+;   Finally it asks you for temperatures and converts them both ways.
+;
+; HOW TO USE
+;   Press Run. Read the table in the text window. When it asks, type
+;   a number such as 37 and press Enter. Type quit to finish.
+;
+; CONCEPTS YOU WILL LEARN
+;   * writing a formula as a procedure that OUTPUTs a number
+;   * FOR loops that count in steps
+;   * FORM to line up numbers in columns
+;   * READWORD with input checking using NUMBERP
+;
+; THINGS TO TRY
+;   * Change the table to count in steps of 5 instead of 10.
+;   * Add a third column for Kelvin (Celsius plus 273.15).
+;   * Mark the temperature of your classroom on the thermometer.
+; ============================================================
+
+; Fahrenheit and Celsius do not just have different sized degrees,
+; they also start counting from different places. Water freezes at
+; 0 C but at 32 F, and a Celsius degree is 9/5 as big as a Fahrenheit one.
+to c.to.f :c
+  output :c * 9 / 5 + 32
+end
+
+to f.to.c :f
+  output (:f - 32) * 5 / 9
+end
+
+to print.table
+  ; vertical bars keep the spaces inside a word, so the headings line up
+  print "| Celsius  Fahrenheit|
+  print "| -------  ----------|
+  ; FORM number width decimals pads the number so the columns line up
+  for [c -20 100 10] [
+    print (word form :c 8 0 "| | form c.to.f :c 11 0)
+  ]
+end
+
+; The tube is 300 steps tall and stands for -20 C at the bottom up
+; to 100 C at the top, so each degree Celsius is 2.5 steps.
+to c.to.y :c
+  output -150 + (:c + 20) * 2.5
+end
+
+to draw.thermometer
+  setpensize 2
+  ; the glass tube
+  penup setxy -15 -150 pendown setpc 15
+  setxy -15 160 setxy 15 160 setxy 15 -150
+  ; the bulb at the bottom, filled red like the liquid inside
+  ; 36 short sides turning 10 degrees each make a circle of radius 25.
+  ; Starting 25 steps left of its center, heading up, centers it at (0, -170).
+  penup setxy -25 -170 setheading 0 pendown
+  setpc 4
+  filled 4 [repeat 36 [fd 4.4 rt 10]]
+  ; the red column reaches room temperature, about 22 C
+  setpensize 14
+  penup setxy 0 -150 pendown setxy 0 c.to.y 22
+  ; tick marks: Celsius on the left, Fahrenheit on the right
+  setpensize 1 setpc 0 setlabelheight 12
+  for [c -20 100 20] [
+    penup setxy -15 c.to.y :c pendown setx -25
+    penup setxy -60 (c.to.y :c) - 5 label :c
+    penup setxy 25 (c.to.y :c) - 5 label word round c.to.f :c "F
+  ]
+  penup setxy -70 185 label [Celsius  Fahrenheit]
+end
+
+to ask.loop
+  print []
+  print [Type a temperature to convert it both ways, or quit to stop.]
+  localmake "answer readword
+  if equalp :answer "quit [print [Bye!] stop]
+  ifelse numberp :answer [
+    print (sentence :answer [C is] round c.to.f :answer [F])
+    print (sentence :answer [F is] round f.to.c :answer [C])
+  ] [
+    print (sentence :answer [is not a number. Try again.])
+  ]
+  ask.loop
+end
+
+clearscreen hideturtle
+setbackground 7
+print.table
+draw.thermometer
+ask.loop

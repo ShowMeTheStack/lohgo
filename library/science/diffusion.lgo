@@ -1,0 +1,111 @@
+; ============================================================
+; TITLE:    Diffusion Through a Gap
+; CATEGORY: Science & Simulation
+; LEVEL:    Advanced
+; TAGS:     diffusion, random walk, arrays, particles, chemistry
+; SUMMARY:  Shows 150 dye particles jiggling at random, slowly leaking through a gap until both sides of the box hold about the same number.
+; ============================================================
+;
+; WHAT IT DOES
+;   A box is split by a wall with a small gap in it. All the dye
+;   particles start crowded in the left half. Each one jiggles about
+;   at random, with no plan at all, and yet the dye spreads into the
+;   right half until the two sides are roughly even. The counts for
+;   each side are shown at the top, and a bar shows the balance.
+;
+; HOW TO USE
+;   Press Run and watch the numbers. Press Stop whenever you like.
+;   Change GAP to make the hole in the wall wider or narrower.
+;
+; CONCEPTS YOU WILL LEARN
+;   * diffusion: many random moves add up to a steady spreading
+;   * arrays to store a position for each particle (ARRAY, ITEM, SETITEM)
+;   * bouncing off walls by undoing a move that would go through them
+;   * redrawing a scene each frame with CLEAN
+;
+; THINGS TO TRY
+;   * Make GAP 150. How much faster does the dye even out?
+;   * Make the particles jiggle further each time (change JIGGLE).
+;   * Start every particle in the top left corner instead.
+; ============================================================
+
+make "count.of 150      ; how many particles
+make "half 200          ; the box goes from -200 to 200 both ways
+make "gap 60            ; height of the hole in the middle wall
+make "jiggle 10         ; biggest random move in one tick
+
+make "xs array :count.of
+make "ys array :count.of
+
+; Put every particle somewhere random in the left half.
+to setup.particles
+  for [i 1 :count.of] [
+    setitem :i :xs (random :half - 10) - :half + 5
+    setitem :i :ys (random 2 * :half - 10) - :half + 5
+  ]
+end
+
+; With JIGGLE 10, RANDOM 21 gives 0 to 20, so this gives -10 to 10.
+to wobble
+  output (random 2 * :jiggle + 1) - :jiggle
+end
+
+; May a particle move from old x to the point (x, y)? It must stay
+; inside the box, and it may only cross the middle wall through the gap.
+; We check for crossing (old x and new x on different sides), not just
+; for landing on the wall, because a big jump could hop right over it.
+to free.spot :oldx :x :y
+  if (abs :x) > :half - 3 [output "false]
+  if (abs :y) > :half - 3 [output "false]
+  localmake "crossing or (abs :x) < 3 (:oldx * :x) < 0
+  if and :crossing (abs :y) > :gap / 2 [output "false]
+  output "true
+end
+
+to move.particles
+  for [i 1 :count.of] [
+    localmake "nx (item :i :xs) + wobble
+    localmake "ny (item :i :ys) + wobble
+    ; If the move would go into a wall the particle just stays put
+    ; this tick, as if it bumped and bounced back.
+    if free.spot item :i :xs :nx :ny [setitem :i :xs :nx setitem :i :ys :ny]
+  ]
+end
+
+to draw.box
+  setpc 7 setpensize 3
+  penup setxy (minus :half) (minus :half) pendown
+  repeat 4 [fd 2 * :half rt 90]
+  ; the middle wall, in two pieces with the gap between them
+  penup setxy 0 :half pendown sety :gap / 2
+  penup setxy 0 (minus :gap) / 2 pendown sety (minus :half)
+end
+
+to draw.scene
+  clean
+  draw.box
+  localmake "left 0
+  setpensize 5 setpc 4
+  for [i 1 :count.of] [
+    dot list item :i :xs item :i :ys
+    if (item :i :xs) < 0 [make "left :left + 1]
+  ]
+  ; the counts and a balance bar above the box
+  setpc 7 penup setxy -200 250
+  label (sentence [left:] :left)
+  setxy 120 250 label (sentence [right:] :count.of - :left)
+  setpensize 12
+  setpc 4 setxy -100 225 pendown setx -100 + 200 * :left / :count.of
+  setpc 1 setx 100 penup
+end
+
+clearscreen hideturtle
+setbackground [20 20 40]
+setlabelheight 18
+setheading 0
+setup.particles
+forever [
+  move.particles
+  draw.scene
+  wait 1
+]

@@ -1,0 +1,113 @@
+; ============================================================
+; TITLE:    Brownian Motion
+; CATEGORY: Science & Simulation
+; LEVEL:    Advanced
+; TAGS:     physics, molecules, collisions, arrays, particles
+; SUMMARY:  A big pollen grain is bumped around by fast little molecules, and its zigzag path is traced behind it.
+; ============================================================
+;
+; WHAT IT DOES
+;   In 1827 the botanist Robert Brown watched pollen grains in water
+;   under a microscope and saw them twitch about, though nothing seemed
+;   to push them. The reason is that water molecules, far too small to
+;   see, crash into the grain from all sides. Here the molecules are
+;   the small blue dots, zooming in straight lines and bouncing off the
+;   walls. The big orange dot is the grain. Each hit gives it a tiny
+;   shove, and its path (the red line) wanders in a jagged way.
+;
+; HOW TO USE
+;   Press Run and watch for a while. Press Stop to end it.
+;   Change MOLECULES, SPEED or the grain's HEAVINESS below.
+;
+; CONCEPTS YOU WILL LEARN
+;   * how many small random pushes add up to a random walk
+;   * moving many objects with a set of arrays (x, y, vx, vy)
+;   * collisions: checking distance, then bouncing
+;   * remembering a trail in a list so it survives CLEAN
+;
+; THINGS TO TRY
+;   * Make HEAVINESS 5 for a lighter grain. It jitters much more.
+;   * Make the molecules slower, as if the water were colder.
+;   * Hide the molecules (skip drawing them) like the real microscope.
+; ============================================================
+
+make "molecules 40
+make "speed 7
+make "heaviness 25       ; the grain is this many times heavier than a molecule
+make "wall 220           ; the box goes from -220 to 220
+make "grain.size 22      ; the grain's radius
+
+make "mx array :molecules  make "my array :molecules
+make "mvx array :molecules make "mvy array :molecules
+
+to setup
+  for [i 1 :molecules] [
+    ; start each molecule somewhere away from the grain in the middle
+    setitem :i :mx (pick [-1 1]) * (50 + random 160)
+    setitem :i :my (random 2 * :wall) - :wall
+    localmake "dir random 360
+    setitem :i :mvx :speed * sin :dir
+    setitem :i :mvy :speed * cos :dir
+  ]
+  make "gx 0 make "gy 0 make "gvx 0 make "gvy 0
+  make "trail [[0 0]]
+end
+
+to move.molecule :i
+  localmake "x (item :i :mx) + item :i :mvx
+  localmake "y (item :i :my) + item :i :mvy
+  ; bounce off the walls by flipping the speed in that direction
+  if (abs :x) > :wall [setitem :i :mvx minus item :i :mvx]
+  if (abs :y) > :wall [setitem :i :mvy minus item :i :mvy]
+  ; Hit the grain? Send the molecule straight back out, away from the
+  ; grain's middle, and give the grain a small shove the other way.
+  localmake "dx :x - :gx
+  localmake "dy :y - :gy
+  localmake "d sqrt (:dx * :dx + :dy * :dy)
+  if :d < :grain.size [
+    make "gvx :gvx + (item :i :mvx) / :heaviness
+    make "gvy :gvy + (item :i :mvy) / :heaviness
+    setitem :i :mvx :speed * :dx / :d
+    setitem :i :mvy :speed * :dy / :d
+  ]
+  setitem :i :mx :x
+  setitem :i :my :y
+end
+
+to move.grain
+  make "gx :gx + :gvx
+  make "gy :gy + :gvy
+  ; the grain bounces off the walls too
+  if (abs :gx) > :wall - :grain.size [make "gvx minus :gvx]
+  if (abs :gy) > :wall - :grain.size [make "gvy minus :gvy]
+  ; the water is thick, so the grain slows down again quickly
+  make "gvx :gvx * 0.97
+  make "gvy :gvy * 0.97
+  make "trail lput list :gx :gy :trail
+  if (count :trail) > 400 [make "trail butfirst :trail]
+end
+
+to draw.all
+  clean
+  setpc 15 setpensize 2
+  penup setxy minus :wall minus :wall pendown
+  repeat 4 [fd 2 * :wall rt 90]
+  setpc 4 setpensize 2
+  penup setpos first :trail pendown
+  foreach :trail [setpos ?]
+  penup
+  setpc 14 setpensize 2 * :grain.size dot list :gx :gy
+  setpc [80 140 255] setpensize 6
+  for [i 1 :molecules] [dot list item :i :mx item :i :my]
+end
+
+clearscreen hideturtle
+setheading 0
+setbackground [10 15 30]
+setup
+forever [
+  for [i 1 :molecules] [move.molecule :i]
+  move.grain
+  draw.all
+  wait 1
+]

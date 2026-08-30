@@ -1,0 +1,94 @@
+; ============================================================
+; TITLE:    Swinging Pendulum
+; CATEGORY: Science & Simulation
+; LEVEL:    Intermediate
+; TAGS:     physics, pendulum, animation, graph, trigonometry
+; SUMMARY:  Animates a swinging pendulum and draws a graph of its angle over time underneath.
+; ============================================================
+;
+; WHAT IT DOES
+;   A ball on a rod swings back and forth from a pivot at the top.
+;   While it swings, a second turtle draws the angle of the rod as a
+;   wavy line along the bottom of the screen. The wave slowly gets
+;   smaller because a little air resistance steals energy each swing.
+;
+; HOW TO USE
+;   Press Run and watch. Change ANGLE, LENGTH or FRICTION at the
+;   bottom of the file and run it again to compare.
+;
+; CONCEPTS YOU WILL LEARN
+;   * how gravity pulls a pendulum back toward the middle
+;   * angular speed and angular acceleration, stepped in time
+;   * erasing and redrawing a line with PENERASE for animation
+;   * using two turtles for two jobs at once
+;
+; THINGS TO TRY
+;   * Make LENGTH 100 and then 300. Does a longer pendulum swing
+;     faster or slower? Count the bumps in the graph.
+;   * Start at 10 degrees and at 80 degrees. Is the timing the same?
+;   * Set FRICTION to 1 so the pendulum never slows down.
+; ============================================================
+
+make "pivot [0 250]
+make "gravity 0.5
+
+; Where is the ball when the rod makes angle :a with the straight-down
+; line? SIN gives how far it is to the side, COS how far down it hangs.
+to bob.position :a
+  output list (first :pivot) + :length * sin :a ~
+              (last :pivot) - :length * cos :a
+end
+
+to draw.rod :a :mode
+  setturtle 0
+  penup setpos :pivot
+  ifelse :mode = "erase [penerase setpensize 5] [penpaint setpensize 2 setpc 8]
+  pendown setpos bob.position :a
+  ; red again, so the ball (the turtle itself) stays red
+  penup penpaint setpc 4
+end
+
+to draw.graph.axes
+  setturtle 1 hideturtle
+  setpc 15 setpensize 1
+  penup setxy -390 -170 pendown setx 390
+  penup setxy -390 -280 pendown sety -60
+  penup setxy -385 -55 label [angle]
+  penup setxy 330 -292 label [time -->]
+  setpc 1 setpensize 2
+  penup setxy -390 -170 + :angle
+  pendown
+end
+
+to swing :ticks
+  localmake "speed 0
+  repeat :ticks [
+    ; Gravity pulls the ball back toward the bottom. The pull is
+    ; strongest when the rod is sideways (sin 90 = 1) and zero when
+    ; the rod hangs straight down (sin 0 = 0). The 57.3 turns radians
+    ; into degrees, because Logo's SIN works in degrees.
+    localmake "accel (minus :gravity / :length) * (sin :angle) * 57.3
+    make "speed (:speed + :accel) * :friction
+    draw.rod :angle "erase
+    make "angle :angle + :speed
+    draw.rod :angle "paint
+    setturtle 0 setpos bob.position :angle
+    ; the graph turtle moves one step right per tick
+    setturtle 1 setxy repcount - 390 :angle - 170
+    wait 1
+  ]
+end
+
+make "length 200
+make "angle 50
+make "friction 0.998
+
+clearscreen
+setbackground 7
+; a little ceiling for the pivot to hang from
+setpc 0 setpensize 6
+penup setxy -40 258 pendown setx 40
+draw.graph.axes
+setturtle 0
+setshape "circle showturtle
+swing 780

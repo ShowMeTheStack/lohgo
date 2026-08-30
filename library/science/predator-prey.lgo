@@ -1,0 +1,97 @@
+; ============================================================
+; TITLE:    Rabbits and Foxes
+; CATEGORY: Science & Simulation
+; LEVEL:    Intermediate
+; TAGS:     ecology, lotka-volterra, population, graph, biology
+; SUMMARY:  Graphs the rise and fall of rabbits and foxes using the Lotka-Volterra predator-prey equations.
+; ============================================================
+;
+; WHAT IT DOES
+;   Rabbits breed, and foxes eat rabbits. When there are lots of
+;   rabbits the foxes have plenty of food and their numbers grow. Then
+;   so many rabbits get eaten that the rabbits crash, the hungry foxes
+;   crash after them, and with few foxes around the rabbits boom again.
+;   The program draws the two populations as a green line (rabbits)
+;   and a red line (foxes), and the cycle repeats over and over.
+;
+; HOW TO USE
+;   Press Run and watch the graph grow from left to right. A short
+;   table is printed as well. Change the four rates at the bottom.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a model: simple rules that imitate something in nature
+;   * changing two numbers together, where each one depends on the other
+;   * scaling numbers to fit a graph on the screen
+;   * two turtles drawing two lines at the same time
+;
+; THINGS TO TRY
+;   * Start with 80 rabbits and 24 foxes. Why does nothing happen?
+;   * Make the foxes better hunters (raise EAT.RATE). What changes?
+;   * Make :dt 0.2. The curves start to spiral outward: that is the
+;     simulation going wrong, not nature.
+; ============================================================
+
+; The graph area: time runs along x, population up y.
+make "left -370
+make "bottom -230
+make "yscale 2           ; screen steps per animal
+
+to draw.axes
+  setturtle 0 hideturtle
+  setpc 15 setpensize 1
+  penup setxy :left :bottom pendown setx 380
+  penup setxy :left :bottom pendown sety 270
+  setlabelheight 14
+  for [n 50 200 50] [
+    penup setxy :left - 4 :bottom + :n * :yscale pendown setx :left + 4
+    penup setxy :left + 8 :bottom + :n * :yscale - 5 label :n
+  ]
+  penup setxy 200 250 setpc 2 label [rabbits]
+  penup setxy 290 250 setpc 4 label [foxes]
+  penup setxy 320 :bottom - 22 setpc 15 label [time]
+end
+
+; Turtle 1 draws the rabbits, turtle 2 draws the foxes.
+to start.pens
+  setturtle 1 hideturtle setpc 2 setpensize 2
+  penup setxy :left :bottom + :rabbits * :yscale pendown
+  setturtle 2 hideturtle setpc 4 setpensize 2
+  penup setxy :left :bottom + :foxes * :yscale pendown
+end
+
+to simulate :steps
+  localmake "xstep 750 / :steps
+  for [s 1 :steps] [
+    ; Rabbits: more are born the more rabbits there are, and more are
+    ; eaten the more meetings there are between rabbits and foxes.
+    localmake "drabbits (:birth.rate * :rabbits) - (:eat.rate * :rabbits * :foxes)
+    ; Foxes: they die off on their own, but each meal helps them breed.
+    localmake "dfoxes (:fox.growth * :rabbits * :foxes) - (:death.rate * :foxes)
+    ; Work out both changes first, then apply them, so the foxes use
+    ; the same rabbit count the rabbits did.
+    make "rabbits :rabbits + :drabbits * :dt
+    make "foxes :foxes + :dfoxes * :dt
+    localmake "x :left + :s * :xstep
+    setturtle 1 setxy :x :bottom + :rabbits * :yscale
+    setturtle 2 setxy :x :bottom + :foxes * :yscale
+    ; a short pause now and then, so the graph grows instead of appearing
+    if 0 = remainder :s 8 [wait 1]
+    if 0 = remainder :s 250 [
+      print (sentence [time] :s * :dt [rabbits] round :rabbits [foxes] round :foxes)
+    ]
+  ]
+end
+
+make "birth.rate 0.6     ; how fast rabbits breed
+make "eat.rate 0.025     ; how often a fox catches a rabbit it meets
+make "fox.growth 0.01    ; how much a meal helps foxes breed
+make "death.rate 0.8     ; how fast foxes die without food
+make "dt 0.02
+make "rabbits 40
+make "foxes 10
+
+clearscreen
+setbackground [250 250 240]
+draw.axes
+start.pens
+simulate 2000

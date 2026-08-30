@@ -1,0 +1,128 @@
+; ============================================================
+; TITLE:    Ant Colony Foraging
+; CATEGORY: Science & Simulation
+; LEVEL:    Advanced
+; TAGS:     biology, ants, multiple turtles, agents, simulation
+; SUMMARY:  Twelve ant turtles search at random for three piles of food and carry it home, remembering the way back.
+; ============================================================
+;
+; WHAT IT DOES
+;   The brown circle in the middle is the nest. Three green piles of
+;   food lie somewhere around it. Twelve ants leave the nest and wander
+;   at random. An ant that stumbles on food picks up a crumb, turns
+;   green and marches straight home, leaving a thin scent trail. After
+;   dropping the crumb it walks straight back to the same pile, so the
+;   piles that were found first are emptied quickly. Each pile vanishes
+;   when it is empty, and the program stops when all food is home.
+;
+; HOW TO USE
+;   Press Run and watch. The text window reports when piles are found
+;   and emptied. Change ANTS or the pile positions and sizes below.
+;
+; CONCEPTS YOU WILL LEARN
+;   * agents: many turtles, each following the same simple rules
+;   * keeping each ant's state (searching, carrying, going back) in arrays
+;   * SETTURTLE to give orders to one turtle at a time
+;   * TOWARDS and DISTANCE to steer and to detect arrival
+;
+; THINGS TO TRY
+;   * Use 3 ants, then 30. How does the time to finish change?
+;   * Make the ants forget the pile (always go back to searching).
+;   * Move one pile far into a corner. Is it found last?
+; ============================================================
+
+make "ants 12
+make "nest [0 0]
+; each pile: x, y and how many crumbs it holds
+make "piles {[-250 170 40] [230 -180 40] [280 200 40]}
+make "mode array :ants       ; "search, "carry or "back for each ant
+make "memory array :ants     ; which pile each ant last found
+make "stored 0
+
+to pile.pos :p
+  output list first item :p :piles item 2 item :p :piles
+end
+
+to pile.food :p
+  output last item :p :piles
+end
+
+to draw.pile :p
+  setturtle 0
+  penup setpos pile.pos :p
+  ; paint over the old pile with the background color, then draw the
+  ; new, smaller pile on top
+  setpc [235 220 180] setpensize 34 dot pos
+  if (pile.food :p) > 0 [setpc 10 setpensize 10 + (pile.food :p) / 2 dot pos]
+end
+
+to setup.world
+  setturtle 0 hideturtle
+  setpc 8 setpensize 40 penup setpos :nest dot pos
+  for [p 1 3] [draw.pile :p]
+  for [a 1 :ants] [
+    setitem :a :mode "search
+    setturtle :a
+    setshape "turtle setpc 0 penup setpos :nest
+    setheading random 360 showturtle
+  ]
+end
+
+; Returns the number of a pile with food within reach, or 0 if none.
+to food.near
+  for [p 1 3] [
+    if and (pile.food :p) > 0 (distance pile.pos :p) < 18 [output :p]
+  ]
+  output 0
+end
+
+to take.crumb :a :p
+  localmake "pile item :p :piles
+  setitem :p :piles (list first :pile item 2 :pile (last :pile) - 1)
+  if (pile.food :p) = 39 [print (sentence [An ant found pile] :p)]
+  if (pile.food :p) = 0 [print (sentence [Pile] :p [is empty.])]
+  setitem :a :mode "carry
+  setitem :a :memory :p
+  draw.pile :p
+  setturtle :a
+end
+
+to move.ant :a
+  setturtle :a
+  localmake "m item :a :mode
+  if :m = "search [
+    ; wander: turn a little at random, walk, and turn back at the edge
+    rt (random 61) - 30 fd 5
+    if or (abs xcor) > 380 (abs ycor) > 280 [rt 180 fd 10]
+    localmake "p food.near
+    if :p > 0 [take.crumb :a :p]
+    stop
+  ]
+  if :m = "carry [
+    ; The pen color is also the turtle's color, so a carrying ant
+    ; turns green and its pen lays a thin green scent trail.
+    setpc [60 150 60] setpensize 1 pendown
+    setheading towards :nest fd 5
+    if (distance :nest) < 12 [
+      make "stored :stored + 1
+      penup setpc 0
+      ; go back to the remembered pile if it still has food
+      ifelse (pile.food item :a :memory) > 0 [setitem :a :mode "back] [setitem :a :mode "search]
+    ]
+    stop
+  ]
+  ; mode "back: head for the remembered pile
+  localmake "p item :a :memory
+  setheading towards pile.pos :p fd 5
+  if (pile.food :p) = 0 [setitem :a :mode "search stop]
+  if (distance pile.pos :p) < 18 [take.crumb :a :p]
+end
+
+clearscreen
+setbackground [235 220 180]
+setup.world
+until [:stored = 120] [
+  for [a 1 :ants] [move.ant :a]
+  wait 1
+]
+print [All 120 crumbs are safe in the nest.]

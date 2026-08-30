@@ -1,0 +1,88 @@
+; ============================================================
+; TITLE:    Population Growth
+; CATEGORY: Science & Simulation
+; LEVEL:    Beginner
+; TAGS:     biology, growth, exponential, logistic, graph
+; SUMMARY:  Compares a population that grows without limits to one that runs short of food, as two curves on a graph.
+; ============================================================
+;
+; WHAT IT DOES
+;   Imagine a jar of fruit flies. Each day the population grows by 30
+;   percent. The red curve shows what happens if food never runs out:
+;   it shoots off the top of the screen. The blue curve shows what
+;   really happens in a jar: growth slows down as the food gets scarce,
+;   and the number levels off at what the jar can support.
+;
+; HOW TO USE
+;   Press Run. Read the day-by-day table in the text window too.
+;   Change GROWTH or CAPACITY at the bottom and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * exponential growth: multiplying again and again
+;   * logistic growth: growth that slows near a limit
+;   * MAKE to update a variable each time round a loop
+;   * REPCOUNT to know which day we are on
+;
+; THINGS TO TRY
+;   * Make GROWTH 0.1. How long until the flies reach the limit now?
+;   * Start with 200 flies instead of 10.
+;   * Halve the CAPACITY halfway through, as if half the food spoiled.
+; ============================================================
+
+; The graph: day 0 is at x = -350, and each day is 18 steps to the right.
+; One fly is 0.5 steps tall, so 1000 flies is 500 steps.
+to day.x :day
+  output -350 + :day * 18
+end
+
+to flies.y :n
+  output -250 + :n * 0.5
+end
+
+to draw.axes
+  setpc 0 setpensize 1
+  penup setxy -350 -250 pendown setx 390
+  penup setxy -350 -250 pendown sety 280
+  ; a dashed line at the jar's limit
+  setpc 15
+  penup setxy -350 flies.y :capacity
+  setheading 90
+  repeat 37 [pendown fd 10 penup fd 10]
+  setpc 0 penup setxy -340 (flies.y :capacity) + 6
+  label [the most flies the jar can feed]
+  penup setxy 350 -275 label [days]
+  setxy -345 285 label [flies]
+end
+
+to grow :days
+  localmake "free 10        ; flies with unlimited food
+  localmake "jar 10         ; flies in a real jar
+  print "|day   unlimited  in the jar|
+  repeat :days [
+    ; Unlimited: every day there are 30 percent more flies.
+    make "free :free + :growth * :free
+    ; In the jar the growth is multiplied by the share of food left.
+    ; Near the limit that share is close to zero, so growth stops.
+    make "jar :jar + :growth * :jar * (1 - :jar / :capacity)
+    ; FORM pads each number to a fixed width so the columns line up
+    print (word form repcount 3 0 form :free 12 0 form :jar 12 0)
+    ; a red dot for unlimited, while it still fits on the screen
+    if (flies.y :free) < 290 [
+      setpc 4 penup setxy day.x repcount flies.y :free dot pos
+    ]
+    setpc 1 penup setxy day.x repcount flies.y :jar dot pos
+    wait 8
+  ]
+end
+
+make "growth 0.3
+make "capacity 800
+
+clearscreen hideturtle
+setbackground 7
+setlabelheight 14
+draw.axes
+setpensize 8
+grow 40
+penup setxy 100 -100 setpc 4 label [red: unlimited food]
+setxy 100 -125 setpc 1 label [blue: flies in a jar]

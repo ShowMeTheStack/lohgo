@@ -1,0 +1,76 @@
+; ============================================================
+; TITLE:    Sound Waves
+; CATEGORY: Science & Simulation
+; LEVEL:    Beginner
+; TAGS:     sound, waves, pitch, loudness, tone, physics
+; SUMMARY:  Draws four sound waves (low, high, loud and soft) and plays each one so you can see and hear the difference.
+; ============================================================
+;
+; WHAT IT DOES
+;   Sound is air wiggling back and forth. The program draws four waves
+;   one under the other and plays each as it is drawn:
+;     a low note    - the wiggles are far apart
+;     a high note   - the wiggles are close together
+;     a loud note   - the wiggles are tall
+;     a soft note   - the wiggles are short
+;   (The computer can only make loud and soft with the volume knob,
+;   so those two sound the same here. Real sound waves differ.)
+;
+; HOW TO USE
+;   Turn your sound on and press Run. Listen while each wave is drawn.
+;
+; CONCEPTS YOU WILL LEARN
+;   * frequency (how many wiggles per second) is the pitch you hear
+;   * amplitude (how tall the wiggles are) is how loud it sounds
+;   * SIN makes the smooth up-and-down shape of a wave
+;   * TONE frequency milliseconds plays a note
+;
+; THINGS TO TRY
+;   * Add a fifth wave for a very low note of 110 hertz.
+;   * Draw a wave whose wiggles get closer and closer (a siren).
+;   * Play two notes at once: add two SIN values together and draw it.
+; ============================================================
+
+; Draw one wave across the screen at height :middle.
+; :wiggles is how many full ups and downs fit across the screen,
+; :height is how tall each one is.
+to draw.wave :middle :wiggles :height :color
+  setpc 15 setpensize 1
+  penup setxy -300 :middle pendown setx 380
+  setpc :color setpensize 3
+  penup setxy -300 :middle pendown
+  ; Walk across 680 steps. At each x, SIN tells us how high to go.
+  ; One full wiggle is 360 degrees, so the angle grows by
+  ; 360 x wiggles over the whole width.
+  for [x 0 680 2] [
+    setxy :x - 300 :middle + :height * sin (:x * 360 * :wiggles / 680)
+  ]
+  penup
+end
+
+to name.wave :middle :words
+  setpc 0 setlabelheight 16
+  penup setxy -390 :middle - 6 label :words
+end
+
+clearscreen hideturtle
+setbackground 7
+
+name.wave 200 [low note]
+draw.wave 200 4 40 1
+tone 220 800
+
+name.wave 70 [high note]
+draw.wave 70 16 40 4
+tone 880 800
+
+name.wave -70 [loud note]
+draw.wave -70 8 60 13
+tone 440 800
+
+name.wave -200 [soft note]
+draw.wave -200 8 15 2
+tone 440 800
+
+print [Low notes have few wiggles, high notes have many.]
+print [Loud sounds have tall wiggles, soft sounds have short ones.]

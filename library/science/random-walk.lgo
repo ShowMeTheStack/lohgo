@@ -1,0 +1,69 @@
+; ============================================================
+; TITLE:    Random Walk
+; CATEGORY: Science & Simulation
+; LEVEL:    Beginner
+; TAGS:     random, probability, walk, color
+; SUMMARY:  A turtle wanders by picking north, south, east or west at random until it escapes a big circle.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle starts in the middle of a circle. At every step it picks
+;   one of four directions at random and walks a short way. Its trail
+;   changes color as time goes on, so you can see where it went first
+;   (red) and where it went later (purple). When it finally crosses the
+;   circle, the program tells you how many steps it took.
+;
+; HOW TO USE
+;   Press Run. Then run it again: every walk is different! Compare how
+;   many steps each walk needed.
+;
+; CONCEPTS YOU WILL LEARN
+;   * RANDOM to make choices, and PICK to choose from a list
+;   * DISTANCE to measure how far the turtle is from a point
+;   * UNTIL loops that stop when something becomes true
+;
+; THINGS TO TRY
+;   * Make the circle bigger. Does doubling the size double the steps?
+;     (Scientists found it takes about four times as many.)
+;   * Allow diagonal moves by picking from [0 45 90 135 180 225 270 315].
+;   * Take a bigger step each time and see how the picture changes.
+; ============================================================
+
+make "radius 200
+make "stride 10
+
+to draw.circle
+  ; ARC draws a circle around the turtle without moving it, so the
+  ; turtle can stay at home, right where the walk will start.
+  penup home
+  setpc 15 setpensize 2
+  arc 360 :radius
+end
+
+; The colors go red, orange, yellow, green, blue, purple, then repeat.
+; Every 40 steps the trail moves on to the next color.
+to color.for :n
+  output item 1 + remainder int (:n / 40) 6 [4 14 6 2 1 13]
+end
+
+to wander
+  localmake "steps 0
+  pendown setpensize 2
+  until [(distance [0 0]) > :radius] [
+    setpc color.for :steps
+    setheading pick [0 90 180 270]
+    fd :stride
+    wait 1
+    make "steps :steps + 1
+  ]
+  print (sentence [The turtle escaped after] :steps [steps.])
+  print (sentence [If it had walked in a straight line it would have needed only] ~
+    round :radius / :stride [steps.])
+end
+
+clearscreen
+setbackground 0
+draw.circle
+setshape "turtle showturtle
+wander
+hideturtle

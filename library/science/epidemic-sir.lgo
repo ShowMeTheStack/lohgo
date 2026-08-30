@@ -1,0 +1,112 @@
+; ============================================================
+; TITLE:    Epidemic Model (SIR)
+; CATEGORY: Science & Simulation
+; LEVEL:    Intermediate
+; TAGS:     epidemic, sir model, health, graph, input
+; SUMMARY:  Asks how contagious a disease is, then draws a stacked chart of healthy, sick and recovered people day by day.
+; ============================================================
+;
+; WHAT IT DOES
+;   A town has 1000 people and one of them catches a cold. Everyone is
+;   in one of three groups: S (susceptible, could still catch it),
+;   I (infected, sick right now) and R (recovered, safe now). Each day
+;   is drawn as one thin column: red at the bottom for the sick, blue
+;   for those who could still catch it, green on top for the recovered.
+;   You see the red wave rise, peak and fade away.
+;
+; HOW TO USE
+;   Press Run. Type how many people one sick person infects, on
+;   average, while they are sick (try numbers from 1 to 6) and press
+;   Enter. Run it again with a different number and compare.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the SIR model used by real scientists who study diseases
+;   * the reproduction number R0, and why it matters if it is below 1
+;   * READLIST with checking, asking again if the answer is no good
+;   * drawing a stacked bar chart with thick pen lines
+;
+; THINGS TO TRY
+;   * Compare R0 = 1.5 with R0 = 3. How high is each red peak?
+;   * Change SICK.DAYS to 14. The illness lasts longer: what happens?
+;   * Vaccinate: start with 600 people already in R.
+; ============================================================
+
+make "people 1000
+make "sick.days 7          ; how long someone stays sick
+make "days 150
+make "bottom -220
+make "yscale 0.42          ; 1000 people fit in 420 steps
+
+to ask.r0
+  print [How many people does one sick person infect, on average?]
+  print [Type a number from 0.5 to 10, for example 2.5, and press Enter.]
+  localmake "answer readlist
+  ; AND works out both of its inputs, so FIRST of an empty answer would
+  ; be an error. Two IFs, one inside the other, check one thing at a time.
+  if (count :answer) = 1 [
+    localmake "value first :answer
+    if numberp :value [if and :value >= 0.5 :value <= 10 [output :value]]
+  ]
+  print [That is not a number from 0.5 to 10. Please try again.]
+  output ask.r0
+end
+
+; One column of the chart: sick at the bottom, then susceptible,
+; then recovered on top. Each band is one thick vertical line.
+to draw.day :day
+  localmake "x -375 + :day * 5
+  localmake "y1 :bottom + :i * :yscale
+  localmake "y2 :y1 + :s * :yscale
+  localmake "y3 :y2 + :r * :yscale
+  penup setxy :x :bottom
+  setpc 4 pendown sety :y1
+  setpc [70 110 220] sety :y2
+  setpc [100 190 100] sety :y3
+  penup
+end
+
+to simulate :r0
+  ; gamma: the share of sick people who get better each day
+  localmake "gamma 1 / :sick.days
+  ; beta: how quickly sickness spreads, chosen so that one sick person
+  ; in a town of healthy people infects R0 others before recovering
+  localmake "beta :r0 * :gamma
+  localmake "peak 0
+  localmake "peak.day 0
+  for [day 0 :days] [
+    draw.day :day
+    if :i > :peak [make "peak :i make "peak.day :day]
+    ; ten small steps per day keep the arithmetic accurate
+    repeat 10 [
+      localmake "new.sick :beta * :s * :i / :people / 10
+      localmake "new.well :gamma * :i / 10
+      make "s :s - :new.sick
+      make "i :i + :new.sick - :new.well
+      make "r :r + :new.well
+    ]
+    wait 1
+  ]
+  print (sentence [The most people sick at once was] round :peak [on day] :peak.day)
+  print (sentence round :s [people never caught it.])
+end
+
+to draw.labels
+  setpc 0 setlabelheight 14
+  penup setxy -375 :bottom - 25 label [day 0]
+  setxy 330 :bottom - 25 label [day 150]
+  setxy -375 230 setpc 4 label [sick]
+  setxy -320 230 setpc [70 110 220] label [could catch it]
+  setxy -200 230 setpc [100 190 100] label [recovered]
+end
+
+make "s :people - 1
+make "i 1
+make "r 0
+
+clearscreen hideturtle
+setbackground 7
+setpensize 5
+draw.labels
+make "r0 ask.r0
+print (sentence [Running with R0 =] :r0)
+simulate :r0

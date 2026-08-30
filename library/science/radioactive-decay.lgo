@@ -1,0 +1,114 @@
+; ============================================================
+; TITLE:    Radioactive Decay
+; CATEGORY: Science & Simulation
+; LEVEL:    Intermediate
+; TAGS:     physics, atoms, probability, half-life, random, graph
+; SUMMARY:  Shows 400 unstable atoms decaying by chance, and graphs how the number left halves again and again.
+; ============================================================
+;
+; WHAT IT DOES
+;   On the left is a block of 400 atoms. Green ones are still
+;   radioactive, grey ones have decayed. Every tick, each green atom
+;   rolls a 20-sided die and decays if it rolls a 1. Nobody can say
+;   which atom will go next, but the total behaves very predictably:
+;   on the right, the graph of atoms left drops by about half every
+;   13 or 14 ticks. That time is called the half-life.
+;
+; HOW TO USE
+;   Press Run and watch. The text window lists the count every tick
+;   and marks each time the count passes another half.
+;
+; CONCEPTS YOU WILL LEARN
+;   * half-life, and how chance on a small scale gives a smooth
+;     curve on a big scale
+;   * an array of 400 true/false values, one for each atom
+;   * RANDOM to decide something with a given chance (1 in 20)
+;
+; THINGS TO TRY
+;   * Change the die to 10 sides. What happens to the half-life?
+;   * Use only 40 atoms. Is the curve still smooth?
+;   * Run it a few times and write down when the count first drops
+;     below 200. Is it always the same tick?
+; ============================================================
+
+make "sides 20           ; each atom decays when a die with this many sides shows 1
+make "total 400
+make "atoms array :total
+
+; The grid: 20 rows of 20 atoms, each atom 12 steps apart.
+to atom.spot :n
+  localmake "row int ((:n - 1) / 20)
+  localmake "col remainder (:n - 1) 20
+  output list -370 + :col * 12 120 - :row * 12
+end
+
+to draw.atom :n
+  ifelse item :n :atoms [setpc [40 200 60]] [setpc [90 90 90]]
+  penup setpos atom.spot :n
+  dot pos
+end
+
+to setup.atoms
+  setpensize 10
+  for [n 1 :total] [setitem :n :atoms "true draw.atom :n]
+end
+
+; Graph area on the right: x is the tick, y is how many atoms are left.
+to graph.point :tick :left
+  output list -80 + :tick * 5 -200 + :left
+end
+
+to draw.graph.frame
+  setpensize 1 setpc 7
+  penup setpos graph.point 0 0 pendown setx 380
+  penup setpos graph.point 0 0 pendown sety 210
+  setlabelheight 14
+  penup setpos graph.point 0 405 label [atoms left]
+  penup setxy 320 -225 label [ticks]
+  ; faint lines at 200, 100 and 50: each half of the one before
+  setpc [80 80 110]
+  foreach [200 100 50] [
+    penup setpos graph.point 0 ? pendown setx 380
+    penup setpos graph.point 85 ? + 4 label ?
+  ]
+end
+
+to decay.tick
+  localmake "left 0
+  for [n 1 :total] [
+    if item :n :atoms [
+      ; one roll of the die for this atom
+      ifelse 0 = random :sides [setitem :n :atoms "false draw.atom :n] [make "left :left + 1]
+    ]
+  ]
+  output :left
+end
+
+to run.decay
+  localmake "left :total
+  localmake "next.mark :total / 2
+  localmake "tick 0
+  setpc 3 setpensize 2
+  while [and :left > 0 :tick < 90] [
+    make "tick :tick + 1
+    make "left decay.tick
+    ; join this tick's point to the last one on the graph
+    setpensize 3 setpc 3
+    penup setpos graph.point :tick - 1 :previous
+    pendown setpos graph.point :tick :left
+    make "previous :left
+    ; each time the count drops past another half, say so
+    if and :left <= :next.mark :next.mark >= 25 [
+      print (sentence [After] :tick [ticks only] :left [atoms are left, passing] :next.mark)
+      make "next.mark :next.mark / 2
+    ]
+    wait 6
+  ]
+end
+
+clearscreen hideturtle
+setbackground [20 20 30]
+setup.atoms
+draw.graph.frame
+make "previous :total
+run.decay

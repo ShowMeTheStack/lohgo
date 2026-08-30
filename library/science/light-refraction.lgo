@@ -1,0 +1,101 @@
+; ============================================================
+; TITLE:    Light Bending in Water
+; CATEGORY: Science & Simulation
+; LEVEL:    Advanced
+; TAGS:     light, optics, refraction, snell's law, trigonometry
+; SUMMARY:  Traces light rays bending as they cross between air and water, including total internal reflection from an underwater lamp.
+; ============================================================
+;
+; WHAT IT DOES
+;   The line across the middle is the surface of a pond. On the left a
+;   lamp in the air shines down into the water: each ray bends toward
+;   the straight-down direction as it enters. On the right a lamp under
+;   the water shines up. Rays that hit the surface steeply escape into
+;   the air, bending away from straight up. Rays that hit at a shallow
+;   slant cannot get out at all and bounce back down (drawn in red).
+;   That is total internal reflection, the trick that keeps light inside
+;   optical fibers.
+;
+; HOW TO USE
+;   Press Run. The text window lists each ray from the underwater lamp.
+;   Change INDEX to try glass (1.5) or diamond (2.42).
+;
+; CONCEPTS YOU WILL LEARN
+;   * Snell's law: sin(angle in air) = index x sin(angle in water)
+;   * ARCTAN and ARCSIN to turn lengths and ratios back into angles
+;   * TOWARDS to aim the turtle at a point
+;   * the critical angle, beyond which light cannot escape
+;
+; THINGS TO TRY
+;   * Set INDEX to 1. What happens to the bending?
+;   * Move the underwater lamp deeper. Do more rays escape?
+;   * Add a third lamp shining up through the surface from a fish's eye.
+; ============================================================
+
+make "index 1.33          ; how strongly water bends light (air is 1)
+make "air.lamp [-250 200]
+make "water.lamp [200 -200]
+
+to draw.pond
+  ; the water, as many thin blue lines below the surface
+  setpc [20 60 120] setpensize 4
+  for [y -296 -2 4] [penup setxy -400 :y pendown setx 400]
+  setpc 7 setpensize 2
+  penup setxy -400 0 pendown setx 400 penup
+  setlabelheight 16
+  setxy -390 10 label [air]
+  setxy -390 -26 label [water]
+end
+
+to draw.lamp :spot
+  setpc 6 setpensize 18 penup setpos :spot dot pos
+end
+
+; Draw one ray from :from to the surface at x = :sx, and return the
+; angle it makes with the straight up-and-down line.
+to ray.to.surface :from :sx
+  penup setpos :from
+  setheading towards list :sx 0
+  pendown setpos list :sx 0
+  output arctan (abs (:sx - first :from)) / (abs last :from)
+end
+
+to air.to.water :sx
+  setpc [255 240 150] setpensize 1
+  localmake "angle.air ray.to.surface :air.lamp :sx
+  ; Snell's law, solved for the angle in the water
+  localmake "angle.water arcsin (sin :angle.air) / :index
+  ; keep going down, on the same side as the ray was heading
+  ifelse :sx > first :air.lamp [setheading 180 - :angle.water] [setheading 180 + :angle.water]
+  fd 280
+end
+
+to water.to.air :sx
+  setpc [255 240 150] setpensize 1
+  localmake "angle.water ray.to.surface :water.lamp :sx
+  localmake "right? :sx > first :water.lamp
+  localmake "s :index * sin :angle.water
+  ifelse :s < 1 [
+    ; the ray escapes, bending away from straight up
+    localmake "angle.air arcsin :s
+    ifelse :right? [setheading :angle.air] [setheading minus :angle.air]
+    fd 300
+    print (sentence [hits at] round :angle.water [degrees, leaves at] round :angle.air)
+  ] [
+    ; no angle in the air has a sine bigger than 1: the light reflects
+    setpc 4
+    ifelse :right? [setheading 180 - :angle.water] [setheading 180 + :angle.water]
+    fd 250
+    print (sentence [hits at] round :angle.water [degrees, trapped and reflected])
+  ]
+end
+
+clearscreen hideturtle
+setbackground [25 30 50]
+draw.pond
+for [sx -390 -110 40] [air.to.water :sx]
+print (sentence [Critical angle for index] :index [is] ~
+  form arcsin 1 / :index 0 1 [degrees.])
+for [sx -120 400 40] [water.to.air :sx]
+draw.lamp :air.lamp
+draw.lamp :water.lamp

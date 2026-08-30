@@ -1,0 +1,106 @@
+; ============================================================
+; TITLE:    Spring and Weight
+; CATEGORY: Science & Simulation
+; LEVEL:    Intermediate
+; TAGS:     physics, springs, oscillation, hooke's law, animation
+; SUMMARY:  A weight bounces on a zigzag spring while a moving chart records its height, like a pen on a paper roll.
+; ============================================================
+;
+; WHAT IT DOES
+;   A blue weight hangs from a spring. It starts pulled down, then gets
+;   let go. The spring stretches and squashes as the weight bobs up and
+;   down. To the right, a chart scrolls along showing the height of the
+;   weight over time, so you can see the bobbing turn into a wave that
+;   slowly dies away.
+;
+; HOW TO USE
+;   Press Run and watch. Change STIFFNESS, MASS and DAMPING at the
+;   bottom of the file, then run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * Hooke's law: a spring pulls back harder the more you stretch it
+;   * force = mass x acceleration, so heavier things respond slower
+;   * keeping a history in a list with FPUT and BUTLAST
+;   * redrawing a whole scene every frame with CLEAN
+;
+; THINGS TO TRY
+;   * Double the MASS. Does it bob faster or slower?
+;   * Set DAMPING to 0 and the weight bounces forever.
+;   * Set DAMPING to 0.5. This is what car shock absorbers do.
+; ============================================================
+
+make "ceiling 260
+make "springx -250
+make "rest 0          ; where the weight would hang still
+
+; A zigzag from the ceiling down to the top of the weight. The coils
+; get squeezed together or pulled apart because the zigzag always has
+; the same number of corners however long it is.
+to draw.spring :bottom
+  localmake "gap (:ceiling - :bottom) / 24
+  setpc 15 setpensize 2
+  penup setxy :springx :ceiling pendown
+  for [i 1 23] [
+    setxy :springx + 18 * (ifelse 0 = remainder :i 2 [-1] [1]) ~
+          :ceiling - :i * :gap
+  ]
+  setxy :springx :bottom
+end
+
+to draw.weight :y
+  penup setxy :springx - 30 :y pendown
+  setpc 1
+  filled 1 [setheading 90 repeat 2 [fd 60 rt 90 fd 50 rt 90]]
+  setheading 0
+end
+
+; The chart: the newest height is drawn at the left, older ones
+; further to the right, as if paper were sliding past a pen.
+to draw.chart
+  setpc 15 setpensize 1
+  penup setxy -170 :rest pendown setx 390
+  setpc 4 setpensize 2
+  penup setxy -170 first :history pendown
+  foreach :history [setxy -170 + 3 * # ?]
+end
+
+to scene
+  clean
+  ; the ceiling bar the spring hangs from
+  setpc 0 setpensize 8
+  penup setxy :springx - 50 :ceiling + 4 pendown setx :springx + 50
+  draw.chart
+  draw.spring :y
+  draw.weight :y
+  ; a dashed line from the weight to the chart pen
+  setpc 15 setpensize 1
+  penup setxy :springx + 35 :y setheading 90
+  repeat 4 [pendown fd 5 penup fd 5]
+end
+
+to simulate :ticks
+  repeat :ticks [
+    ; How far from resting? The spring pulls back in proportion.
+    localmake "stretch :y - :rest
+    localmake "force (minus :stiffness * :stretch) - :damping * :speed
+    ; a = F / m: the same push moves a heavy weight less
+    make "speed :speed + :force / :mass
+    make "y :y + :speed
+    ; keep 140 recent heights, dropping the oldest from the end
+    make "history fput :y :history
+    if (count :history) > 140 [make "history butlast :history]
+    scene
+    wait 1
+  ]
+end
+
+make "stiffness 0.08
+make "mass 2
+make "damping 0.02
+make "y -160
+make "speed 0
+make "history (list :y)
+
+clearscreen hideturtle
+setbackground [245 245 235]
+simulate 900

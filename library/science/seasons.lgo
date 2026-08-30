@@ -1,0 +1,99 @@
+; ============================================================
+; TITLE:    Why We Have Seasons
+; CATEGORY: Science & Simulation
+; LEVEL:    Intermediate
+; TAGS:     astronomy, seasons, earth, sun, animation, trigonometry
+; SUMMARY:  The tilted Earth travels around the Sun while the program shows the month and how long the day lasts at 45 degrees north.
+; ============================================================
+;
+; WHAT IT DOES
+;   We look at the Earth's orbit from a little above, so the circle
+;   looks squashed into an oval. The Earth's axis is tilted and always
+;   points the same way in space (toward the North Star). In June the
+;   north pole leans toward the Sun, so the north gets long days and
+;   summer. In December it leans away and the north gets winter. The
+;   dark half of the Earth is its night side. The month and the length
+;   of the day at 45 degrees north, about where Minneapolis, Bordeaux and
+;   Milan are, are shown at the top.
+;
+; HOW TO USE
+;   Press Run and watch the Earth go around a few times.
+;   Press Stop to finish. Change LATITUDE to see your own day lengths.
+;
+; CONCEPTS YOU WILL LEARN
+;   * seasons come from the tilt, not from the distance to the Sun
+;   * SIN and COS to place something on an oval path
+;   * ARC with a thick pen to paint half a circle (the night side)
+;   * a real astronomy formula for the length of a day
+;
+; THINGS TO TRY
+;   * Set TILT to 0. Do the day lengths still change?
+;   * Set LATITUDE to 0 (the equator) or 66 (the Arctic Circle).
+;   * Set TILT to 90 for a planet like Uranus. What would summer be like?
+; ============================================================
+
+make "tilt 23.44
+make "latitude 45
+make "months [March April May June July August September October November December January February]
+
+; Where is the Earth when it is :angle degrees around the orbit?
+to earth.spot :angle
+  output list 300 * cos :angle 140 * sin :angle
+end
+
+; How far north (positive) or south the Sun is overhead, in degrees.
+to sun.height :angle
+  output :tilt * sin (:angle - 90)
+end
+
+; The sunrise equation: hours of daylight at a latitude.
+to day.hours :angle
+  localmake "x (minus tan :latitude) * tan sun.height :angle
+  ; past the polar circles the sun never sets, or never rises
+  if :x < -1 [output 24]
+  if :x > 1 [output 0]
+  output 2 * (arccos :x) / 15
+end
+
+to draw.sun
+  setpc [255 200 0] setpensize 70 penup home dot pos
+end
+
+to draw.earth :angle
+  localmake "spot earth.spot :angle
+  penup setpos :spot
+  setpc [40 110 220] setpensize 40 dot pos
+  ; the night side: half a ring as thick as the Earth's radius, painted
+  ; on the side facing away from the sun
+  setheading (towards [0 0]) + 90
+  setpc [10 20 60] setpensize 10 pendown arc 180 5
+  setpensize 10 arc 180 15
+  penup
+  ; the axis, always tilted the same way
+  setpc 7 setpensize 2 setheading :tilt
+  back 30 pendown fd 60 penup
+  setlabelheight 14 label "N
+end
+
+to draw.frame :angle
+  clean
+  setpc [90 90 120] setpensize 1
+  ; the orbit, drawn from many short lines
+  penup setpos earth.spot 0 pendown
+  for [a 0 360 5] [setpos earth.spot :a]
+  penup
+  ; Is the Earth behind the Sun (top of the oval)? Then draw it first,
+  ; so the Sun covers it.
+  ifelse (sin :angle) > 0 [draw.earth :angle draw.sun] [draw.sun draw.earth :angle]
+  localmake "month item 1 + int (remainder (:angle - 90 + 360) 360) / 30 :months
+  setpc 7 setlabelheight 20
+  penup setxy -380 260 label (sentence [Month:] :month)
+  penup setxy -380 230
+  label (sentence [Daylight at] :latitude [degrees north:] form day.hours :angle 4 1 [hours])
+end
+
+clearscreen hideturtle
+setbackground [5 5 25]
+forever [
+  for [angle 90 449 1.5] [draw.frame :angle wait 2]
+]

@@ -1,0 +1,92 @@
+; ============================================================
+; TITLE:    Two Dice Totals
+; CATEGORY: Science & Simulation
+; LEVEL:    Intermediate
+; TAGS:     probability, dice, bar chart, arrays, statistics
+; SUMMARY:  Rolls two dice 3600 times and builds a bar chart of the totals, showing why 7 comes up most often.
+; ============================================================
+;
+; WHAT IT DOES
+;   Two dice are rolled again and again and their total, from 2 to 12,
+;   is counted. Every 100 rolls the bar chart is redrawn. Next to each
+;   bar a small black mark shows how many times that total should come
+;   up if you count all 36 ways two dice can land. The bars creep
+;   toward the marks, and 7 always wins.
+;
+; HOW TO USE
+;   Press Run and watch the chart settle. The final counts are printed.
+;   Change ROLLS to try a shorter or longer experiment.
+;
+; CONCEPTS YOU WILL LEARN
+;   * why some totals are more likely: there are six ways to make 7
+;     but only one way to make 2 (1 and 1) or 12 (6 and 6)
+;   * an ARRAY used as a set of tally counters
+;   * FILLED rectangles for a bar chart, redrawn after CLEAN
+;
+; THINGS TO TRY
+;   * Roll three dice. Totals now go from 3 to 18: what shape appears?
+;   * Change the second die to an 8-sided one, (RANDOM 8) + 1.
+;   * Roll only 36 times. How often does the chart look like the marks?
+; ============================================================
+
+make "rolls 3600
+; ARRAY 12 has boxes 1 to 12. Box 1 is never used, since no roll totals 1.
+make "tally array 12
+
+to roll.die
+  output 1 + random 6
+end
+
+; How many of the 36 ways two dice can land give this total?
+; 2 -> 1 way, 3 -> 2 ways ... 7 -> 6 ways ... 12 -> 1 way.
+to ways :total
+  output 6 - abs (:total - 7)
+end
+
+to bar.left :total
+  output -330 + (:total - 2) * 60
+end
+
+to draw.chart :rolled
+  clean
+  localmake "scale 0.5        ; screen steps per roll counted
+  for [t 2 12] [
+    localmake "h :scale * item :t :tally
+    penup setxy bar.left :t -230 setheading 0
+    ; bars first, so the marks drawn after them land on top
+    filled ifelse :t = 7 [14] [1] [repeat 2 [fd :h rt 90 fd 44 rt 90]]
+  ]
+  setpc 0 setlabelheight 16
+  for [t 2 12] [
+    ; the black mark: what a perfect share of the rolls would be
+    localmake "expect :rolled * (ways :t) / 36
+    setpensize 3
+    penup setxy (bar.left :t) - 4 -230 + :scale * :expect
+    pendown setx (bar.left :t) + 48
+    penup setxy (bar.left :t) + 14 -255 label :t
+  ]
+  setpensize 1
+  penup setxy -330 -230 pendown setx 330
+  penup setxy -330 250 label (sentence :rolled [rolls of two dice])
+end
+
+to roll.many :n
+  for [r 1 :n] [
+    localmake "total roll.die + roll.die
+    setitem :total :tally (item :total :tally) + 1
+    if 0 = remainder :r 100 [draw.chart :r wait 2]
+  ]
+end
+
+to print.results
+  print "|total  count  expected|
+  for [t 2 12] [
+    print (word form :t 5 0 form item :t :tally 7 0 form :rolls * (ways :t) / 36 10 0)
+  ]
+end
+
+clearscreen hideturtle
+setbackground 7
+for [t 1 12] [setitem :t :tally 0]
+roll.many :rolls
+print.results

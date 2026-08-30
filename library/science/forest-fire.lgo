@@ -1,0 +1,114 @@
+; ============================================================
+; TITLE:    Forest Fire
+; CATEGORY: Science & Simulation
+; LEVEL:    Advanced
+; TAGS:     cellular automaton, ecology, fire, arrays, random
+; SUMMARY:  A cellular automaton where trees grow, lightning strikes and fire spreads from tree to tree across a grid.
+; ============================================================
+;
+; WHAT IT DOES
+;   The forest is a grid of 32 by 24 squares. Each square is bare
+;   ground (brown), a tree (green) or a burning tree (orange). A fire
+;   starts along the left edge and sweeps across, leaving bare ground.
+;   Then new trees sprout here and there, and now and then lightning
+;   hits a tree and starts a new fire. The forest never settles down:
+;   it keeps growing back and burning again in patches.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop when you are done. Try changing
+;   DENSITY, GROW.CHANCE and LIGHTNING.CHANCE below.
+;
+; CONCEPTS YOU WILL LEARN
+;   * cellular automata: each cell changes by looking at its neighbors
+;   * computing the next generation in a second array, so every cell
+;     sees the same "now" before anything changes
+;   * storing a 2D grid in a 1D array: box = (row - 1) * width + column
+;   * redrawing only the cells that changed, to save time
+;
+; THINGS TO TRY
+;   * Make DENSITY 0.4 and then 0.7. Below about 0.6, the first fire
+;     dies out before crossing. Scientists call that a tipping point.
+;   * Turn lightning off (0) and watch the forest fill up completely.
+;   * Let fire jump diagonally too, by checking eight neighbors.
+; ============================================================
+
+make "cols 32
+make "rows 24
+make "size 20               ; each cell is 20 steps wide
+make "density 0.65          ; share of squares that start with a tree
+make "grow.chance 200       ; bare ground sprouts a tree 1 time in 200
+make "lightning.chance 20000  ; a tree is struck 1 time in 20000
+
+; 0 = bare ground, 1 = tree, 2 = burning
+make "now array :cols * :rows
+make "next array :cols * :rows
+
+to cell.index :r :c
+  output (:r - 1) * :cols + :c
+end
+
+; Is the cell at row r, column c on fire? Cells outside the grid
+; are never on fire. (We check the edges first because ITEM would
+; complain about a box number that does not exist.)
+to burning :r :c
+  if or :r < 1 :r > :rows [output "false]
+  if or :c < 1 :c > :cols [output "false]
+  output (item cell.index :r :c :now) = 2
+end
+
+; Is there fire next door, above, below, left or right?
+to fire.near :r :c
+  output (or burning :r - 1 :c  burning :r + 1 :c ~
+             burning :r :c - 1  burning :r :c + 1)
+end
+
+to draw.cell :r :c :state
+  setpc item :state + 1 [[90 60 30] [30 130 40] [255 140 0]]
+  penup setxy -330 + :c * :size 250 - :r * :size
+  dot pos
+end
+
+to plant.forest
+  setpensize :size - 1
+  for [r 1 :rows] [
+    for [c 1 :cols] [
+      localmake "state ifelse (random 100) < :density * 100 [1] [0]
+      ; the whole left column starts on fire
+      if :c = 1 [make "state 2]
+      setitem cell.index :r :c :now :state
+      draw.cell :r :c :state
+    ]
+  ]
+end
+
+; Work out every cell's next state, then copy it over.
+to generation
+  for [r 1 :rows] [
+    for [c 1 :cols] [
+      localmake "i cell.index :r :c
+      localmake "s item :i :now
+      localmake "new :s
+      if :s = 2 [make "new 0]
+      if :s = 1 [
+        if fire.near :r :c [make "new 2]
+        if 0 = random :lightning.chance [make "new 2]
+      ]
+      if and :s = 0 0 = random :grow.chance [make "new 1]
+      setitem :i :next :new
+    ]
+  ]
+  for [r 1 :rows] [
+    for [c 1 :cols] [
+      localmake "i cell.index :r :c
+      if not equalp item :i :now item :i :next [
+        setitem :i :now item :i :next
+        draw.cell :r :c item :i :now
+      ]
+    ]
+  ]
+end
+
+clearscreen hideturtle
+setbackground 0
+plant.forest
+forever [generation wait 3]

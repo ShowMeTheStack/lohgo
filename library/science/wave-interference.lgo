@@ -1,0 +1,100 @@
+; ============================================================
+; TITLE:    Adding Waves Together
+; CATEGORY: Science & Simulation
+; LEVEL:    Advanced
+; TAGS:     waves, interference, beats, superposition, animation
+; SUMMARY:  Two traveling waves with slightly different wavelengths are added point by point, and their sum shows the pattern called beats.
+; ============================================================
+;
+; WHAT IT DOES
+;   The blue wave (top) and the red wave (middle) have almost the same
+;   wavelength, and both slide to the right. The black wave (bottom)
+;   is their sum: at every x it is the blue height plus the red height.
+;   Where the two waves are in step they add up to a big wave; where
+;   one is up while the other is down they cancel out. The sum grows
+;   and shrinks in groups called beats. The thin grey curves show the
+;   outline, or "envelope", of the beats.
+;
+; HOW TO USE
+;   Press Run and watch. Press Stop to end. Change WAVES.A and WAVES.B
+;   (how many wiggles fit across the screen) and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * superposition: waves that overlap simply add their heights
+;   * constructive and destructive interference
+;   * beats: two nearly equal notes make a slow wobble in loudness,
+;     which musicians use to tune their instruments
+;   * computing a whole curve from a formula with a FOR loop
+;
+; THINGS TO TRY
+;   * Make WAVES.B equal WAVES.A. When are there no beats at all?
+;   * Make the two waves move in opposite directions (standing wave).
+;   * Give the red wave half the height of the blue one.
+; ============================================================
+
+make "waves.a 20       ; wiggles across the screen for the blue wave
+make "waves.b 23       ; and for the red wave
+make "height 40
+make "width 720
+
+; Height of a wave at screen position x, at time t. Each wave slides
+; right as t grows because we subtract the time from the angle.
+to wave.a :x :t
+  output :height * sin (360 * :waves.a * :x / :width - :t)
+end
+
+to wave.b :x :t
+  output :height * sin (360 * :waves.b * :x / :width - :t * 1.15)
+end
+
+; Draw a curve at height :middle. :which is the name of a procedure
+; that gives the height at each x (wave.a, wave.b or sum.ab).
+to draw.curve :which :middle :t :color
+  setpc :color setpensize 2
+  penup
+  for [x 0 :width 4] [
+    ; INVOKE runs the procedure named in :which; the parentheses are
+    ; needed because we give it two inputs instead of one
+    setxy :x - 360 :middle + (invoke :which :x :t)
+    pendown
+  ]
+  penup
+end
+
+to sum.ab :x :t
+  output (wave.a :x :t) + (wave.b :x :t)
+end
+
+; The envelope: the biggest the sum can be at each x. It comes from
+; the difference between the two waves, which changes slowly.
+to envelope :x :t
+  localmake "angle.a 360 * :waves.a * :x / :width - :t
+  localmake "angle.b 360 * :waves.b * :x / :width - :t * 1.15
+  output abs (2 * :height * cos ((:angle.a - :angle.b) / 2))
+end
+
+to neg.envelope :x :t
+  output minus envelope :x :t
+end
+
+to labels
+  setpc 0 setlabelheight 16
+  penup setxy -360 250 label [blue wave]
+  setxy -360 110 label [red wave]
+  setxy -360 -40 label [blue + red]
+end
+
+clearscreen hideturtle
+setbackground 7
+make "t 0
+forever [
+  clean
+  labels
+  draw.curve "wave.a 200 :t 1
+  draw.curve "wave.b 60 :t 4
+  draw.curve "envelope -170 :t 15
+  draw.curve "neg.envelope -170 :t 15
+  draw.curve "sum.ab -170 :t 0
+  make "t :t + 6
+  wait 2
+]
