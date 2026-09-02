@@ -1,0 +1,96 @@
+; ============================================================
+; TITLE:    Metronome and Tempo
+; CATEGORY: Music & Sound
+; LEVEL:    Intermediate
+; TAGS:     tempo, readword, input checking, animation, penreverse
+; SUMMARY:  Asks for a tempo in beats per minute, then plays Row Row Row Your Boat at that speed while a metronome arm swings with the beat.
+; ============================================================
+;
+; WHAT IT DOES
+;   Musicians count speed in beats per minute (BPM). 60 BPM is one
+;   beat every second, like a clock; 120 BPM is a brisk walk. You type
+;   a tempo, and the song plays at exactly that speed. A metronome on
+;   the screen swings its arm from side to side on every beat so you
+;   can see the tempo too.
+;
+; HOW TO USE
+;   Press Run. When the command center asks, type a number between 40
+;   and 240 and press Enter. The question comes back after the song so
+;   you can compare tempos. Type quit to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READWORD waits for a line typed in the command center
+;   * checking input with NUMBERP before using it
+;   * milliseconds per beat = 60000 / BPM
+;   * PENREVERSE draws a line that a second drawing rubs out again
+;
+; THINGS TO TRY
+;   * Find the tempo where the song feels "just right" to you.
+;   * Words like largo (slow), andante (walking) and presto (very fast)
+;     are names of tempos. Make the program accept them too.
+;   * Make the arm swing twice per beat for a fast tick.
+; ============================================================
+
+pprop "hz "c 262  pprop "hz "d 294  pprop "hz "e 330  pprop "hz "f 349
+pprop "hz "g 392  pprop "hz "c5 523
+
+; Row row row your boat, gently down the stream. [note beats]
+make "song [[c 1] [c 1] [c 0.75] [d 0.25] [e 1]
+            [e 0.75] [d 0.25] [e 0.75] [f 0.25] [g 2]
+            [c5 0.33] [c5 0.33] [c5 0.34] [g 0.33] [g 0.33] [g 0.34]
+            [e 0.33] [e 0.33] [e 0.34] [c 0.33] [c 0.33] [c 0.34]
+            [g 0.75] [f 0.25] [e 0.75] [d 0.25] [c 2]]
+
+; The metronome body: a tall triangle with a pivot at the bottom.
+to draw.metronome
+  penup setxy -90 -200 setheading 0 pendown setpencolor 0
+  filled 8 [setxy 0 120 setxy 90 -200 setxy -90 -200]
+  penup setxy -30 -150 pendown
+  setpencolor 7 setlabelheight 20
+  label [BPM]
+end
+
+; Draw the arm leaning to :angle. Drawing it again in reverse mode
+; makes it disappear, which is how the arm moves.
+to arm :angle
+  penup setxy 0 -140 setheading :angle penreverse
+  setpensize 6 pendown fd 240 penup
+  penpaint setpensize 1
+end
+
+; Ask for a tempo until we get a sensible number, or the word quit.
+to ask.tempo
+  print [Type a tempo from 40 to 240 beats per minute, or quit:]
+  localmake "answer readword
+  if memberp :answer [quit q] [output "quit]
+  if not numberp :answer [print [That is not a number.] output ask.tempo]
+  if or :answer < 40 :answer > 240 [print [Please choose between 40 and 240.] output ask.tempo]
+  output :answer
+end
+
+to play.at :bpm
+  localmake "ms 60000 / :bpm
+  localmake "side 25
+  arm :side
+  foreach :song [
+    sound list gprop "hz first ? :ms * last ?
+    ; swing the arm on every whole beat or longer note
+    if (last ?) >= 1 [arm :side make "side 0 - :side arm :side]
+  ]
+  arm :side
+end
+
+to main
+  localmake "bpm ask.tempo
+  if :bpm = "quit [print [Goodbye!] stop]
+  clean draw.metronome
+  print (sentence [Playing at] :bpm [BPM: one beat every] round 60000 / :bpm [milliseconds.])
+  play.at :bpm
+  main
+end
+
+clearscreen
+hideturtle
+setbackground [235 225 200]
+draw.metronome
+main

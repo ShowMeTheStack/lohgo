@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Twinkle Twinkle Little Star
+; CATEGORY: Music & Sound
+; LEVEL:    Beginner
+; TAGS:     song, data list, stars, property list
+; SUMMARY:  Plays Twinkle Twinkle Little Star from a list of notes and draws a star in the night sky for every note, higher notes higher up.
+; ============================================================
+;
+; WHAT IT DOES
+;   The tune is stored as data: a list of little lists, each holding a
+;   note name and how many beats it lasts. As each note plays, a star
+;   appears in the sky. High notes make stars near the top, low notes
+;   near the bottom, so the sky ends up drawing the shape of the tune.
+;
+; HOW TO USE
+;   Press Run with the sound on. Change "make "beat 280" to change the
+;   speed of the song.
+;
+; CONCEPTS YOU WILL LEARN
+;   * storing a song as a list of [note beats] pairs
+;   * FIRST and LAST take the parts out of each pair
+;   * a property list turns note names into frequencies
+;   * using a number (the pitch) to decide where to draw
+;
+; THINGS TO TRY
+;   * The second half of the song is missing: "up above the world so
+;     high". Add it: [g 1] [g 1] [f 1] [f 1] [e 1] [e 1] [d 2], twice.
+;   * The same tune is the ABC song. Sing along!
+;   * Make long notes draw bigger stars.
+; ============================================================
+
+pprop "pitch "c 262  pprop "pitch "d 294  pprop "pitch "e 330
+pprop "pitch "f 349  pprop "pitch "g 392  pprop "pitch "a 440
+
+; Twinkle twinkle little star, how I wonder what you are.
+make "song [[c 1] [c 1] [g 1] [g 1] [a 1] [a 1] [g 2]
+            [f 1] [f 1] [e 1] [e 1] [d 1] [d 1] [c 2]]
+
+make "beat 280
+
+; A five-pointed star of any size, filled with yellow.
+to star :size
+  filled 6 [repeat 5 [fd :size rt 144]]
+end
+
+; The height of a star depends on the pitch: 262 (low C) lands near
+; the bottom of the sky and 440 (A) near the top.
+to note.height :freq
+  output (:freq - 262) * 2 - 120
+end
+
+to twinkle
+  localmake "x -330
+  foreach :song [
+    localmake "freq gprop "pitch first ?
+    penup setxy :x note.height :freq
+    setheading 0 lt 18 pendown
+    star 14 * last ?
+    sound (list :freq :beat * last ?)
+    make "x :x + 50
+  ]
+end
+
+; A dark blue sky and a white moon to start with.
+clearscreen
+hideturtle
+setbackground [10 15 50]
+penup setxy 270 200 setheading 0 pendown
+filled 7 [repeat 36 [fd 6 rt 10]]   ; a 36-sided circle
+twinkle

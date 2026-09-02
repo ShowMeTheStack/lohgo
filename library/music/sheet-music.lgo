@@ -1,0 +1,127 @@
+; ============================================================
+; TITLE:    Sheet Music Reader
+; CATEGORY: Music & Sound
+; LEVEL:    Advanced
+; TAGS:     notation, staff, coordinates, data, drawing
+; SUMMARY:  Draws Jingle Bells as real sheet music on two staves, with note heads on the right lines and spaces, then plays it while each note lights up in red.
+; ============================================================
+;
+; WHAT IT DOES
+;   Written music uses five lines called a staff. A note's height on
+;   the staff says its pitch: each line and each space is the next
+;   letter. In the treble staff the bottom line is E and middle C
+;   needs a little extra line of its own (a ledger line). Short notes
+;   have filled heads, half notes open heads, whole notes no stem.
+;   The program draws the chorus of Jingle Bells this way, with bar
+;   lines every four beats, and then plays it note by note, coloring
+;   each head red as you hear it.
+;
+; HOW TO USE
+;   Press Run with the sound on and follow the red notes. Each note in
+;   :tune is [name beats], where name is a letter and an octave.
+;
+; CONCEPTS YOU WILL LEARN
+;   * two number systems for one note: staff steps (for drawing) and
+;     half steps (for sound)
+;   * placing things with arithmetic on a grid of rows and columns
+;   * reusing one procedure to draw a head, then again to highlight it
+;   * keeping a running total of beats to know where bar lines go
+;
+; THINGS TO TRY
+;   * Write Ode to Joy in the same form: e4 e4 f4 g4 g4 f4 e4 d4 ...
+;   * Add a treble clef, or at least a big letter G at the start of a staff.
+;   * Make eighth notes (0.5 beats) with a little flag on the stem.
+; ============================================================
+
+make "tune [[e4 1] [e4 1] [e4 2] [e4 1] [e4 1] [e4 2]
+            [e4 1] [g4 1] [c4 1.5] [d4 0.5] [e4 4]
+            [f4 1] [f4 1] [f4 1.5] [f4 0.5] [f4 1] [e4 1] [e4 1] [e4 0.5] [e4 0.5]
+            [e4 1] [d4 1] [d4 1] [e4 1] [d4 2] [g4 2]]
+make "beat 330
+make "space 20                 ; distance between staff lines
+make "beat.width 20            ; extra width for every beat a note lasts
+make "rows [140 -110]          ; the bottom line of each staff
+
+; Letters in order up the staff, and their half steps above C.
+make "letters [c d e f g a b]
+make "halfsteps [0 2 4 5 7 9 11]
+
+to letter.index :name
+  output 8 - count member first :name :letters
+end
+
+; Staff step: e4 (bottom line) is 0, f4 is 1, g4 (second line) is 2.
+to staff.step :name
+  output (letter.index :name) - 3 + 7 * ((last :name) - 4)
+end
+
+to freq :name
+  localmake "semis (item letter.index :name :halfsteps) + 12 * ((last :name) - 4)
+  output 261.63 * power 2 :semis / 12
+end
+
+to staff :y
+  setpencolor 0 setpensize 1
+  for [i 0 4] [penup setxy -360 :y + :space * :i setheading 90 pendown fd 730]
+end
+
+; A note head of radius 7 at [x y]; :open draws only the outline.
+; A filled head is a DOT with a wide pen: a round disc painted on top
+; of the staff lines.
+to head :x :y :c :open
+  setpencolor :c
+  ifelse :open [
+    penup setxy :x :y - 7 setheading 90 pendown
+    setpensize 3 repeat 24 [fd 1.85 lt 15] setpensize 1
+  ] [
+    setpensize 15 dot list :x :y setpensize 1
+  ]
+end
+
+to note :name :beats :x :row
+  localmake "y (item :row :rows) + (staff.step :name) * :space / 2
+  ; middle C sits on its own short ledger line below the staff
+  if (staff.step :name) = -2 [penup setxy :x - 14 :y setheading 90 setpencolor 0 pendown fd 28]
+  head :x :y 0 :beats >= 2
+  if :beats < 4 [penup setxy :x + 7 :y setheading 0 setpencolor 0 pendown fd 50]
+end
+
+; Lay the tune out: 16 beats per row, a bar line after every 4 beats.
+; Each note takes 20 steps plus 20 more for every beat it lasts, so
+; even quick notes have room for their heads.
+to draw.tune
+  localmake "t 0
+  localmake "x -330
+  make "places []
+  foreach :tune [
+    localmake "row 1 + int :t / 16
+    localmake "y (item :row :rows) + (staff.step first ?) * :space / 2
+    note first ? last ? :x :row
+    make "places lput (list :x :y) :places
+    make "t :t + last ?
+    make "x :x + 20 + :beat.width * last ?
+    if 0 = remainder :t 4 [
+      ; the bar line goes halfway into the gap before the next note
+      penup setxy :x - 15 item :row :rows
+      setheading 0 setpencolor 0 pendown fd 4 * :space
+    ]
+    if 0 = remainder :t 16 [make "x -330]
+  ]
+end
+
+to perform
+  foreach :tune [
+    localmake "p item # :places
+    head first :p last :p 4 (last ?) >= 2
+    sound list freq first ? :beat * last ?
+  ]
+end
+
+clearscreen
+hideturtle
+setbackground [252 250 240]
+foreach :rows [staff ?]
+penup setxy -360 240 pendown setlabelheight 22
+label [Jingle Bells]
+draw.tune
+perform

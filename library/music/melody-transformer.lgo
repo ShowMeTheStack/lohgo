@@ -1,0 +1,100 @@
+; ============================================================
+; TITLE:    Melody Transformer
+; CATEGORY: Music & Sound
+; LEVEL:    Advanced
+; TAGS:     map, reverse, higher-order procedures, composition, graphs
+; SUMMARY:  Takes one short melody and transforms it the way composers like Bach did (transposed, backwards, upside down, stretched), drawing and playing each version.
+; ============================================================
+;
+; WHAT IT DOES
+;   Composers rarely invent a brand-new tune for every part of a
+;   piece. They take a short idea and change it: move it higher
+;   (transpose), play it backwards (retrograde), flip it upside down
+;   (inversion), or slow it down (augmentation). This program does all
+;   of that with list operations. Each version is drawn as a melody
+;   line in its own panel, and played, so you can see and hear how it
+;   relates to the original.
+;
+; HOW TO USE
+;   Press Run with the sound on. Change :motif to your own tune: each
+;   note is [number beats] where 60 is middle C and each 1 is a half
+;   step.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MAP applies the same change to every note of a list
+;   * REVERSE turns a list backwards
+;   * procedures that take other procedures' names, used with RUN
+;   * inversion as arithmetic: new = 2 * first - old mirrors around the start
+;
+; THINGS TO TRY
+;   * Combine two transformations: the inversion played backwards.
+;   * Add "diminution", which halves every length.
+;   * Transpose by 7 instead of 5 and listen to the difference.
+; ============================================================
+
+make "motif [[60 1] [62 0.5] [64 0.5] [65 1] [67 1] [64 0.5] [62 0.5] [60 2]]
+make "beat 300
+
+to transpose :tune :by
+  output map [list (first ?) + :by last ?] :tune
+end
+
+to retrograde :tune
+  output reverse :tune
+end
+
+to inversion :tune
+  localmake "home first first :tune
+  output map [list 2 * :home - first ? last ?] :tune
+end
+
+to augmentation :tune
+  output map [list first ? 2 * last ?] :tune
+end
+
+to freq :n
+  output 440 * power 2 (:n - 69) / 12
+end
+
+; Draw a tune as steps in a panel whose top left corner is [x y]:
+; across for time, up for pitch.
+to draw.tune :tune :x :y :title :c
+  penup setxy :x :y setheading 0 pendown
+  setpencolor 15
+  repeat 2 [rt 90 fd 360 rt 90 fd 170]
+  penup setxy :x + 8 :y - 22 pendown
+  setpencolor 0 label :title
+  localmake "t 0
+  setpencolor :c setpensize 4
+  foreach :tune [
+    penup setxy :x + 10 + 20 * :t :y - 160 + 6 * ((first ?) - 48) pendown
+    setheading 90 fd 20 * (last ?) - 3
+    make "t :t + last ?
+  ]
+  setpensize 1
+end
+
+to play.tune :tune
+  foreach :tune [sound list freq first ? :beat * last ?]
+  sound [0 400]
+end
+
+; Each entry: title, the instructions that make the version, and its
+; panel's corner. RUN turns the instruction list into a tune.
+make "versions [[[original] [:motif] -380 290]
+                [[transposed up 5] [transpose :motif 5] 0 290]
+                [[retrograde] [retrograde :motif] -380 100]
+                [[inversion] [inversion :motif] 0 100]
+                [[augmentation] [augmentation :motif] -380 -90]
+                [[inversion backwards] [retrograde inversion :motif] 0 -90]]
+
+clearscreen
+hideturtle
+setbackground [250 250 250]
+setlabelheight 16
+foreach :versions [
+  make "tune run item 2 ?
+  draw.tune :tune item 3 ? item 4 ? item 1 ? item 1 + remainder # 6 [4 1 2 13 14 5]
+  print item 1 ?
+  play.tune :tune
+]

@@ -1,0 +1,113 @@
+; ============================================================
+; TITLE:    Click Piano
+; CATEGORY: Music & Sound
+; LEVEL:    Intermediate
+; TAGS:     mouse, events, mouseon, piano, geometry
+; SUMMARY:  Draws a two-octave piano keyboard and plays the key you click with the mouse, lighting it up while it sounds.
+; ============================================================
+;
+; WHAT IT DOES
+;   Fourteen white keys and ten black keys are drawn across the
+;   screen, starting at middle C. Click any key and it plays, and a
+;   colored dot glows on it while the mouse button is down. Black
+;   keys sit on top of the white ones, so the program checks them
+;   first when it works out which key you clicked.
+;
+; HOW TO USE
+;   Press Run, turn the sound on and click the keys. Press Stop when
+;   you are done. Try the start of Ode to Joy: E E F G G F E D.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MOUSEON runs a list of instructions when the button goes down or up
+;   * MOUSEPOS tells where the mouse is, as a list [x y]
+;   * turning a position into a key number with arithmetic (INT and division)
+;   * semitones: each key, black or white, is one twelfth of an octave
+;
+; THINGS TO TRY
+;   * Make notes longer by changing 350 in PRESS.
+;   * Add a third octave: the keys will need to be narrower.
+;   * Use the right button to play a note one octave lower.
+; ============================================================
+
+; Half steps from C for the seven white keys of an octave.
+make "white.steps [0 2 4 5 7 9 11]
+; Black keys sit just to the right of these white keys (C D F G A).
+make "black.after [1 2 4 5 6]
+make "black.keys []      ; filled in by DRAW.PIANO: [center.x semitone]
+make "lit []             ; the position of the glowing dot, if any
+
+to freq :semis
+  output 261.63 * power 2 :semis / 12
+end
+
+to box :x :y :w :h :c
+  penup setxy :x :y setheading 0 pendown
+  setpencolor 0
+  filled :c [repeat 2 [fd :h rt 90 fd :w rt 90]]
+end
+
+; Each new shape covers what is already on the screen, like paint on
+; a canvas. So the white keys go down first and the black keys are
+; painted on top of them.
+to draw.piano
+  for [w 0 13] [box -350 + 50 * :w -150 50 240 7]
+  for [w 0 13] [
+    localmake "pos 1 + remainder :w 7
+    if memberp :pos :black.after [
+      localmake "cx -350 + 50 * (:w + 1)
+      box :cx - 15 -60 30 150 0
+      make "black.keys lput (list :cx 12 * (int :w / 7) + 1 + item :pos :white.steps) :black.keys
+    ]
+  ]
+end
+
+; Which key is at [x y]? Output [semitone dot.x dot.y], or [] for none.
+to key.at :p
+  localmake "x first :p
+  localmake "y last :p
+  if or :y < -150 :y > 90 [output []]
+  if :y > -60 [
+    foreach :black.keys [
+      if (abs :x - first ?) < 15 [output (list last ? first ? -30)]
+    ]
+  ]
+  if or :x < -350 :x >= 350 [output []]
+  localmake "w int (:x + 350) / 50
+  output (list 12 * (int :w / 7) + item 1 + remainder :w 7 :white.steps ~
+               -325 + 50 * :w -120)
+end
+
+; A round dot of color :c centered at [x y]. A DOT drawn with a wide
+; pen paints on top of the keys.
+to glow :x :y :c
+  setpencolor :c setpensize 18
+  dot list :x :y
+  setpensize 1
+end
+
+to press
+  localmake "k key.at mousepos
+  if emptyp :k [stop]
+  make "lit :k
+  glow item 2 :k item 3 :k 4
+  tone freq first :k 350
+end
+
+; On release, paint the dot over in the key's own color.
+to release
+  if emptyp :lit [stop]
+  glow item 2 :lit item 3 :lit ifelse (item 3 :lit) = -30 [0] [7]
+  make "lit []
+end
+
+clearscreen
+hideturtle
+setbackground [90 60 40]
+draw.piano
+penup setxy -100 150 pendown
+setpencolor 7
+setlabelheight 22
+label [Click the keys to play]
+mouseon [press] [release] [] [] []
+print [Click the piano keys with the mouse. Press Stop to finish.]
+forever [wait 10]

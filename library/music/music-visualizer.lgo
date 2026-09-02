@@ -1,0 +1,108 @@
+; ============================================================
+; TITLE:    Fur Elise Visualizer
+; CATEGORY: Music & Sound
+; LEVEL:    Advanced
+; TAGS:     visualizer, polar coordinates, pitch class, color, parsing
+; SUMMARY:  Plays the opening of Beethoven's Fur Elise while drawing a spinning flower: every note is a petal whose color names the note and whose length shows how high it is.
+; ============================================================
+;
+; WHAT IT DOES
+;   Music players often show pictures that move with the sound. This
+;   one draws a flower from the center out. Each note adds a petal at
+;   the next angle around the circle. Higher notes reach further out,
+;   longer notes make fatter petals, and the color tells the note
+;   name: every C is red, every E is green, every G# is blue, around a
+;   color wheel of twelve hues. At the same time a bar at the bottom
+;   of the screen stretches further for higher notes.
+;
+; HOW TO USE
+;   Press Run with the sound on. Notes are written like e5, d#5 or a4:
+;   letter, an optional # for sharp, then the octave number.
+;
+; CONCEPTS YOU WILL LEARN
+;   * parsing a word: FIRST for the letter, LAST for the octave,
+;     MEMBERP to spot the # sign
+;   * the pitch class: REMAINDER note 12 is the same for every C, every D...
+;   * polar drawing: turn to an angle, then go out a distance
+;   * mixing a color from a position on a wheel
+;
+; THINGS TO TRY
+;   * Turn by 137.5 degrees per note instead of 23 (the angle sunflowers
+;     use) and see how the flower changes.
+;   * Replace the tune with Twinkle Twinkle and compare the flowers.
+;   * Make rests (written as r) leave a gap in the flower.
+; ============================================================
+
+make "tune [[e5 1] [d#5 1] [e5 1] [d#5 1] [e5 1] [b4 1] [d5 1] [c5 1] [a4 3]
+            [c4 1] [e4 1] [a4 1] [b4 3] [e4 1] [g#4 1] [b4 1] [c5 3]
+            [e4 1] [e5 1] [d#5 1] [e5 1] [d#5 1] [e5 1] [b4 1] [d5 1] [c5 1] [a4 3]
+            [c4 1] [e4 1] [a4 1] [b4 3] [e4 1] [c5 1] [b4 1] [a4 4]]
+make "beat 170
+make "turn 23
+
+pprop "step "c 0  pprop "step "d 2  pprop "step "e 4  pprop "step "f 5
+pprop "step "g 7  pprop "step "a 9  pprop "step "b 11
+
+; e5 -> 76, d#5 -> 75, a4 -> 69
+to notenum :name
+  localmake "n (gprop "step first :name) + 12 * (last :name) + 12
+  if memberp "# :name [make "n :n + 1]
+  output :n
+end
+
+to freq :n
+  output 440 * power 2 (:n - 69) / 12
+end
+
+; The color wheel: pitch class 0 to 11 goes red, yellow, green, cyan,
+; blue, magenta and back. Each channel is a bump that peaks at its
+; own place on the wheel.
+to hue :pc
+  output (list bump :pc 0 bump :pc 4 bump :pc 8)
+end
+to bump :pc :center
+  localmake "d abs :pc - :center
+  if :d > 6 [make "d 12 - :d]
+  output max 40 255 - 60 * :d
+end
+to max :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+; One petal: a thin diamond from the center pointing out along the
+; current heading, :fat degrees wide on each side, filled with :c.
+to petal :len :fat :c
+  pendown
+  filled :c [
+    lt :fat fd :len / 2 rt 2 * :fat fd :len / 2
+    rt 180 - 2 * :fat fd :len / 2 rt 2 * :fat fd :len / 2
+    rt 180 - :fat
+  ]
+end
+
+; The bar at the bottom: rub out the old bar with the eraser pen,
+; then draw a new one whose length shows the pitch. A single line
+; with a wide pen makes a bar without walking round a rectangle.
+to meter :h :c
+  penup setxy -300 -265 setheading 90 setpensize 40
+  penerase pendown fd 620 penup penpaint
+  setxy -300 -265 setpencolor :c pendown fd 10 * :h penup
+  setpensize 1
+end
+
+to visualize
+  localmake "angle 0
+  foreach :tune [
+    localmake "n notenum first ?
+    penup setxy 0 40 setpencolor 0 setheading :angle
+    petal 6 * (:n - 48) 4 + 3 * last ? hue remainder :n 12
+    meter (:n - 55) * 2.5 hue remainder :n 12
+    sound list freq :n :beat * last ?
+    make "angle :angle + :turn
+  ]
+end
+
+clearscreen
+hideturtle
+setbackground [10 10 20]
+visualize

@@ -1,0 +1,88 @@
+; ============================================================
+; TITLE:    Chord Clock Arpeggios
+; CATEGORY: Music & Sound
+; LEVEL:    Intermediate
+; TAGS:     chords, arpeggio, geometry, map, intervals
+; SUMMARY:  Plays chords as arpeggios and draws each one as a shape on a twelve-note clock, showing that every major chord has the same shape.
+; ============================================================
+;
+; WHAT IT DOES
+;   There are twelve different notes before the pattern repeats, so
+;   they fit around a clock face like the hours. A chord is a few
+;   notes played together; on the clock it becomes a triangle. The
+;   program plays the famous four-chord progression C, G, Am, F (it
+;   is in hundreds of pop songs), each chord broken into an arpeggio,
+;   one note after another, and draws its triangle while it plays.
+;   Look closely: the two major chords make the same triangle, just
+;   turned, and so do minor chords.
+;
+; HOW TO USE
+;   Press Run with the sound on. Change the progression at the bottom.
+;   A chord is written as [root kind], where root is 0 for C, 2 for D
+;   and so on, and kind is major, minor, dim or aug.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a chord is a list of intervals added to a root note
+;   * MAP adds the root to every interval in one go
+;   * REMAINDER wraps a note number around the clock (13 is 1 again)
+;   * an arpeggio plays the notes of a chord one at a time
+;
+; THINGS TO TRY
+;   * Add a seventh chord kind with intervals [0 4 7 10]. What shape is it?
+;   * Try the progression [[9 minor] [5 major] [0 major] [7 major]].
+;   * Play each arpeggio up and then down.
+; ============================================================
+
+pprop "kind "major [0 4 7]
+pprop "kind "minor [0 3 7]
+pprop "kind "dim   [0 3 6]
+pprop "kind "aug   [0 4 8]
+
+make "names [C C# D D# E F F# G G# A A# B]
+make "radius 150
+
+; The point on the clock for note n: C is at the top, going clockwise.
+to clock.point :n
+  output list :radius * sin 30 * :n  :radius * cos 30 * :n
+end
+
+to draw.clock
+  setpencolor 15
+  for [n 0 11] [
+    penup setpos clock.point :n
+    setpensize 8 pendown dot pos
+    ; write the note name a little further out from the center
+    penup setxy 1.2 * first clock.point :n (1.2 * last clock.point :n) - 6
+    setx xcor - 8
+    label item :n + 1 :names
+  ]
+  setpensize 1
+end
+
+to freq :n
+  output 261.63 * power 2 :n / 12
+end
+
+; Draw the chord's shape and play its notes, one at a time, twice.
+to arpeggio :chord :c
+  localmake "notes map [(first :chord) + ?] gprop "kind last :chord
+  setpencolor :c setpensize 3
+  penup setpos clock.point remainder last :notes 12 pendown
+  foreach :notes [setpos clock.point remainder ? 12]
+  repeat 2 [
+    foreach :notes [sound list freq ? 220]
+    sound list freq 12 + first :notes 220
+  ]
+  sound [0 200]
+end
+
+to play.progression :chords
+  localmake "colors [4 1 2 14 13 5]
+  foreach :chords [arpeggio ? item 1 + remainder # 6 :colors]
+end
+
+clearscreen
+hideturtle
+setbackground [250 248 240]
+draw.clock
+play.progression [[0 major] [7 major] [9 minor] [5 major]]

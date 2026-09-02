@@ -1,0 +1,76 @@
+; ============================================================
+; TITLE:    Rainbow Xylophone
+; CATEGORY: Music & Sound
+; LEVEL:    Beginner
+; TAGS:     drawing, sound, lists, turtle
+; SUMMARY:  Draws a rainbow xylophone whose bars get shorter as the notes get higher, then a turtle mallet taps out Mary Had a Little Lamb.
+; ============================================================
+;
+; WHAT IT DOES
+;   Eight bars are drawn side by side, from a long red bar (low note)
+;   to a short purple one (high note), just like a real toy
+;   xylophone. Then the turtle flies to each bar it needs, taps it,
+;   and the bar sounds. The song is written as bar numbers, the same
+;   way color-coded songbooks for toy xylophones do it.
+;
+; HOW TO USE
+;   Press Run with the sound on. Write your own song as a list of bar
+;   numbers from 1 to 8 and give it to PLAYBARS.
+;
+; CONCEPTS YOU WILL LEARN
+;   * shorter bars ring at higher pitches, on real instruments too
+;   * ITEM picks the color, frequency and position for a bar number
+;   * the turtle can be moved around to act like a pointer or a mallet
+;
+; THINGS TO TRY
+;   * Hot Cross Buns is 3 2 1 0 3 2 1 0 1 1 1 1 2 2 2 2 3 2 1 (use 0
+;     for a rest and add that to TAP).
+;   * Make the turtle a circle with SETSHAPE "circle so it looks more
+;     like a mallet.
+;   * Try a different scale in the :freqs list.
+; ============================================================
+
+make "freqs [262 294 330 349 392 440 494 523]
+make "colors [4 14 6 2 3 1 13 5]
+
+; Bar number :n sits at this x position.
+to bar.x :n
+  output -280 + 70 * (:n - 1)
+end
+
+; Draw bar :n. Its height shrinks by 18 steps per note.
+to bar :n
+  localmake "h 260 - 18 * (:n - 1)
+  penup setxy bar.x :n 0 - :h / 2 setheading 0 pendown
+  filled item :n :colors [repeat 2 [fd :h rt 90 fd 50 rt 90]]
+  ; two little nails that hold the bar on the frame
+  dot list (bar.x :n) + 25 :h / 2 - 15
+  dot list (bar.x :n) + 25 15 - :h / 2
+end
+
+; Move the mallet over bar :n, dip it down to tap, and play the note.
+to tap :n
+  penup
+  setxy (bar.x :n) + 25 40
+  setxy (bar.x :n) + 25 20
+  tone item :n :freqs 300
+  setxy (bar.x :n) + 25 40
+end
+
+to playbars :song
+  foreach :song [tap ?]
+end
+
+clearscreen
+setbackground [250 240 220]
+setpensize 6
+setpencolor 15
+for [n 1 8] [bar :n]
+setpensize 1
+penup setheading 180 showturtle
+playbars [1 2 3 4 5 6 7 8]
+wait 30
+; Mary had a little lamb, little lamb, little lamb
+playbars [3 2 1 2 3 3 3 2 2 2 3 5 5]
+playbars [3 2 1 2 3 3 3 3 2 2 3 2 1]
+hideturtle

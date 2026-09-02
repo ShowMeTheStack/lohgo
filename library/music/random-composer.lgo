@@ -1,0 +1,91 @@
+; ============================================================
+; TITLE:    Random Composer
+; CATEGORY: Music & Sound
+; LEVEL:    Intermediate
+; TAGS:     random, pentatonic, lists, composition, rerandom
+; SUMMARY:  Composes a new tune every run with a random walk over a pentatonic scale, arranged in the AABA form of many songs, and draws its shape.
+; ============================================================
+;
+; WHAT IT DOES
+;   Picking notes completely at random sounds like a cat on a piano.
+;   Real melodies mostly move in small steps and come back to ideas
+;   they have played before. So this composer takes a random walk,
+;   usually one step up or down, sometimes a jump, over the five notes
+;   of a pentatonic scale (the black keys of a piano sound like it).
+;   It writes phrase A, phrase B, and plays them as A A B A, ending
+;   on the home note. The melody is drawn as a line of colored dots.
+;
+; HOW TO USE
+;   Press Run several times: every tune is different. Found one you
+;   like? Put (rerandom 7) with your favorite number before COMPOSE
+;   and you get that same tune every time.
+;
+; CONCEPTS YOU WILL LEARN
+;   * RANDOM and PICK for chance; RERANDOM to repeat the same "random" tune
+;   * a random walk: the next note depends on the one before
+;   * keeping a value inside limits so the walk never runs off the scale
+;   * musical form: repeating phrases make a tune easy to remember
+;
+; THINGS TO TRY
+;   * Allow bigger jumps by adding 3 and -3 to the moves list.
+;   * Use a major scale instead: [262 294 330 349 392 440 494 523 587 659].
+;   * Make phrase B start higher than phrase A.
+; ============================================================
+
+; Two octaves of the C major pentatonic scale: C D E G A.
+make "scale [262 294 330 392 440 523 587 659 784 880]
+make "beat 260
+
+; The next position: mostly small steps, now and then a jump.
+to next.pos :p
+  localmake "q :p + pick [-1 -1 1 1 -2 2 0]
+  if :q < 1 [output 2]
+  if :q > count :scale [output (count :scale) - 1]
+  output :q
+end
+
+; A phrase of :n notes, each a list [position beats], starting at :p.
+; The last note is long so the phrase sounds finished.
+to phrase :n :p
+  localmake "out []
+  repeat :n - 1 [
+    make "out lput (list :p pick [1 1 1 0.5 0.5 2]) :out
+    make "p next.pos :p
+  ]
+  output lput (list :p 2) :out
+end
+
+to compose
+  make "a phrase 7 6
+  make "b phrase 7 8
+  ; the final A ends on position 6, the high home C, so it feels complete
+  make "end.a lput [6 3] butlast :a
+  make "tune (sentence :a :a :b :end.a)
+end
+
+; Every note is a dot whose height shows its pitch and whose color
+; changes along the scale; a gray line joins the dots.
+to perform
+  localmake "x -360
+  penup setxy :x -200 + 40 * first first :tune pendown
+  foreach :tune [
+    localmake "spot first ?
+    setpencolor 15 setpensize 2
+    setxy :x -200 + 40 * :spot
+    setpencolor item 1 + remainder :spot 6 [1 2 4 13 14 5]
+    setpensize 12 + 6 * last ?
+    dot pos
+    sound (list item :spot :scale :beat * last ?)
+    make "x :x + 25
+  ]
+end
+
+clearscreen
+hideturtle
+setbackground [250 250 240]
+compose
+print [Phrase A, as scale positions and beats:]
+show :a
+print [Phrase B:]
+show :b
+perform

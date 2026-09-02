@@ -1,0 +1,117 @@
+; ============================================================
+; TITLE:    Drum Machine
+; CATEGORY: Music & Sound
+; LEVEL:    Intermediate
+; TAGS:     rhythm, patterns, words, grid, loops
+; SUMMARY:  A 16-step drum machine: each drum's pattern is a word like x---x---, drawn as a lit-up grid and looped while a playhead sweeps across.
+; ============================================================
+;
+; WHAT IT DOES
+;   Drum machines split a bar into 16 small steps. For every drum you
+;   say which steps it hits. Here each pattern is a word of 16
+;   characters: x means hit, - means rest. The grid on the screen
+;   shows the patterns, and a white playhead moves from step to step
+;   while the machine plays the beat four times around.
+;
+; HOW TO USE
+;   Press Run with the sound on. Edit the patterns in SETUP to make
+;   your own beat. Change :bpm to set the speed in beats per minute.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a word is a sequence of characters; ITEM n picks one of them
+;   * the same pattern data drives both the drawing and the sound
+;   * drum sounds made from short noise bursts and quick pitch drops
+;   * a steady tempo: every step takes the same time, hit or not
+;
+; THINGS TO TRY
+;   * Put the snare on steps 5 and 13 only: ----x-------x---
+;   * Make the hi-hat play on every step for a busy disco feel.
+;   * Add a fourth drum, like a cowbell (a short 800 hertz tone).
+; ============================================================
+
+make "bpm 110
+
+to setup
+  make "drums [kick snare hat]
+  pprop "pattern "kick  "x-----x---x-----
+  pprop "pattern "snare "----x-------x--x
+  pprop "pattern "hat   "x-x-x-x-x-x-x-x-
+end
+
+; A step is a sixteenth note: a quarter of a beat.
+to step.ms
+  output int 60000 / :bpm / 4
+end
+
+; The three drum sounds. Each outputs a SOUND list and its length.
+; A kick drum is a thump: a pitch that falls fast.
+to kick.sound
+  output [150 15 110 15 80 20 60 20]
+end
+; A snare is a crackle: a burst of random pitches.
+to snare.sound
+  localmake "out []
+  repeat 8 [make "out sentence :out list 300 + random 1500 8]
+  output :out
+end
+; A hi-hat is a tiny high tick.
+to hat.sound
+  output [5000 15]
+end
+
+; Add up the times in a SOUND list (every second number).
+to sound.length :s
+  if emptyp :s [output 0]
+  output (item 2 :s) + sound.length butfirst butfirst :s
+end
+
+; Everything that plays on step :n, one drum after the other (they
+; are short enough that it sounds like one hit), then silence to fill
+; the step.
+to play.step :n
+  localmake "s []
+  foreach :drums [
+    if equalp item :n gprop "pattern ? "x [
+      make "s sentence :s run (list word ? ".sound)
+    ]
+  ]
+  localmake "rest (step.ms) - sound.length :s
+  sound sentence :s list 0 max 1 :rest
+end
+
+to max :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+; One square of the grid: bright if the drum hits there.
+to cell :row :n
+  localmake "on equalp item :n gprop "pattern item :row :drums "x
+  penup setxy -330 + 42 * (:n - 1) 100 - 70 * (:row - 1) setheading 0 pendown
+  setpencolor [60 60 80]
+  filled (ifelse :on [item :row [[230 70 70] [70 160 230] [240 200 60]]] ~
+                    [ifelse 0 = remainder :n - 1 4 [[70 70 90]] [[45 45 60]]]) ~
+    [repeat 4 [fd 36 rt 90]]
+end
+
+to draw.grid
+  for [row 1 3] [
+    penup setxy -390 110 - 70 * (:row - 1) pendown
+    setpencolor 7
+    label item :row :drums
+    for [n 1 16] [cell :row :n]
+  ]
+end
+
+clearscreen
+setup
+setbackground [25 25 35]
+draw.grid
+setshape "triangle
+penup setheading 180 showturtle setpencolor 7
+repeat 4 [
+  for [n 1 16] [
+    setxy -312 + 42 * (:n - 1) 180
+    play.step :n
+  ]
+]
+hideturtle

@@ -1,0 +1,87 @@
+; ============================================================
+; TITLE:    Morse Code Beeper
+; CATEGORY: Music & Sound
+; LEVEL:    Intermediate
+; TAGS:     morse code, property list, words, timing
+; SUMMARY:  Sends any message in Morse code as beeps and draws the dots and dashes on the screen as they are sent.
+; ============================================================
+;
+; WHAT IT DOES
+;   Morse code turns letters into short and long beeps: a dot (dit)
+;   and a dash (dah). It was used on telegraph wires and ship radios
+;   long before phones. The program looks up every letter of the
+;   message in a property list, beeps it, and draws it: a round dot
+;   for dit, a bar for dah, one row of the screen per word.
+;
+; HOW TO USE
+;   Press Run with the sound on. To send your own message, type in the
+;   command center:  send [your message here]
+;
+; CONCEPTS YOU WILL LEARN
+;   * a property list as a code book: letter in, code word out
+;   * the code itself is a word like .-- that FOREACH can walk through
+;   * Morse timing: a dah is 3 dits, gaps are 1, 3 and 7 dits long
+;   * a list of words, and a word of letters, nested FOREACH loops
+;
+; THINGS TO TRY
+;   * Make :dit 60 to send faster, like an expert operator.
+;   * Add the digits: 1 is .----, 2 is ..---, up to 0 which is -----.
+;   * Write a program that goes the other way: from dots to letters.
+; ============================================================
+
+make "dit 90        ; the length of one dot in milliseconds
+make "pitch 650     ; radio operators liked a pitch around 600 to 800
+
+to codebook
+  localmake "table [a .- b -... c -.-. d -.. e . f ..-. g --. h ....
+                    i .. j .--- k -.- l .-.. m -- n -. o --- p .--.
+                    q --.- r .-. s ... t - u ..- v ...- w .-- x -..-
+                    y -.-- z --..]
+  ; the table alternates letter, code, letter, code ...
+  while [not emptyp :table] [
+    pprop "morse first :table first butfirst :table
+    make "table butfirst butfirst :table
+  ]
+end
+
+; One symbol: beep and draw. A dot is a round spot, a dash a bar.
+to symbol :s
+  ifelse :s = ". [
+    setpensize 12 dot pos
+    sound (list :pitch :dit 0 :dit)
+    penup fd 20
+  ] [
+    setpensize 12 pendown fd 30 penup
+    sound (list :pitch 3 * :dit 0 :dit)
+    fd 20
+  ]
+end
+
+to letter :ch
+  localmake "code gprop "morse lowercase :ch
+  if emptyp :code [stop]          ; skip anything not in the code book
+  foreach :code [symbol ?]
+  sound list 0 2 * :dit           ; 1 + 2 = 3 dits between letters
+  penup fd 22
+end
+
+to send :message
+  localmake "y 200
+  foreach :message [
+    setpencolor 2
+    penup setxy -380 :y setheading 90
+    label uppercase ?
+    setxy -230 :y + 6
+    setpencolor 6
+    foreach ? [letter ?]
+    sound list 0 4 * :dit         ; words are 7 dits apart
+    make "y :y - 70
+  ]
+end
+
+clearscreen
+hideturtle
+setbackground [15 25 15]
+setlabelheight 20
+codebook
+send [sos hello world from logo]

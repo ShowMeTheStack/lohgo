@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Musical Words
+; CATEGORY: Music & Sound
+; LEVEL:    Beginner
+; TAGS:     property list, words, sound, letters
+; SUMMARY:  Uses a property list to turn note names into frequencies and plays English words spelled only with the letters A to G.
+; ============================================================
+;
+; WHAT IT DOES
+;   Musicians name notes with the letters A B C D E F G. Some English
+;   words use only those letters, like CABBAGE, FACE and BADGE, so
+;   you can play them! The program looks up each letter in a property
+;   list, plays it, and writes the word in big letters as it goes.
+;
+; HOW TO USE
+;   Press Run with the sound on. Add your own words to the list at
+;   the bottom. Letters that are not notes are skipped with a short
+;   rest, so any word works, but the A to G words sound the best.
+;
+; CONCEPTS YOU WILL LEARN
+;   * PPROP stores a value under a name in a property list
+;   * GPROP looks the value up again; an unknown name gives the empty list
+;   * a word is a sequence of letters that FOREACH can walk through
+;   * SOUND with a frequency of 0 makes a silent rest
+;
+; THINGS TO TRY
+;   * Find more A to G words: BEADED, DECADE, CAFE, EGG, BAGGAGE.
+;   * Make the notes longer by changing the 250 in PLAYLETTER.
+;   * Store the notes one octave higher by doubling every number.
+; ============================================================
+
+; One property list called "notes holds a frequency for each letter.
+pprop "notes "a 440
+pprop "notes "b 494
+pprop "notes "c 262
+pprop "notes "d 294
+pprop "notes "e 330
+pprop "notes "f 349
+pprop "notes "g 392
+
+; Play one letter. GPROP outputs the empty list when the letter is
+; not in the property list, so we check with EMPTYP before playing.
+to playletter :ch
+  localmake "freq gprop "notes lowercase :ch
+  ifelse emptyp :freq [sound [0 250]] [sound (list :freq 250)]
+end
+
+; Write the word one letter at a time, playing each letter as it
+; appears, so the eyes and ears follow along together.
+to playword :w :y
+  penup setxy -200 :y pendown
+  foreach :w [
+    label ?
+    playletter ?
+    penup setx xcor + 45 pendown
+  ]
+  sound [0 400]   ; a breath between words
+end
+
+clearscreen
+hideturtle
+setbackground [30 30 60]
+setlabelheight 40
+make "words [cabbage face badge deaf bead egg]
+make "y 220
+foreach :words [
+  setpencolor 1 + remainder # 15
+  playword uppercase ? :y
+  make "y :y - 80
+]

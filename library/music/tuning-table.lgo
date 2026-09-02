@@ -1,0 +1,111 @@
+; ============================================================
+; TITLE:    Two Ways to Tune a Piano
+; CATEGORY: Music & Sound
+; LEVEL:    Advanced
+; TAGS:     math, logarithms, form, fractions, bar chart
+; SUMMARY:  Computes the twelve notes of an octave two ways, with equal steps and with simple fractions, prints a table, charts the difference in cents and plays both scales.
+; ============================================================
+;
+; WHAT IT DOES
+;   Pianos today use equal temperament: each half step multiplies the
+;   frequency by the same number, the twelfth root of 2 (about 1.0595),
+;   so twelve steps make exactly double. Older tunings used simple
+;   fractions instead: a fifth is 3/2, a major third 5/4. Fractions
+;   sound sweeter, but only in one key. The program prints both
+;   frequencies side by side, measures the difference in cents (a
+;   hundredth of a half step), draws it as a bar chart, and then plays
+;   the major scale in each tuning so you can compare.
+;
+; HOW TO USE
+;   Press Run and read the table in the text window. Change :base to
+;   start from a different note, for example 440 for A.
+;
+; CONCEPTS YOU WILL LEARN
+;   * POWER 2 n / 12 for equal steps, and ratios kept as [top bottom] lists
+;   * cents: 1200 times the logarithm base 2, computed as LN r / LN 2
+;   * FORM to line numbers up in columns
+;   * a bar chart with bars above and below a zero line
+;
+; THINGS TO TRY
+;   * Which interval is furthest off? Musicians argue about it to this day.
+;   * Try the Pythagorean ratios, built only from 3/2: [1 1] [256 243]
+;     [9 8] [32 27] [81 64] [4 3] [729 512] [3 2] [128 81] [27 16]
+;     [16 9] [243 128].
+;   * Play a C major chord quickly in both tunings and listen closely.
+; ============================================================
+
+make "base 261.63
+
+make "names [C C# D Eb E F F# G Ab A Bb B]
+; Just intonation: each note as a fraction of the base frequency.
+make "ratios [[1 1] [16 15] [9 8] [6 5] [5 4] [4 3] [45 32] [3 2] [8 5] [5 3] [9 5] [15 8]]
+
+to equal.freq :n
+  output :base * power 2 :n / 12
+end
+
+to just.freq :n
+  localmake "r item :n + 1 :ratios
+  output :base * (first :r) / (last :r)
+end
+
+; How far apart two frequencies are, in cents.
+to cents :f1 :f2
+  output 1200 * (ln :f1 / :f2) / ln 2
+end
+
+; FORM only lines up numbers, so words get padded with spaces by hand.
+to pad :w :width
+  if (count :w) >= :width [output :w]
+  output pad word :w "| | :width
+end
+
+to table
+  print "|note     equal     just     ratio   cents|
+  for [n 0 11] [
+    localmake "e equal.freq :n
+    localmake "j just.freq :n
+    type pad item :n + 1 :names 4
+    type form :e 10 2
+    type form :j 9 2
+    type "|     |
+    type pad (word first item :n + 1 :ratios "/ last item :n + 1 :ratios) 5
+    print form cents :j :e 8 1
+  ]
+end
+
+; Bars go up when the fraction is sharper than the piano, down when flatter.
+to chart
+  setpencolor 15
+  penup setxy -360 0 setheading 90 pendown fd 720
+  for [n 0 11] [
+    localmake "c cents just.freq :n equal.freq :n
+    localmake "x -340 + 58 * :n
+    penup setxy :x 0 setheading 0 pendown
+    setpencolor 0
+    filled (ifelse :c > 0 [[220 120 60]] [[60 120 220]]) ~
+      [fd 7 * :c rt 90 fd 36 rt 90 fd 7 * :c rt 90 fd 36 rt 90]
+    penup setxy :x + 6 ifelse :c > 0 [-30] [20] pendown
+    label item :n + 1 :names
+  ]
+  penup setxy -360 230 pendown
+  label [cents: orange is sharper than the piano, blue is flatter]
+end
+
+to play.scale :kind
+  foreach [0 2 4 5 7 9 11 12] [
+    ifelse ? = 12 [sound list 2 * :base 400] [sound list run (list :kind ?) 400]
+  ]
+  sound [0 500]
+end
+
+clearscreen
+hideturtle
+setbackground [250 250 245]
+setlabelheight 16
+table
+chart
+print [Equal temperament scale...]
+play.scale "equal.freq
+print [Just intonation scale...]
+play.scale "just.freq

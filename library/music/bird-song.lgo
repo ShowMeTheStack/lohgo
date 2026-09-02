@@ -1,0 +1,116 @@
+; ============================================================
+; TITLE:    Dawn Chorus
+; CATEGORY: Music & Sound
+; LEVEL:    Intermediate
+; TAGS:     random, sound design, procedures, drawing
+; SUMMARY:  Four birds sit on a branch and take turns singing their own calls (a chirp, a trill, a cuckoo and an owl hoot), each made from sweeps and random notes.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each bird has its own song procedure. The sparrow chirps with
+;   quick upward sweeps, the canary trills between two notes, the
+;   cuckoo sings its famous falling two-note call, and the owl hoots
+;   low and slow. The birds are drawn on a branch at sunrise, and
+;   whichever bird is singing gets little sound lines beside it. Who
+;   sings next is chosen at random, so no two mornings are the same.
+;
+; HOW TO USE
+;   Press Run with the sound on and listen. Change :rounds for a
+;   longer or shorter chorus.
+;
+; CONCEPTS YOU WILL LEARN
+;   * designing sounds from sweeps (FOR loops) and random pitches
+;   * RUN a procedure whose name was picked at random
+;   * PICK chooses one item of a list at random
+;   * drawing a simple animal from circles and triangles
+;
+; THINGS TO TRY
+;   * Invent a fifth bird with its own call and add it to :birds.
+;   * Make the sparrow chirp a random number of times, from 2 to 5.
+;   * Give the owl a chance to hoot only one time in five.
+; ============================================================
+
+make "rounds 10
+make "birds [sparrow canary cuckoo owl]
+
+; ---- the songs ----------------------------------------------------
+to sparrow
+  repeat 3 [
+    for [f 2500 4000 300] [tone :f 8]
+    sound [0 90]
+  ]
+end
+
+to canary
+  localmake "hi 2600 + random 600
+  repeat 12 [sound (list :hi 35 :hi - 500 35)]
+end
+
+to cuckoo
+  repeat 2 [sound [659 250 0 40 523 450 0 250]]
+end
+
+to owl
+  sound [392 200 0 80 370 600 0 150 392 180 0 40 392 180 0 40 370 500]
+end
+
+; ---- the pictures -------------------------------------------------
+; A bird at x: a round body, a smaller head, a beak and a tail.
+; Later drawing covers earlier drawing, so we start with the parts
+; at the back (tail, body) and finish with the parts in front.
+to bird :x :c
+  setpencolor :c
+  ; tail
+  penup setxy :x - 25 15 setheading 240 pendown
+  filled :c [fd 40 rt 120 fd 25 setxy :x - 25 15]
+  ; body
+  penup setxy :x -10 setheading 90 pendown
+  filled :c [repeat 30 [fd 6 lt 12]]
+  ; head
+  penup setxy :x + 22 40 pendown
+  filled :c [repeat 20 [fd 4 lt 18]]
+  ; beak
+  penup setxy :x + 33 50 setheading 90 pendown
+  setpencolor 14
+  filled 14 [fd 14 rt 120 fd 8 rt 120 setxy :x + 33 50]
+end
+
+; Little lines beside the beak while a bird sings. Drawing them again
+; with PENERASE rubs them out when the song is over.
+to sing.marks :x :c
+  setpencolor :c setpensize 3
+  foreach [60 90 120] [
+    penup setxy :x + 50 50 setheading ? fd 10 pendown fd 15
+  ]
+  setpensize 1
+end
+
+to scene
+  setbackground [255 200 150]
+  ; the morning sun
+  penup setxy 300 100 setheading 90 pendown setpencolor [255 230 90]
+  filled [255 230 90] [repeat 60 [fd 10 lt 6]]
+  ; the branch
+  penup setxy -400 -20 setheading 90 pendown
+  setpensize 14 setpencolor 8 fd 800 setpensize 1
+  bird -270 [140 90 60]
+  bird -110 6
+  bird 50 [120 120 130]
+  bird 210 [110 80 50]
+end
+
+to chorus
+  repeat :rounds [
+    localmake "singer 1 + random 4
+    localmake "x item :singer [-270 -110 50 210]
+    sing.marks :x 0
+    run (list item :singer :birds)
+    penerase sing.marks :x 0 penpaint
+    sound [0 300]
+  ]
+end
+
+clearscreen
+hideturtle
+scene
+chorus

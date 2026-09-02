@@ -1,0 +1,104 @@
+; ============================================================
+; TITLE:    Typing Piano
+; CATEGORY: Music & Sound
+; LEVEL:    Intermediate
+; TAGS:     readchar, keyboard, property list, interactive
+; SUMMARY:  Turns the computer keyboard into a piano: the middle row plays the white keys, the row above plays the black keys, and every note leaves a colored mark.
+; ============================================================
+;
+; WHAT IT DOES
+;   Music programs often use the letters A S D F G H J K as the white
+;   keys of a piano and W E T Y U as the black keys, because that is
+;   how they are laid out on a real keyboard. This program does the
+;   same. A picture of the keys sits at the bottom of the screen and
+;   every note you play adds a dot above its key, so you can see the
+;   tune you typed. Press Q to stop.
+;
+; HOW TO USE
+;   Press Run, then CLICK THE TURTLE WORLD so it gets your key presses.
+;   Type a s d f g h j k for a scale. Hot Cross Buns is: d s a, d s a,
+;   a a a a s s s s, d s a.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READCHAR waits for a single key press and outputs it
+;   * a property list maps each key to a note number
+;   * a loop that runs until a particular key is pressed
+;   * keeping track of a position with a global variable
+;
+; THINGS TO TRY
+;   * Add the keys L and O for the next notes up (D and D sharp).
+;   * Make the Z key drop everything an octave lower for the next note.
+;   * Make the dots bigger for notes you play twice in a row.
+; ============================================================
+
+; Each key gives a note number: half steps above middle C.
+make "keys [a w s e d f t g y h u j k]
+; # counts 1, 2, 3 ... along the list, so # - 1 counts from 0.
+foreach :keys [pprop "piano ? # - 1]
+
+; Where each key is drawn: white keys in a row, black keys between.
+make "white [a s d f g h j k]
+make "row 0
+
+; MEMBER outputs the rest of the list starting at :k, so counting what
+; is left tells us how far from the right end the key is.
+to key.x :k
+  if memberp :k :white [output 210 - 60 * ((count member :k :white) - 1)]
+  ; a black key sits halfway between the white key below it and the
+  ; next one up; the key below is the one just before it in :keys
+  output 30 + key.x item (gprop "piano :k) :keys
+end
+
+; Later drawing covers earlier drawing, so the white keys go down
+; first and the black keys are painted on top of them.
+to draw.keys
+  foreach :white [
+    penup setxy (key.x ?) - 28 -280 setheading 0 pendown
+    setpencolor 0 filled 7 [repeat 2 [fd 150 rt 90 fd 56 rt 90]]
+    penup setxy (key.x ?) - 6 -270 pendown label uppercase ?
+  ]
+  foreach [w e t y u] [
+    penup setxy (key.x ?) - 18 -200 setheading 0 pendown setpencolor 0
+    filled 0 [repeat 2 [fd 70 rt 90 fd 36 rt 90]]
+    setpencolor 7
+    penup setxy (key.x ?) - 7 -185 pendown label uppercase ?
+    setpencolor 0
+  ]
+end
+
+; Mark the note: one more row up, a dot over the key that was played.
+to mark :k
+  make "row :row + 1
+  if :row > 20 [
+    make "row 1
+    ; the screen is full: wipe it and draw the keys again
+    clean
+    draw.keys
+  ]
+  setpencolor item 1 + remainder gprop "piano :k 6 [4 14 6 2 3 13]
+  setpensize 18
+  penup setxy key.x :k -120 + 20 * :row pendown
+  dot pos
+  setpensize 1
+end
+
+to play.loop
+  localmake "k lowercase readchar
+  if :k = "q [print [Bye!] stop]
+  ifelse memberp :k :keys [
+    mark :k
+    tone 261.63 * power 2 (gprop "piano :k) / 12 300
+  ] [
+    print (sentence [The key] :k [is not on the piano.])
+  ]
+  play.loop
+end
+
+clearscreen
+hideturtle
+setbackground [20 20 40]
+setlabelheight 18
+draw.keys
+print [Click the turtle world first, then play with A S D F G H J K]
+print [and W E T Y U. Press Q to stop.]
+play.loop

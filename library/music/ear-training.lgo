@@ -1,0 +1,111 @@
+; ============================================================
+; TITLE:    Ear Trainer
+; CATEGORY: Music & Sound
+; LEVEL:    Advanced
+; TAGS:     quiz, readword, random, adaptive difficulty, score
+; SUMMARY:  A listening quiz: two notes play and you say whether the second is higher, lower or the same; the gap between the notes shrinks as you get better.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each round plays two notes. Type h if the second note is higher,
+;   l if it is lower, or s if it is the same. Get it right and the
+;   next question is harder: the notes move closer together. Get it
+;   wrong and they move further apart again. A row of squares on the
+;   screen records every answer, green for right and red for wrong,
+;   and a staircase graph shows how small the gap has become.
+;
+; HOW TO USE
+;   Press Run with the sound on and answer in the command center.
+;   Type r to hear the two notes again and quit to stop early. There
+;   are 12 rounds.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READWORD for answers, and checking that the answer makes sense
+;   * adaptive difficulty: a variable that goes down after a right
+;     answer and up after a wrong one (a "staircase")
+;   * CATCH and THROW to leave a deep loop when the player quits
+;   * semitones and cents: very small pitch steps are hard to hear
+;
+; THINGS TO TRY
+;   * Play the notes with a short gap of silence between them, or none.
+;   * Start the gap at 12 half steps (a whole octave) for beginners.
+;   * Change the quiz to name intervals: is it 4 or 7 half steps apart?
+; ============================================================
+
+make "rounds 12
+make "gap 6          ; starting distance between the notes, in half steps
+make "score 0
+make "best :gap       ; the smallest gap reached so far
+
+to freq :semis
+  output 330 * power 2 :semis / 12
+end
+
+; Ask until we get h, l, s or quit. Typing r replays the notes.
+to get.answer :a :b
+  print [Is the second note higher, lower or the same? Type h, l or s, or r to repeat.]
+  localmake "w lowercase readword
+  if memberp :w [quit q] [(throw "quit)]
+  if :w = "r [play.pair :a :b output get.answer :a :b]
+  if memberp :w [h l s] [output :w]
+  print [Please type just one letter: h, l or s.]
+  output get.answer :a :b
+end
+
+to play.pair :a :b
+  sound (list freq :a 600 0 250 freq :b 600)
+end
+
+; Draw the square for round :r and a point on the staircase graph.
+to record :r :ok
+  penup setxy -330 + 55 * (:r - 1) 180 setheading 0 pendown
+  setpencolor 0
+  filled (ifelse :ok [[60 180 80]] [[210 70 60]]) [repeat 4 [fd 40 rt 90]]
+  penup setxy -310 + 55 * (:r - 1) -200 + 30 * :gap
+  setpencolor 1 setpensize 10 pendown dot pos setpensize 1
+end
+
+to round.of :r
+  localmake "a (random 12) - 6
+  ; one time in five the notes are the same, otherwise a random direction
+  localmake "dir ifelse 0 = random 5 [0] [pick [-1 1]]
+  localmake "b :a + :dir * :gap
+  localmake "right ifelse :dir = 0 ["s] [ifelse :dir > 0 ["h] ["l]]
+  print (sentence [Round] :r [of] :rounds)
+  play.pair :a :b
+  localmake "answer get.answer :a :b
+  ifelse :answer = :right [
+    print [Right!]
+    make "score :score + 1
+    make "gap max 0.25 :gap / 1.5
+    make "best min :best :gap
+  ] [
+    print (sentence [Not quite, the answer was] :right)
+    make "gap min 12 :gap * 1.5
+  ]
+  record :r :answer = :right
+end
+
+to max :x :y
+  output ifelse :x > :y [:x] [:y]
+end
+to min :x :y
+  output ifelse :x < :y [:x] [:y]
+end
+
+to quiz
+  for [r 1 :rounds] [round.of :r]
+  print (sentence [You got] :score [out of] :rounds [right.])
+  print (sentence [The smallest gap you reached was] (round 100 * :best) / 100 [half steps.])
+end
+
+clearscreen
+hideturtle
+setbackground [240 240 235]
+penup setxy -330 240 pendown
+setlabelheight 20
+label [Answers]
+penup setxy -330 -240 pendown
+label [How close the notes were: lower is harder]
+catch "quit [quiz]
+print [Thanks for playing.]

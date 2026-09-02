@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Arcade Sound Effects
+; CATEGORY: Music & Sound
+; LEVEL:    Beginner
+; TAGS:     sound, effects, for loop, games
+; SUMMARY:  Builds a siren, a laser, a coin pickup, a power-up and a falling bomb out of nothing but short beeps.
+; ============================================================
+;
+; WHAT IT DOES
+;   Old video games had no recorded sounds. Every zap and ding was
+;   made from quick beeps whose pitch went up or down. This program
+;   plays five classic effects one after another and writes the name
+;   of each one on the screen while you hear it.
+;
+; HOW TO USE
+;   Press Run with the sound on. Then type the name of one effect in
+;   the command center, for example:  laser   or   siren 5
+;
+; CONCEPTS YOU WILL LEARN
+;   * a sweep is many very short notes with the pitch changing a bit each time
+;   * FOR [f 300 1200 40] counts from 300 to 1200 in steps of 40
+;   * a negative step counts downward
+;   * RUN carries out a list of instructions kept in a variable
+;   * small procedures with good names can be reused in games
+;
+; THINGS TO TRY
+;   * Make the laser longer by making the step smaller (try -20).
+;   * Invent a "jump" sound: a quick sweep up, then a quick sweep down.
+;   * Put COIN inside one of your own game programs.
+; ============================================================
+
+; A police siren goes up and down, up and down.
+to siren :times
+  repeat :times [
+    for [f 600 1000 25] [tone :f 12]
+    for [f 1000 600 -25] [tone :f 12]
+  ]
+end
+
+; A laser drops quickly from very high to low.
+to laser
+  for [f 2000 300 -100] [tone :f 10]
+end
+
+; A coin is two bright notes, the second one higher and longer.
+to coin
+  tone 988 70
+  tone 1319 300
+end
+
+; A power-up climbs in little jumps, each jump ending a bit higher.
+to powerup
+  for [base 300 700 100] [
+    for [f :base :base + 300 60] [tone :f 15]
+  ]
+end
+
+; The bomb whistles down, then explodes in a burst of random noise.
+to bomb
+  for [f 1500 400 -10] [tone :f 15]
+  repeat 40 [tone 60 + random 120 8]
+end
+
+; Write the name of an effect big on the screen, then play it.
+; The input is a list of instructions such as [siren 4]; its first
+; word is the name, and RUN carries out the whole list.
+to show.effect :effect :c
+  clean
+  setpencolor :c
+  penup setxy -150 0 pendown
+  label first :effect
+  run :effect
+  wait 30
+end
+
+clearscreen
+hideturtle
+setbackground 0
+setlabelheight 60
+show.effect [siren 4] 4
+show.effect [laser] 2
+show.effect [coin] 6
+show.effect [powerup] 3
+show.effect [bomb] 14
+clean
+setpencolor 7
+penup setxy -260 0 pendown
+setlabelheight 30
+label [Type laser, coin, powerup, bomb or siren 3]

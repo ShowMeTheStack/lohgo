@@ -1,0 +1,136 @@
+; ============================================================
+; TITLE:    Jukebox on Disk
+; CATEGORY: Music & Sound
+; LEVEL:    Advanced
+; TAGS:     files, openwrite, readlist, menus, readword
+; SUMMARY:  Saves three songs as files on the virtual disk, lists them as a jukebox menu, and reads the one you pick back from its file to play it.
+; ============================================================
+;
+; WHAT IT DOES
+;   A song does not have to live inside the program. This jukebox
+;   first writes three songs into a folder, /projects/jukebox, one
+;   file each: the first line is the title and the second line holds
+;   the notes. Then it looks in the folder to see which songs are
+;   there, shows a numbered menu, and plays the song you choose by
+;   reading it back from its file. A record spins while it plays.
+;
+; HOW TO USE
+;   Press Run. Type a number from the menu in the command center and
+;   press Enter, or quit to stop. After the first run you can open the
+;   files in /projects/jukebox and edit them, or add your own: any
+;   file ending in .song with a title line and a line of notes works.
+;
+; CONCEPTS YOU WILL LEARN
+;   * OPENWRITE, SETWRITE and PRINT to write a file, CLOSE when done
+;   * OPENREAD, SETREAD and READLIST to read it again line by line
+;   * CHDIR and FILES to see what is in a folder
+;   * CATCH "ERROR to carry on when something might fail
+;
+; THINGS TO TRY
+;   * Write a fourth song file by hand and see it appear in the menu.
+;   * Store the tempo on a third line of each file.
+;   * Make the record a different color for every song.
+; ============================================================
+
+make "folder "/projects/jukebox
+
+pprop "hz "c4 262  pprop "hz "d4 294  pprop "hz "e4 330  pprop "hz "f4 349
+pprop "hz "g4 392  pprop "hz "a4 440  pprop "hz "b4 494  pprop "hz "c5 523
+
+; Write one song file: a title line, then a line of note and beat pairs.
+to save.song :file :title :notes
+  localmake "path (word :folder "/ :file ".song)
+  openwrite :path
+  setwrite :path
+  print :title
+  print :notes
+  setwrite []
+  close :path
+end
+
+to make.songs
+  catch "error [mkdir :folder]       ; it is already there after the first run
+  save.song "buns [Hot Cross Buns] [e4 1 d4 1 c4 2 e4 1 d4 1 c4 2 c4 .5 c4 .5 c4 .5 c4 .5 d4 .5 d4 .5 d4 .5 d4 .5 e4 1 d4 1 c4 2]
+  save.song "lamb [Mary Had a Little Lamb] [e4 1 d4 1 c4 1 d4 1 e4 1 e4 1 e4 2 d4 1 d4 1 d4 2 e4 1 g4 1 g4 2]
+  save.song "saints [When the Saints] [c4 1 e4 1 f4 1 g4 4 c4 1 e4 1 f4 1 g4 4 c4 1 e4 1 f4 1 g4 2 e4 2 c4 2 e4 2 d4 4]
+end
+
+; The names of all .song files in the folder.
+to song.files
+  chdir :folder
+  localmake "all files
+  popdir
+  output filter [equalp ".song substring.end ? 5] :all
+end
+
+to substring.end :w :n
+  if (count :w) <= :n [output :w]
+  output substring.end butfirst :w :n
+end
+
+; Read a song file back: [title notes].
+to load.song :file
+  localmake "path (word :folder "/ :file)
+  openread :path
+  setread :path
+  localmake "title readlist
+  localmake "notes readlist
+  setread []
+  close :path
+  output list :title :notes
+end
+
+; A record: a black disc with a red label and a white mark. Each call
+; wipes the screen and draws the record with the mark turned a bit
+; further, which looks like spinning. Later drawing covers earlier
+; drawing, so the big disc goes first and the label is painted on it.
+to record :turn
+  clean
+  penup setxy 0 -140 setheading 90 pendown setpencolor 0
+  filled 0 [repeat 40 [fd 22 lt 9]]
+  penup setxy 0 -30 setheading 90 pendown setpencolor 4
+  filled 4 [repeat 20 [fd 9.4 lt 18]]
+  penup setxy 0 0 setheading :turn fd 100 pendown
+  setpencolor 7 setpensize 3 fd 30 setpensize 1
+end
+
+to play.notes :notes
+  localmake "turn 0
+  while [not emptyp :notes] [
+    record :turn
+    sound list gprop "hz first :notes 350 * first butfirst :notes
+    make "notes butfirst butfirst :notes
+    make "turn :turn + 40
+  ]
+end
+
+; AND looks at all its inputs, so we must not compare a word like
+; "Sam" with a number. Check that it is a number first, then the range.
+to good.choice :c :most
+  if not numberp :c [output "false]
+  output and :c >= 1 :c <= :most
+end
+
+to menu
+  localmake "songs song.files
+  print []
+  foreach :songs [print (sentence # first load.song ?)]
+  print [Type a number to play that song, or quit:]
+  localmake "choice readword
+  if memberp :choice [quit q] [print [The jukebox switches off.] stop]
+  ifelse good.choice :choice count :songs [
+    localmake "song load.song item :choice :songs
+    print sentence [Now playing:] first :song
+    play.notes last :song
+  ] [
+    print [Please type one of the numbers in the menu.]
+  ]
+  menu
+end
+
+clearscreen
+hideturtle
+setbackground [60 40 70]
+make.songs
+record 0
+menu

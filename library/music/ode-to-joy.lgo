@@ -1,0 +1,99 @@
+; ============================================================
+; TITLE:    Ode to Joy Piano Roll
+; CATEGORY: Music & Sound
+; LEVEL:    Intermediate
+; TAGS:     song, piano roll, frequencies, octaves, power
+; SUMMARY:  Draws Beethoven's Ode to Joy as a piano roll and plays it while a turtle cursor moves along the notes.
+; ============================================================
+;
+; WHAT IT DOES
+;   Old player pianos read music from a paper roll with holes punched
+;   in it: the higher the hole, the higher the note, and the longer
+;   the hole, the longer the note. This program draws the first part
+;   of Ode to Joy as such a roll, then plays it while the turtle
+;   slides along the roll, like the reading head of the piano.
+;
+; HOW TO USE
+;   Press Run with the sound on. Change :tempo (beats per minute) to
+;   play it faster or slower. Notes are written as a letter and an
+;   octave number, like e4 (the E above middle C) or g3.
+;
+; CONCEPTS YOU WILL LEARN
+;   * every note has a number: middle C (c4) is 60, A above it (a4) is 69
+;   * frequency = 440 * 2 to the power (n - 69) / 12
+;   * splitting a word with FIRST and BUTFIRST to read the letter and octave
+;   * drawing the same data in two ways: as pictures and as sound
+;
+; THINGS TO TRY
+;   * Change the tempo to 60 and then to 200.
+;   * Raise the whole tune an octave by adding 12 to every note number
+;     inside FREQ.
+;   * Write another tune in the same form and draw its roll.
+; ============================================================
+
+make "tempo 120
+
+; The tune as [note beats] pairs.
+make "tune [[e4 1] [e4 1] [f4 1] [g4 1] [g4 1] [f4 1] [e4 1] [d4 1]
+            [c4 1] [c4 1] [d4 1] [e4 1] [e4 1.5] [d4 0.5] [d4 2]
+            [e4 1] [e4 1] [f4 1] [g4 1] [g4 1] [f4 1] [e4 1] [d4 1]
+            [c4 1] [c4 1] [d4 1] [e4 1] [d4 1.5] [c4 0.5] [c4 2]]
+
+; Where each letter sits inside an octave, counting half steps from C.
+pprop "step "c 0  pprop "step "d 2  pprop "step "e 4  pprop "step "f 5
+pprop "step "g 7  pprop "step "a 9  pprop "step "b 11
+
+; The note number of a name like e4: the letter's step plus 12 for
+; every octave. The +12 makes c4 come out as 60, the usual MIDI number.
+to notenum :name
+  output (gprop "step first :name) + 12 * (butfirst :name) + 12
+end
+
+to freq :name
+  output 440 * power 2 ((notenum :name) - 69) / 12
+end
+
+; One beat in milliseconds: 60000 ms in a minute shared among the beats.
+to beat.ms
+  output 60000 / :tempo
+end
+
+; Each beat is 22 steps wide on the roll, each half step 14 steps tall.
+to roll.x :beats
+  output -340 + 22 * :beats
+end
+to roll.y :name
+  output 14 * ((notenum :name) - 64)
+end
+
+to draw.roll
+  localmake "t 0
+  foreach :tune [
+    penup setxy roll.x :t (roll.y first ?) - 6 setheading 90 pendown
+    filled (list 40 + 30 * ((notenum first ?) - 60) 90 200) ~
+      [repeat 2 [fd 22 * (last ?) - 3 lt 90 fd 12 lt 90]]
+    make "t :t + last ?
+  ]
+end
+
+to play.roll
+  localmake "t 0
+  penup setheading 90 showturtle
+  foreach :tune [
+    setxy roll.x :t (roll.y first ?) + 20
+    sound (list freq first ? (last ?) * beat.ms)
+    make "t :t + last ?
+  ]
+  hideturtle
+end
+
+clearscreen
+setbackground [245 235 210]
+setpencolor [180 160 130]
+; faint lines mark each note of the C major scale
+foreach [c4 d4 e4 f4 g4] [
+  penup setxy -360 roll.y ? pendown setheading 90 fd 720
+  penup setxy -390 (roll.y ?) - 5 pendown label ?
+]
+draw.roll
+play.roll

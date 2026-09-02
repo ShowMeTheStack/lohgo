@@ -1,0 +1,76 @@
+; ============================================================
+; TITLE:    My First Scale
+; CATEGORY: Music & Sound
+; LEVEL:    Beginner
+; TAGS:     tone, scale, staircase, repeat
+; SUMMARY:  Plays the C major scale up and down with TONE while the turtle climbs a staircase of colored steps.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle builds a staircase, one colored step for each note of
+;   the C major scale: do re mi fa sol la ti do. Each step plays its
+;   note as it is drawn. Then the scale comes back down, and the
+;   turtle walks down the stairs it built.
+;
+; HOW TO USE
+;   Press Run and turn your sound on. Change the number in
+;   "make "beat 300" to play faster or slower.
+;
+; CONCEPTS YOU WILL LEARN
+;   * TONE plays one note: a frequency in hertz and a length in milliseconds
+;   * a list can hold the numbers of a scale so a loop can walk through it
+;   * FOREACH runs the same instructions for every item of a list
+;   * higher frequency means higher pitch
+;
+; THINGS TO TRY
+;   * Make the beat 150 for a fast scale, or 600 for a slow one.
+;   * Swap the list for [262 294 330 392 440 523], a five-note scale
+;     that sounds a little like a folk tune.
+;   * Make the steps taller so the staircase fills the screen.
+; ============================================================
+
+; The frequencies of the C major scale, from middle C up to the next C.
+; Each number is how many times per second the air shakes.
+make "scale [262 294 330 349 392 440 494 523]
+
+; How long each note lasts, in milliseconds (1000 is one second).
+make "beat 300
+
+; Colors for the eight steps, one for each note.
+make "colors [4 14 6 2 3 1 13 5]
+
+; Draw one step as a filled box, then move to the top right corner of
+; it, ready for the next step.
+to stair :c
+  filled :c [repeat 2 [fd 30 rt 90 fd 60 rt 90]]
+  fd 30 rt 90 fd 60 lt 90
+end
+
+to climb
+  foreach :scale [
+    stair item # :colors
+    tone ? :beat
+  ]
+end
+
+; Going down, we play the list backwards. The turtle steps down too,
+; without drawing, so you can follow it with your eyes.
+to descend
+  penup
+  foreach reverse :scale [
+    tone ? :beat
+    lt 90 fd 60 rt 90 bk 30
+  ]
+  pendown
+end
+
+clearscreen
+setbackground [250 245 230]
+penup setxy -240 -150 pendown
+climb
+wait 30
+descend
+penup setxy -110 160 pendown
+setpencolor 0
+label [do re mi fa sol la ti do]
+hideturtle

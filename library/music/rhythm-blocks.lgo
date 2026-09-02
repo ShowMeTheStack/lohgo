@@ -1,0 +1,78 @@
+; ============================================================
+; TITLE:    Rhythm Blocks
+; CATEGORY: Music & Sound
+; LEVEL:    Beginner
+; TAGS:     rhythm, fractions, beats, drawing
+; SUMMARY:  Shows whole, half, quarter and eighth notes as blocks of different widths and claps out rhythms built from them.
+; ============================================================
+;
+; WHAT IT DOES
+;   In music, how long a note lasts matters as much as how high it
+;   is. A whole note lasts 4 beats, a half note 2, a quarter note 1
+;   and an eighth note half a beat. Each row on the screen is one bar
+;   of 4 beats, built from blocks whose width is their length. As a
+;   row is drawn, you hear it clapped.
+;
+; HOW TO USE
+;   Press Run with the sound on and clap along. Make your own rhythm
+;   by writing a list of the letters w h q e and giving it to ROW.
+;
+; CONCEPTS YOU WILL LEARN
+;   * beats as numbers: 4, 2, 1 and 0.5
+;   * every row adds up to 4 beats, like fractions that make a whole
+;   * CASE chooses a value by matching a word
+;   * a short tick followed by silence makes a clap sound
+;
+; THINGS TO TRY
+;   * Write a row with eight eighth notes: [e e e e e e e e].
+;   * Change :beat to make the whole program faster or slower.
+;   * Use a different tone for half notes so you can hear them.
+; ============================================================
+
+make "beat 500        ; one beat is half a second
+
+; How many beats each letter stands for.
+to beats :letter
+  output case :letter [[[w] 4] [[h] 2] [[q] 1] [[e] 0.5] [else 0]]
+end
+
+; Every kind of note has its own color, so they are easy to tell apart.
+to note.color :letter
+  output case :letter [[[w] 4] [[h] 14] [[q] 2] [[e] 1] [else 0]]
+end
+
+; One clap: a 40 millisecond click, then silence for the rest of the note.
+to clap :b
+  localmake "ms :b * :beat
+  sound (list 900 40 0 :ms - 40)
+end
+
+; Draw a row of blocks starting at height :y and clap each block.
+to row :pattern :y
+  localmake "x -300
+  foreach :pattern [
+    localmake "w 150 * beats ?
+    penup setxy :x :y setheading 0 pendown
+    setpencolor 7
+    filled note.color ? [repeat 2 [fd 60 rt 90 fd :w - 6 rt 90]]
+    penup setxy :x + 6 :y + 20 pendown
+    setpencolor 0
+    label ?
+    clap beats ?
+    make "x :x + :w
+  ]
+end
+
+clearscreen
+hideturtle
+setbackground [235 235 245]
+setlabelheight 24
+penup setxy -300 260 pendown
+label [w = 4 beats   h = 2   q = 1   e = 1/2]
+row [w] 170
+row [h h] 100
+row [q q q q] 30
+row [e e e e e e e e] -40
+row [q q h] -110
+row [e e q e e q] -180
+row [h e e q] -250

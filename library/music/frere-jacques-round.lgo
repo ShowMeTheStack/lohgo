@@ -1,0 +1,107 @@
+; ============================================================
+; TITLE:    Frere Jacques in Three Voices
+; CATEGORY: Music & Sound
+; LEVEL:    Advanced
+; TAGS:     round, polyphony, lists, chiptune, multiple turtles
+; SUMMARY:  Sings Frere Jacques as a three-voice round on a one-note speaker by switching between the voices very fast, the trick old game consoles used.
+; ============================================================
+;
+; WHAT IT DOES
+;   In a round, a second singer starts the song when the first one
+;   reaches the second line, and a third starts after that. Our
+;   speaker can only play one note at a time, so how can three voices
+;   sing together? The program chops time into tiny slices of 20
+;   milliseconds and gives them to the voices in turn. Your ear blends
+;   the fast flicker into a chord. Three turtles, one per voice, draw
+;   the melody line in their own lane as they sing.
+;
+; HOW TO USE
+;   Press Run with the sound on. Change :slice to hear how the trick
+;   works: at 80 or more you hear the voices taking turns, at 20 they
+;   blur together.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a song can be expanded into a list with one entry per time step
+;   * ITEM with a computed index finds what each voice sings right now
+;   * building one long SOUND list with a loop, then playing it at once
+;   * TELL, ASK and SETTURTLE for several turtles
+;
+; THINGS TO TRY
+;   * Add a fourth voice by changing :voices to 4 (and give it a lane).
+;   * Make the round start every 8 steps instead of 16. Does it still
+;     sound good?
+;   * Swap the tune for Row Row Row Your Boat.
+; ============================================================
+
+make "voices 3
+make "slice 20          ; milliseconds per slice of time
+make "unit 240          ; one eighth note, in milliseconds
+make "gap 16            ; each voice starts this many eighths later
+
+pprop "hz "g3 196  pprop "hz "c4 262  pprop "hz "d4 294  pprop "hz "e4 330
+pprop "hz "f4 349  pprop "hz "g4 392  pprop "hz "a4 440
+
+; The tune as [note eighths] pairs, every line sung twice.
+make "tune [[c4 2] [d4 2] [e4 2] [c4 2] [c4 2] [d4 2] [e4 2] [c4 2]
+            [e4 2] [f4 2] [g4 4] [e4 2] [f4 2] [g4 4]
+            [g4 1] [a4 1] [g4 1] [f4 1] [e4 2] [c4 2]
+            [g4 1] [a4 1] [g4 1] [f4 1] [e4 2] [c4 2]
+            [c4 2] [g3 2] [c4 4] [c4 2] [g3 2] [c4 4]]
+
+; Expand [[c4 2] [d4 1]] into [c4 c4 d4]: one note name per eighth.
+to expand :pairs
+  if emptyp :pairs [output []]
+  output sentence (cascade last first :pairs [lput first first :pairs ?] []) ~
+    expand butfirst :pairs
+end
+
+make "steps expand :tune
+make "length count :steps
+
+; What voice :v sings at time :t, or the empty list if it is silent.
+to sings :v :t
+  localmake "i :t - :gap * (:v - 1)
+  if or :i < 1 :i > :length [output []]
+  output item :i :steps
+end
+
+; All the notes sounding at time :t.
+to chord :t
+  localmake "out []
+  for [v 1 :voices] [
+    localmake "n sings :v :t
+    if not emptyp :n [make "out lput :n :out]
+  ]
+  output :out
+end
+
+; Turn a chord into a SOUND list that flickers between its notes.
+to flicker :notes
+  if emptyp :notes [output (list 0 :unit)]
+  localmake "out []
+  repeat int :unit / :slice [
+    make "out sentence :out list (gprop "hz item 1 + remainder repcount count :notes :notes) :slice
+  ]
+  output :out
+end
+
+; Each turtle draws its voice in its own lane; higher notes higher up.
+to draw.voices :t
+  for [v 1 :voices] [
+    localmake "n sings :v :t
+    if not emptyp :n [
+      ask :v - 1 [setxy -380 + 11 * (:t - :gap * (:v - 1)) (200 - 150 * (:v - 1)) + (gprop "hz :n) / 4 - 70]
+    ]
+  ]
+end
+
+clearscreen
+setbackground [20 20 35]
+tell [0 1 2]
+each [penup setxy -380 (200 - 150 * who) + 65 - 70 setheading 90 setpensize 3
+      setpencolor item who + 1 [14 3 5] pendown]
+setturtle 0
+for [t 1 :length + :gap * (:voices - 1)] [
+  draw.voices :t
+  sound flicker chord :t
+]

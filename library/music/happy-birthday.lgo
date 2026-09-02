@@ -1,0 +1,92 @@
+; ============================================================
+; TITLE:    Happy Birthday Cake
+; CATEGORY: Music & Sound
+; LEVEL:    Beginner
+; TAGS:     song, lyrics, data list, drawing
+; SUMMARY:  Draws a birthday cake, then sings Happy Birthday syllable by syllable, lighting a candle at the end of each line.
+; ============================================================
+;
+; WHAT IT DOES
+;   A layered cake with four candles appears. Then the song plays.
+;   Every note comes with its word, which is typed out in the text
+;   window like karaoke. When a line of the song ends, one candle
+;   gets its flame.
+;
+; HOW TO USE
+;   Press Run with the sound on. Put a name in "make "name" to sing
+;   to someone you know.
+;
+; CONCEPTS YOU WILL LEARN
+;   * each note in the song is a list of three things: word, note, beats
+;   * ITEM picks out the first, second or third thing
+;   * TYPE prints without starting a new line, PRINT ends the line
+;   * the word "/" in the data marks the end of a line of the song
+;   * a placeholder word in data can be replaced while the program runs
+;
+; THINGS TO TRY
+;   * Change the name to your own.
+;   * Add a fifth candle (you will need to move the others a little).
+;   * Make the cake colors match your favorite flavor.
+; ============================================================
+
+make "name "Sam
+
+; Notes we need, with "c5" meaning the C one octave above middle C.
+pprop "hz "g 392  pprop "hz "a 440  pprop "hz "b 494
+pprop "hz "c5 523 pprop "hz "d5 587 pprop "hz "e5 659
+pprop "hz "f5 698 pprop "hz "g5 784
+
+; Each entry is [word note beats]. A "/" ends a line of the song.
+; The word NAME is a placeholder: SING swaps in the real name.
+make "song [[Hap g 0.75] [py g 0.25] [birth a 1] [day g 1] [to c5 1] [you b 2] /
+            [Hap g 0.75] [py g 0.25] [birth a 1] [day d5 1] [to g 1] [you c5 2] /
+            [Hap g 0.75] [py g 0.25] [birth g5 1] [day e5 1] [dear c5 1]
+              [NAME b 1] [! a 2] /
+            [Hap f5 0.75] [py f5 0.25] [birth e5 1] [day c5 1] [to d5 1] [you c5 2] /]
+
+; Swap the placeholder for the birthday person's name.
+to lyric :w
+  if :w = "NAME [output :name]
+  output :w
+end
+
+; A box of the given size, filled in color, with its bottom left
+; corner where the turtle stands.
+to box :w :h :c
+  filled :c [repeat 2 [fd :h rt 90 fd :w rt 90]]
+end
+
+to cake
+  penup setxy -150 -200 setheading 0 pendown
+  box 300 90 8
+  penup setxy -110 -110 pendown
+  box 220 70 12
+  ; four candles on the top layer
+  foreach [-75 -25 25 75] [penup setxy ? -40 pendown box 10 50 1]
+end
+
+; A flame is a small orange diamond on top of candle number :n.
+to flame :n
+  penup setxy (item :n [-70 -20 30 80]) 12 setheading 330 pendown
+  filled 14 [repeat 2 [fd 14 rt 60 fd 14 rt 120]]
+end
+
+to sing
+  localmake "line 0
+  foreach :song [
+    ifelse ? = "/ [
+      print "
+      make "line :line + 1
+      flame :line
+    ] [
+      type word lyric item 1 ? "| |
+      sound (list gprop "hz item 2 ? 450 * item 3 ?)
+    ]
+  ]
+end
+
+clearscreen
+hideturtle
+setbackground [255 235 240]
+cake
+sing

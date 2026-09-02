@@ -1,0 +1,81 @@
+; ============================================================
+; TITLE:    Mouse Theremin
+; CATEGORY: Music & Sound
+; LEVEL:    Intermediate
+; TAGS:     mouse, buttonp, mousepos, pitch, exponent
+; SUMMARY:  A theremin you play by holding the mouse button and sliding left and right; the pitch glides smoothly and the path is painted in color.
+; ============================================================
+;
+; WHAT IT DOES
+;   A theremin is an electronic instrument played without touching
+;   it: moving your hand closer raises the pitch. Here the mouse is
+;   your hand. Hold the left button and slide: further right is
+;   higher. Moving up the screen makes the notes shorter and choppier,
+;   moving down makes them smooth. Your gestures are painted as a
+;   trail whose color shows the pitch.
+;
+; HOW TO USE
+;   Press Run, then hold down the left mouse button in the turtle
+;   world and move around. Let go to stop the sound. Press Stop when
+;   you are finished. Change :snap to "true to land only on the notes
+;   of a scale.
+;
+; CONCEPTS YOU WILL LEARN
+;   * BUTTONP tells if a mouse button is held down right now
+;   * a loop that checks the mouse many times a second (polling)
+;   * pitch grows exponentially: each octave doubles the frequency
+;   * ROUND to snap a smooth value to the nearest whole step
+;
+; THINGS TO TRY
+;   * Set :snap to "true and play a tune.
+;   * Make the range three octaves by changing the 2 in PITCH.AT to 3.
+;   * Make the trail wider when the notes are longer.
+; ============================================================
+
+make "snap "false
+make "low 220          ; the pitch at the far left of the screen
+
+; Turn an x position into a frequency. Across the 800 step width we
+; climb 2 octaves; each octave is 12 half steps.
+to pitch.at :x
+  localmake "steps 24 * (:x + 400) / 800
+  if :snap [make "steps round :steps]
+  output :low * power 2 :steps / 12
+end
+
+; Higher up the screen means shorter, choppier notes.
+to length.at :y
+  output 30 + (300 - :y) / 6
+end
+
+; Hue from pitch: low notes are red, high notes blue.
+to color.at :x
+  localmake "k (:x + 400) / 800
+  output (list 255 * (1 - :k) 80 255 * :k)
+end
+
+to draw.guides
+  setpencolor [70 70 90]
+  ; one faint line per octave
+  foreach [-400 0 400] [penup setxy ? -300 pendown setxy ? 300]
+  penup setxy -390 270 pendown setpencolor 7
+  label [Hold the left button and slide: right is higher, up is choppier]
+end
+
+to play
+  localmake "p mousepos
+  if not buttonp [penup setpos :p wait 2 stop]
+  setpencolor color.at first :p
+  setpensize 6 pendown setpos :p
+  tone pitch.at first :p length.at last :p
+  sound list 0 15
+end
+
+clearscreen
+hideturtle
+setbackground [15 15 25]
+setlabelheight 16
+draw.guides
+penup
+print [Hold the left mouse button down in the turtle world and move.]
+forever [play]
