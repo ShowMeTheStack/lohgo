@@ -1,0 +1,114 @@
+; ============================================================
+; TITLE:    High Score Table
+; CATEGORY: Files & Data
+; LEVEL:    Intermediate
+; TAGS:     files, sorting, game, podium
+; SUMMARY:  A number guessing game that keeps the five best scores in a file and draws a winners' podium.
+; ============================================================
+;
+; WHAT IT DOES
+;   You get six guesses to find a number from 1 to 20. Fewer guesses
+;   means more points. Your score is slotted into the table kept in
+;   /projects/highscores.txt, the table is cut down to the top five
+;   and written back, and the top three stand on a podium.
+;
+; HOW TO USE
+;   Run it, type your name, then type guesses. Run it again to see
+;   whether you made it onto the table.
+;
+; CONCEPTS YOU WILL LEARN
+;   * reading a whole file into a list, changing it, writing it back
+;   * keeping a list sorted by inserting each new item in its place
+;   * OPENWRITE wipes a file clean, which is what we want here
+;
+; THINGS TO TRY
+;   * Keep the top 10 instead of the top 5
+;   * Make the secret number go up to 50 and allow 8 guesses
+;   * Add the date to each line of the table
+; ============================================================
+
+make "table.file "/projects/highscores.txt
+
+to load.table
+  ; A fresh disk has no table yet: that is just an empty list.
+  if not filep :table.file [output []]
+  localmake "rows []
+  openread :table.file
+  setread :table.file
+  while [not eofp] [
+    localmake "row readlist
+    if (count :row) = 2 [make "rows lput :row :rows]
+  ]
+  setread []
+  close :table.file
+  output :rows
+end
+
+to save.table :rows
+  openwrite :table.file
+  setwrite :table.file
+  foreach :rows [print ?]
+  setwrite []
+  close :table.file
+end
+
+; Put [score name] into an already sorted list, biggest score first.
+to insert.row :row :rows
+  if emptyp :rows [output (list :row)]
+  if (first :row) > (first first :rows) [output fput :row :rows]
+  output fput first :rows insert.row :row butfirst :rows
+end
+
+to top :n :rows
+  if or (:n = 0) (emptyp :rows) [output []]
+  output fput first :rows top :n - 1 butfirst :rows
+end
+
+to play
+  localmake "secret 1 + random 20
+  localmake "tries 0
+  print [I am thinking of a number from 1 to 20. You have 6 guesses.]
+  repeat 6 [
+    type "|Guess: |
+    localmake "g readword
+    if emptyp :g [print [You gave up.] output 0]
+    ifelse numberp :g [
+      make "tries :tries + 1
+      if :g = :secret [print (sentence [Got it in] :tries [guesses!]) output 70 - 10 * :tries]
+      print ifelse :g < :secret [[Too low.]] [[Too high.]]
+    ] [
+      print [That is not a number, so it does not count.]
+    ]
+  ]
+  print (sentence [Out of guesses. It was] :secret)
+  output 0
+end
+
+to podium :rows
+  clearscreen hideturtle
+  setlabelheight 18
+  ; Second place stands on the left, first in the middle, third on the right.
+  if (count :rows) > 1 [block -230 120 15 item 2 :rows]
+  if (count :rows) > 0 [block -80 180 6 item 1 :rows]
+  if (count :rows) > 2 [block 70 80 8 item 3 :rows]
+  penup setxy -120 250 setpencolor 1 label [Hall of Fame]
+end
+
+to block :x :height :color :row
+  penup setxy :x -200 setheading 0 pendown
+  setpencolor 0
+  filled :color [repeat 2 [fd :height rt 90 fd 150 rt 90]]
+  penup setxy :x + 20 -200 + :height + 15
+  label (sentence last :row first :row)
+end
+
+print [What is your name?]
+make "name readword
+if emptyp :name [make "name "Mystery]
+make "score play
+print (sentence :name [scored] :score [points.])
+make "rows top 5 insert.row (list :score :name) load.table
+save.table :rows
+print [The table is now:]
+foreach :rows [print (sentence # "- last ? first ?)]
+podium :rows

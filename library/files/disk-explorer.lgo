@@ -1,0 +1,118 @@
+; ============================================================
+; TITLE:    Disk Explorer
+; CATEGORY: Files & Data
+; LEVEL:    Intermediate
+; TAGS:     files, folders, mkdir, chdir, directory tree
+; SUMMARY:  Builds a small set of folders and files, lists them with FILES and FOLDERS, and draws the folder tree.
+; ============================================================
+;
+; WHAT IT DOES
+;   Makes a folder /projects/school with a few folders and files inside
+;   (only the ones that do not exist yet). Then it walks through every
+;   folder with CHDIR and POPDIR, asking FILES and FOLDERS what is in
+;   each one, prints the listing like a real file manager, and draws
+;   the whole thing as a tree: folders are yellow, files are blue.
+;
+; HOW TO USE
+;   Press Run. Look at /projects/school in the file panel and compare.
+;   Add your own files there and run it again: they appear in the tree.
+;
+; CONCEPTS YOU WILL LEARN
+;   * MKDIR, CHDIR, POPDIR and CURRENTDIR
+;   * FILES and FOLDERS list what is in the current folder
+;   * a recursive procedure for a recursive thing, a folder tree
+;
+; THINGS TO TRY
+;   * Add another level of folders
+;   * Print the size of each file by reading it and counting lines
+; ============================================================
+
+to make.folder :path
+  ; MKDIR complains if the folder is already there, so check first.
+  if not memberp last split.path :path folders.in :path [mkdir :path]
+end
+
+to folders.in :path
+  chdir parent :path
+  localmake "f folders
+  popdir
+  output :f
+end
+
+to split.path :path
+  ; "/projects/school  outputs  [projects school]
+  output parse map [ifelse equalp ? "/ ["| |] [?]] :path
+end
+
+to parent :path
+  localmake "parts butlast split.path :path
+  output reduce [(word ?1 "/ ?2)] fput "|| :parts
+end
+
+to make.note :path :text
+  if filep :path [stop]
+  openwrite :path
+  setwrite :path
+  print :text
+  setwrite []
+  close :path
+end
+
+to build
+  make.folder "/projects/school
+  make.folder "/projects/school/math
+  make.folder "/projects/school/art
+  make.folder "/projects/school/art/pictures
+  make.note "/projects/school/timetable.txt [Monday: math, art]
+  make.note "/projects/school/math/homework.txt [page 12, all of it]
+  make.note "/projects/school/math/marks.txt [9 8 10]
+  make.note "/projects/school/art/ideas.txt [paint a dragon]
+  make.note "/projects/school/art/pictures/sky.txt [blue, mostly]
+end
+
+; Print and draw the folder we are in, then go into each subfolder.
+; :X :Y is where to draw this folder's name; outputs the next free Y.
+to explore :name :depth :x :y
+  print (word indent :depth :name "/)
+  box :x :y :name 6
+  localmake "next :y - 30
+  foreach files [
+    print (word indent :depth + 1 ?)
+    link :x :y :x + 40 :next
+    box :x + 40 :next ? 11
+    make "next :next - 30
+  ]
+  foreach folders [
+    link :x :y :x + 40 :next
+    chdir ?
+    make "next explore ? :depth + 1 :x + 40 :next
+    popdir
+  ]
+  output :next
+end
+
+to indent :n
+  if :n = 0 [output "]
+  output word "|   | indent :n - 1
+end
+
+; A line from under the parent's box to the middle of the left edge
+; of the child's box. Each box hangs down 20 steps from its :y.
+to link :x1 :y1 :x2 :y2
+  penup setxy :x1 + 10 :y1 - 20 pendown setpencolor 15
+  setxy :x1 + 10 :y2 - 10 setxy :x2 :y2 - 10
+end
+
+to box :x :y :text :color
+  penup setxy :x :y setheading 90 setpencolor 0
+  filled :color [repeat 2 [fd 12 + 9 * count :text rt 90 fd 20 rt 90]]
+  setxy :x + 5 :y - 15 label :text
+end
+
+build
+clearscreen hideturtle setlabelheight 13
+chdir "/projects/school
+print (sentence [Now in] currentdir)
+make "bottom explore "school 0 -200 250
+popdir
+print (sentence [Back in] currentdir)

@@ -1,0 +1,82 @@
+; ============================================================
+; TITLE:    Turtle Flight Recorder
+; CATEGORY: Files & Data
+; LEVEL:    Intermediate
+; TAGS:     files, pos, random walk, distance
+; SUMMARY:  A wandering turtle writes its position to a log file, which is then read back to retrace and measure the trip.
+; ============================================================
+;
+; WHAT IT DOES
+;   Like the flight recorder in an airplane, this program keeps a log.
+;   A turtle wanders around the screen taking random steps, and after
+;   every step it writes its position and heading into
+;   /projects/turtle-log.txt. Then a second turtle reads the log and
+;   retraces the trip in red, adding up how far the first one went and
+;   marking the point farthest from home.
+;
+; HOW TO USE
+;   Press Run. Open /projects/turtle-log.txt afterwards to read the
+;   numbers the turtle wrote down.
+;
+; CONCEPTS YOU WILL LEARN
+;   * POS and HEADING tell you where the turtle is
+;   * writing numbers to a file and reading them back as lists
+;   * DISTANCE to measure between two points
+;   * two turtles with SETTURTLE
+;
+; THINGS TO TRY
+;   * Make the walk longer, or the steps bigger
+;   * Log the pen color too, and replay in the same colors
+;   * Find the leftmost and rightmost points of the trip
+; ============================================================
+
+make "log "/projects/turtle-log.txt
+
+to wander :steps
+  openwrite :log
+  setturtle 0 setpencolor 15 setpensize 1
+  repeat :steps [
+    right (random 91) - 45
+    forward 10 + random 30
+    ; Turn back toward the middle if we get near the edge.
+    if (distance [0 0]) > 250 [setheading towards [0 0]]
+    setwrite :log
+    ; Each line looks like: 12.3 -45.6 270
+    print (sentence round xcor round ycor round heading)
+    setwrite []
+  ]
+  close :log
+end
+
+to retrace
+  localmake "trip 0
+  localmake "far 0
+  localmake "farthest [0 0]
+  setturtle 1 setshape "triangle penup home pendown
+  setpencolor 4 setpensize 3
+  openread :log
+  setread :log
+  while [not eofp] [
+    localmake "line readlist
+    localmake "spot list first :line item 2 :line
+    make "trip :trip + distance :spot
+    setpos :spot
+    setheading last :line
+    if (distance [0 0]) > :far [make "far distance [0 0] make "farthest :spot]
+    wait 2
+  ]
+  setread []
+  close :log
+  ; a yellow dot at the farthest point
+  penup setpos :farthest setpencolor 6 pendown
+  repeat 36 [fd 3 rt 10]
+  print (sentence [Total trip:] round :trip [steps.])
+  print (sentence [Farthest from home:] round :far [steps, at] :farthest)
+end
+
+clearscreen
+setbackground 0
+wander 60
+print [The log is written. Retracing it now...]
+retrace
+setturtle 0 hideturtle

@@ -1,0 +1,90 @@
+; ============================================================
+; TITLE:    Visit Counter
+; CATEGORY: Files & Data
+; LEVEL:    Beginner
+; TAGS:     files, counter, tally marks, filep
+; SUMMARY:  Remembers how many times it has been run by keeping a number in a file, and draws the count as tally marks.
+; ============================================================
+;
+; WHAT IT DOES
+;   Variables are forgotten when Logo stops, but files are not. This
+;   program reads a number from /projects/visits.txt, adds one, and
+;   writes it back. Then it draws that many tally marks, in groups of
+;   five with a line across, the way you count on paper.
+;
+; HOW TO USE
+;   Press Run a few times and watch the tally grow. To reset it, type
+;   ERASEFILE "/projects/visits.txt in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FILEP to check whether a file exists
+;   * reading one number, changing it, writing it back
+;   * INT and REMAINDER to split a count into groups of five
+;
+; THINGS TO TRY
+;   * Also store the date of the last visit and print it
+;   * Draw a star for every 10 visits instead of tally marks
+; ============================================================
+
+make "counter "/projects/visits.txt
+
+to read.count
+  ; No file yet means nobody has run the program before.
+  if not filep :counter [output 0]
+  openread :counter
+  setread :counter
+  localmake "n readword
+  setread []
+  close :counter
+  ; If someone typed something strange into the file, start again at 0.
+  if not numberp :n [output 0]
+  output :n
+end
+
+to write.count :n
+  openwrite :counter
+  setwrite :counter
+  print :n
+  setwrite []
+  close :counter
+end
+
+to stick
+  pendown fd 60 penup bk 60
+end
+
+; Four upright sticks and a slanted fifth one across them.
+to gate :sticks
+  localmake "start pos
+  repeat min :sticks 4 [stick rt 90 fd 14 lt 90]
+  if :sticks = 5 [
+    setpos :start bk 5 lt 90 fd 8 rt 90
+    setheading 60 pendown fd 80 penup setheading 0
+  ]
+  setpos :start rt 90 fd 80 lt 90
+end
+
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+to tally :n
+  clearscreen hideturtle setpensize 4 setpencolor 1
+  penup setxy -360 160
+  localmake "groups 0
+  repeat int :n / 5 [
+    gate 5
+    make "groups :groups + 1
+    ; eight gates fit on a row, then start a new row
+    if (remainder :groups 8) = 0 [setxy -360 ycor - 100]
+  ]
+  if (remainder :n 5) > 0 [gate remainder :n 5]
+  penup setxy -360 230 setpencolor 0 setlabelheight 24
+  label (sentence [This program has been run] :n ifelse :n = 1 [[time]] [[times]])
+end
+
+make "visits 1 + read.count
+write.count :visits
+print (sentence [Visit number] :visits)
+if :visits = 1 [print [Welcome! Press Run again and I will remember you.]]
+tally :visits

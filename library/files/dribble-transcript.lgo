@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Lesson Transcript
+; CATEGORY: Files & Data
+; LEVEL:    Beginner
+; TAGS:     dribble, nodribble, files, times tables
+; SUMMARY:  Uses DRIBBLE to keep a copy of everything printed during a short times-table session, then reads the copy back.
+; ============================================================
+;
+; WHAT IT DOES
+;   DRIBBLE "/projects/transcript.txt starts a recording: from then on
+;   everything that appears in the command center is also written into
+;   that file. The program prints a times table and asks two questions
+;   while recording, stops with NODRIBBLE, and then reads the
+;   transcript to count its lines and print it back with line numbers.
+;
+; HOW TO USE
+;   Press Run and answer the two sums. Afterwards open
+;   /projects/transcript.txt in the file panel. Teachers can use DRIBBLE
+;   to keep a record of a whole lesson at the keyboard.
+;
+; CONCEPTS YOU WILL LEARN
+;   * DRIBBLE and NODRIBBLE
+;   * the difference between a transcript, which copies the screen,
+;     and SETWRITE, which sends output only to the file
+;
+; THINGS TO TRY
+;   * Dribble your own work in the command center for a few minutes
+;   * Make the session ask five questions instead of two
+; ============================================================
+
+make "transcript "/projects/transcript.txt
+
+to table :n
+  for [i 1 10] [print (sentence :i "x :n "= :i * :n)]
+end
+
+to ask.sum :a :b
+  print (sentence [What is] :a "x :b "?)
+  localmake "reply readword
+  ifelse equalp :reply :a * :b [print [Correct.]] [print (sentence [The answer is] :a * :b)]
+end
+
+to number.lines :file
+  localmake "n 0
+  openread :file
+  setread :file
+  while [not eofp] [
+    make "n :n + 1
+    ; READWORD keeps the line exactly as the transcript stored it.
+    print (sentence :n "| | readword)
+  ]
+  setread []
+  close :file
+  output :n
+end
+
+; If an earlier run left a transcript behind, we start a fresh one.
+if filep :transcript [erasefile :transcript]
+dribble :transcript
+print [=== Times table session ===]
+table 7
+ask.sum 6 7
+ask.sum 8 7
+print [=== End of session ===]
+nodribble
+
+print []
+print [Here is what the transcript file holds:]
+make "count number.lines :transcript
+print (sentence [The transcript has] :count [lines.])

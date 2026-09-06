@@ -1,0 +1,106 @@
+; ============================================================
+; TITLE:    Mood Diary
+; CATEGORY: Files & Data
+; LEVEL:    Beginner
+; TAGS:     files, openappend, readlist, bar chart
+; SUMMARY:  Writes down how you feel each day in a file and draws a bar chart of your moods.
+; ============================================================
+;
+; WHAT IT DOES
+;   Asks how you feel from 1 to 5 and what happened today, then adds
+;   one line to /projects/mood-diary.txt. Afterwards it reads the whole
+;   diary back and draws one colored bar for each day you wrote.
+;
+; HOW TO USE
+;   Press Run and answer the two questions in the command center.
+;   Run it again tomorrow (or right away) and the chart grows, because
+;   the file stays on the disk between runs.
+;
+; CONCEPTS YOU WILL LEARN
+;   * OPENAPPEND adds to the end of a file instead of wiping it
+;   * SETWRITE sends PRINT into the file, SETWRITE [] brings it back
+;   * reading every line with WHILE [NOT EOFP] [...]
+;   * FILEP to find out if a file exists yet
+;
+; THINGS TO TRY
+;   * Change the bar colors in MOOD.COLOR
+;   * Show only the last 5 days instead of the last 10
+;   * Erase the diary with ERASEFILE :DIARY and start over
+; ============================================================
+
+make "diary "/projects/mood-diary.txt
+
+; TIME outputs something like [Thu Oct 15 14:03:11 2026].
+; A diary only needs the month and the day, joined into one word.
+to today
+  output (word item 2 time "- item 3 time)
+end
+
+to ask.mood
+  print [How do you feel today? Type a number: 1 is sad, 5 is happy.]
+  localmake "m readword
+  ; An empty answer means the person just pressed Enter.
+  if emptyp :m [print [I will write down a 3.] output 3]
+  if not numberp :m [print [That is not a number from 1 to 5.] output ask.mood]
+  if or (:m < 1) (:m > 5) [print [Please pick 1, 2, 3, 4 or 5.] output ask.mood]
+  output int :m
+end
+
+to add.entry :mood :words
+  ; OPENAPPEND creates the file if it is missing, so a fresh disk is fine.
+  openappend :diary
+  setwrite :diary
+  ; One line per day: date, mood, then the words you typed.
+  print (sentence today :mood :words)
+  setwrite []
+  close :diary
+end
+
+to read.diary
+  ; Collect every line of the file into one big list of lists.
+  localmake "days []
+  openread :diary
+  setread :diary
+  while [not eofp] [
+    localmake "line readlist
+    if not emptyp :line [make "days lput :line :days]
+  ]
+  setread []
+  close :diary
+  output :days
+end
+
+to mood.color :m
+  output item :m [red orange yellow #90ee90 green]
+end
+
+to bar :x :entry
+  localmake "m item 2 :entry
+  penup setxy :x -200 setheading 0 pendown
+  setpencolor "black
+  filled mood.color :m [repeat 2 [fd :m * 70 rt 90 fd 50 rt 90]]
+  penup setxy :x -225 label first :entry
+  setxy :x + 18 -200 + :m * 70 + 8 label :m
+end
+
+to chart :days
+  clearscreen hideturtle
+  setlabelheight 12
+  ; Keep only the last 10 days so the bars always fit on the screen.
+  while [(count :days) > 10] [make "days butfirst :days]
+  localmake "x -330
+  foreach :days [bar :x ? make "x :x + 66]
+  penup setxy -330 230 setpencolor "#00008b setlabelheight 20
+  label [My mood diary]
+end
+
+if not filep :diary [print [This is your first entry. Starting a new diary file.]]
+make "mood ask.mood
+print [Write a few words about your day:]
+make "words readlist
+if not listp :words [make "words []]
+add.entry :mood :words
+make "all read.diary
+print (sentence [Your diary has] count :all [entries:])
+foreach :all [print ?]
+chart :all

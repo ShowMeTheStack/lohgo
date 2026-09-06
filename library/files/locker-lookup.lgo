@@ -1,0 +1,103 @@
+; ============================================================
+; TITLE:    Locker Lookup
+; CATEGORY: Files & Data
+; LEVEL:    Advanced
+; TAGS:     files, setreadpos, readpos, random access, fixed width
+; SUMMARY:  Jumps straight to any record in a file with SETREADPOS, because every record has exactly the same length.
+; ============================================================
+;
+; WHAT IT DOES
+;   A school has 20 lockers. The file /projects/lockers.txt holds one
+;   line per locker, and every line is padded with spaces to exactly
+;   22 characters. That means locker N always starts at character
+;   (N - 1) * 22, so the program can jump right to it with SETREADPOS
+;   instead of reading every line before it. The lockers are drawn and
+;   the one you ask for lights up.
+;
+; HOW TO USE
+;   Run it and type a locker number from 1 to 20. Type QUIT to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * fixed width records: padding text with spaces
+;   * SETREADPOS jumps, READPOS tells you where you are
+;   * random access versus reading a file from the start
+;
+; THINGS TO TRY
+;   * Make 40 lockers in two rows
+;   * Print READPOS after reading to see that it moved on by 22
+;   * Use OPENUPDATE and SETWRITEPOS to change one owner in place
+; ============================================================
+
+make "lockers "/projects/lockers.txt
+make "width 22
+
+to pad :w :n
+  if (count :w) >= :n [output :w]
+  output pad word :w "| | :n
+end
+
+to three.digits :n
+  if :n < 10 [output word "00 :n]
+  if :n < 100 [output word "0 :n]
+  output :n
+end
+
+to write.lockers
+  localmake "names [Ava Ben Cleo Dan Esme Finn Gus Hana Ian Jo Kai Lena Milo Nia Omar Pia Quin Rosa Sol Tess]
+  localmake "colors [red blue green yellow]
+  openwrite :lockers
+  setwrite :lockers
+  for [i 1 20] [
+    ; 3 + 1 + 10 + 1 + 6 = 21 characters, and PRINT adds a newline: 22.
+    print (word three.digits :i "| | pad item :i :names 10 "| | pad item 1 + remainder :i 4 :colors 6)
+  ]
+  setwrite []
+  close :lockers
+end
+
+to fetch :n
+  openread :lockers
+  setread :lockers
+  setreadpos (:n - 1) * :width
+  localmake "where readpos
+  localmake "record readlist
+  setread []
+  close :lockers
+  print (sentence [Jumped to character] :where [and read:] :record)
+  output :record
+end
+
+to locker.at :n
+  ; Lockers 1-10 on the top row, 11-20 underneath.
+  output list -300 + 60 * remainder :n - 1 10 ifelse :n <= 10 [40] [-120]
+end
+
+to draw.locker :n :color
+  penup setpos locker.at :n setheading 0 pendown setpencolor 0
+  filled :color [repeat 2 [fd 140 rt 90 fd 54 rt 90]]
+  penup setpos locker.at :n fd 120 rt 90 fd 18 label :n
+end
+
+to draw.all :lit
+  clearscreen hideturtle setlabelheight 14
+  for [i 1 20] [draw.locker :i ifelse :i = :lit [6] [15]]
+end
+
+to ask.loop
+  print []
+  print [Which locker? Type 1 to 20, or quit.]
+  localmake "a readword
+  if or emptyp :a memberp :a [quit q stop exit] [print [Bye.] stop]
+  ifelse numberp :a [
+    ifelse and :a >= 1 :a <= 20 [
+      localmake "r fetch int :a
+      print (sentence [Locker] first :r [belongs to] item 2 :r [and has a] item 3 :r [lock.])
+      draw.all int :a
+    ] [print [There are only 20 lockers.]]
+  ] [print [That is not a locker number.]]
+  ask.loop
+end
+
+if not filep :lockers [write.lockers]
+draw.all 0
+ask.loop

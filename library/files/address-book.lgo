@@ -1,0 +1,118 @@
+; ============================================================
+; TITLE:    Address Book
+; CATEGORY: Files & Data
+; LEVEL:    Intermediate
+; TAGS:     files, search, menu, substringp
+; SUMMARY:  A little address book on disk that you can add to, list and search.
+; ============================================================
+;
+; WHAT IT DOES
+;   Keeps friends in /projects/addresses.txt, one friend per line,
+;   written as a list: [name phone town]. A small menu lets you list
+;   everybody, add a friend or search. The search finds any friend
+;   whose name, phone or town contains what you typed.
+;
+; HOW TO USE
+;   Run it and type a command: LIST, ADD, FIND or QUIT.
+;   ADD asks for one line like:  Maya 555-0192 Springfield
+;   FIND asks for a piece of text like:  spring
+;
+; CONCEPTS YOU WILL LEARN
+;   * one record per line, each line read back with READLIST
+;   * SUBSTRINGP to find text inside a word
+;   * a menu loop that ends when a flag changes
+;   * OPENAPPEND to add one line without rewriting the file
+;
+; THINGS TO TRY
+;   * Add an email address as a fourth field
+;   * Make FIND print "nobody found" when nothing matches (it does,
+;     can you see how?)
+;   * Add a DELETE command that rewrites the file without one friend
+; ============================================================
+
+make "book "/projects/addresses.txt
+
+to make.starter.book
+  ; A brand new disk has no address book, so we write three friends
+  ; to start with. Then LIST and FIND have something to show.
+  openwrite :book
+  setwrite :book
+  print [Maya 555-0192 Springfield]
+  print [Leo 555-0147 Riverton]
+  print [Priya 555-0110 Lakeside]
+  setwrite []
+  close :book
+end
+
+to all.friends
+  localmake "friends []
+  openread :book
+  setread :book
+  while [not eofp] [
+    localmake "f readlist
+    if (count :f) = 3 [make "friends lput :f :friends]
+  ]
+  setread []
+  close :book
+  output :friends
+end
+
+to pad :w :width
+  ; Add spaces to the end of a word until it is WIDTH characters long,
+  ; so the columns of the list line up neatly.
+  if (count :w) >= :width [output :w]
+  output pad (word :w "| |) :width
+end
+
+to show.friend :f
+  print (word pad first :f 10 pad item 2 :f 12 item 3 :f)
+end
+
+to add.friend
+  print [Type name, phone and town on one line, like: Maya 555-0192 Springfield]
+  localmake "f readlist
+  if not listp :f [stop]
+  if not equalp count :f 3 [print [I need exactly three things. Nothing was added.] stop]
+  openappend :book
+  setwrite :book
+  print :f
+  setwrite []
+  close :book
+  print (sentence [Added] first :f)
+end
+
+to matches? :text :f
+  ; True if the text is hidden inside any of the three fields.
+  output not emptyp filter [substringp :text ?] :f
+end
+
+to find.friend
+  print [What should I look for?]
+  localmake "text readword
+  if emptyp :text [stop]
+  localmake "found filter [matches? :text ?] all.friends
+  if emptyp :found [print [Nobody found.] stop]
+  foreach :found [show.friend ?]
+end
+
+to menu
+  localmake "going "true
+  while [:going] [
+    print []
+    type "|Command (list, add, find, quit): |
+    localmake "c readword
+    if emptyp :c [make "c "quit]
+    case :c [
+      [[list l] foreach all.friends [show.friend ?]]
+      [[add a] add.friend]
+      [[find f search] find.friend]
+      [[quit q bye] make "going "false]
+      [else print [I know list, add, find and quit.]]
+    ]
+  ]
+  print [Goodbye. Your address book is saved in /projects/addresses.txt]
+end
+
+if not filep :book [make.starter.book]
+print (sentence [The address book has] count all.friends [friends in it.])
+menu

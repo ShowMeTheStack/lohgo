@@ -1,0 +1,108 @@
+; ============================================================
+; TITLE:    Merging Two Lists
+; CATEGORY: Files & Data
+; LEVEL:    Intermediate
+; TAGS:     files, sorting, beforep, duplicates, venn diagram
+; SUMMARY:  Merges two friends' party lists from two files into one sorted list without repeats, and draws who wanted what.
+; ============================================================
+;
+; WHAT IT DOES
+;   Mia and Sam each wrote a list of things to bring to a party, kept
+;   in /projects/mia.txt and /projects/sam.txt. The program reads both,
+;   joins them, throws out the repeats, sorts the result into
+;   alphabetical order with BEFOREP and writes /projects/party.txt.
+;   A Venn diagram shows which things only Mia wanted, which only Sam
+;   wanted, and which they both wrote down.
+;
+; HOW TO USE
+;   Press Run. Edit mia.txt or sam.txt in the file panel (one thing per
+;   line) and run again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * insertion sort with BEFOREP, which compares words alphabetically
+;   * REMDUP removes repeats, FILTER and MEMBERP find the overlap
+;   * writing your results to a new file
+;
+; THINGS TO TRY
+;   * Add a third friend with a third circle
+;   * Sort the list backwards, from Z to A
+; ============================================================
+
+to write.if.missing :file :things
+  if filep :file [stop]
+  openwrite :file
+  setwrite :file
+  foreach :things [print ?]
+  setwrite []
+  close :file
+end
+
+to read.things :file
+  localmake "things []
+  openread :file
+  setread :file
+  while [not eofp] [
+    localmake "w readword
+    if not emptyp :w [make "things lput lowercase :w :things]
+  ]
+  setread []
+  close :file
+  output :things
+end
+
+; Put a word into its place in an already sorted list.
+to insert :w :sorted
+  if emptyp :sorted [output (list :w)]
+  if beforep :w first :sorted [output fput :w :sorted]
+  output fput first :sorted insert :w butfirst :sorted
+end
+
+to sort.words :words
+  if emptyp :words [output []]
+  output insert first :words sort.words butfirst :words
+end
+
+to save.things :file :things
+  openwrite :file
+  setwrite :file
+  foreach :things [print ?]
+  setwrite []
+  close :file
+end
+
+to circle.at :x :color
+  ; ARC draws around the turtle, so the turtle stands at the center.
+  penup setxy :x 0 setheading 0 setpencolor :color setpensize 3
+  pendown arc 360 170 penup
+end
+
+to column :x :things
+  localmake "y 100
+  foreach :things [penup setxy :x :y label ? make "y :y - 24]
+end
+
+to venn :mia :sam
+  clearscreen hideturtle setlabelheight 15
+  circle.at -90 4
+  circle.at 90 1
+  setpencolor 0
+  column -230 filter [not memberp ? :sam] :mia
+  column -40 filter [memberp ? :sam] :mia
+  column 120 filter [not memberp ? :mia] :sam
+  setlabelheight 22
+  penup setxy -200 190 setpencolor 4 label "Mia
+  setxy 150 190 setpencolor 1 label "Sam
+  setxy -30 130 setpencolor 0 label "both
+end
+
+write.if.missing "/projects/mia.txt [cake balloons lemonade cups crisps]
+write.if.missing "/projects/sam.txt [crisps music cake candles napkins]
+make "mia read.things "/projects/mia.txt
+make "sam read.things "/projects/sam.txt
+make "party sort.words remdup sentence :mia :sam
+save.things "/projects/party.txt :party
+print (sentence [Mia:] :mia)
+print (sentence [Sam:] :sam)
+print (sentence [Together, sorted, no repeats:] :party)
+print (sentence [Saved] count :party [things to /projects/party.txt])
+venn :mia :sam

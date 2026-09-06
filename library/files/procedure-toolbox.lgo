@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Procedure Toolbox
+; CATEGORY: Files & Data
+; LEVEL:    Advanced
+; TAGS:     savel, load, define, text, erase, workspace
+; SUMMARY:  Builds new drawing procedures with DEFINE, saves them to a toolbox file with SAVEL, forgets them and loads them back.
+; ============================================================
+;
+; WHAT IT DOES
+;   Procedures are data too. This program writes three new procedures
+;   while it runs, using DEFINE with a list of lines: TRIANGLE, PENTAGON
+;   and HEXAGON, all made by one maker procedure. It saves them into
+;   /projects/toolbox.lgo with SAVEL, erases them (so Logo no longer
+;   knows them), then LOADs the file and uses the tools to draw a
+;   pattern. Any later program can LOAD the same toolbox.
+;
+; HOW TO USE
+;   Press Run. Open /projects/toolbox.lgo afterwards: it is ordinary
+;   Logo with TO and END, written by the program. In the command
+;   center try  LOAD "/projects/toolbox.lgo  and then  HEXAGON 50
+;
+; CONCEPTS YOU WILL LEARN
+;   * DEFINE "name [[inputs] [line 1] [line 2]] makes a procedure
+;   * TEXT outputs a procedure as that same list
+;   * SAVEL, ERASE, PROCEDUREP and LOAD
+;
+; THINGS TO TRY
+;   * Add OCTAGON to the toolbox
+;   * Make a maker for stars instead of polygons
+;   * Save the toolbox, then LOAD it in a new program of your own
+; ============================================================
+
+make "toolbox "/projects/toolbox.lgo
+
+; Build a polygon procedure called NAME with SIDES sides.
+; The procedure it makes takes one input, the length of a side.
+to make.polygon.tool :name :sides
+  define :name (list [size] (list "repeat :sides (list "fd ":size "rt 360 / :sides)))
+end
+
+to tool.names
+  output [triangle pentagon hexagon]
+end
+
+make.polygon.tool "triangle 3
+make.polygon.tool "pentagon 5
+make.polygon.tool "hexagon 6
+print [DEFINE made this procedure from a list:]
+show text "hexagon
+
+savel tool.names :toolbox
+print (sentence [Saved] tool.names [to] :toolbox)
+
+foreach tool.names [erase ?]
+print (sentence [After ERASE, is HEXAGON a procedure?] procedurep "hexagon)
+
+load :toolbox
+print (sentence [After LOAD, is HEXAGON a procedure?] procedurep "hexagon)
+
+; Now use the reloaded tools: three rings, one per tool.
+clearscreen hideturtle setpensize 2
+make "colors [4 2 1]
+foreach tool.names [
+  localmake "tool ?
+  setpencolor item # :colors
+  repeat 12 [
+    penup home setheading repcount * 30 fd 40 * # pendown
+    run (list :tool 30)
+  ]
+]

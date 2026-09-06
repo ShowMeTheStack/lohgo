@@ -1,0 +1,115 @@
+; ============================================================
+; TITLE:    Recipe Box
+; CATEGORY: Files & Data
+; LEVEL:    Intermediate
+; TAGS:     files, records, scaling, label
+; SUMMARY:  Keeps recipes in a file, scales one to any number of people and draws it on a recipe card.
+; ============================================================
+;
+; WHAT IT DOES
+;   The file /projects/recipes.txt holds several recipes. Each recipe
+;   starts with a line RECIPE name serves, then one line per
+;   ingredient such as [2 cups flour], and ends with a line END.
+;   The program lists the recipes, lets you pick one, asks how many
+;   people are eating and works out the new amounts.
+;
+; HOW TO USE
+;   Run it, type the number of a recipe, then the number of people.
+;   Open /projects/recipes.txt in the file panel and add your own
+;   recipe in the same layout; it shows up next time.
+;
+; CONCEPTS YOU WILL LEARN
+;   * reading a file that is split into blocks by marker lines
+;   * a property list for each recipe: GPROP "pancakes "serves
+;   * scaling numbers and rounding them to a sensible size
+;
+; THINGS TO TRY
+;   * Add a fourth recipe to the file by hand
+;   * Print the amounts as fractions such as 1/2 instead of 0.5
+;   * Change the card colors
+; ============================================================
+
+make "box "/projects/recipes.txt
+
+to write.starter.recipes
+  openwrite :box
+  setwrite :box
+  print [RECIPE Pancakes 4]
+  print [1.5 cups flour] print [2 eggs] print [1.25 cups milk] print [2 spoons sugar]
+  print [END]
+  print [RECIPE Lemonade 6]
+  print [6 lemons] print [1 cup sugar] print [8 cups water]
+  print [END]
+  print [RECIPE Fruit-Salad 3]
+  print [2 apples] print [1 banana] print [12 grapes] print [0.5 cups yogurt]
+  print [END]
+  setwrite []
+  close :box
+end
+
+; Read the file. Every recipe name goes in the list :NAMES and its
+; details go in a property list named after the recipe.
+to read.recipes
+  make "names []
+  localmake "current []
+  openread :box
+  setread :box
+  while [not eofp] [
+    localmake "line readlist
+    cond [
+      [[emptyp :line]]
+      [[equalp first :line "recipe]
+        make "current item 2 :line
+        make "names lput :current :names
+        pprop :current "serves item 3 :line
+        pprop :current "items []]
+      [[equalp first :line "end] make "current []]
+      [[not emptyp :current] pprop :current "items lput :line gprop :current "items]
+    ]
+  ]
+  setread []
+  close :box
+end
+
+to ask.number :question :low :high
+  print :question
+  localmake "a readword
+  if emptyp :a [output :low]
+  ; AND works out all of its inputs, so we only compare once we know
+  ; the answer really is a number.
+  if numberp :a [if and :a >= :low :a <= :high [output int :a]]
+  print (sentence [Please type a number from] :low [to] :high)
+  output ask.number :question :low :high
+end
+
+to nice :x
+  ; Keep at most two decimal places: 1.875 becomes 1.88
+  output (round :x * 100) / 100
+end
+
+to scaled :recipe :people
+  localmake "factor :people / gprop :recipe "serves
+  output map [fput nice :factor * first ? butfirst ?] gprop :recipe "items
+end
+
+to card :title :lines
+  clearscreen hideturtle
+  penup setxy -220 170 setheading 90 pendown setpencolor 8
+  filled "#fff3d6 [repeat 2 [fd 440 rt 90 fd 360 rt 90]]
+  penup setxy -200 125 setpencolor 4 setlabelheight 26 label :title
+  setxy -200 112 setpencolor 4 pendown fd 400 penup
+  setlabelheight 18 setpencolor 0
+  localmake "y 80
+  foreach :lines [setxy -190 :y label ? make "y :y - 32]
+end
+
+if not filep :box [write.starter.recipes]
+read.recipes
+print [Recipes in the box:]
+foreach :names [print (sentence # ? [serves] gprop ? "serves)]
+make "choice item ask.number [Which recipe? Type its number.] 1 count :names :names
+make "people ask.number [How many people are eating?] 1 50
+make "new scaled :choice :people
+print (sentence :choice [for] :people [people:])
+foreach :new [print ?]
+card (sentence :choice [for] :people) :new

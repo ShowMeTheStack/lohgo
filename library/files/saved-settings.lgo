@@ -1,0 +1,88 @@
+; ============================================================
+; TITLE:    Saved Settings
+; CATEGORY: Files & Data
+; LEVEL:    Beginner
+; TAGS:     files, preferences, readlist, polygons
+; SUMMARY:  Asks for your favorite color, shape and size once, saves them in a settings file and uses them every time.
+; ============================================================
+;
+; WHAT IT DOES
+;   Many programs remember your choices in a settings file. This one
+;   keeps three settings in /projects/settings.txt as lines like
+;   [color 4]. The first time it asks you for them; after that it
+;   reads the file and draws a ring of your favorite shape straight
+;   away. It also offers to change the settings.
+;
+; HOW TO USE
+;   Run it and answer the questions: a color number 0 to 15, a number
+;   of sides 3 to 10, and a size 20 to 120. Run it again and it
+;   remembers. Answer yes when it asks if you want a change.
+;
+; CONCEPTS YOU WILL LEARN
+;   * name and value pairs stored one per line
+;   * property lists as a handy place to keep settings in memory
+;   * checking that an answer is a number in the right range
+;
+; THINGS TO TRY
+;   * Add a fourth setting for the background color
+;   * Add a setting for how many shapes go around the ring
+; ============================================================
+
+make "settings.file "/projects/settings.txt
+
+to ask.range :question :low :high :default
+  print :question
+  localmake "a readword
+  if emptyp :a [output :default]
+  if numberp :a [if and :a >= :low :a <= :high [output int :a]]
+  print (sentence [Please type a number from] :low [to] :high)
+  output ask.range :question :low :high :default
+end
+
+to ask.all
+  pprop "my "color ask.range [Favorite color number, 0 to 15?] 0 15 4
+  pprop "my "sides ask.range [How many sides should the shape have, 3 to 10?] 3 10 5
+  pprop "my "size ask.range [How big, 20 to 120?] 20 120 60
+  save.settings
+end
+
+to save.settings
+  openwrite :settings.file
+  setwrite :settings.file
+  foreach [color sides size] [print list ? gprop "my ?]
+  setwrite []
+  close :settings.file
+end
+
+to load.settings
+  openread :settings.file
+  setread :settings.file
+  while [not eofp] [
+    localmake "line readlist
+    if (count :line) = 2 [pprop "my first :line last :line]
+  ]
+  setread []
+  close :settings.file
+end
+
+to ring
+  clearscreen hideturtle
+  setpencolor gprop "my "color setpensize 2
+  repeat 12 [
+    penup home setheading repcount * 30 fd 150 pendown
+    repeat gprop "my "sides [fd gprop "my "size rt 360 / gprop "my "sides]
+  ]
+end
+
+ifelse filep :settings.file [
+  load.settings
+  print (sentence [Welcome back. Your settings are] plist "my)
+  ring
+  print [Do you want to change them? yes or no]
+  if memberp readword [yes y] [ask.all ring]
+] [
+  print [No settings yet, so here are three questions.]
+  ask.all
+  ring
+]
+print [Your settings are saved in /projects/settings.txt]

@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    Pet Database
+; CATEGORY: Files & Data
+; LEVEL:    Advanced
+; TAGS:     property lists, savel, load, erpl, queries
+; SUMMARY:  Stores pets as property lists, saves them with SAVEL, wipes them from memory and LOADs them back to answer questions.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every pet is a property list: GPROP "rex "kind gives DOG. The list
+;   of all pets is kept in the variable :PETS. SAVEL writes the
+;   variable and all the property lists into /projects/pets.lgo as
+;   ordinary Logo instructions. The program then erases everything,
+;   proves it is gone, LOADs the file and asks the database some
+;   questions: which pets are dogs, who is oldest, average age.
+;
+; HOW TO USE
+;   Press Run and read the answers. Then open /projects/pets.lgo: it is
+;   just a list of MAKE and PPROP lines that LOAD runs.
+;
+; CONCEPTS YOU WILL LEARN
+;   * PPROP, GPROP and PLIST
+;   * SAVEL with a contents list [[procedures] [names] [plists]]
+;   * ERN and ERPL to forget, LOAD to remember again
+;   * FILTER and a tiny query language built from procedures
+;
+; THINGS TO TRY
+;   * Add a property "color to every pet and ask for all brown pets
+;   * Add your own pets with ADD.PET
+;   * Write a query for pets younger than 3
+; ============================================================
+
+make "db.file "/projects/pets.lgo
+
+to add.pet :name :kind :age :food
+  pprop :name "kind :kind
+  pprop :name "age :age
+  pprop :name "food :food
+  if not memberp :name :pets [make "pets lput :name :pets]
+end
+
+to save.db
+  ; SAVEL takes [[procedures] [variables] [property lists]].
+  savel (list [] [pets] :pets) :db.file
+end
+
+to forget.everything
+  foreach :pets [erpl ?]
+  ern "pets
+end
+
+; The query helpers: each one outputs a list of pet names.
+to where :prop :value
+  output filter [equalp gprop ? :prop :value] :pets
+end
+
+to oldest
+  localmake "best first :pets
+  foreach :pets [if (gprop ? "age) > (gprop :best "age) [make "best ?]]
+  output :best
+end
+
+to average.age
+  output (reduce "sum map [gprop ? "age] :pets) / count :pets
+end
+
+to describe :name
+  print (sentence :name [is a] gprop :name "age [year old] gprop :name "kind [who eats] gprop :name "food)
+end
+
+make "pets []
+add.pet "Rex "dog 5 "biscuits
+add.pet "Mittens "cat 3 "fish
+add.pet "Bubbles "fish 1 "flakes
+add.pet "Biscuit "dog 9 "meat
+add.pet "Hopper "rabbit 2 "carrots
+save.db
+print (sentence [Saved] count :pets [pets to] :db.file)
+
+forget.everything
+print (sentence [After erasing, is :PETS still a name?] namep "pets)
+print [And what does Rex have now? SHOW prints the empty list:]
+show plist "Rex
+
+load :db.file
+print (sentence [After LOAD the pets are back:] :pets)
+print []
+foreach :pets [describe ?]
+print []
+print (sentence [The dogs are:] where "kind "dog)
+print (sentence [Oldest pet:] oldest)
+print (sentence [Average age:] average.age)
+print (sentence [Who eats fish?] where "food "fish)

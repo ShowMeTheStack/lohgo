@@ -1,0 +1,95 @@
+; ============================================================
+; TITLE:    Drawing Recorder
+; CATEGORY: Files & Data
+; LEVEL:    Intermediate
+; TAGS:     files, run, replay, lists of instructions
+; SUMMARY:  Records every turtle move into a file and plays the drawing back later, bigger, smaller and in color.
+; ============================================================
+;
+; WHAT IT DOES
+;   Instead of calling FORWARD and RIGHT directly, the drawing uses
+;   GO and TURN. They move the turtle and also write the move, such
+;   as [fd 40], as one line in /projects/moves.txt. Then the screen is
+;   cleared and the file is read back and RUN, line by line, to draw
+;   the same picture four times around the screen in four colors.
+;
+; HOW TO USE
+;   Just press Run and watch. Then open /projects/moves.txt in the file
+;   panel to see the recording. Change the HOUSE procedure to record a
+;   drawing of your own.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a file can hold instructions, not only data
+;   * RUN carries out a list as if you had typed it
+;   * changing a recorded move before running it (scaling)
+;
+; THINGS TO TRY
+;   * Draw a star with GO and TURN instead of the house
+;   * Replay the moves backwards with BK and LT to undo the drawing
+;   * Record the pen color as well, with a line like [setpc 4]
+; ============================================================
+
+make "tape "/projects/moves.txt
+
+to start.recording
+  ; OPENWRITE makes a new, empty file (or wipes an old one).
+  openwrite :tape
+end
+
+to stop.recording
+  close :tape
+end
+
+to remember :move
+  setwrite :tape
+  print :move
+  setwrite []
+end
+
+to go :steps
+  forward :steps
+  remember list "fd :steps
+end
+
+to turn :angle
+  right :angle
+  remember list "rt :angle
+end
+
+to house
+  ; Walls, then the roof, using only GO and TURN.
+  repeat 4 [go 80 turn 90]
+  go 80 turn 30
+  go 80 turn 120
+  go 80
+end
+
+to replay :scale
+  openread :tape
+  setread :tape
+  while [not eofp] [
+    localmake "move readlist
+    ; A forward move gets stretched, a turn stays the same angle.
+    if equalp first :move "fd [make "move list "fd :scale * last :move]
+    run :move
+  ]
+  setread []
+  close :tape
+end
+
+clearscreen
+setpensize 2
+start.recording
+house
+stop.recording
+print [Recorded the house. Now playing it back...]
+wait 60
+clearscreen hideturtle setpensize 3
+make "spots [[-250 40] [80 40] [-250 -260] [80 -260]]
+make "sizes [1 1.5 0.6 2]
+make "colors [4 1 2 13]
+foreach :spots [
+  penup setpos ? setheading 0 pendown
+  setpencolor item # :colors
+  replay item # :sizes
+]

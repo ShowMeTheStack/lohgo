@@ -1,0 +1,119 @@
+; ============================================================
+; TITLE:    Grade Book
+; CATEGORY: Files & Data
+; LEVEL:    Advanced
+; TAGS:     files, csv, readword, averages, chart
+; SUMMARY:  Reads a comma separated grade book, works out averages for every student and subject, and charts them.
+; ============================================================
+;
+; WHAT IT DOES
+;   A teacher's grade book is saved as /projects/grades.csv, the kind
+;   of file a spreadsheet can open: the first line names the columns,
+;   every other line is one student, with commas between the values.
+;   The program splits each line at the commas, prints a neat table
+;   with each student's average and letter grade, finds the class
+;   average for every subject, and draws a bar chart of the students.
+;
+; HOW TO USE
+;   Press Run. Edit /projects/grades.csv in the file panel (keep the
+;   commas) and run it again to see the new results. If you delete the
+;   file, the program writes the sample one again.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READWORD reads a whole line as one word, commas and all
+;   * splitting a word into a list with a recursive procedure
+;   * REDUCE to add up a list, MAP to walk down columns
+;
+; THINGS TO TRY
+;   * Add a fifth subject column to the file
+;   * Change the letter grade boundaries in LETTER
+;   * Sort the students from best to worst before charting
+; ============================================================
+
+make "csv "/projects/grades.csv
+
+to write.sample
+  openwrite :csv
+  setwrite :csv
+  print "Name,Math,Reading,Science,Art
+  print "Ana,85,92,78,95
+  print "Ben,72,65,80,88
+  print "Chloe,94,89,97,70
+  print "Dev,60,75,68,82
+  print "Ella,88,94,85,91
+  setwrite []
+  close :csv
+end
+
+; split "a,b,c  outputs  [a b c]
+to split :text
+  ; An empty text is one empty piece: (list ") is a list holding the empty word.
+  if emptyp :text [output (list ")]
+  localmake "rest split butfirst :text
+  ; A comma starts a new, empty piece in front of the others.
+  if equalp first :text ", [output fput " :rest]
+  ; glue this character onto the front of the first piece
+  output fput (word first :text first :rest) butfirst :rest
+end
+
+to read.csv
+  localmake "rows []
+  openread :csv
+  setread :csv
+  while [not eofp] [
+    localmake "line readword
+    if not emptyp :line [make "rows lput split :line :rows]
+  ]
+  setread []
+  close :csv
+  output :rows
+end
+
+to average :numbers
+  output (round 10 * (reduce "sum :numbers) / count :numbers) / 10
+end
+
+to letter :score
+  if :score >= 90 [output "A]
+  if :score >= 80 [output "B]
+  if :score >= 70 [output "C]
+  if :score >= 60 [output "D]
+  output "F
+end
+
+to column :n :rows
+  output map [item :n ?] :rows
+end
+
+to chart :students
+  clearscreen hideturtle setlabelheight 14
+  ; axis line and a mark every 20 points
+  penup setxy -300 -200 setheading 0 pendown setpencolor 15
+  fd 300
+  for [p 0 100 20] [penup setxy -340 -205 + 3 * :p label :p]
+  localmake "x -270
+  foreach :students [
+    localmake "avg average butfirst ?
+    penup setxy :x -200 setheading 0 pendown setpencolor 0
+    filled item # [1 4 2 14 13 3 5] [repeat 2 [fd 3 * :avg rt 90 fd 60 rt 90]]
+    penup setxy :x -225 label first ?
+    setxy :x + 12 -190 + 3 * :avg label :avg
+    make "x :x + 100
+  ]
+  penup setxy -270 140 setlabelheight 22 label [Class averages]
+end
+
+if not filep :csv [write.sample]
+make "all read.csv
+make "header first :all
+make "students butfirst :all
+print (sentence [Columns:] :header)
+foreach :students [
+  localmake "avg average butfirst ?
+  print (sentence first ? [average] :avg [grade] letter :avg)
+]
+print []
+for [i 2 count :header] [
+  print (sentence item :i :header [class average:] average column :i :students)
+]
+chart :students

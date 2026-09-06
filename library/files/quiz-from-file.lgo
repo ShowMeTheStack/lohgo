@@ -1,0 +1,109 @@
+; ============================================================
+; TITLE:    Quiz From a File
+; CATEGORY: Files & Data
+; LEVEL:    Intermediate
+; TAGS:     files, quiz, readlist, pick
+; SUMMARY:  Loads quiz questions from a text file, asks them in a random order and logs your score.
+; ============================================================
+;
+; WHAT IT DOES
+;   The questions live in /projects/quiz.txt, two lines each: the
+;   question, then a line of accepted answers. Keeping them in a file
+;   means anyone can write a new quiz without touching the program.
+;   Questions are shuffled, you answer five, and your score is added
+;   to /projects/quiz-log.txt. A ring of stars shows how you did.
+;
+; HOW TO USE
+;   Run it and type answers. Type QUIT to stop early. Then open
+;   /projects/quiz.txt and write your own questions in the same
+;   two-line pattern.
+;
+; CONCEPTS YOU WILL LEARN
+;   * reading records that take up two lines each
+;   * shuffling a list by picking random items out of it
+;   * MEMBERP to accept more than one right answer
+;
+; THINGS TO TRY
+;   * Add ten questions about your favorite subject
+;   * Ask every question instead of five
+;   * Print the log file at the end to see all your past scores
+; ============================================================
+
+make "quiz.file "/projects/quiz.txt
+make "log.file "/projects/quiz-log.txt
+
+to write.sample.quiz
+  openwrite :quiz.file
+  setwrite :quiz.file
+  print [How many legs does a spider have?]          print [8 eight]
+  print [What color do you get mixing blue and yellow?] print [green]
+  print [What is the largest planet?]                print [jupiter]
+  print [What do bees make?]                         print [honey wax]
+  print [How many days are in a leap year?]          print [366]
+  print [What is frozen water called?]               print [ice]
+  print [Which animal has a trunk?]                  print [elephant elephants]
+  setwrite []
+  close :quiz.file
+end
+
+to load.quiz
+  localmake "cards []
+  openread :quiz.file
+  setread :quiz.file
+  while [not eofp] [
+    localmake "q readlist
+    localmake "a readlist
+    ; a blank line at the end of the file is not a question
+    if and listp :q not emptyp :q [make "cards lput list :q :a :cards]
+  ]
+  setread []
+  close :quiz.file
+  output :cards
+end
+
+to shuffle :cards
+  if emptyp :cards [output []]
+  localmake "one pick :cards
+  output fput :one shuffle remove :one :cards
+end
+
+to ask.card :card
+  print first :card
+  localmake "reply readlist
+  if or (not listp :reply) (emptyp :reply) [output "quit]
+  if memberp first :reply [quit stop] [output "quit]
+  if memberp first :reply last :card [print [Right!] output "true]
+  print (sentence [Not quite. The answer was] first last :card)
+  output "false
+end
+
+to star.ring :score :total
+  clearscreen hideturtle
+  repeat :total [
+    penup home setheading repcount * 360 / :total fd 150 setheading 0
+    setpencolor ifelse repcount <= :score [14] [15]
+    pendown filled pencolor [repeat 5 [fd 40 rt 144]]
+  ]
+  penup setxy -70 -10 setpencolor 1 setlabelheight 30
+  label (sentence :score "/ :total)
+end
+
+if not filep :quiz.file [write.sample.quiz]
+make "cards shuffle load.quiz
+make "score 0 make "asked 0
+catch "stop.quiz [
+  foreach :cards [
+    if :asked = 5 [throw "stop.quiz]
+    localmake "r ask.card ?
+    if equalp :r "quit [throw "stop.quiz]
+    make "asked :asked + 1
+    if :r [make "score :score + 1]
+  ]
+]
+print (sentence [You scored] :score [out of] :asked)
+openappend :log.file
+setwrite :log.file
+print (sentence first time item 2 time item 3 time [score] :score "/ :asked)
+setwrite []
+close :log.file
+if :asked > 0 [star.ring :score :asked]

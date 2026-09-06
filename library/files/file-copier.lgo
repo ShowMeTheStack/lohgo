@@ -1,0 +1,88 @@
+; ============================================================
+; TITLE:    File Copier
+; CATEGORY: Files & Data
+; LEVEL:    Beginner
+; TAGS:     files, copy, append, line numbers
+; SUMMARY:  Copies a file line by line, adds line numbers, and appends one file onto the end of another.
+; ============================================================
+;
+; WHAT IT DOES
+;   Makes two small files, a shopping list and a list of extras.
+;   Then it copies the shopping list into a new file with line
+;   numbers, and appends the extras onto the end of the copy. Each
+;   file is printed so you can see what happened at every step.
+;
+; HOW TO USE
+;   Press Run and read the command center. Look in /projects/ in the
+;   file panel: shopping.txt, extras.txt and copy.txt are all there.
+;
+; CONCEPTS YOU WILL LEARN
+;   * two files open at the same time, one read and one written
+;   * SETREAD and SETWRITE choose where reading and printing go
+;   * the difference between OPENWRITE (start fresh) and OPENAPPEND
+;
+; THINGS TO TRY
+;   * Copy only the lines that contain a certain word
+;   * Copy a file backwards, last line first
+; ============================================================
+
+to make.file :name :lines
+  openwrite :name
+  setwrite :name
+  foreach :lines [print ?]
+  setwrite []
+  close :name
+end
+
+to show.file :name
+  print (sentence "---- :name "----)
+  if not filep :name [print [That file does not exist.] stop]
+  openread :name
+  setread :name
+  while [not eofp] [print readword]
+  setread []
+  close :name
+end
+
+; Copy FROM into TO, putting a number in front of every line.
+; MODE is either "write (start the copy fresh) or "append.
+to copy.numbered :from :to :mode
+  openread :from
+  ifelse equalp :mode "append [openappend :to] [openwrite :to]
+  localmake "n 0
+  setread :from
+  setwrite :to
+  while [not eofp] [
+    localmake "line readword
+    make "n :n + 1
+    print (sentence word :n ". :line)
+  ]
+  ; Always put reading and writing back to the keyboard and screen.
+  setread []
+  setwrite []
+  close :from
+  close :to
+end
+
+to copy.plain :from :to
+  openread :from
+  openappend :to
+  setread :from
+  setwrite :to
+  while [not eofp] [print readword]
+  setread []
+  setwrite []
+  close :from
+  close :to
+end
+
+make.file "/projects/shopping.txt [[bread] [apples] [milk] [cheese]]
+make.file "/projects/extras.txt [[birthday candles] [balloons]]
+show.file "/projects/shopping.txt
+show.file "/projects/extras.txt
+copy.numbered "/projects/shopping.txt "/projects/copy.txt "write
+print [After copying with numbers:]
+show.file "/projects/copy.txt
+copy.plain "/projects/extras.txt "/projects/copy.txt
+print [After appending the extras:]
+show.file "/projects/copy.txt

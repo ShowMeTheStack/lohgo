@@ -1,0 +1,123 @@
+; ============================================================
+; TITLE:    Weather Log
+; CATEGORY: Files & Data
+; LEVEL:    Intermediate
+; TAGS:     files, graphs, data logging, min max
+; SUMMARY:  Keeps daily high and low temperatures in a file and plots them as a line graph.
+; ============================================================
+;
+; WHAT IT DOES
+;   /projects/weather.txt holds one line per day: day number, highest
+;   and lowest temperature in Celsius. On a new disk the program
+;   writes two weeks of readings to start with. You can add today's
+;   reading, then the whole log is drawn as two lines, red for the
+;   highs and blue for the lows, with the hottest and coldest days
+;   marked.
+;
+; HOW TO USE
+;   Run it. When asked, type two numbers on one line, like 21 12,
+;   or just press Enter to skip. Each run with a reading adds a day.
+;
+; CONCEPTS YOU WILL LEARN
+;   * logging data over time by appending
+;   * scaling numbers so a graph fits the screen
+;   * finding the largest and smallest values in a list
+;
+; THINGS TO TRY
+;   * Plot only the last 10 days
+;   * Draw a green line for the average of high and low each day
+;   * Change the graph to Fahrenheit: F = C * 9 / 5 + 32
+; ============================================================
+
+make "log "/projects/weather.txt
+
+to start.log
+  openwrite :log
+  setwrite :log
+  localmake "highs [18 20 21 19 17 22 24 25 23 20 18 21 23 26]
+  localmake "lows  [9 11 12 10 8 12 14 15 13 11 9 10 12 15]
+  for [d 1 14] [print (sentence :d item :d :highs item :d :lows)]
+  setwrite []
+  close :log
+end
+
+to read.log
+  localmake "days []
+  openread :log
+  setread :log
+  while [not eofp] [
+    localmake "d readlist
+    if (count :d) = 3 [make "days lput :d :days]
+  ]
+  setread []
+  close :log
+  output :days
+end
+
+to add.today :days
+  print [Type today's high and low temperature, like: 21 12. Or press Enter to skip.]
+  localmake "r readlist
+  if not listp :r [stop]
+  if not (count :r) = 2 [print [No reading added.] stop]
+  if not and numberp first :r numberp last :r [print [Those were not numbers. No reading added.] stop]
+  openappend :log
+  setwrite :log
+  ; The bigger number is the high, whichever order it was typed in.
+  print (sentence 1 + count :days max first :r last :r min first :r last :r)
+  setwrite []
+  close :log
+  print [Reading added.]
+end
+
+to max :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+; Screen position for day number I and temperature T.
+to spot :i :t :n
+  output list -340 + 680 * (:i - 1) / max 1 (:n - 1) -220 + 12 * :t
+end
+
+to plot :days :col :color
+  localmake "n count :days
+  penup setpencolor :color setpensize 3
+  foreach :days [setpos spot # item :col ? :n pendown dot pos]
+  setpensize 1
+end
+
+to axes
+  setpencolor 15 setlabelheight 12
+  for [t 0 35 5] [
+    penup setxy -360 -220 + 12 * :t setheading 90 pendown fd 720
+    penup setxy -395 -225 + 12 * :t label :t
+  ]
+end
+
+to mark :days :col :best :color
+  ; Find the day whose value in column COL is the most extreme.
+  localmake "pick first :days
+  ; INVOKE runs the comparison whose name is in :BEST, GREATERP or LESSP.
+  foreach :days [if (invoke :best item :col ? item :col :pick) [make "pick ?]]
+  penup setpos spot first :pick item :col :pick count :days
+  setpencolor :color setheading 0 fd 10 label item :col :pick
+  output :pick
+end
+
+if not filep :log [start.log]
+make "days read.log
+add.today :days
+make "days read.log
+clearscreen hideturtle
+axes
+plot :days 2 4
+plot :days 3 1
+make "hot mark :days 2 "greaterp 4
+make "cold mark :days 3 "lessp 1
+penup setxy -340 250 setpencolor 0 setlabelheight 20
+label (sentence count :days [days of weather])
+print (sentence [Hottest: day] first :hot [at] item 2 :hot [degrees.])
+print (sentence [Coldest: day] first :cold [at] item 3 :cold [degrees.])

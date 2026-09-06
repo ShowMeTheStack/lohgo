@@ -1,0 +1,84 @@
+; ============================================================
+; TITLE:    READWORD or READLIST?
+; CATEGORY: Files & Data
+; LEVEL:    Beginner
+; TAGS:     files, readword, readlist, readchar, show
+; SUMMARY:  Reads the same small file three ways, with READWORD, READLIST and READCHAR, to show what each one gives you.
+; ============================================================
+;
+; WHAT IT DOES
+;   Writes a four-line file, then reads it three times. READWORD gives
+;   each line as one word, spaces included. READLIST chops each line
+;   into a list of words, and even turns [brackets] in the file into
+;   lists inside the list. READCHAR gives one character at a time.
+;   SHOW is used instead of PRINT so you can see the brackets.
+;
+; HOW TO USE
+;   Press Run and compare the three sections in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READWORD keeps a line exactly as it is, good for text and CSV
+;   * READLIST is good when you want to work with separate words
+;   * COUNT tells you how many characters or how many words
+;   * EOFP says when the file has run out
+;
+; THINGS TO TRY
+;   * Add a line with lots of spaces between the words
+;   * Count the vowels in the file using READCHAR
+; ============================================================
+
+make "f "/projects/three-ways.txt
+
+to write.sample
+  openwrite :f
+  setwrite :f
+  print [Logo was made for children]
+  print [a list [inside] a list]
+  print [42]
+  type "|two   spaces|
+  print "
+  setwrite []
+  close :f
+end
+
+to read.with :how
+  print []
+  print (word "|Reading with | uppercase :how ":)
+  openread :f
+  setread :f
+  while [not eofp] [
+    localmake "thing run (list :how)
+    ; SHOW puts brackets around lists; PRINT would not.
+    type "|  got: |
+    show :thing
+    print (sentence "|       a| ifelse wordp :thing ["word] ["list] [of size] count :thing)
+  ]
+  setread []
+  close :f
+end
+
+to count.chars
+  print []
+  print [Reading with READCHAR, counting letters and spaces:]
+  localmake "letters 0 localmake "spaces 0 localmake "lines 0
+  openread :f
+  setread :f
+  while [not eofp] [
+    localmake "c readchar
+    if equalp :c "| | [make "spaces :spaces + 1]
+    if equalp :c char 10 [make "lines :lines + 1]
+    if alphap :c [make "letters :letters + 1]
+  ]
+  setread []
+  close :f
+  print (sentence [letters:] :letters [spaces:] :spaces [line endings:] :lines)
+end
+
+to alphap :c
+  output memberp lowercase :c "abcdefghijklmnopqrstuvwxyz
+end
+
+write.sample
+read.with "readword
+read.with "readlist
+count.chars

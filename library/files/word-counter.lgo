@@ -1,0 +1,110 @@
+; ============================================================
+; TITLE:    Word Counter
+; CATEGORY: Files & Data
+; LEVEL:    Intermediate
+; TAGS:     files, readlist, counting, property lists
+; SUMMARY:  Writes a short poem to a file, then reads it back and counts its lines, words and letters.
+; ============================================================
+;
+; WHAT IT DOES
+;   First the program writes a nursery rhyme into /projects/poem.txt
+;   (so there is always something to count, even on a new disk).
+;   Then it reads the file one line at a time and works out how many
+;   lines, words and letters there are, the longest word, and which
+;   word appears most often. A bar chart shows the top words.
+;
+; HOW TO USE
+;   Press Run. To count your own text, change WRITE.POEM, or type
+;   COUNT.FILE "/projects/yourfile.txt after making a file.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READLIST splits a line into words for you
+;   * a property list as a tally: one property per word
+;   * stripping punctuation off a word with a small recursive procedure
+;
+; THINGS TO TRY
+;   * Count only words longer than three letters
+;   * Show the top 8 words instead of 5
+; ============================================================
+
+make "poem.file "/projects/poem.txt
+
+to write.poem
+  openwrite :poem.file
+  setwrite :poem.file
+  print [Twinkle, twinkle, little star,]
+  print [How I wonder what you are!]
+  print [Up above the world so high,]
+  print [Like a diamond in the sky.]
+  print [Twinkle, twinkle, little star,]
+  print [How I wonder what you are!]
+  setwrite []
+  close :poem.file
+end
+
+; Keep only letters, digits and apostrophes, so "star," counts as "star".
+; MEMBERP can look for one character inside a word.
+to clean.word :w
+  if emptyp :w [output "]
+  if not memberp first :w "abcdefghijklmnopqrstuvwxyz0123456789' [output clean.word butfirst :w]
+  output word first :w clean.word butfirst :w
+end
+
+to tally :w
+  localmake "old gprop "tally :w
+  if emptyp :old [make "seen lput :w :seen make "old 0]
+  pprop "tally :w :old + 1
+end
+
+to count.file :path
+  make "lines 0 make "words 0 make "letters 0
+  make "longest " make "seen []
+  erpl "tally
+  openread :path
+  setread :path
+  while [not eofp] [
+    localmake "line readlist
+    make "lines :lines + 1
+    foreach :line [
+      localmake "w clean.word lowercase ?
+      if not emptyp :w [
+        make "words :words + 1
+        make "letters :letters + count :w
+        if (count :w) > (count :longest) [make "longest :w]
+        tally :w
+      ]
+    ]
+  ]
+  setread []
+  close :path
+end
+
+; Pick out the most used word, remove it, and repeat N times.
+to top.words :n :pool
+  if or (:n = 0) (emptyp :pool) [output []]
+  localmake "best first :pool
+  foreach :pool [if (gprop "tally ?) > (gprop "tally :best) [make "best ?]]
+  output fput :best top.words :n - 1 remove :best :pool
+end
+
+to chart :top
+  clearscreen hideturtle setlabelheight 16
+  localmake "y 150
+  foreach :top [
+    penup setxy -150 :y setheading 90 setpencolor 0
+    filled item # [4 14 6 2 1] [repeat 2 [fd 60 * gprop "tally ? rt 90 fd 30 rt 90]]
+    setxy -280 :y - 22 label ?
+    setxy -140 + 60 * gprop "tally ? :y - 22 label gprop "tally ?
+    make "y :y - 50
+  ]
+  penup setxy -280 210 setlabelheight 22 label [Most used words]
+end
+
+write.poem
+count.file :poem.file
+print (sentence [Lines:] :lines [Words:] :words [Letters:] :letters)
+print (sentence [Longest word:] :longest)
+print (sentence [Different words:] count :seen)
+make "top top.words 5 :seen
+foreach :top [print (sentence ? [appears] gprop "tally ? [times])]
+chart :top

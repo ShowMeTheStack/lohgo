@@ -1,0 +1,98 @@
+; ============================================================
+; TITLE:    Receipt Printer
+; CATEGORY: Files & Data
+; LEVEL:    Advanced
+; TAGS:     string streams, openwrite, openread, variables as files
+; SUMMARY:  Prints a shop receipt into a variable instead of a file, then reads that text back like a file to check the total.
+; ============================================================
+;
+; WHAT IT DOES
+;   OPENWRITE [RECEIPT] opens a pretend file whose text ends up in the
+;   variable :RECEIPT when it is closed. Everything PRINTed in between
+;   goes into that text. Later, OPENREAD (LIST :RECEIPT) opens the text
+;   as if it were a file, so READLIST can go through it line by line.
+;   The program uses this to write a receipt, read it back to add up
+;   the prices, and draw it on a strip of paper.
+;
+; HOW TO USE
+;   Press Run. Change the BASKET list to buy different things.
+;
+; CONCEPTS YOU WILL LEARN
+;   * string streams: OPENWRITE and OPENREAD with a list
+;   * reusing code that was written for real files
+;   * money arithmetic with ROUND to avoid tiny rounding errors
+;
+; THINGS TO TRY
+;   * Add a 10 percent discount line before the total
+;   * Count how many lines the receipt has by reading it back
+;   * Save :RECEIPT to a real file with OPENWRITE "/projects/receipt.txt
+; ============================================================
+
+; Each item: name, how many, price for one.
+make "basket [[apples 4 0.35] [bread 1 2.10] [milk 2 0.95] [cheese 1 3.40] [banana 6 0.20]]
+
+to money :x
+  ; Two decimal places as text: 2.5 becomes 2.50
+  localmake "cents round :x * 100
+  localmake "rest remainder :cents 100
+  output (word int :cents / 100 ". ifelse :rest < 10 [word 0 :rest] [:rest])
+end
+
+to write.receipt
+  openwrite [receipt]
+  setwrite [receipt]
+  print [CORNER SHOP]
+  print time
+  foreach :basket [
+    localmake "cost (item 2 ?) * (item 3 ?)
+    print (sentence first ? item 2 ? "x money item 3 ? "= money :cost)
+  ]
+  setwrite []
+  ; Closing the stream is what copies the text into :RECEIPT.
+  close [receipt]
+end
+
+to check.total
+  ; Read the receipt text as if it were a file.
+  localmake "source (list :receipt)
+  localmake "total 0
+  openread :source
+  setread :source
+  while [not eofp] [
+    localmake "line readlist
+    ; Only item lines have an = sign in them.
+    if memberp "= :line [make "total :total + last :line]
+  ]
+  setread []
+  close :source
+  output :total
+end
+
+to paper :lines
+  clearscreen hideturtle
+  localmake "h 40 + 26 * count :lines
+  penup setxy -150 :h / 2 setheading 90 setpencolor 15
+  pendown filled 7 [repeat 2 [fd 300 rt 90 fd :h rt 90]]
+  penup setpencolor 0 setlabelheight 15
+  localmake "y :h / 2 - 32
+  foreach :lines [setxy -135 :y label ? make "y :y - 26]
+end
+
+write.receipt
+make "total check.total
+; Append the total to the same stream: OPENAPPEND keeps what is there.
+openappend [receipt]
+setwrite [receipt]
+print [------------------]
+print (sentence "TOTAL money :total)
+setwrite []
+close [receipt]
+print :receipt
+; Split the finished text into lines for drawing, reading it once more.
+make "lines []
+openread (list :receipt)
+setread (list :receipt)
+while [not eofp] [make "lines lput readword :lines]
+setread []
+close (list :receipt)
+paper :lines

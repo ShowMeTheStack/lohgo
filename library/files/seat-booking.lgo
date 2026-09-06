@@ -1,0 +1,123 @@
+; ============================================================
+; TITLE:    Cinema Seat Booking
+; CATEGORY: Files & Data
+; LEVEL:    Advanced
+; TAGS:     openupdate, setwritepos, setreadpos, readchar, files
+; SUMMARY:  Books cinema seats by changing single characters inside a file with OPENUPDATE and SETWRITEPOS.
+; ============================================================
+;
+; WHAT IT DOES
+;   The seating plan is stored in /projects/seats.txt as five rows of
+;   ten characters: a dot is a free seat, an X is a booked one. To book
+;   seat C4 the program works out exactly where that character sits in
+;   the file, reads it with SETREADPOS and READCHAR to see if it is
+;   free, then opens the file for update and overwrites just that one
+;   character. The cinema is drawn with free seats green and booked
+;   seats red.
+;
+; HOW TO USE
+;   Run it and type a seat such as C4 (rows A to E, seats 1 to 10).
+;   Type QUIT to stop. The bookings stay in the file for next time.
+;
+; CONCEPTS YOU WILL LEARN
+;   * OPENUPDATE opens a file for reading and changing in place
+;   * SETWRITEPOS chooses where the next characters are written
+;   * why TYPE is used, not PRINT: PRINT would also write a newline
+;     over the next seat
+;
+; THINGS TO TRY
+;   * Add a CANCEL command that writes a dot back
+;   * Make the cinema bigger: 8 rows of 14 seats
+;   * Count the free seats left and print it after each booking
+; ============================================================
+
+make "plan "/projects/seats.txt
+make "rows "ABCDE
+; ten seats plus the newline character at the end of each line
+make "line.length 11
+
+to new.plan
+  openwrite :plan
+  setwrite :plan
+  repeat 5 [
+    ; a few seats are already sold when the cinema opens
+    repeat 10 [type ifelse (random 5) = 0 ["X] [".]]
+    print "
+  ]
+  setwrite []
+  close :plan
+end
+
+to offset :row :seat
+  ; Row A is line 0, row B is line 1, and so on.
+  output (:row - 1) * :line.length + :seat - 1
+end
+
+to seat.at :row :seat
+  openread :plan
+  setread :plan
+  setreadpos offset :row :seat
+  localmake "c readchar
+  setread []
+  close :plan
+  output :c
+end
+
+to book :row :seat
+  openupdate :plan
+  setwrite :plan
+  setwritepos offset :row :seat
+  type "X
+  setwrite []
+  close :plan
+end
+
+to draw.cinema
+  clearscreen hideturtle setlabelheight 14
+  penup setxy -200 200 setheading 90 setpencolor 15 setpensize 8 pendown fd 400
+  penup setxy -40 215 setpencolor 0 label "SCREEN
+  setpensize 1
+  for [r 1 5] [
+    penup setxy -280 150 - :r * 60 setpencolor 0 label item :r :rows
+    for [s 1 10] [
+      ; each seat is a square drawn upward from its lower left corner
+      penup setxy -260 + :s * 44 140 - :r * 60 setheading 0
+      setpencolor ifelse equalp seat.at :r :s "X [4] [2]
+      pendown filled pencolor [repeat 4 [fd 30 rt 90]]
+    ]
+  ]
+  for [s 1 10] [penup setxy -252 + :s * 44 -190 setpencolor 0 label :s]
+end
+
+; Turn a word like C4 into [3 4], or output [] if it makes no sense.
+to parse.seat :w
+  if not wordp :w [output []]
+  if (count :w) < 2 [output []]
+  localmake "row memberp uppercase first :w :rows
+  if not :row [output []]
+  localmake "n butfirst :w
+  if not numberp :n [output []]
+  if or :n < 1 :n > 10 [output []]
+  output list (count :rows) - (count member uppercase first :w :rows) + 1 :n
+end
+
+to booking.loop
+  print [Which seat would you like? Type a row and a number like C4, or quit.]
+  localmake "a readword
+  if or emptyp :a memberp :a [quit q stop exit] [print [Enjoy the film.] stop]
+  localmake "s parse.seat :a
+  ifelse emptyp :s [print [Rows are A to E and seats are 1 to 10.]] [
+    ifelse equalp seat.at first :s last :s "X [
+      print (sentence [Sorry,] :a [is already taken.])
+    ] [
+      book first :s last :s
+      print (sentence [Seat] uppercase :a [is yours.])
+      draw.cinema
+    ]
+  ]
+  booking.loop
+end
+
+if not filep :plan [new.plan]
+draw.cinema
+booking.loop

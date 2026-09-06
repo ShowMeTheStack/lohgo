@@ -1,0 +1,92 @@
+; ============================================================
+; TITLE:    Picture Saver
+; CATEGORY: Files & Data
+; LEVEL:    Beginner
+; TAGS:     savepict, loadpict, files, drawing
+; SUMMARY:  Draws a sunset over the sea, saves it as a PNG picture with SAVEPICT, wipes the screen and loads it back.
+; ============================================================
+;
+; WHAT IT DOES
+;   Paints a sunset: an orange sky, a sun, the sea and a little boat.
+;   SAVEPICT "/projects/sunset.png stores the screen as a picture file.
+;   The screen is then cleared, and LOADPICT brings the picture back,
+;   exactly as it was, and a label is written on top of it.
+;
+; HOW TO USE
+;   Press Run. Look for sunset.png in /projects in the file panel; you
+;   can download it like any picture.
+;
+; CONCEPTS YOU WILL LEARN
+;   * SAVEPICT saves what the turtle drew, LOADPICT shows it again
+;   * a saved picture is just pixels: the turtle cannot "undo" it
+;   * FILLED to paint shapes
+;
+; THINGS TO TRY
+;   * Save three different pictures and load them one after another
+;     like a slide show
+;   * Draw something new on top of the loaded picture and save again
+; ============================================================
+
+make "picture "/projects/sunset.png
+
+to rect :w :h :color
+  ; a filled rectangle with its lower left corner at the turtle
+  setheading 0
+  filled :color [repeat 2 [fd :h rt 90 fd :w rt 90]]
+end
+
+to sky
+  ; Bands of color from red at the top to yellow near the sea.
+  localmake "colors [[200 60 60] [230 100 60] [245 140 60] [250 180 80] [255 210 120]]
+  for [i 1 5] [
+    penup setxy -400 300 - :i * 60 setpencolor item :i :colors
+    rect 800 60 item :i :colors
+  ]
+end
+
+to sun
+  penup setxy 0 -20 setpencolor [255 240 160]
+  pendown filled [255 240 160] [arc 360 70]
+end
+
+to sea
+  penup setxy -400 -300 setpencolor [30 70 140]
+  rect 800 300 [30 70 140]
+  ; little white waves
+  setpencolor 7 setpensize 2
+  repeat 25 [
+    penup setxy (random 760) - 380 -40 - random 240 setheading 60 pendown
+    repeat 2 [arc.step]
+  ]
+  setpensize 1
+end
+
+to arc.step
+  repeat 6 [fd 3 rt 20]
+  lt 120
+end
+
+to boat
+  penup setxy -200 -120 setheading 90 setpencolor 8
+  filled 8 [fd 120 rt 120 fd 30 rt 60 fd 90 rt 60 fd 30]
+  penup setxy -150 -120 setheading 0 setpencolor 0 pendown fd 100
+  ; the sail: from the top of the mast, out to the right, back to the mast
+  setpencolor 7 filled 7 [rt 150 fd 90 setxy -150 -110 setxy -150 -20]
+end
+
+to paint
+  clearscreen hideturtle
+  sky sun sea boat
+end
+
+paint
+savepict :picture
+print (sentence [Saved the picture as] :picture)
+wait 60
+clearscreen
+print [Screen cleared. Loading it back...]
+wait 30
+loadpict :picture
+penup setxy -120 250 setpencolor 7 setlabelheight 28
+label [Loaded from disk]
+hideturtle

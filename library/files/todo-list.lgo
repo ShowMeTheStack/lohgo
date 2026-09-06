@@ -1,0 +1,115 @@
+; ============================================================
+; TITLE:    To-Do List
+; CATEGORY: Files & Data
+; LEVEL:    Beginner
+; TAGS:     files, lists, menu, checklist
+; SUMMARY:  A to-do list saved on disk, drawn as a sticky note with check boxes.
+; ============================================================
+;
+; WHAT IT DOES
+;   Keeps your jobs in /projects/todo.txt. Each line is a job, and
+;   jobs that are finished start with the word DONE. After every
+;   change the file is written again and the sticky note is redrawn.
+;
+; HOW TO USE
+;   Type a whole line each time:
+;     add feed the cat     adds a job
+;     done 2               ticks off job number 2
+;     tidy                 throws away the finished jobs
+;     quit                 stops
+;
+; CONCEPTS YOU WILL LEARN
+;   * READLIST reads the whole line, so the command and its words
+;     arrive together as one list
+;   * keeping the data in a variable and saving it after each change
+;   * FPUT to mark a job, FILTER to remove the done ones
+;
+; THINGS TO TRY
+;   * Add an UNDO command that takes the DONE mark off again
+;   * Color the jobs by how long they are
+; ============================================================
+
+make "todo.file "/projects/todo.txt
+
+to load.jobs
+  if not filep :todo.file [output [[water the plants] [read a chapter]]]
+  localmake "jobs []
+  openread :todo.file
+  setread :todo.file
+  while [not eofp] [localmake "j readlist if not emptyp :j [make "jobs lput :j :jobs]]
+  setread []
+  close :todo.file
+  output :jobs
+end
+
+to save.jobs
+  openwrite :todo.file
+  setwrite :todo.file
+  foreach :jobs [print ?]
+  setwrite []
+  close :todo.file
+end
+
+to done? :job
+  output equalp first :job "done
+end
+
+to note
+  ; Draw a yellow sticky note with one box per job.
+  clearscreen hideturtle
+  penup setxy -200 250 setheading 90 setpencolor 14
+  filled 6 [repeat 2 [fd 400 rt 90 fd 480 rt 90]]
+  setpencolor 0 setlabelheight 22 setxy -180 205 label [Things to do]
+  setlabelheight 16
+  localmake "y 160
+  foreach :jobs [
+    tick.box :y done? ?
+    penup setxy -140 :y - 4
+    setpencolor ifelse done? ? [15] [0]
+    label (sentence # ifelse done? ? [butfirst ?] [?])
+    make "y :y - 36
+  ]
+end
+
+to tick.box :y :ticked
+  penup setxy -175 :y - 8 setheading 0 pendown setpencolor 0
+  repeat 4 [fd 20 rt 90]
+  if :ticked [setpencolor 2 setpensize 3 penup setxy -172 :y penup
+    pendown setxy -166 :y - 6 setxy -152 :y + 14 setpensize 1]
+end
+
+to obey :line
+  localmake "cmd first :line
+  if equalp :cmd "add [
+    if emptyp butfirst :line [print [Add what? Try: add buy bread] stop]
+    make "jobs lput butfirst :line :jobs stop]
+  if equalp :cmd "done [
+    localmake "n last :line
+    if not numberp :n [print [Say which number, like: done 2] stop]
+    if or :n < 1 :n > count :jobs [print [There is no job with that number.] stop]
+    if not done? item :n :jobs [setitem.list :n fput "done item :n :jobs]
+    stop]
+  if equalp :cmd "tidy [make "jobs filter [not done? ?] :jobs stop]
+  print [Commands: add ..., done number, tidy, quit]
+end
+
+; Lists cannot be changed in place, so build a new list with item N swapped.
+to setitem.list :n :new
+  make "jobs map [ifelse # = :n [:new] [?]] :jobs
+end
+
+to main.loop
+  forever [
+    print [What now? add ..., done number, tidy or quit]
+    localmake "line readlist
+    ; An empty line, or running out of input, also means stop.
+    if or (emptyp :line) (memberp first :line [quit q stop bye]) [save.jobs print [Saved.] stop]
+    obey :line
+    save.jobs
+    note
+  ]
+end
+
+make "jobs load.jobs
+note
+main.loop
