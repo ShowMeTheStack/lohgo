@@ -1,0 +1,88 @@
+; ============================================================
+; TITLE:    Unit Conversion Trainer
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Intermediate
+; TAGS:     measurement, units, multiplication, division
+; SUMMARY:  Practice changing meters to centimeters, kilograms to grams, hours to minutes and back again.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each question picks a pair of units, such as kilometers and
+;   meters, and a direction. Going from a big unit to a small one you
+;   multiply; going from small to big you divide. The program shows
+;   the rule after every answer and draws a "conversion ladder" so you
+;   can see which way to go.
+;
+; HOW TO USE
+;   Press Run and type the number of the new unit. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a table of facts as a list of lists: [km m 1000]
+;   * choosing multiply or divide from the direction
+;   * questions built so the answers come out as whole numbers
+;
+; THINGS TO TRY
+;   * Add [l ml 1000] for liters and milliliters
+;   * Add [day hours 24] and [week days 7]
+; ============================================================
+
+; big unit, small unit, how many small ones make one big one
+make "units [[km m 1000] [m cm 100] [cm mm 10] [kg g 1000] [hours minutes 60] [minutes seconds 60] [liters ml 1000]]
+
+to ladder :big :small :factor
+  clearscreen hideturtle setlabelheight 22
+  penup setxy -200 60 setpencolor 1 setheading 90
+  filled 11 [repeat 2 [fd 140 rt 90 fd 60 rt 90]]
+  setxy -180 25 setpencolor 0 label :big
+  setxy 60 -40 setpencolor 1
+  filled 11 [repeat 2 [fd 140 rt 90 fd 60 rt 90]]
+  setxy 80 -75 setpencolor 0 label :small
+  ; arrows down and up between the two boxes
+  setpencolor 4 setpensize 3
+  setxy -40 30 pendown setxy 50 -40 penup
+  setxy 10 -60 label word "x :factor
+  setpencolor 2
+  setxy 60 -10 pendown setxy -30 60 penup
+  setxy -30 80 label word "/ :factor
+  setpensize 1
+end
+
+to get.answer
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if numberp :a [output :a]
+  print [Please type just the number.]
+  output get.answer
+end
+
+to question
+  localmake "u pick :units
+  localmake "big first :u localmake "small item 2 :u localmake "f last :u
+  ladder :big :small :f
+  localmake "n 1 + random 9
+  ifelse (random 2) = 0 [
+    print (sentence [How many] :small [are in] :n word :big "?)
+    localmake "right :n * :f
+    localmake "rule (sentence [Big to small: multiply by] :f)
+  ] [
+    print (sentence [How many] :big [are in] :n * :f word :small "?)
+    localmake "right :n
+    localmake "rule (sentence [Small to big: divide by] :f)
+  ]
+  localmake "a get.answer
+  if equalp :a "quit [output "quit]
+  ifelse :a = :right [print [Correct.]] [print (sentence [The answer is] :right)]
+  print :rule
+  output :a = :right
+end
+
+make "score 0 make "done 0
+catch "end.quiz [
+  repeat 8 [
+    localmake "r question
+    if equalp :r "quit [throw "end.quiz]
+    make "done :done + 1
+    if :r [make "score :score + 1]
+  ]
+]
+print (sentence [Score:] :score "/ :done)

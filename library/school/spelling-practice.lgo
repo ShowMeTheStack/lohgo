@@ -1,0 +1,91 @@
+; ============================================================
+; TITLE:    Look, Cover, Write, Check
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Beginner
+; TAGS:     spelling, words, cleartext, wait
+; SUMMARY:  Shows a spelling word for a few seconds, hides it, and asks you to type it from memory.
+; ============================================================
+;
+; WHAT IT DOES
+;   This is the classroom spelling method: look at the word, cover it,
+;   write it, then check. The word appears in big letters on the screen,
+;   then the screen is cleared and you type it. If it is wrong, the
+;   program shows which letters were different, and the word comes back
+;   for another try at the end.
+;
+; HOW TO USE
+;   Run it, look hard at each word, then type it when it disappears.
+;   Change the WORDS list to your own spelling list for the week.
+;
+; CONCEPTS YOU WILL LEARN
+;   * LABEL to show text, CLEARSCREEN and CLEARTEXT to hide it
+;   * WAIT to pause: WAIT 60 is one second
+;   * comparing two words letter by letter with ITEM
+;   * a list of mistakes that grows and is tried again
+;
+; THINGS TO TRY
+;   * Show the word for less time as you get better
+;   * Keep the words you got wrong in a file for next week
+; ============================================================
+
+make "words [because friend people beautiful necessary believe Wednesday island answer separate]
+
+to show.word :w
+  clearscreen hideturtle
+  setlabelheight 60 setpencolor 1
+  penup setxy -18 * count :w 0 label :w
+  wait 120
+  clearscreen
+end
+
+; Mark each letter: the same letter stays, a wrong one becomes a star.
+to compare :typed :right
+  localmake "marks "
+  for [i 1 count :right] [
+    ; Check the length first: ITEM fails if the typed word is too short.
+    localmake "same "false
+    if :i <= count :typed [make "same equalp item :i :typed item :i :right]
+    make "marks word :marks ifelse :same [item :i :right] ["*]
+  ]
+  output :marks
+end
+
+to test.word :w
+  show.word :w
+  print [Now type the word:]
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop] [output "quit]
+  if equalp :a :w [print [Spot on!] output "true]
+  print word "|You wrote:     | :a
+  print word "|Right word:    | :w
+  print word "|Letters right: | compare :a :w
+  output "false
+end
+
+to practice :list
+  localmake "missed []
+  foreach :list [
+    localmake "r test.word ?
+    if equalp :r "quit [output "quit]
+    if not :r [make "missed lput ? :missed]
+  ]
+  output :missed
+end
+
+; The words that have not been picked yet.
+to remove.all :used :all
+  output filter [not memberp ? :used] :all
+end
+
+make "todays []
+repeat 5 [make "todays lput pick remove.all :todays :words :todays]
+print [Look at each word carefully. It will disappear!]
+make "missed practice :todays
+if listp :missed [
+  ifelse emptyp :missed [print [All five correct first time!]] [
+    print (sentence [Let's try these again:] :missed)
+    make "again practice :missed
+    if listp :again [print (sentence [Still tricky:] :again)]
+  ]
+]
+print [Practice finished.]

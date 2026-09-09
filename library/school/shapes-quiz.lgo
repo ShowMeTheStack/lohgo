@@ -1,0 +1,79 @@
+; ============================================================
+; TITLE:    Name That Shape
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Beginner
+; TAGS:     polygons, shapes, quiz, repeat
+; SUMMARY:  Draws a random shape in a random color and size and asks you its name.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle draws a triangle, square, pentagon, hexagon, heptagon,
+;   octagon or circle, turned a random amount so you cannot guess from
+;   the way it sits. You type its name. After each answer the program
+;   tells you how many sides and corners the shape has.
+;
+; HOW TO USE
+;   Run it and type the name of each shape. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * every regular shape is REPEAT sides [FD size RT 360 / sides]
+;   * a circle is just a shape with very many tiny sides
+;   * looking up a word in a list with ITEM
+;
+; THINGS TO TRY
+;   * Add nonagon (9) and decagon (10)
+;   * Draw a rectangle or a rhombus, which are not regular
+; ============================================================
+
+make "names [triangle square pentagon hexagon heptagon octagon]
+
+to regular :sides :size
+  ; Walk out from the middle to a corner, then turn to face along the
+  ; first side. That keeps every shape centered on the screen.
+  penup home setheading random 360
+  fd :size / (2 * sin 180 / :sides)
+  rt 90 + 180 / :sides pendown
+  filled pick [4 1 2 14 13 5 8] [repeat :sides [fd :size rt 360 / :sides]]
+end
+
+to round.shape
+  penup home setheading 90 fd 120 lt 90 pendown
+  filled pick [4 1 2 14 13] [repeat 120 [fd 2 * 120 * pi / 120 lt 3]]
+end
+
+to a.or.an :w
+  ; "an octagon" but "a hexagon"
+  output ifelse memberp first :w "aeiou ["an] ["a]
+end
+
+to ask.name
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  output lowercase :a
+end
+
+to one.shape
+  clearscreen hideturtle setpencolor 0 setpensize 3
+  localmake "sides pick [0 3 4 5 6 7 8]
+  ifelse :sides = 0 [round.shape] [regular :sides 260 / :sides + 40]
+  localmake "right ifelse :sides = 0 ["circle] [item :sides - 2 :names]
+  print [What is the name of this shape?]
+  localmake "a ask.name
+  if equalp :a "quit [output "quit]
+  ifelse equalp :a :right [print [That's right!]] [print (sentence [It is] a.or.an :right :right)]
+  ifelse :sides = 0 [print [A circle has no corners at all.]] [
+    print (sentence [It has] :sides [straight sides and] :sides [corners.])]
+  output equalp :a :right
+end
+
+make "score 0
+make "asked 0
+catch "stop.quiz [
+  repeat 7 [
+    localmake "r one.shape
+    if equalp :r "quit [throw "stop.quiz]
+    make "asked :asked + 1
+    if :r [make "score :score + 1]
+  ]
+]
+print (sentence [Score:] :score [out of] :asked)

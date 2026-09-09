@@ -1,0 +1,102 @@
+; ============================================================
+; TITLE:    Capital Cities Quiz
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Intermediate
+; TAGS:     property lists, geography, quiz, hints
+; SUMMARY:  Asks for the capital cities of countries stored in property lists, with hints and a score per continent.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each country is a property list holding its capital and continent:
+;   GPROP "Japan "capital gives Tokyo. The quiz picks six countries,
+;   draws a card colored by continent, and asks for the capital. Type
+;   HINT to see the first letter and the number of letters. At the end
+;   you get a score for every continent you were asked about.
+;
+; HOW TO USE
+;   Run it and type the capital, then Enter. Two-word capitals such as
+;   New Delhi are typed with a space. HINT gives a clue, QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * PPROP and GPROP to store facts about a word
+;   * READLIST, so that two-word answers work
+;   * a second property list used as a score board
+;
+; THINGS TO TRY
+;   * Add more countries with ADD.COUNTRY
+;   * Turn it around: give the capital, ask for the country
+; ============================================================
+
+to add.country :country :capital :continent
+  pprop :country "capital :capital
+  pprop :country "continent :continent
+  make "countries lput :country :countries
+end
+
+make "countries []
+add.country "France [Paris] "Europe
+add.country "Japan [Tokyo] "Asia
+add.country "Kenya [Nairobi] "Africa
+add.country "Brazil [Brasilia] "Americas
+add.country "India [New Delhi] "Asia
+add.country "Egypt [Cairo] "Africa
+add.country "Canada [Ottawa] "Americas
+add.country "Italy [Rome] "Europe
+add.country "Australia [Canberra] "Oceania
+add.country "Argentina [Buenos Aires] "Americas
+add.country "Spain [Madrid] "Europe
+add.country "China [Beijing] "Asia
+
+to continent.color :c
+  output item 1 + count member :c [Oceania Americas Africa Asia Europe] [0 2 14 4 1 13]
+end
+
+to card :country
+  clearscreen hideturtle
+  penup setxy -220 -80 setheading 0 setpencolor 0
+  filled continent.color gprop :country "continent [repeat 2 [fd 160 rt 90 fd 440 rt 90]]
+  setpencolor 7 setlabelheight 40 setxy -190 10 label :country
+  setlabelheight 20 setxy -190 -50 label gprop :country "continent
+end
+
+to hint :country
+  localmake "city gprop :country "capital
+  print (sentence [It starts with] first first :city [and has] count reduce "word :city [letters.])
+end
+
+to ask.capital :country
+  print (sentence [What is the capital of] word :country "?)
+  localmake "a readlist
+  if or not listp :a emptyp :a [output "quit]
+  if memberp first :a [quit stop] [output "quit]
+  if equalp :a [hint] [hint :country output ask.capital :country]
+  output equalp :a gprop :country "capital
+end
+
+to score.add :continent :points
+  localmake "old gprop "board :continent
+  if emptyp :old [make "old [0 0]]
+  pprop "board :continent list (first :old) + :points (last :old) + 1
+end
+
+to quiz :n
+  localmake "pool :countries
+  repeat :n [
+    localmake "c pick :pool
+    make "pool remove :c :pool
+    card :c
+    localmake "r ask.capital :c
+    if equalp :r "quit [stop]
+    ifelse :r [print [Correct!] score.add gprop :c "continent 1] [
+      print (sentence [The capital of] :c [is] gprop :c "capital)
+      score.add gprop :c "continent 0]
+  ]
+end
+
+quiz 6
+print []
+print [Your scores by continent:]
+foreach [Europe Asia Africa Americas Oceania] [
+  localmake "s gprop "board ?
+  if not emptyp :s [print (sentence word ? ": first :s [out of] last :s)]
+]

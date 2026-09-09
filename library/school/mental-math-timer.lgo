@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    Mental Math Stopwatch
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Intermediate
+; TAGS:     timemilli, timing, arithmetic, speed
+; SUMMARY:  Times how fast you answer ten mental math questions with TIMEMILLI and draws a speed chart.
+; ============================================================
+;
+; WHAT IT DOES
+;   TIMEMILLI is a clock that counts milliseconds (thousandths of a
+;   second). The program reads it just before each question and again
+;   after your answer; the difference is how long you took. At the end
+;   it prints your fastest and average times and draws one bar per
+;   question: green for right, red for wrong, taller for slower.
+;
+; HOW TO USE
+;   Press Run and answer as fast as you can. Accuracy still matters:
+;   wrong answers get a red bar. QUIT stops early.
+;
+; CONCEPTS YOU WILL LEARN
+;   * TIMEMILLI and subtracting two times
+;   * turning milliseconds into seconds with one decimal place
+;   * keeping a list of results to chart afterwards
+;
+; THINGS TO TRY
+;   * Add a 10 second penalty for each wrong answer
+;   * Store your best average in a file and try to beat it
+; ============================================================
+
+to question
+  ; Mix of adding, taking away and times, all small enough to do in your head.
+  localmake "kind random 3
+  localmake "a 2 + random 11
+  localmake "b 2 + random 11
+  if :kind = 0 [output (list :a "+ :b :a + :b)]
+  if :kind = 1 [output (list :a + :b "- :b :a)]
+  output (list :a "x :b :a * :b)
+end
+
+to seconds :ms
+  output (round :ms / 100) / 10
+end
+
+to answer
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if numberp :a [output :a]
+  type "|A number please: |
+  output answer
+end
+
+to chart :results
+  clearscreen hideturtle setlabelheight 14
+  penup setxy -320 -200 setheading 90 setpencolor 0 pendown fd 640
+  localmake "x -300
+  foreach :results [
+    ; each result is [seconds right?]
+    localmake "h min 400 40 * first ?
+    penup setxy :x -200 setheading 0 pendown
+    filled ifelse last ? [2] [4] [repeat 2 [fd :h rt 90 fd 40 rt 90]]
+    penup setxy :x -220 label # 
+    setxy :x -190 + :h label first ?
+    make "x :x + 60
+  ]
+  penup setxy -300 240 setlabelheight 20 label [Seconds per question]
+end
+
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+make "results []
+print [Ten questions. Answer as fast as you can!]
+catch "stopped [
+  repeat 10 [
+    localmake "q question
+    type (sentence item 1 :q item 2 :q item 3 :q "=) type "| |
+    localmake "start timemilli
+    localmake "a answer
+    if equalp :a "quit [throw "stopped]
+    localmake "took seconds timemilli - :start
+    localmake "ok :a = last :q
+    ifelse :ok [print (sentence [Right, in] :took [seconds.])] [print (sentence [The answer was] last :q)]
+    make "results lput list :took :ok :results
+  ]
+]
+if not emptyp :results [
+  localmake "times map [first ?] :results
+  print (sentence [Right answers:] count filter [last ?] :results [of] count :results)
+  print (sentence [Fastest:] reduce "min :times [seconds])
+  print (sentence [Average:] (round 10 * (reduce "sum :times) / count :times) / 10 [seconds])
+  chart :results
+]

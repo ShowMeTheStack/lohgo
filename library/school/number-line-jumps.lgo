@@ -1,0 +1,91 @@
+; ============================================================
+; TITLE:    Number Line Jumps
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Beginner
+; TAGS:     number line, addition, subtraction, animation
+; SUMMARY:  A frog hops along a number line to show adding and taking away, and you say where it lands.
+; ============================================================
+;
+; WHAT IT DOES
+;   A number line from 0 to 20 is drawn across the screen. The frog
+;   (the turtle) starts on one number, and the question asks where it
+;   will be after some hops forward or back. You answer first, then the
+;   frog makes its hops one at a time with little arcs, so you can
+;   check by counting.
+;
+; HOW TO USE
+;   Press Run and type where the frog will land. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * adding is jumping right, taking away is jumping left
+;   * an arc for each hop drawn with small steps
+;   * WAIT to slow an animation down
+;
+; THINGS TO TRY
+;   * Make the frog hop in twos for skip counting
+;   * Draw a number line from -10 to 10 to meet negative numbers
+; ============================================================
+
+make "gap 36
+
+to x.of :n
+  output -360 + :n * :gap
+end
+
+to number.line
+  clearscreen setpensize 2 setpencolor 0 setlabelheight 14
+  penup setxy -380 0 setheading 90 pendown fd 760
+  for [n 0 20] [
+    penup setxy x.of :n -8 setheading 0 pendown fd 16
+    penup setxy (x.of :n) - 4 * count :n -32 label :n
+  ]
+end
+
+to hop :direction
+  ; half a circle of little steps, up and over to the next number
+  localmake "start xcor
+  pendown setpencolor 2
+  repeat 18 [
+    setheading 90 * :direction - 90 * :direction * cos repcount * 10
+    fd :gap * pi / 2 / 18
+  ]
+  setheading 0
+  penup setxy :start + :direction * :gap 0
+  wait 12
+end
+
+to jump.show :from :size
+  penup setxy x.of :from 0 showturtle
+  localmake "dir ifelse :size > 0 [1] [-1]
+  repeat abs :size [hop :dir]
+end
+
+to get.number
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if numberp :a [output :a]
+  print [Type the number where the frog lands.]
+  output get.number
+end
+
+setshape "turtle
+make "score 0
+catch "done [
+  repeat 6 [
+    localmake "start random 21
+    ; choose a jump that stays on the line
+    localmake "size (random 21) - :start
+    if :size = 0 [make "size 1]
+    if :start + :size > 20 [make "size 20 - :start]
+    number.line
+    penup setxy x.of :start 0 setheading 0 showturtle
+    print (sentence [The frog is on] :start [and hops] abs :size ifelse :size > 0 [[forward.]] [[back.]] [Where does it land?])
+    localmake "a get.number
+    if equalp :a "quit [throw "done]
+    jump.show :start :size
+    ifelse :a = :start + :size [print [Right!] make "score :score + 1] [print (sentence [It lands on] :start + :size)]
+    print (sentence :start ifelse :size > 0 ["+] ["-] abs :size "= :start + :size)
+  ]
+]
+hideturtle
+print (sentence [Score:] :score)

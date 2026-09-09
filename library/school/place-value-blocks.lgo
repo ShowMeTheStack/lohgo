@@ -1,0 +1,90 @@
+; ============================================================
+; TITLE:    Place Value Blocks
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Beginner
+; TAGS:     place value, hundreds, tens, ones, counting
+; SUMMARY:  Draws a number as hundred squares, ten rods and single cubes, and asks you what number it is.
+; ============================================================
+;
+; WHAT IT DOES
+;   Base ten blocks are what many classrooms use for place value: a
+;   flat square is 100, a long rod is 10 and a little cube is 1. The
+;   turtle draws a random number with blue hundreds, green tens and
+;   orange ones, and you count them up. The numbers start small and
+;   grow up to 400.
+;
+; HOW TO USE
+;   Run it and type the number the blocks show. QUIT stops. After each
+;   answer the program writes the number out as hundreds, tens and ones.
+;
+; CONCEPTS YOU WILL LEARN
+;   * INT and REMAINDER pull a number apart into its digits
+;   * nested REPEAT to draw grids of little squares
+;   * reusing one CUBE procedure for flats, rods and ones
+;
+; THINGS TO TRY
+;   * Go up to 9999 with a thousand cube
+;   * Turn it around: you type a number, the turtle draws the blocks
+; ============================================================
+
+make "unit 9
+
+to cube :color
+  ; one little square, the turtle ends where it started
+  filled :color [repeat 4 [fd :unit rt 90]]
+end
+
+to rod :x :y
+  ; ten cubes stacked upward
+  for [i 0 9] [penup setxy :x :y + :i * :unit pendown cube 2]
+end
+
+to flat :x :y
+  ; ten rods side by side make a hundred
+  for [i 0 9] [
+    for [j 0 9] [penup setxy :x + :j * :unit :y + :i * :unit pendown cube 1]
+  ]
+end
+
+to blocks :n
+  clearscreen hideturtle setpencolor 0 setheading 0
+  localmake "h int :n / 100
+  localmake "t int (remainder :n 100) / 10
+  localmake "o remainder :n 10
+  localmake "x -370
+  repeat :h [flat :x 0 make "x :x + 10 * :unit + 12]
+  make "x :x + 10
+  repeat :t [rod :x 0 make "x :x + :unit + 8]
+  make "x :x + 10
+  repeat :o [penup setxy :x 0 pendown cube 14 make "x :x + :unit + 6]
+  output (list :h :t :o)
+end
+
+to get.number
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if numberp :a [output :a]
+  print [Count the blocks and type a number.]
+  output get.number
+end
+
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+make "score 0
+catch "stop.game [
+  repeat 6 [
+    ; Smaller numbers first, bigger ones later.
+    localmake "n 1 + random 100 * min repcount 4
+    localmake "parts blocks min :n 499
+    print [What number do the blocks show?]
+    localmake "a get.number
+    if equalp :a "quit [throw "stop.game]
+    localmake "real (100 * item 1 :parts) + (10 * item 2 :parts) + item 3 :parts
+    ifelse :a = :real [print [Correct!] make "score :score + 1] [print (sentence [It shows] :real)]
+    print (sentence item 1 :parts [hundreds,] item 2 :parts [tens and] item 3 :parts [ones])
+  ]
+]
+print (sentence [Score:] :score)
+

@@ -1,0 +1,107 @@
+; ============================================================
+; TITLE:    Flash Cards with Boxes
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Advanced
+; TAGS:     flash cards, leitner, queues, property lists
+; SUMMARY:  Flash cards that move between three boxes, so the cards you find hard come up more often.
+; ============================================================
+;
+; WHAT IT DOES
+;   This is the Leitner box method. Every card starts in box 1. Get it
+;   right and it moves up a box; get it wrong and it drops back to
+;   box 1. Box 1 is practiced every round, box 2 every second round,
+;   box 3 every fourth round. The boxes are drawn with the cards inside
+;   them, so you can watch the hard ones pile up at the start.
+;
+; HOW TO USE
+;   Press Run. Each card shows a question; type the answer. The deck
+;   here is about animals; change MAKE.DECK for your own subject. Type
+;   QUIT to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * property lists hold each card's question, answer and box
+;   * FILTER picks the cards that are due this round
+;   * a spaced repetition schedule with REMAINDER
+;
+; THINGS TO TRY
+;   * Add box 4, practiced every eighth round
+;   * Save the boxes to a file so the cards remember next time
+; ============================================================
+
+to card :id :question :answer
+  pprop :id "q :question
+  pprop :id "a :answer
+  pprop :id "box 1
+  make "deck lput :id :deck
+end
+
+to make.deck
+  make "deck []
+  card "c1 [A baby cat is called a] [kitten]
+  card "c2 [A baby dog is called a] [puppy]
+  card "c3 [A baby cow is called a] [calf]
+  card "c4 [A baby sheep is called a] [lamb]
+  card "c5 [A baby frog is called a] [tadpole]
+  card "c6 [A baby kangaroo is called a] [joey]
+  card "c7 [A baby goat is called a] [kid]
+  card "c8 [A baby swan is called a] [cygnet]
+end
+
+to due? :id :round
+  localmake "box gprop :id "box
+  if :box = 1 [output "true]
+  if :box = 2 [output (remainder :round 2) = 0]
+  output (remainder :round 4) = 0
+end
+
+to draw.boxes
+  clearscreen hideturtle setlabelheight 14
+  for [b 1 3] [
+    localmake "left -380 + (:b - 1) * 260
+    penup setxy :left -250 setheading 0 setpencolor 0 setpensize 3
+    pendown fd 400 penup setxy :left -250 pendown setheading 90 fd 240 setheading 0 fd 400
+    penup setxy :left + 90 170 setlabelheight 20 label word "Box :b
+    setlabelheight 14
+    localmake "y -230
+    foreach filter [(gprop ? "box) = :b] :deck [
+      penup setxy :left + 20 :y setheading 90 setpencolor 0
+      filled item :b [12 6 10] [repeat 2 [fd 200 rt 90 fd 30 rt 90]]
+      penup setxy :left + 28 :y + 8 label first gprop ? "a
+      make "y :y + 44
+    ]
+  ]
+end
+
+to ask.card :id
+  print (sentence gprop :id "q "...)
+  localmake "a readlist
+  if or not listp :a emptyp :a [output "quit]
+  if memberp first :a [quit stop] [output "quit]
+  ; Ignore "a" or "an" if the answer starts with one.
+  if and (count :a) > 1 memberp first :a [a an] [make "a butfirst :a]
+  ifelse equalp :a gprop :id "a [
+    pprop :id "box min 3 (gprop :id "box) + 1
+    print (sentence [Right. Up to box] gprop :id "box)
+  ] [
+    pprop :id "box 1
+    print (sentence [It is] gprop :id "a [- back to box 1.])
+  ]
+  output "ok
+end
+
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+make.deck
+draw.boxes
+catch "done [
+  for [session 1 6] [
+    print (sentence "--- [Round] :session "---)
+    foreach filter [due? ? :session] :deck [
+      if equalp ask.card ? "quit [throw "done]
+      draw.boxes
+    ]
+  ]
+]
+print (sentence [Cards in box 3:] count filter [(gprop ? "box) = 3] :deck [of] count :deck)

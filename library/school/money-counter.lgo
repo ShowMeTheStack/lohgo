@@ -1,0 +1,95 @@
+; ============================================================
+; TITLE:    Counting Coins
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Beginner
+; TAGS:     money, coins, adding, circles
+; SUMMARY:  Draws a handful of coins and asks how many cents they add up to.
+; ============================================================
+;
+; WHAT IT DOES
+;   Pennies (1 cent), nickels (5), dimes (10) and quarters (25) are
+;   drawn as circles of different sizes and colors, each with its value
+;   printed on it, scattered across a table. You add them up and type
+;   the total in cents. A hint suggests counting the biggest coins
+;   first.
+;
+; HOW TO USE
+;   Press Run and type the total, for example 47. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * each coin is a list: [value size color]
+;   * REDUCE "SUM to add a list of numbers
+;   * placing things in a grid so they do not overlap
+;
+; THINGS TO TRY
+;   * Add half dollars (50) and dollar coins (100)
+;   * Show the answer as dollars and cents, like $1.27
+; ============================================================
+
+; value, radius, color
+make "coins [[1 22 [184 115 51]] [5 27 [190 190 190]] [10 20 [210 210 210]] [25 32 [170 170 170]]]
+
+to coin :x :y :c
+  ; ARC draws a circle around the turtle, so stand in the middle of the coin
+  penup setxy :x :y setpencolor 0 setpensize 2
+  pendown filled item 3 :c [arc 360 item 2 :c] penup
+  setlabelheight 16 setpencolor 0
+  setxy :x - 5 * count first :c :y - 7 label first :c
+end
+
+to table.of :hand
+  clearscreen hideturtle
+  setbackground [60 120 60]
+  ; coins go in a grid of 6 per row, with a little random wobble
+  localmake "i 0
+  foreach :hand [
+    ; parentheses matter: REMAINDER :I 6 + 3 would mean REMAINDER :I 9
+    localmake "x -250 + 100 * (remainder :i 6) + (random 21) - 10
+    localmake "y 120 - 110 * (int :i / 6) + (random 21) - 10
+    coin :x :y ?
+    make "i :i + 1
+  ]
+end
+
+to grab :n
+  if :n = 0 [output []]
+  output fput pick :coins grab :n - 1
+end
+
+; biggest first, so the hint lists quarters before pennies
+to biggest.first :values
+  if emptyp :values [output []]
+  localmake "top reduce [ifelse ?1 > ?2 [?1] [?2]] :values
+  output fput :top biggest.first remove.one :top :values
+end
+
+to remove.one :x :values
+  if equalp :x first :values [output butfirst :values]
+  output fput first :values remove.one :x butfirst :values
+end
+
+to ask.total
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if numberp :a [output :a]
+  print [Type the total in cents, like 37.]
+  output ask.total
+end
+
+make "score 0
+catch "done [
+  for [round.number 1 5] [
+    localmake "hand grab 2 + :round.number
+    table.of :hand
+    localmake "total reduce "sum map [first ?] :hand
+    print [How many cents are on the table?]
+    localmake "a ask.total
+    if equalp :a "quit [throw "done]
+    ifelse :a = :total [print [Correct!] make "score :score + 1] [
+      print (sentence [Not quite. Add the big coins first:] biggest.first map [first ?] :hand)
+      print (sentence [They make] :total [cents.])
+    ]
+  ]
+]
+setbackground 7
+print (sentence [You counted] :score [tables of coins correctly.])

@@ -1,0 +1,79 @@
+; ============================================================
+; TITLE:    Even or Odd?
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Beginner
+; TAGS:     even, odd, pairs, counting, remainder
+; SUMMARY:  Shows a number of counters and asks whether the number is even or odd, then pairs them up to prove it.
+; ============================================================
+;
+; WHAT IT DOES
+;   A number between 1 and 20 appears with that many counters scattered
+;   on the screen. You decide if it is even or odd. Then the counters
+;   line up in pairs, two by two. If one is left over with no partner,
+;   it turns red and the number is odd; if everyone has a partner, the
+;   number is even.
+;
+; HOW TO USE
+;   Press Run and type even or odd (or e or o). QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * REMAINDER :N 2 is 0 for even numbers and 1 for odd ones
+;   * drawing the same counters in two different arrangements
+;   * WAIT to give your eyes time between the two pictures
+;
+; THINGS TO TRY
+;   * Use numbers up to 50 and smaller counters
+;   * Ask about multiples of 3 by lining the counters up in threes
+; ============================================================
+
+to counter :x :y :color
+  penup setxy :x :y setpencolor 0 pendown
+  filled :color [arc 360 14]
+  penup
+end
+
+to scattered :n
+  clearscreen hideturtle
+  setlabelheight 40 setpencolor 1 penup setxy -20 200 label :n
+  repeat :n [counter (random 600) - 300 (random 300) - 150 14]
+end
+
+to paired :n
+  clearscreen hideturtle
+  setlabelheight 40 setpencolor 1 penup setxy -20 200 label :n
+  for [i 0 :n - 1] [
+    ; partners stand one above the other; columns go left to right
+    localmake "x -300 + 60 * int :i / 2
+    localmake "y ifelse (remainder :i 2) = 0 [40] [-40]
+    localmake "alone and (:i = :n - 1) ((remainder :n 2) = 1)
+    counter :x :y ifelse :alone [4] [2]
+  ]
+end
+
+to ask.kind
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if memberp :a [even e] [output "even]
+  if memberp :a [odd o] [output "odd]
+  print [Please type even or odd.]
+  output ask.kind
+end
+
+make "score 0 make "count 0
+catch "finished [
+  repeat 8 [
+    localmake "n 1 + random 20
+    scattered :n
+    print (sentence [Is] :n [even or odd?])
+    localmake "a ask.kind
+    if equalp :a "quit [throw "finished]
+    make "count :count + 1
+    localmake "truth ifelse (remainder :n 2) = 0 ["even] ["odd]
+    wait 20
+    paired :n
+    ifelse equalp :a :truth [print [Yes!] make "score :score + 1] [print (sentence [No,] :n [is] :truth)]
+    print ifelse equalp :truth "even [[Everyone has a partner.]] [[One counter is left without a partner.]]
+    wait 60
+  ]
+]
+print (sentence [You got] :score [out of] :count)

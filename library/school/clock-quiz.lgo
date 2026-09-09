@@ -1,0 +1,115 @@
+; ============================================================
+; TITLE:    What Time Is It?
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Intermediate
+; TAGS:     clock, time, angles, quiz
+; SUMMARY:  Draws a clock face showing a random time and asks you to read it, with easy, medium and hard levels.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle draws a round clock with numbers and tick marks, then
+;   sets the hands to a random time. Level 1 uses o'clock and half
+;   past, level 2 quarters, level 3 any five minutes. You type the time
+;   like 3:15. The hour hand creeps between the numbers just as on a
+;   real clock, which is a good clue.
+;
+; HOW TO USE
+;   Run it, pick a level 1, 2 or 3, then type each time with a colon,
+;   for example 9:30 or 12:05. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * each minute is 6 degrees for the minute hand (360 / 60)
+;   * each hour is 30 degrees for the hour hand, plus half a degree
+;     for every minute that has passed
+;   * splitting 3:15 into hours and minutes
+;
+; THINGS TO TRY
+;   * Add a level 4 with any minute at all
+;   * Draw the clock with Roman numerals
+; ============================================================
+
+to face
+  clearscreen hideturtle
+  penup home setpencolor 0 setpensize 3
+  setxy 0 -200 setheading 90 pendown
+  filled [255 250 230] [repeat 120 [fd 200 * pi / 60 lt 3]]
+  setlabelheight 22
+  for [h 1 12] [
+    penup home setheading :h * 30 fd 165
+    ; labels start at their lower left corner, so nudge them to center
+    setheading 0 bk 10 lt 90 fd 6 * count :h rt 90 label :h
+  ]
+  setpensize 2
+  for [m 0 59] [
+    penup home setheading :m * 6 fd ifelse (remainder :m 5) = 0 [185] [192]
+    pendown fd ifelse (remainder :m 5) = 0 [15] [8]
+  ]
+end
+
+to hands :h :m
+  penup home setheading :m * 6 setpencolor 1 setpensize 4 pendown fd 150
+  penup home setheading (remainder :h 12) * 30 + :m / 2 setpencolor 4 setpensize 8 pendown fd 95
+  penup home setpencolor 0 pendown dot [0 0]
+  setpensize 1
+end
+
+to two.digits :n
+  output ifelse :n < 10 [word 0 :n] [:n]
+end
+
+; "3:15  outputs  [3 15], or [] if it is not a time.
+to time.of :w
+  if not wordp :w [output []]
+  localmake "rest member ": :w
+  if emptyp :rest [output []]
+  localmake "mins butfirst :rest
+  localmake "hrs butlast butlast butlast :w
+  if (count :mins) = 1 [make "hrs butlast butlast :w]
+  if not and numberp :hrs numberp :mins [output []]
+  output list :hrs :mins
+end
+
+to random.minutes :level
+  if :level = 1 [output 30 * random 2]
+  if :level = 2 [output 15 * random 4]
+  output 5 * random 12
+end
+
+to ask.level
+  print [Which level? 1 is o'clock and half past, 2 is quarters, 3 is five minutes.]
+  localmake "a readword
+  if emptyp :a [output 1]
+  if memberp :a [1 2 3] [output :a]
+  output ask.level
+end
+
+to one.round :level
+  localmake "h 1 + random 12
+  localmake "m random.minutes :level
+  face hands :h :m
+  print [What time does the clock show? Type it like 3:15]
+  localmake "answer []
+  while [emptyp :answer] [
+    localmake "a readword
+    if or emptyp :a memberp :a [quit stop q] [output "quit]
+    make "answer time.of :a
+    if emptyp :answer [print [Use a colon, like 7:30]]
+  ]
+  ; 12:00 and 0:00 both mean twelve o'clock.
+  if and (remainder first :answer 12) = (remainder :h 12) (last :answer) = :m [print [Correct!] output "true]
+  print (sentence [It was] word :h word ": two.digits :m)
+  output "false
+end
+
+make "level ask.level
+make "score 0
+make "rounds 0
+catch "stop.game [
+  repeat 6 [
+    localmake "r one.round :level
+    if equalp :r "quit [throw "stop.game]
+    make "rounds :rounds + 1
+    if :r [make "score :score + 1]
+  ]
+]
+print (sentence [You read] :score [of] :rounds [clocks correctly.])

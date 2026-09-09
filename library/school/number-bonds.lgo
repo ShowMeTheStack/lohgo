@@ -1,0 +1,94 @@
+; ============================================================
+; TITLE:    Number Bonds
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Beginner
+; TAGS:     addition, number bonds, part whole, ten frame
+; SUMMARY:  Shows a part-whole diagram and a ten frame and asks for the missing part of a number bond to 10 or 20.
+; ============================================================
+;
+; WHAT IT DOES
+;   A number bond is a pair of numbers that make a whole: 6 and 4 make
+;   10. The screen shows the whole in a big circle at the top and two
+;   parts below, one of them a question mark. Ten frames show the part
+;   you know as red counters, so you can count the empty spaces.
+;
+; HOW TO USE
+;   Run it and choose bonds to 10 or to 20. Then type the missing part
+;   for each diagram. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * drawing circles with ARC and placing numbers with LABEL
+;   * a ten frame: two rows of five boxes
+;   * the missing part is the whole take away the part you know
+;
+; THINGS TO TRY
+;   * Make bonds to 100 in steps of 10
+;   * Hide the whole instead of a part
+; ============================================================
+
+to bubble :x :y :text :color
+  penup setxy :x :y setpencolor 0 setpensize 2 setheading 0
+  pendown filled :color [arc 360 45] penup
+  setlabelheight 32
+  setxy :x - 10 * count :text :y - 14 setpencolor 0 label :text
+end
+
+to diagram :whole :known :side
+  clearscreen hideturtle
+  penup setxy 0 200 setpencolor 0 setpensize 2
+  pendown setxy -120 70 penup setxy 0 200 pendown setxy 120 70 penup
+  bubble 0 200 :whole 6
+  bubble ifelse :side = 1 [-120] [120] 70 :known 11
+  bubble ifelse :side = 1 [120] [-120] 70 "? 7
+end
+
+; One ten frame: ten boxes in two rows, the first N filled in.
+to frame :left :top :n
+  for [i 0 9] [
+    penup setxy :left + 45 * remainder :i 5 :top - 45 * int :i / 5
+    setheading 0 setpencolor 0 setpensize 1 pendown
+    repeat 4 [fd 40 rt 90]
+    if :i < :n [penup fd 20 rt 90 fd 20 setpencolor 4 pendown filled 4 [arc 360 14] penup]
+  ]
+end
+
+to frames :whole :known
+  frame -230 -90 min :known 10
+  if :whole = 20 [frame 20 -90 :known - 10]
+end
+
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+to ask.target
+  print [Bonds to 10 or to 20? Type 10 or 20.]
+  localmake "a readword
+  if equalp :a 20 [output 20]
+  if not equalp :a 10 [print [Let's practice bonds to 10.]]
+  output 10
+end
+
+to get.number
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if numberp :a [output :a]
+  print [Type a number.]
+  output get.number
+end
+
+make "whole ask.target
+make "score 0
+catch "finished [
+  repeat 8 [
+    localmake "known 1 + random :whole - 1
+    diagram :whole :known 1 + random 2
+    frames :whole :known
+    print (sentence :known [and what make] word :whole "?)
+    localmake "a get.number
+    if equalp :a "quit [throw "finished]
+    ifelse :a = :whole - :known [print [Yes!] make "score :score + 1] [
+      print (sentence :known "+ :whole - :known "= :whole)]
+  ]
+]
+print (sentence [You found] :score [bonds.])

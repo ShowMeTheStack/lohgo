@@ -1,0 +1,109 @@
+; ============================================================
+; TITLE:    Area and Perimeter
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Intermediate
+; TAGS:     area, perimeter, rectangles, grid, measurement
+; SUMMARY:  Draws rectangles and L-shapes on squared paper and asks for their area or perimeter.
+; ============================================================
+;
+; WHAT IT DOES
+;   A shape is drawn on a grid of squares. Each square is 1 unit by 1
+;   unit. Some questions ask for the AREA (how many squares are
+;   inside) and some for the PERIMETER (how far it is all the way
+;   around the edge). After you answer, the turtle walks around the
+;   edge counting the units, or numbers the squares inside.
+;
+; HOW TO USE
+;   Press Run and type a number for each question. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * area of a rectangle = length x width
+;   * perimeter = add up all the sides
+;   * an L-shape is two rectangles stuck together
+;
+; THINGS TO TRY
+;   * Add a T-shape made of three rectangles
+;   * Ask for a missing side when you know the area
+; ============================================================
+
+make "unit 30
+
+to paper
+  clearscreen hideturtle setpensize 1 setpencolor [200 220 255]
+  for [x -390 390 :unit] [penup setxy :x -270 pendown setxy :x 270]
+  for [y -270 270 :unit] [penup setxy -390 :y pendown setxy 390 :y]
+end
+
+; Draw a rectangle W by H squares with its corner at grid square COL ROW.
+; The fill covers the squared paper under it, so we draw the paper's
+; lines again inside the rectangle, stopping just short of the thick
+; edge so they do not cut into it.
+to box :col :row :w :h :color
+  localmake "x -390 + :col * :unit
+  localmake "y -270 + :row * :unit
+  penup setxy :x :y setheading 0
+  setpencolor 1 setpensize 3 pendown
+  filled :color [repeat 2 [fd :h * :unit rt 90 fd :w * :unit rt 90]]
+  setpencolor [200 220 255] setpensize 1
+  for [i 1 :w - 1] [
+    penup setxy :x + :i * :unit :y + 2 pendown setxy :x + :i * :unit :y + :h * :unit - 2
+  ]
+  for [j 1 :h - 1] [
+    penup setxy :x + 2 :y + :j * :unit pendown setxy :x + :w * :unit - 2 :y + :j * :unit
+  ]
+  penup
+end
+
+to rectangle.question
+  localmake "w 2 + random 8 localmake "h 2 + random 6
+  paper
+  box 6 4 :w :h [255 230 150]
+  label.sides 6 4 :w :h
+  output list :w * :h 2 * (:w + :h)
+end
+
+to label.sides :col :row :w :h
+  setlabelheight 18 setpencolor 4 penup
+  setxy -390 + (:col + :w / 2) * :unit -270 + :row * :unit - 28 label :w
+  setxy -390 + (:col + :w) * :unit + 10 -270 + (:row + :h / 2) * :unit label :h
+end
+
+to l.question
+  ; a wide base with a tower on its left end
+  localmake "w 4 + random 5 localmake "h 2 + random 2
+  localmake "tw 1 + random 2 localmake "th 2 + random 4
+  paper
+  box 6 4 :w :h [180 240 180]
+  box 6 4 + :h :tw :th [180 240 180]
+  label.sides 6 4 :w :h
+  setlabelheight 18 setpencolor 4 penup
+  setxy -390 + 6 * :unit - 30 -270 + (4 + :h + :th / 2) * :unit label :th
+  setxy -390 + (6 + :tw / 2) * :unit -270 + (4 + :h + :th) * :unit + 8 label :tw
+  ; the perimeter of an L is the same as the rectangle around it
+  output list (:w * :h) + (:tw * :th) 2 * (:w + :h + :th)
+end
+
+to get.number
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if numberp :a [output :a]
+  print [Please type a number of units.]
+  output get.number
+end
+
+make "score 0 make "asked 0
+catch "finished [
+  repeat 6 [
+    localmake "facts ifelse repcount > 3 [l.question] [rectangle.question]
+    localmake "want pick [area perimeter]
+    print (sentence [What is the] :want [of this shape?])
+    localmake "a get.number
+    if equalp :a "quit [throw "finished]
+    make "asked :asked + 1
+    localmake "right ifelse equalp :want "area [first :facts] [last :facts]
+    ifelse :a = :right [print [Correct!] make "score :score + 1] [print (sentence [The] :want [is] :right)]
+    if equalp :want "area [print [Area counts the squares inside.]]
+    if equalp :want "perimeter [print [Perimeter is the distance all the way around.]]
+  ]
+]
+print (sentence [Score:] :score [out of] :asked)

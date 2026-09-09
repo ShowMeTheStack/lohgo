@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    Angle Estimator
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Intermediate
+; TAGS:     angles, degrees, estimation, protractor
+; SUMMARY:  Draws a random angle and asks you to guess its size in degrees; the closer you are, the more points.
+; ============================================================
+;
+; WHAT IT DOES
+;   Two arms meet at a point with a colored arc between them. You
+;   guess how many degrees the angle is. Within 5 degrees scores 10
+;   points, within 15 scores 5, within 30 scores 2. Then a protractor
+;   scale is drawn over the angle so you can see the real size, and
+;   the program says whether the angle is acute, right, obtuse or
+;   reflex.
+;
+; HOW TO USE
+;   Press Run and type a number of degrees for each angle. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the turtle's RIGHT input is an angle in degrees
+;   * ARC draws part of a circle around the turtle
+;   * ABS gives the size of a difference, ignoring its sign
+;
+; THINGS TO TRY
+;   * Only use multiples of 10 to make it easier
+;   * Draw the first arm pointing in a random direction
+; ============================================================
+
+to arm.picture :angle
+  clearscreen hideturtle setpensize 4 setpencolor 0
+  penup setxy -100 -100 setheading 90 pendown fd 250
+  penup setxy -100 -100 setheading 90 - :angle pendown fd 250
+  ; the arc between the arms: ARC sweeps clockwise from the heading
+  penup setxy -100 -100 setheading 90 - :angle
+  setpencolor 4 setpensize 3 arc :angle 60
+  setpensize 1
+end
+
+to protractor :angle
+  ; tick marks every 10 degrees, labeled every 30
+  setpencolor 1 setlabelheight 12
+  for [d 0 :angle 10] [
+    penup setxy -100 -100 setheading 90 - :d fd 200 pendown
+    fd ifelse (remainder :d 30) = 0 [20] [10]
+    if (remainder :d 30) = 0 [penup fd 12 label :d]
+  ]
+end
+
+; The full stop comes with the answer, because WORD cannot join a
+; two-word answer like [a right angle] to a full stop.
+to kind :angle
+  if :angle < 90 [output "acute.]
+  if :angle = 90 [output [a right angle.]]
+  if :angle < 180 [output "obtuse.]
+  if :angle = 180 [output [a straight angle.]]
+  output "reflex.
+end
+
+to points :error
+  if :error <= 5 [output 10]
+  if :error <= 15 [output 5]
+  if :error <= 30 [output 2]
+  output 0
+end
+
+to guess
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if numberp :a [output :a]
+  print [Type a number of degrees, like 45.]
+  output guess
+end
+
+make "total 0
+make "rounds 0
+catch "finish [
+  repeat 6 [
+    localmake "angle 5 * (2 + random 64)
+    arm.picture :angle
+    print [How many degrees is the red angle?]
+    localmake "g guess
+    if equalp :g "quit [throw "finish]
+    localmake "p points abs :g - :angle
+    make "total :total + :p
+    make "rounds :rounds + 1
+    protractor :angle
+    print (sentence [It is] :angle [degrees, which is] kind :angle)
+    print (sentence [You were] abs :g - :angle [degrees away, so you get] :p [points.])
+    wait 60
+  ]
+]
+print (sentence [Total:] :total [points from] :rounds [angles.])

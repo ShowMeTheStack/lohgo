@@ -1,0 +1,104 @@
+; ============================================================
+; TITLE:    Roman Numerals
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Advanced
+; TAGS:     roman numerals, recursion, conversion, quiz
+; SUMMARY:  Converts numbers to Roman numerals and back, then quizzes you both ways with the numerals carved on a stone tablet.
+; ============================================================
+;
+; WHAT IT DOES
+;   TO.ROMAN turns 1994 into MCMXCIV by taking away the biggest value
+;   it can, over and over. FROM.ROMAN goes the other way: it adds up the
+;   letters, except that a smaller letter in front of a bigger one (like
+;   the I in IV) is taken away. The quiz alternates: read a numeral,
+;   then write one.
+;
+; HOW TO USE
+;   Press Run. Answer with a number when you see a numeral, and with
+;   Roman letters when you see a number. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a greedy algorithm: always use the biggest piece that fits
+;   * two lists kept side by side: values and their letters
+;   * looking one letter ahead to spot subtraction
+;
+; THINGS TO TRY
+;   * Make the quiz use years, like 1066 or 2024
+;   * Check that FROM.ROMAN TO.ROMAN N is N for every N up to 3999
+; ============================================================
+
+make "values [1000 900 500 400 100 90 50 40 10 9 5 4 1]
+make "letters [M CM D CD C XC L XL X IX V IV I]
+
+to to.roman :n
+  output roman.helper :n :values :letters
+end
+
+to roman.helper :n :vals :lets
+  if :n = 0 [output "]
+  if :n >= first :vals [output word first :lets roman.helper :n - first :vals :vals :lets]
+  output roman.helper :n butfirst :vals butfirst :lets
+end
+
+to letter.value :c
+  output item 1 + count member uppercase :c "IVXLCDM [0 1000 500 100 50 10 5 1]
+end
+
+to from.roman :r
+  if emptyp :r [output 0]
+  localmake "here letter.value first :r
+  if (count :r) = 1 [output :here]
+  ; IV: a smaller letter before a bigger one is subtracted
+  if :here < letter.value first butfirst :r [output (from.roman butfirst :r) - :here]
+  output :here + from.roman butfirst :r
+end
+
+to roman.word? :w
+  if not wordp :w [output "false]
+  if emptyp :w [output "false]
+  output emptyp filter [not memberp uppercase ? "IVXLCDM] :w
+end
+
+to tablet :text
+  clearscreen hideturtle
+  penup setxy -250 -80 setheading 90 setpencolor 8 setpensize 4
+  pendown filled [200 190 170] [repeat 2 [fd 500 rt 90 fd 160 rt 90]]
+  penup setlabelheight 60 setpencolor [90 70 50]
+  setxy -20 * count :text -30 label :text
+end
+
+to odd? :n
+  output (remainder :n 2) = 1
+end
+
+to reply
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  output :a
+end
+
+make "score 0 make "asked 0
+catch "finished [
+  repeat 8 [
+    localmake "n 1 + random 99 * repcount
+    ifelse odd? repcount [
+      tablet to.roman :n
+      print [What number is on the tablet?]
+      localmake "a reply
+      if equalp :a "quit [throw "finished]
+      make "asked :asked + 1
+      ifelse equalp :a :n [print [Correct!] make "score :score + 1] [print (sentence [It is] :n)]
+    ] [
+      tablet :n
+      print [Write this number in Roman numerals:]
+      localmake "a reply
+      if equalp :a "quit [throw "finished]
+      make "asked :asked + 1
+      ifelse and roman.word? :a equalp uppercase :a to.roman :n [print [Correct!] make "score :score + 1] [
+        print (sentence [It is] to.roman :n)
+        if roman.word? :a [print (sentence [Your] uppercase :a [means] from.roman :a)]
+      ]
+    ]
+  ]
+]
+print (sentence [Score:] :score [out of] :asked)

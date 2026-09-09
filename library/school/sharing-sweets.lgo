@@ -1,0 +1,86 @@
+; ============================================================
+; TITLE:    Sharing Sweets
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Intermediate
+; TAGS:     division, remainders, sharing, quotient
+; SUMMARY:  Shares a pile of sweets equally between friends; you say how many each gets and how many are left over.
+; ============================================================
+;
+; WHAT IT DOES
+;   A bag of sweets is shared out between some friends, one sweet at a
+;   time, the fair way. Before the sharing you predict two numbers: how
+;   many each friend gets, and how many are left over. Then the sweets
+;   are dealt out on screen into each friend's plate, with any leftovers
+;   in the middle.
+;
+; HOW TO USE
+;   Press Run. Type your two numbers on one line with a space between
+;   them, like 4 2 for "4 each, 2 left over". QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * INT :A / :B gives how many each, REMAINDER :A :B what is left
+;   * READLIST to read two numbers typed on one line
+;   * dealing out one at a time: the turtle visits each plate in turn
+;
+; THINGS TO TRY
+;   * Write the answer as a fraction: 23 shared by 4 is 5 and 3/4
+;   * Let the friends be 2 to 9
+; ============================================================
+
+to plate.spot :i :friends
+  ; plates spread around a circle, numbered from 1
+  output list 220 * sin (:i - 1) * 360 / :friends 220 * cos (:i - 1) * 360 / :friends
+end
+
+to plates :friends
+  clearscreen hideturtle setpensize 2
+  for [i 1 :friends] [
+    penup setpos plate.spot :i :friends setpencolor 15 pendown
+    filled 7 [arc 360 60] penup
+  ]
+end
+
+to sweet :spot :color
+  ; drop a sweet at a slightly random spot on a plate
+  penup setpos :spot setheading random 360 fd random 40
+  setpencolor 0 pendown filled :color [arc 360 7] penup
+end
+
+to share :sweets :friends
+  plates :friends
+  localmake "given 0
+  ; deal whole rounds: every friend gets one per round
+  repeat int :sweets / :friends [
+    for [i 1 :friends] [sweet plate.spot :i :friends pick [4 14 13 2 1] wait 3]
+  ]
+  repeat remainder :sweets :friends [sweet [0 0] 15 wait 3]
+end
+
+to read.two
+  localmake "a readlist
+  if or not listp :a emptyp :a [output "quit]
+  if memberp first :a [quit stop q] [output "quit]
+  if (count :a) = 2 [if and numberp first :a numberp last :a [output :a]]
+  print [Type two numbers: how many each, then how many left, like 4 2]
+  output read.two
+end
+
+make "score 0
+catch "finished [
+  repeat 5 [
+    localmake "friends 2 + random 5
+    localmake "sweets :friends + random 25
+    clearscreen plates :friends
+    print (sentence :sweets [sweets are shared between] :friends [friends.])
+    print [How many does each friend get, and how many are left over?]
+    localmake "guess read.two
+    if equalp :guess "quit [throw "finished]
+    localmake "each int :sweets / :friends
+    localmake "left remainder :sweets :friends
+    share :sweets :friends
+    ifelse and (first :guess) = :each (last :guess) = :left [print [Exactly right!] make "score :score + 1] [
+      print (sentence [Each friend gets] :each [and] :left [are left over.])]
+    print (sentence :sweets [shared by] :friends "= :each [remainder] :left)
+  ]
+]
+print (sentence [You got] :score [right.])

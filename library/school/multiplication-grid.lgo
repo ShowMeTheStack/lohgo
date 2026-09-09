@@ -1,0 +1,97 @@
+; ============================================================
+; TITLE:    Multiplication Grid
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Intermediate
+; TAGS:     multiplication, grid, patterns, missing number
+; SUMMARY:  Draws a 10 by 10 times table grid with some squares blank, and asks you to fill in the missing products.
+; ============================================================
+;
+; WHAT IT DOES
+;   The whole times table is drawn as a grid. Squares are shaded by
+;   how big the number is, which shows the pattern: big numbers in the
+;   far corner, and the same numbers mirrored across the diagonal.
+;   Five squares are left blank with a question mark. You give the
+;   row and column product for each, and a right answer fills it in.
+;
+; HOW TO USE
+;   Press Run. For each blank the program says which row and column,
+;   for example 6 x 8. Type the answer. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * nested FOR loops for rows and columns
+;   * turning a number into a shade of color with an [r g b] list
+;   * the grid is symmetrical because 6 x 8 = 8 x 6
+;
+; THINGS TO TRY
+;   * Color only the square numbers 1, 4, 9, 16 ... on the diagonal
+;   * Make the grid 12 by 12
+; ============================================================
+
+make "cell 44
+
+to corner :row :col
+  ; top left of the grid is at (-220, 230); rows go down the screen
+  output list -220 + (:col - 1) * :cell 230 - :row * :cell
+end
+
+to shade :n
+  ; small numbers pale, big numbers strong blue
+  localmake "k 255 - 2 * :n
+  output (list :k :k 255)
+end
+
+to square.at :row :col :blank
+  penup setpos corner :row :col setheading 0 setpencolor 15 pendown
+  filled ifelse :blank [7] [shade :row * :col] [repeat 4 [fd :cell rt 90]]
+  penup setpos corner :row :col fd 14 rt 90 fd 8
+  setpencolor ifelse :row * :col > 60 [7] [0]
+  label ifelse :blank ["?] [:row * :col]
+end
+
+to headings
+  setlabelheight 16 setpencolor 4
+  for [i 1 10] [
+    penup setpos corner 0 :i fd 14 rt 90 fd 12 setheading 0 label :i
+    penup setpos corner :i 0 fd 14 rt 90 fd 12 setheading 0 label :i
+  ]
+  penup setpos corner 0 0 fd 14 rt 90 fd 12 setheading 0 label "x
+end
+
+to grid :blanks
+  clearscreen hideturtle setlabelheight 15
+  headings
+  setlabelheight 15
+  for [r 1 10] [for [c 1 10] [square.at :r :c memberp list :r :c :blanks]]
+end
+
+to pick.blanks :n
+  if :n = 0 [output []]
+  localmake "rest pick.blanks :n - 1
+  localmake "b list 2 + random 9 2 + random 9
+  if memberp :b :rest [output pick.blanks :n]
+  output fput :b :rest
+end
+
+to get.number
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if numberp :a [output :a]
+  print [A number, please.]
+  output get.number
+end
+
+make "blanks pick.blanks 5
+grid :blanks
+make "right 0
+catch "quit.game [
+  foreach :blanks [
+    print (sentence [What is] first ? "x word last ? "?)
+    localmake "a get.number
+    if equalp :a "quit [throw "quit.game]
+    ifelse :a = (first ?) * (last ?) [print [Yes.] make "right :right + 1] [
+      print (sentence [It is] (first ?) * (last ?))]
+    make "blanks butfirst :blanks
+    grid :blanks
+  ]
+]
+print (sentence [You filled in] :right [squares.])

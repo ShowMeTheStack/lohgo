@@ -1,0 +1,82 @@
+; ============================================================
+; TITLE:    Left or Right?
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Beginner
+; TAGS:     directions, left, right, turtle heading
+; SUMMARY:  The turtle points somewhere and a flag appears beside it: is the flag on the turtle's left or its right?
+; ============================================================
+;
+; WHAT IT DOES
+;   A big turtle stands in the middle of the screen facing up, down,
+;   left or right. A red flag appears on one side of it. You answer
+;   from the TURTLE's point of view, not yours. When the turtle faces
+;   down the screen, its left is on your right, which is the tricky
+;   part, and exactly what a turtle has to think about when you type
+;   LEFT 90.
+;
+; HOW TO USE
+;   Run it and answer each question with left or right (or just l
+;   or r). QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * LEFT and RIGHT always turn from the turtle's point of view
+;   * HEADING: 0 is up, 90 is right, 180 is down, 270 is left
+;   * STAMP leaves a copy of the turtle shape on the screen
+;
+; THINGS TO TRY
+;   * Add "in front" and "behind" as answers too
+;   * Let the turtle face diagonal directions such as 45
+; ============================================================
+
+to flag.at :x :y
+  penup setxy :x :y setheading 0 setpencolor 8 setpensize 3 pendown fd 50
+  setpencolor 4 setpensize 1 filled 4 [rt 90 fd 35 rt 120 fd 20 setxy :x :y + 50]
+  penup
+end
+
+to draw.scene :facing :side
+  clearscreen
+  setpensize 1
+  ; The flag goes 120 steps to the turtle's left or right.
+  penup home setheading :facing
+  ifelse equalp :side "left [lt 90] [rt 90]
+  fd 120
+  localmake "spot pos
+  flag.at first :spot last :spot
+  penup home setheading :facing setshape "turtle setpencolor 2
+  showturtle
+end
+
+to ask.side
+  print [Is the flag on the turtle's left or right?]
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if memberp :a [left l] [output "left]
+  if memberp :a [right r] [output "right]
+  print [Please answer left or right.]
+  output ask.side
+end
+
+to round.of :n
+  localmake "facing pick [0 90 180 270]
+  localmake "side pick [left right]
+  draw.scene :facing :side
+  print (sentence [Question] :n [- the turtle is facing] item 1 + :facing / 90 [up right down left])
+  localmake "a ask.side
+  if equalp :a "quit [output "quit]
+  if equalp :a :side [print [Yes, well done.] output "true]
+  print (sentence [No, it was on the turtle's] :side [- imagine you are the turtle.])
+  output "false
+end
+
+make "score 0
+make "count 0
+catch "finished [
+  repeat 8 [
+    localmake "r round.of repcount
+    if equalp :r "quit [throw "finished]
+    make "count :count + 1
+    if :r [make "score :score + 1]
+  ]
+]
+print (sentence [You got] :score [of] :count [right.])

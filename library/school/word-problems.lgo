@@ -1,0 +1,87 @@
+; ============================================================
+; TITLE:    Word Problem Maker
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Intermediate
+; TAGS:     word problems, templates, sentences, arithmetic
+; SUMMARY:  Builds a new story sum every time from lists of names, things and situations, then checks your answer.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each problem is made from a pattern with gaps, like
+;   "NAME has A THINGS and buys B more". The program fills the gaps
+;   with a random name, a random thing and random numbers, so you
+;   practice reading the question, not remembering the answer. There
+;   are patterns for adding, taking away, multiplying and sharing.
+;
+; HOW TO USE
+;   Press Run, read the story and type the number that answers it.
+;   QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * building sentences with SENTENCE and WORD
+;   * one procedure per kind of problem, chosen with RUN and PICK
+;   * making the sharing numbers divide exactly
+;
+; THINGS TO TRY
+;   * Add a pattern for money with change
+;   * Use two-step problems: buys some, then gives some away
+; ============================================================
+
+make "names [Aisha Ben Carlos Dina Eli Fatima Gabe Hiro Isla Jonah]
+make "things [marbles stickers apples pencils cookies shells cards balloons]
+
+; Each pattern procedure prints the story and outputs the answer.
+to adding.story
+  localmake "who pick :names localmake "what pick :things
+  localmake "a 3 + random 20 localmake "b 2 + random 15
+  print (sentence :who [has] :a :what [and is given] :b [more.])
+  print (sentence [How many] :what [does] :who [have now?])
+  output :a + :b
+end
+
+to taking.story
+  localmake "who pick :names localmake "what pick :things
+  localmake "a 10 + random 30 localmake "b 1 + random 9
+  print (sentence :who [had] :a word :what ". :who [lost] :b [of them on the way home.])
+  print (sentence [How many are left?])
+  output :a - :b
+end
+
+to times.story
+  localmake "what pick :things
+  localmake "bags 2 + random 8 localmake "each 2 + random 9
+  print (sentence [There are] :bags [bags with] :each :what [in each bag.])
+  print (sentence [How many] :what [are there altogether?])
+  output :bags * :each
+end
+
+to sharing.story
+  localmake "who pick :names localmake "what pick :things
+  ; Pick the answer first so the sharing comes out exact.
+  localmake "friends 2 + random 5 localmake "each 2 + random 8
+  print (sentence :who [shares] :friends * :each :what [equally between] :friends [friends.])
+  print (sentence [How many] :what [does each friend get?])
+  output :each
+end
+
+to number.answer
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if numberp :a [output :a]
+  print [Please answer with a number.]
+  output number.answer
+end
+
+make "score 0 make "tries 0
+catch "finished [
+  repeat 6 [
+    print []
+    localmake "right run (list pick [adding.story taking.story times.story sharing.story])
+    localmake "a number.answer
+    if equalp :a "quit [throw "finished]
+    make "tries :tries + 1
+    ifelse :a = :right [print [Correct!] make "score :score + 1] [print (sentence [The answer is] :right)]
+  ]
+]
+print []
+print (sentence [You solved] :score [of] :tries [story problems.])

@@ -1,0 +1,75 @@
+; ============================================================
+; TITLE:    Adding and Taking Away
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Beginner
+; TAGS:     addition, subtraction, quiz, tower
+; SUMMARY:  Ten quick sums with numbers up to 20; every right answer adds a block to a growing tower.
+; ============================================================
+;
+; WHAT IT DOES
+;   Asks ten questions, each an adding or a taking-away sum with
+;   numbers up to 20. Taking-away sums are always set up so the answer
+;   is never below zero. Each right answer stacks a colored block on a
+;   tower, and three right in a row earns a streak message.
+;
+; HOW TO USE
+;   Press Run and type each answer, then Enter. QUIT stops early.
+;
+; CONCEPTS YOU WILL LEARN
+;   * RANDOM to make new questions every time
+;   * swapping two numbers so the bigger one comes first
+;   * a counter for the streak that goes back to 0 on a mistake
+;
+; THINGS TO TRY
+;   * Use numbers up to 100
+;   * Make the tower wobble when you get one wrong
+; ============================================================
+
+to answer.or.quit
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if numberp :a [output :a]
+  print [Type the answer as a number.]
+  output answer.or.quit
+end
+
+to block :n
+  ; Block number N sits on top of block N - 1.
+  penup setxy -40 -260 + 40 * (:n - 1) setheading 0 setpencolor 0
+  pendown filled item 1 + remainder :n 6 [4 14 6 2 1 13] [repeat 2 [fd 40 rt 90 fd 80 rt 90]]
+end
+
+to make.question
+  localmake "a random 21
+  localmake "b random 21
+  if (random 2) = 0 [output (list :a "+ :b :a + :b)]
+  ; For taking away, start from the bigger number.
+  if :a < :b [localmake "t :a make "a :b make "b :t]
+  output (list :a "- :b :a - :b)
+end
+
+to drill
+  localmake "right 0
+  localmake "streak 0
+  repeat 10 [
+    localmake "q make.question
+    type (sentence word repcount ". item 1 :q item 2 :q item 3 :q "=) type "| |
+    localmake "a answer.or.quit
+    if equalp :a "quit [output :right]
+    ifelse :a = last :q [
+      make "right :right + 1
+      make "streak :streak + 1
+      block :right
+      print ifelse :streak >= 3 [(sentence [Right! That is] :streak [in a row.])] [[Right!]]
+    ] [
+      make "streak 0
+      print (sentence [Oops, it is] last :q)
+    ]
+  ]
+  output :right
+end
+
+clearscreen hideturtle
+penup setxy -300 -262 setheading 90 pendown setpencolor 8 setpensize 4 fd 600 setpensize 1
+make "total drill
+print (sentence [You built a tower of] :total [blocks.])

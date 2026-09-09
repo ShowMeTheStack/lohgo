@@ -1,0 +1,103 @@
+; ============================================================
+; TITLE:    Fraction Pies
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Intermediate
+; TAGS:     fractions, circles, quiz, parsing
+; SUMMARY:  Draws a pie cut into equal slices with some colored in and asks what fraction is shaded.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each round the turtle cuts a pie into 2 to 8 equal slices and
+;   colors some of them. You type the shaded fraction, like 3/4.
+;   Equal fractions count too: if the pie shows 2/4 you may answer 1/2,
+;   and the program tells you they are the same amount.
+;
+; HOW TO USE
+;   Press Run. Type answers such as 3/8 and press Enter. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * drawing a pie slice: out along a radius, round the edge, back
+;   * splitting a word like 3/4 at the slash with MEMBER
+;   * checking equal fractions by cross multiplying: a/b = c/d when
+;     a times d equals c times b
+;
+; THINGS TO TRY
+;   * Allow up to 12 slices
+;   * Ask the question the other way: type a fraction, the turtle draws it
+; ============================================================
+
+make "radius 150
+
+to slice :angle :color
+  ; Start at the middle facing outward. Walk out, round, and back.
+  ; The extra half degree at each end makes every little step a true
+  ; chord of the circle, so the turtle comes back exactly to the middle.
+  localmake "h heading
+  filled :color [
+    fd :radius rt 90.5
+    repeat :angle [fd :radius * pi / 180 rt 1]
+    rt 89.5 fd :radius
+  ]
+  setheading :h + :angle
+end
+
+to pie :parts :shaded
+  clearscreen hideturtle
+  penup home setheading 0 setpencolor 0 setpensize 2 pendown
+  repeat :parts [slice 360 / :parts ifelse repcount <= :shaded [14] [7]]
+end
+
+; "3/4  outputs  [3 4].  Anything that is not a fraction outputs [].
+to fraction.of :w
+  if not wordp :w [output []]
+  localmake "after member "/ :w
+  if emptyp :after [output []]
+  localmake "bottom butfirst :after
+  localmake "top first.part :w
+  if not and numberp :top numberp :bottom [output []]
+  if :bottom = 0 [output []]
+  output list :top :bottom
+end
+
+to first.part :w
+  ; everything before the slash
+  if emptyp :w [output "]
+  if equalp first :w "/ [output "]
+  output word first :w first.part butfirst :w
+end
+
+to ask.fraction
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  localmake "f fraction.of :a
+  if not emptyp :f [output :f]
+  print [Type it like this: 3/4]
+  output ask.fraction
+end
+
+to round.of.pie
+  localmake "parts 2 + random 7
+  localmake "shaded 1 + random :parts - 1
+  pie :parts :shaded
+  print [What fraction of the pie is yellow?]
+  localmake "f ask.fraction
+  if equalp :f "quit [output "quit]
+  if and (first :f) = :shaded (last :f) = :parts [print [Exactly right!] output "true]
+  if (first :f) * :parts = :shaded * (last :f) [
+    print (sentence [Right! That is the same as] word :shaded word "/ :parts)
+    output "true]
+  print (sentence [Not this time. It was] word :shaded word "/ :parts)
+  output "false
+end
+
+make "score 0
+make "played 0
+catch "done [
+  repeat 5 [
+    localmake "r round.of.pie
+    if equalp :r "quit [throw "done]
+    make "played :played + 1
+    if :r [make "score :score + 1]
+  ]
+]
+print (sentence [You got] :score [out of] :played)

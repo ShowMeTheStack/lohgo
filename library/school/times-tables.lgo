@@ -1,0 +1,88 @@
+; ============================================================
+; TITLE:    Times Tables Practice
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Beginner
+; TAGS:     multiplication, quiz, readword, stars
+; SUMMARY:  Practice one times table with ten questions in a mixed-up order and earn a star for each right answer.
+; ============================================================
+;
+; WHAT IT DOES
+;   You choose a times table from 2 to 12. The program asks the ten
+;   questions of that table in a random order, so you cannot just count
+;   up. Every right answer puts a gold star on the screen; a wrong one
+;   puts a gray star and tells you the answer.
+;
+; HOW TO USE
+;   Run it, type the table you want (for example 7), then answer each
+;   question and press Enter. Type QUIT to stop early.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READWORD to read an answer, NUMBERP to check it
+;   * shuffling a list so questions come in a random order
+;   * keeping a score in a variable
+;
+; THINGS TO TRY
+;   * Ask 1 x to 12 x instead of 1 x to 10 x
+;   * Ask the same table again but only the ones you got wrong
+; ============================================================
+
+to shuffle :things
+  if emptyp :things [output []]
+  localmake "one pick :things
+  output fput :one shuffle remove :one :things
+end
+
+; Asks until it gets a number. Outputs the number, or "quit.
+to get.number
+  localmake "a readword
+  if emptyp :a [output "quit]
+  if memberp :a [quit q stop] [output "quit]
+  if numberp :a [output :a]
+  type "|Numbers only, please: |
+  output get.number
+end
+
+to star :x :y :color
+  penup setxy :x :y setheading 18 setpencolor :color pendown
+  filled :color [repeat 5 [fd 50 rt 144]]
+end
+
+to choose.table
+  print [Which times table do you want to practice? 2 to 12]
+  localmake "t get.number
+  if equalp :t "quit [output 0]
+  if and :t >= 2 :t <= 12 [output int :t]
+  print [Pick a table from 2 to 12.]
+  output choose.table
+end
+
+to practice :table
+  localmake "score 0
+  localmake "x -330
+  foreach shuffle [1 2 3 4 5 6 7 8 9 10] [
+    type (sentence ? "x :table "=) type "| |
+    localmake "a get.number
+    if equalp :a "quit [output :score]
+    ifelse :a = ? * :table [
+      print [Yes!]
+      make "score :score + 1
+      star :x 0 6
+    ] [
+      print (sentence [Not quite:] ? "x :table "= ? * :table)
+      star :x 0 15
+    ]
+    make "x :x + 70
+  ]
+  output :score
+end
+
+clearscreen hideturtle
+make "table choose.table
+if :table > 0 [
+  penup setxy -150 150 setpencolor 1 setlabelheight 30
+  label (sentence "The :table "times "table)
+  make "score practice :table
+  print (sentence [You got] :score [out of 10.])
+  penup setxy -100 -120 setpencolor 0 setlabelheight 24
+  label (sentence :score [out of 10])
+]

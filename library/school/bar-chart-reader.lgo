@@ -1,0 +1,100 @@
+; ============================================================
+; TITLE:    Reading a Bar Chart
+; CATEGORY: School Helpers & Quizzes
+; LEVEL:    Intermediate
+; TAGS:     data, bar chart, statistics, questions
+; SUMMARY:  Draws a bar chart of a class survey about favorite fruit and asks questions you answer by reading the chart.
+; ============================================================
+;
+; WHAT IT DOES
+;   A class voted for their favorite fruit. The program makes up the
+;   votes, draws a bar chart with a scale up the side, and then asks
+;   questions: which fruit is most popular, how many voted for one,
+;   how many more chose one fruit than another, how many children
+;   voted in all. Every chart is different.
+;
+; HOW TO USE
+;   Press Run and read the chart to answer each question. Answers are
+;   a number or the name of a fruit. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * drawing axes, a scale and bars from a list of numbers
+;   * finding the biggest value and its position in a list
+;   * questions that need one step (read) or two (compare, total)
+;
+; THINGS TO TRY
+;   * Ask which fruit was least popular
+;   * Draw a pictogram with one apple shape for every two votes
+; ============================================================
+
+make "fruits [apple banana grape mango orange]
+make "colors [4 6 13 14 [255 140 0]]
+
+to make.votes
+  ; different numbers for each fruit, so "most popular" has one answer
+  localmake "v []
+  repeat count :fruits [
+    localmake "n 1 + random 12
+    while [memberp :n :v] [make "n 1 + random 12]
+    make "v lput :n :v
+  ]
+  output :v
+end
+
+to draw.chart :votes
+  clearscreen hideturtle setlabelheight 14
+  ; scale up the side, one line every 2 votes
+  for [n 0 12 2] [
+    penup setxy -300 -200 + :n * 30 setheading 90 setpencolor 15 pendown fd 560
+    penup setxy -330 -206 + :n * 30 setpencolor 0 label :n
+  ]
+  for [i 1 count :fruits] [
+    penup setxy -280 + (:i - 1) * 110 -200 setheading 0 setpencolor 0 pendown
+    filled item :i :colors [repeat 2 [fd 30 * item :i :votes rt 90 fd 70 rt 90]]
+    penup setxy -275 + (:i - 1) * 110 -225 label item :i :fruits
+  ]
+  penup setxy -200 210 setlabelheight 20 label [Our favorite fruit]
+end
+
+to position :x :list
+  output 1 + (count :list) - count member :x :list
+end
+
+to biggest :votes
+  output reduce [ifelse ?1 > ?2 [?1] [?2]] :votes
+end
+
+to question :text
+  print :text
+  localmake "a readword
+  ; THROW jumps straight out to the CATCH "FINISHED further down,
+  ; skipping all the questions that are left.
+  if or emptyp :a memberp :a [quit stop q] [throw "finished]
+  output :a
+end
+
+make "votes make.votes
+draw.chart :votes
+make "score 0
+make "asked 0
+
+to check :answer :right
+  make "asked :asked + 1
+  ifelse equalp :answer :right [print [Correct!] make "score :score + 1] [print (sentence [The answer is] :right)]
+end
+
+catch "finished [
+  localmake "top item position biggest :votes :votes :fruits
+  check question [Which fruit got the most votes?] :top
+  localmake "f pick :fruits
+  check question (sentence [How many children chose] word :f "?) item position :f :fruits :votes
+  localmake "a item 1 :fruits localmake "b item 2 :fruits
+  localmake "va item 1 :votes localmake "vb item 2 :votes
+  ifelse :va > :vb [
+    check question (sentence [How many more chose] :a [than] word :b "?) :va - :vb
+  ] [
+    check question (sentence [How many more chose] :b [than] word :a "?) :vb - :va
+  ]
+  check question [How many children voted altogether?] reduce "sum :votes
+]
+print (sentence [You answered] :score [of] :asked [questions correctly.])
