@@ -1,0 +1,129 @@
+; ============================================================
+; TITLE:    The Lost Crown
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Advanced
+; TAGS:     text adventure, property lists, parser, map
+; SUMMARY:  A tiny text adventure in a castle whose rooms, exits and objects are all kept in property lists.
+; ============================================================
+;
+; WHAT IT DOES
+;   The queen's crown is lost somewhere in the castle. You move from
+;   room to room by typing directions, pick things up and use them.
+;   Every room is a property list: GPROP "kitchen "exits gives a list
+;   like [north hall], and GPROP "kitchen "items lists what lies there.
+;   A map in the turtle world shows the rooms you have visited and
+;   where you are now.
+;
+; HOW TO USE
+;   Type commands such as: north, n, go east, look, take key,
+;   drop key, inventory, help. Type quit to stop.
+;   Hint: the tower door is locked.
+;
+; CONCEPTS YOU WILL LEARN
+;   * modeling a little world with property lists
+;   * a two-word parser: a verb and a noun
+;   * game state: where you are, what you carry, what is unlocked
+;
+; THINGS TO TRY
+;   * Add a cellar under the kitchen, reached by going down
+;   * Put a sleeping dragon in the garden that needs a lullaby
+; ============================================================
+
+to room :name :x :y :text :exits :items
+  pprop :name "text :text
+  pprop :name "exits :exits
+  pprop :name "items :items
+  pprop :name "spot list :x :y
+  pprop :name "seen "false
+end
+
+to build.castle
+  room "hall 0 0 [You are in the great hall. The empty throne waits for its crown.] [north library east kitchen west garden] []
+  room "kitchen 160 0 [The kitchen smells of fresh bread. Pots hang from the ceiling.] [west hall] [key bread]
+  room "library 0 130 [Tall shelves of dusty books. A ladder leans in the corner.] [south hall east tower] [book]
+  room "garden -160 0 [Roses and a fountain. A cat is asleep on the bench.] [east hall] [rose]
+  room "tower 160 130 [The top of the tower. Moonlight shines through the window.] [west library] [crown]
+end
+
+to draw.map
+  clearscreen hideturtle setlabelheight 14
+  foreach [hall kitchen library garden tower] [
+    if gprop ? "seen [
+      penup setpos gprop ? "spot setheading 0 bk 40 lt 90 fd 60 rt 90
+      setpencolor 0 pendown
+      filled ifelse equalp ? :here [6] [7] [repeat 2 [fd 80 rt 90 fd 120 rt 90]]
+      penup setpos gprop ? "spot setxy xcor - 30 ycor - 5 label ?
+    ]
+  ]
+end
+
+to describe
+  pprop :here "seen "true
+  print []
+  print gprop :here "text
+  if not emptyp gprop :here "items [print (sentence [You can see:] gprop :here "items)]
+  print (sentence [Exits:] map [first ?] pairs gprop :here "exits)
+  draw.map
+end
+
+; [north library east kitchen]  becomes  [[north library] [east kitchen]]
+to pairs :l
+  if emptyp :l [output []]
+  output fput list first :l first butfirst :l pairs butfirst butfirst :l
+end
+
+to go :dir
+  localmake "d first :dir
+  localmake "full find [equalp first first ? :d] pairs gprop :here "exits
+  if emptyp :full [print [You cannot go that way.] stop]
+  if and equalp last :full "tower not memberp "key :carrying [print [The tower door is locked.] stop]
+  make "here last :full
+  describe
+end
+
+to take :thing
+  if not memberp :thing gprop :here "items [print [That is not here.] stop]
+  pprop :here "items remove :thing gprop :here "items
+  make "carrying lput :thing :carrying
+  print (sentence [You take the] word :thing ".)
+end
+
+to drop :thing
+  if not memberp :thing :carrying [print [You are not carrying that.] stop]
+  make "carrying remove :thing :carrying
+  pprop :here "items lput :thing gprop :here "items
+  print (sentence [You put down the] word :thing ".)
+  if and equalp :thing "crown equalp :here "hall [make "won "true]
+end
+
+to obey :words
+  localmake "verb first :words
+  localmake "noun ifelse (count :words) > 1 [last :words] ["]
+  if memberp :verb [n s e w north south east west] [go :verb stop]
+  if equalp :verb "go [ifelse emptyp :noun [print [Go where?]] [go :noun] stop]
+  if memberp :verb [look l] [describe stop]
+  if memberp :verb [inventory i] [print (sentence [You carry:] ifelse emptyp :carrying [[nothing]] [:carrying]) stop]
+  if memberp :verb [take get] [take :noun stop]
+  if equalp :verb "drop [drop :noun stop]
+  if equalp :verb "help [print [Try: north, south, east, west, look, take thing, drop thing, inventory.] stop]
+  print [I do not understand that. Type help for ideas.]
+end
+
+to play
+  forever [
+    if :won [print [You set the crown on the throne. The queen cheers. You win!] stop]
+    type "|> |
+    localmake "line readlist
+    if or not listp :line emptyp :line [print [You leave the castle for now.] stop]
+    if memberp first :line [quit q bye] [print [You leave the castle for now.] stop]
+    obey map [lowercase ?] :line
+  ]
+end
+
+build.castle
+make "here "hall
+make "carrying []
+make "won "false
+print [THE LOST CROWN. The queen's crown is missing. Find it and put it back in the hall.]
+describe
+play

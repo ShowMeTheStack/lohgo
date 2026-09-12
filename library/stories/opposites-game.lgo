@@ -1,0 +1,109 @@
+; ============================================================
+; TITLE:    Opposites Game
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Beginner
+; TAGS:     words, opposites, antonyms, quiz, pictures
+; SUMMARY:  Shows a word and asks for its opposite, with a picture for some pairs like big and small or up and down.
+; ============================================================
+;
+; WHAT IT DOES
+;   The program knows pairs of opposites like hot and cold, and it
+;   works both ways: it might ask for the opposite of cold too. Some
+;   pairs come with a little turtle drawing that shows both words, for
+;   example a big square next to a small one. Some words have more
+;   than one good opposite, and any of them is accepted.
+;
+; HOW TO USE
+;   Press Run and type the opposite of each word. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a list of pairs, searched in both directions
+;   * RUN to call the drawing procedure whose name is stored in a list
+;   * accepting several right answers with MEMBERP
+;
+; THINGS TO TRY
+;   * Add your own pairs, like early and late
+;   * Draw pictures for more of the pairs
+; ============================================================
+
+; Each entry: word, opposite, other good answers, and a picture procedure.
+make "pairs [
+  [big small [little tiny] draw.size]
+  [hot cold [freezing chilly] draw.temperature]
+  [up down [] draw.updown]
+  [happy sad [unhappy] draw.faces]
+  [fast slow [] none]
+  [open closed [shut] none]
+  [day night [] none]
+  [full empty [] none]
+  [light dark [heavy] none]
+  [old new [young] none]
+]
+
+to draw.size
+  penup setxy -250 -100 setheading 0 setpencolor 1 pendown filled 1 [repeat 4 [fd 200 rt 90]]
+  penup setxy 120 -100 pendown filled 1 [repeat 4 [fd 50 rt 90]]
+end
+
+to draw.temperature
+  penup setxy -200 0 setpencolor 4 pendown filled 14 [arc 360 80]
+  penup setxy 200 0 setpencolor 1 setpensize 4
+  repeat 6 [pendown fd 80 bk 80 rt 60]
+  setpensize 1
+end
+
+to draw.updown
+  arrow -150 0 2
+  arrow 150 180 4
+end
+
+to arrow :x :angle :color
+  penup setxy :x 0 setheading :angle bk 80 setpencolor :color setpensize 6 pendown fd 160
+  setpensize 1 filled :color [lt 90 fd 25 rt 120 fd 50 rt 120 fd 50 rt 120 fd 25] penup
+end
+
+to draw.faces
+  face -180 1
+  face 180 -1
+end
+
+to face :x :mood
+  penup setxy :x 0 setpencolor 0 setpensize 3 pendown filled 6 [arc 360 90] penup
+  setxy :x - 30 30 pendown dot pos penup setxy :x + 30 30 pendown dot pos penup
+  ; The mouth: for happy (mood 1) start heading down-right and bend left,
+  ; making a smile. For sad (mood -1) start heading up-right and bend right.
+  setxy :x - 45 ifelse :mood > 0 [-30] [-55] setheading 90 + 30 * :mood pendown
+  repeat 12 [fd 8 rt -5 * :mood]
+  penup setpensize 1
+end
+
+to none
+end
+
+to ask.opposite :word :good
+  print (sentence [What is the opposite of] word :word "?)
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  output memberp lowercase :a :good
+end
+
+make "score 0 make "asked 0
+catch "finished [
+  repeat 8 [
+    localmake "p pick :pairs
+    clearscreen hideturtle
+    run (list last :p)
+    ; half the time ask it the other way round
+    ifelse (random 2) = 0 [
+      localmake "r ask.opposite first :p fput item 2 :p item 3 :p
+      localmake "answer item 2 :p
+    ] [
+      localmake "r ask.opposite item 2 :p (list first :p)
+      localmake "answer first :p
+    ]
+    if equalp :r "quit [throw "finished]
+    make "asked :asked + 1
+    ifelse :r [print [Yes!] make "score :score + 1] [print (sentence [The opposite is] :answer)]
+  ]
+]
+print (sentence [You knew] :score [of] :asked [opposites.])

@@ -1,0 +1,77 @@
+; ============================================================
+; TITLE:    Atbash Mirror Code
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Beginner
+; TAGS:     secret codes, cipher, alphabet, mirror
+; SUMMARY:  The ancient Atbash code swaps A with Z, B with Y and so on; the turtle draws the code strip and encodes your messages.
+; ============================================================
+;
+; WHAT IT DOES
+;   Atbash is one of the oldest codes in the world. Write the alphabet
+;   forwards, and underneath it write the alphabet backwards. To encode
+;   a letter, look straight down (or up). Because it is a mirror, the
+;   same steps that encode a message also decode it. The turtle draws
+;   the two alphabets with lines joining each pair.
+;
+; HOW TO USE
+;   Press Run. Type a message and it is encoded. Type the secret back
+;   in and you get the message again. Type QUIT to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * the position of a letter: ASCII "A is 65, ASCII "Z is 90
+;   * mirror formula: the partner of position P is 25 - P
+;   * a code that is its own decoder
+;
+; THINGS TO TRY
+;   * WIZARD encodes to DRAZIW, which is WIZARD backwards! Can you
+;     find another word that does that?
+;   * Make your own code strip by writing the alphabet in a muddled order
+; ============================================================
+
+to mirror :c
+  localmake "code ascii uppercase :c
+  if or :code < 65 :code > 90 [output :c]
+  ; position 0 for A ... 25 for Z, and its mirror partner
+  output char 65 + 25 - (:code - 65)
+end
+
+to atbash :message
+  output map [map "mirror ?] :message
+end
+
+to strip
+  clearscreen hideturtle setlabelheight 18
+  for [i 0 25] [
+    localmake "x -375 + :i * 29
+    penup setxy :x 60 setpencolor 1 label char 65 + :i
+    setxy :x -40 setpencolor 4 label char 90 - :i
+    setxy :x + 5 52 setpencolor 15 pendown setxy :x + 5 -18 penup
+  ]
+  setpencolor 0 setlabelheight 18
+  setxy -375 140 label [Atbash: look straight down to encode, straight up to decode]
+end
+
+to show.message :plain :secret
+  setlabelheight 22
+  penup setxy -375 -140 setpencolor 1 label :plain
+  setxy -375 -190 setpencolor 4 label :secret
+end
+
+to play
+  print []
+  print [Type a message, or quit:]
+  localmake "m readlist
+  if or not listp :m emptyp :m [print [Goodbye. Or in Atbash: TLLWYBV.] stop]
+  if memberp first :m [quit stop q] [print [Goodbye. Or in Atbash: TLLWYBV.] stop]
+  localmake "secret atbash :m
+  print (sentence [Atbash:] :secret)
+  print (sentence [And once more brings back:] atbash :secret)
+  strip
+  show.message :m :secret
+  play
+end
+
+strip
+show.message [WIZARD] atbash [WIZARD]
+print [WIZARD in Atbash is DRAZIW: the same word spelled backwards!]
+play

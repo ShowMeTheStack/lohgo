@@ -1,0 +1,91 @@
+; ============================================================
+; TITLE:    Riddle Me This
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Beginner
+; TAGS:     riddles, hints, lists, readlist
+; SUMMARY:  Asks classic riddles, gives a hint after a wrong guess, and accepts different ways of saying the answer.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each riddle is stored as a list: the question, a hint, and a list
+;   of answers that count as right. You get two guesses. After the
+;   first wrong one you get the hint; after the second, the answer is
+;   revealed. A big question mark turns into a check mark or a cross
+;   in the turtle world.
+;
+; HOW TO USE
+;   Press Run and type your guess. You can type a whole phrase, like
+;   "a towel": the program looks for any answer word inside it.
+;   QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * one list holding all the parts of a riddle
+;   * looking for a key word anywhere in what was typed
+;   * two tries with a hint in between
+;
+; THINGS TO TRY
+;   * Add three riddles of your own
+;   * Give a third guess with the first letter of the answer
+; ============================================================
+
+make "riddles [
+  [[What has hands but cannot clap?] [It hangs on the wall and ticks.] [clock watch]]
+  [[What gets wetter the more it dries?] [You use it after a bath.] [towel]]
+  [[What has a neck but no head?] [You can pour from it.] [bottle jar]]
+  [[What has keys but cannot open locks?] [It makes music.] [piano keyboard]]
+  [[What goes up but never comes down?] [Everyone has one and it grows every birthday.] [age]]
+  [[What has one eye but cannot see?] [You thread it to sew.] [needle]]
+  [[What can you catch but not throw?] [Achoo!] [cold]]
+  [[What is full of holes but still holds water?] [You use it to wash dishes.] [sponge]]
+]
+
+to mark :kind
+  clearscreen hideturtle setpensize 14
+  ifelse equalp :kind "right [
+    penup setxy -80 0 setpencolor 2 pendown setxy -20 -70 setxy 110 110
+  ] [
+    ifelse equalp :kind "wrong [
+      penup setxy -80 -80 setpencolor 4 pendown setxy 80 80
+      penup setxy -80 80 pendown setxy 80 -80
+    ] [
+      penup setxy -40 -40 setpencolor 13 setlabelheight 160 label "?
+    ]
+  ]
+  setpensize 1
+end
+
+; Outputs "true, "false or "quit
+to guess :answers
+  localmake "g readlist
+  if or not listp :g emptyp :g [output "quit]
+  if memberp first :g [quit stop] [output "quit]
+  output not emptyp filter [memberp lowercase ? :answers] :g
+end
+
+to riddle :r
+  mark "ask
+  print []
+  print first :r
+  localmake "g guess last :r
+  if equalp :g "quit [output "quit]
+  if :g [mark "right print [Well done!] output "true]
+  print (sentence [Not quite. Hint:] item 2 :r)
+  localmake "g guess last :r
+  if equalp :g "quit [output "quit]
+  if :g [mark "right print [Got it on the second try!] output "true]
+  mark "wrong
+  print (sentence [The answer is:] first last :r)
+  output "false
+end
+
+make "solved 0 make "tried 0
+catch "finished [
+  foreach :riddles [
+    localmake "r riddle ?
+    if equalp :r "quit [throw "finished]
+    make "tried :tried + 1
+    if :r [make "solved :solved + 1]
+  ]
+]
+print []
+print (sentence [You solved] :solved [of] :tried [riddles.])

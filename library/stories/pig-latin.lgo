@@ -1,0 +1,135 @@
+; ============================================================
+; TITLE:    Pig Latin
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Intermediate
+; TAGS:     words, recursion, vowels, playground language
+; SUMMARY:  Translates sentences into Pig Latin, the playground secret language, and back again.
+; ============================================================
+;
+; WHAT IT DOES
+;   In Pig Latin, a word that starts with consonants moves them to the
+;   end and adds "ay": pig becomes igpay, string becomes ingstray. A
+;   word that starts with a vowel just adds "way": apple becomes
+;   appleway. Punctuation stays at the end of the word, and capital
+;   letters stay at the front. The program can also turn Pig Latin
+;   back into English, though sometimes it has to guess.
+;
+; HOW TO USE
+;   Run it and type a sentence. It answers in Pig Latin. Type a
+;   sentence in Pig Latin starting with the word "back" to translate it
+;   back to English. Type QUIT to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * recursion: keep moving the first letter until a vowel is in front
+;   * splitting off punctuation and putting it back
+;   * why going backwards is harder: "away" could come from "way" or "a"
+;
+; THINGS TO TRY
+;   * Treat "qu" as one consonant, so queen becomes eenquay
+;   * Invent your own rule, like adding "zib" instead of "ay"
+; ============================================================
+
+to vowel? :c
+  output memberp lowercase :c "aeiou
+end
+
+; Move consonants from the front to the back until a vowel leads.
+; COUNT stops us looping forever on words with no vowels, like "hmm".
+to rotate :w :n
+  if or :n = 0 vowel? first :w [output :w]
+  output rotate word butfirst :w first :w :n - 1
+end
+
+to letters.only :w
+  output filter [memberp lowercase ? "abcdefghijklmnopqrstuvwxyz] :w
+end
+
+to marks.only :w
+  output filter [not memberp lowercase ? "abcdefghijklmnopqrstuvwxyz] :w
+end
+
+to pig.word :w
+  localmake "core letters.only :w
+  if emptyp :core [output :w]
+  ; EQUALP ignores capitals, so look at the letter's code instead:
+  ; capital letters are 65 to 90
+  localmake "code ascii first :core
+  localmake "capital and :code >= 65 :code <= 90
+  localmake "core lowercase :core
+  localmake "result ifelse vowel? first :core [word :core "way] [word rotate :core count :core "ay]
+  if :capital [make "result word uppercase first :result butfirst :result]
+  output word :result marks.only :w
+end
+
+; Letter groups that English words often start with. Going backwards,
+; we use them to guess how many letters were moved: "ingstray" could
+; come from "gstrin" or "string", and STR is the better guess.
+make "clusters [str spr scr spl thr shr sch squ chr ch sh th wh ph bl br cl cr dr fl fr gl gr pl pr sc sk sl sm sn sp st sw tr tw]
+
+to unpig.word :w
+  localmake "core lowercase letters.only :w
+  if (count :core) < 3 [output :w]
+  ; "appleway" came from a word that started with a vowel
+  if equalp last3 :core "way [output word butlast butlast butlast :core marks.only :w]
+  if not equalp last2 :core "ay [output :w]
+  make "core butlast butlast :core
+  if emptyp filter "vowel? :core [output word :core marks.only :w]
+  localmake "moved best.cluster trailing :core
+  output (word :moved drop.end :core count :moved marks.only :w)
+end
+
+to last2 :w
+  output word last butlast :w last :w
+end
+
+to last3 :w
+  output word last butlast butlast :w last2 :w
+end
+
+; the consonants at the very end of a word
+to trailing :w
+  if or emptyp :w vowel? last :w [output "]
+  output word trailing butlast :w last :w
+end
+
+; the longest ending of C that is a known starting group, or one letter
+to best.cluster :c
+  if (count :c) <= 1 [output :c]
+  if memberp :c :clusters [output :c]
+  output best.cluster butfirst :c
+end
+
+to drop.end :w :n
+  if :n = 0 [output :w]
+  output drop.end butlast :w :n - 1
+end
+
+to banner :text
+  clearscreen hideturtle setbackground [255 220 230]
+  ; a simple pig face
+  penup setxy -250 0 setpencolor 0 pendown filled [250 160 180] [arc 360 80]
+  penup setxy -250 -20 pendown filled [230 120 150] [ellipse 30 20]
+  foreach [-262 -238] [penup setxy ? -20 pendown filled 0 [arc 360 5]]
+  foreach [-280 -220] [penup setxy ? 25 pendown filled 0 [arc 360 7]]
+  penup setxy -140 -10 setpencolor 13 setlabelheight 22 label :text
+end
+
+to play
+  print []
+  print [Type a sentence, or start with BACK to translate from Pig Latin, or quit:]
+  localmake "s readlist
+  if or not listp :s emptyp :s [print [Oodbyegay!] stop]
+  if memberp first :s [quit q stop] [print [Oodbyegay!] stop]
+  ifelse equalp first :s "back [
+    print (sentence [English:] map [unpig.word ?] butfirst :s)
+  ] [
+    localmake "p map [pig.word ?] :s
+    print (sentence [Pig Latin:] :p)
+    banner :p
+  ]
+  play
+end
+
+banner [Ellohay, igpay atinlay!]
+print [Ellohay! That is Pig Latin for hello.]
+play

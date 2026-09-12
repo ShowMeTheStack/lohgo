@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Mad Libs
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Beginner
+; TAGS:     words, readword, sentences, story
+; SUMMARY:  Asks you for a name, an animal, a food and other words, then drops them into a silly story.
+; ============================================================
+;
+; WHAT IT DOES
+;   Before you see the story, the program asks you for words: a name,
+;   an animal, a describing word, a food and so on. It does not tell
+;   you what the story is about, so the result is usually ridiculous.
+;   The finished story is printed and also written on a paper scroll in
+;   the turtle world.
+;
+; HOW TO USE
+;   Press Run and type one word for each question. If you just press
+;   Enter, the program picks a word for you.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READWORD to collect a word, MAKE to keep it in a variable
+;   * SENTENCE to build a story from fixed text and your words
+;   * a default value when the answer is empty
+;
+; THINGS TO TRY
+;   * Write a second story that uses the same words
+;   * Ask for a plural noun and a verb ending in -ing
+; ============================================================
+
+; Ask for a word. If nothing is typed, use the backup word instead.
+to collect :question :backup
+  print :question
+  localmake "w readword
+  if or emptyp :w not wordp :w [print (sentence [I will use] :backup) output :backup]
+  output :w
+end
+
+; The ~ at the end of a line joins it to the next one, so one long
+; instruction can be spread over several lines.
+to story
+  output (list ~
+    (sentence [One sunny morning,] :name [found a] :describing :animal [sitting in the kitchen.]) ~
+    (sentence [The] :animal [was eating] :number [plates of] word :food ".) ~
+    (sentence :name [shouted] word :shout "! [and the] :animal [ran off to] word :place ".) ~
+    (sentence [Nobody has seen it since, but people say] :place [smells of] :food [to this day.]))
+end
+
+to scroll :lines
+  clearscreen hideturtle
+  penup setxy -360 -110 setheading 0 setpencolor 8 setpensize 2
+  pendown filled [250 235 200] [repeat 2 [fd 240 rt 90 fd 720 rt 90]]
+  ; rolled ends of the scroll
+  penup setxy -360 130 pendown filled [220 200 160] [setheading 90 fd 720 rt 90 fd 16 rt 90 fd 720]
+  penup setxy -360 -110 pendown filled [220 200 160] [setheading 90 fd 720 rt 90 fd 16 rt 90 fd 720]
+  setpencolor 0 setlabelheight 16
+  localmake "y 80
+  foreach :lines [penup setxy -340 :y label ? make "y :y - 50]
+end
+
+make "name collect [Type a person's name:] "Grandma
+make "animal collect [Type an animal:] "giraffe
+make "describing collect [Type a describing word, like fluffy:] "enormous
+make "number collect [Type a number:] 37
+make "food collect [Type a food:] "spaghetti
+make "shout collect [Type something you might shout:] "Yikes
+make "place collect [Type a place:] "Paris
+print []
+make "lines story
+foreach :lines [print ?]
+scroll :lines

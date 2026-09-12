@@ -1,0 +1,127 @@
+; ============================================================
+; TITLE:    Eliza the Listener
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Advanced
+; TAGS:     chatbot, eliza, keywords, pronouns, readlist
+; SUMMARY:  A small version of the famous ELIZA program from 1966 that chats by spotting keywords and turning your words around.
+; ============================================================
+;
+; WHAT IT DOES
+;   ELIZA was one of the first chatbots. It does not understand
+;   anything; it just looks for keywords in what you type, and has a
+;   few replies for each one. Some replies reuse your own words with
+;   "I" and "you" swapped, so "I am sad about my cat" can come back as
+;   "Why are you sad about your cat?". If no keyword matches, ELIZA
+;   gives a general reply to keep you talking.
+;
+; HOW TO USE
+;   Run it and type sentences, then Enter. Try "I feel tired",
+;   "my brother is annoying", "I am happy", "because it rained".
+;   Type BYE to finish.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a table of rules: each is [keyword [reply] [reply] ...]
+;   * MEMBER finds the keyword and outputs the rest of the sentence
+;   * swapping pronouns with a lookup list
+;   * the * in a reply is replaced by the rest of your sentence
+;
+; THINGS TO TRY
+;   * Add a rule for "school" or "dream"
+;   * Make ELIZA remember something you said earlier and bring it up
+; ============================================================
+
+; Each rule: keyword, then possible replies. A * in a reply is filled in
+; with whatever came after the keyword, with pronouns swapped.
+make "rules [
+  [[i am] [Why are you *?] [How long have you been *?] [Do you enjoy being *?]]
+  [[i feel] [Why do you feel *?] [Do you often feel *?]]
+  [[because] [Is that the real reason?] [What else could explain it?]]
+  [[mother] [Tell me more about your family.] [Who else in your family do you think of?]]
+  [[father] [Tell me more about your family.] [Does your father know how you feel?]]
+  [[brother] [Do you get on well with your brother?] [What is your brother like?]]
+  [[sister] [Do you get on well with your sister?] [What is your sister like?]]
+  [[friend] [Friends are important. Why do you mention them?] [Tell me about your friends.]]
+  [[my] [Why do you say your *?] [Is it important to you that your *?]]
+  [[you] [We were talking about you, not me.] [Why do you think I *?]]
+  [[yes] [You seem quite sure.] [I see.]]
+  [[no] [Why not?] [Are you saying no just to be different?]]
+  [[sorry] [Please do not apologize.]]
+]
+
+make "general [[Please go on.] [Tell me more.] [How does that make you feel?] [I see. And then?] [Interesting. Why do you say that?]]
+
+make "swaps [[i you] [me you] [my your] [am are] [you I] [your my] [mine yours] [are am]]
+
+to swap :w
+  localmake "hit find [equalp first ? :w] :swaps
+  if emptyp :hit [output :w]
+  output last :hit
+end
+
+; Does the list KEY appear inside SENT? Output what comes after it, or "none.
+to after :key :sent
+  if (count :sent) < (count :key) [output "none]
+  if starts.with? :key :sent [output butfirst.n count :key :sent]
+  output after :key butfirst :sent
+end
+
+to starts.with? :key :sent
+  if emptyp :key [output "true]
+  if not equalp first :key first :sent [output "false]
+  output starts.with? butfirst :key butfirst :sent
+end
+
+to butfirst.n :n :l
+  if :n = 0 [output :l]
+  output butfirst.n :n - 1 butfirst :l
+end
+
+; Put the swapped rest of the sentence where the * is.
+to fill.in :reply :rest
+  localmake "words map [swap ?] :rest
+  output map.se [ifelse memberp "* ? [fill.word ? :words] [?]] :reply
+end
+
+to fill.word :w :words
+  ; the * may have a ? or . stuck to it, like *?
+  if equalp :w "* [output :words]
+  if emptyp :words [output butfirst :w]
+  output lput word last :words butfirst :w butlast :words
+end
+
+to respond :sent
+  foreach :rules [
+    localmake "rest after first ? :sent
+    if not equalp :rest "none [
+      localmake "reply pick butfirst ?
+      ; A reply that needs words is no good if nothing came after the keyword.
+      if and memberp "* reduce "word :reply emptyp :rest [output pick :general]
+      output fill.in :reply :rest
+    ]
+  ]
+  output pick :general
+end
+
+to tidy :sent
+  ; lower case, and no periods, question marks or commas on the words
+  output map [lowercase strip ?] :sent
+end
+
+to strip :w
+  if emptyp :w [output :w]
+  if memberp last :w ".,!?" [output strip butlast :w]
+  output :w
+end
+
+to chat
+  print []
+  type "|You: |
+  localmake "line readlist
+  if or not listp :line emptyp :line [print [ELIZA: Goodbye.] stop]
+  if memberp lowercase first :line [bye quit goodbye] [print [ELIZA: Goodbye. It was nice talking to you.] stop]
+  print (sentence "ELIZA: respond tidy :line)
+  chat
+end
+
+print [ELIZA: Hello. I am ELIZA. What would you like to talk about?]
+chat

@@ -1,0 +1,67 @@
+; ============================================================
+; TITLE:    Rhyming Poem Machine
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Intermediate
+; TAGS:     poetry, rhyme, random, lists of lists
+; SUMMARY:  Writes a four-line rhyming poem from families of rhyming words, then displays it on a starry night sky.
+; ============================================================
+;
+; WHAT IT DOES
+;   Words are kept in rhyme families, such as [night light kite
+;   flight]. Each couplet picks one family and uses two different words
+;   from it to end two lines, so the lines rhyme. Line starters are
+;   picked from another list so each poem is fresh. The poem is shown
+;   in the turtle world under a sky full of stars.
+;
+; HOW TO USE
+;   Press Run for a new poem. Add a new rhyme family to RHYMES and new
+;   line starters to OPENERS to change the poems.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a list of lists: each inner list is a rhyme family
+;   * picking two different items: pick one, REMOVE it, pick again
+;   * AABB rhyme scheme: lines 1 and 2 rhyme, lines 3 and 4 rhyme
+;
+; THINGS TO TRY
+;   * Change the scheme to ABAB
+;   * Add a title made from one of the rhyming words
+; ============================================================
+
+make "rhymes [[night light kite flight] [moon spoon balloon tune] [sea tree bee key] [sky pie butterfly] [day bay hay play] [rain train lane plane]]
+make "openers [[The cat sat watching the] [I looked up into the] [We ran together through the] [A bird was singing of the] [My heart is full of] [Nobody ever saw the] [Under a blanket of] [I dreamed I sailed across the]]
+
+to two.different :family
+  localmake "a pick :family
+  output list :a pick remove :a :family
+end
+
+; Use each opener only once per poem.
+to next.opener
+  localmake "o pick :openers.left
+  make "openers.left remove :o :openers.left
+  output :o
+end
+
+to couplet
+  localmake "pair two.different pick :rhymes
+  output list (sentence next.opener first :pair) (sentence next.opener last :pair)
+end
+
+to night.sky :lines
+  clearscreen hideturtle setbackground [15 20 60]
+  repeat 60 [
+    penup setxy (random 780) - 390 (random 280) + 10
+    setpencolor pick [7 6 [200 200 255]] pendown dot pos
+  ]
+  ; a crescent moon: a yellow circle, then a sky-colored one over it
+  penup setxy 300 200 setpencolor 6 pendown filled 6 [arc 360 40]
+  penup setxy 318 212 setpencolor [15 20 60] pendown filled [15 20 60] [arc 360 36]
+  setpencolor 7 setlabelheight 22
+  localmake "y -20
+  foreach :lines [penup setxy -300 :y label ? make "y :y - 50]
+end
+
+make "openers.left :openers
+make "poem sentence couplet couplet
+foreach :poem [print ?]
+night.sky :poem

@@ -1,0 +1,82 @@
+; ============================================================
+; TITLE:    Tongue Twister Factory
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Beginner
+; TAGS:     alliteration, letters, filter, random
+; SUMMARY:  Pick a letter and the factory builds a tongue twister where nearly every word starts with that letter.
+; ============================================================
+;
+; WHAT IT DOES
+;   Tongue twisters use alliteration: lots of words that start with
+;   the same sound, like "Peter Piper picked a peck of pickled
+;   peppers". The factory has lists of names, describing words, verbs
+;   and things. You choose a letter, it FILTERs each list down to the
+;   words starting with that letter, and puts a twister together. The
+;   chosen letter is drawn huge in the background.
+;
+; HOW TO USE
+;   Run it and type a letter, such as S or B. Try saying the twister
+;   three times fast! Type QUIT to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FILTER with a template, to keep only matching words
+;   * what to do when a list comes out empty
+;   * ALPHABET order: some letters have far fewer words than others
+;
+; THINGS TO TRY
+;   * Add words for the letters that do not have any yet
+;   * Make a twister with two letters, like S and SH
+; ============================================================
+
+make "names [Peter Polly Sally Sam Betty Bob Freddy Fiona Molly Max Carla Kit Tina Tom Greta Gus Wendy Will Lucy Larry Dora Dan]
+make "describers [purple silly busy big fancy fluffy merry muddy curly crunchy tiny tired giggly golden wobbly wild lazy lumpy dizzy daring]
+make "doers [picked sold bought baked found fried munched made cooked carried tickled tossed grabbed gobbled washed wiggled licked lifted dropped dug]
+make "things [peppers pickles seashells sausages buttons biscuits feathers fish marbles muffins cookies cupcakes turnips teacups grapes gumdrops waffles worms lollipops lemons donuts dumplings]
+
+to starting.with :letter :list
+  output filter [equalp first ? :letter] :list
+end
+
+; Pick a word that starts with the letter; if there is none, any word will do.
+to pick.from :letter :list
+  localmake "good starting.with :letter :list
+  if emptyp :good [output pick :list]
+  output pick :good
+end
+
+; A twister has two halves; it outputs them as a list of two lines.
+to twister :letter
+  localmake "who pick.from :letter :names
+  output (list ~
+    (sentence :who pick.from :letter :doers [a pile of] pick.from :letter :describers ~
+      word pick.from :letter :things ".) ~
+    (sentence [If] :who pick.from :letter :doers [them, where are the] ~
+      pick.from :letter :describers word pick.from :letter :things "?))
+end
+
+to poster :letter :lines
+  clearscreen hideturtle
+  penup setxy -150 -200 setpencolor [255 220 120] setlabelheight 400 label uppercase :letter
+  setpencolor 13 setlabelheight 20
+  setxy -370 220 label first :lines
+  setxy -370 185 label last :lines
+end
+
+to factory
+  print []
+  print [Type a letter, or quit:]
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop] [print [Factory closed. Try saying that ten times fast!] stop]
+  localmake "letter first :a
+  if not memberp lowercase :letter "abcdefghijklmnopqrstuvwxyz [
+    print [That is not a letter.]
+    factory stop]
+  if emptyp starting.with :letter :names [print [Not many words start with that letter, so this one is a bit mixed up.]]
+  localmake "t twister :letter
+  foreach :t [print ?]
+  poster :letter :t
+  factory
+end
+
+poster "P [[Peter picked a pile of purple peppers.] [How many purple peppers did Peter pick?]]
+factory

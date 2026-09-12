@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Compliment Machine
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Beginner
+; TAGS:     random, sentences, kindness, hearts
+; SUMMARY:  Builds kind, silly compliments from three lists of word pieces and frames each one with hearts.
+; ============================================================
+;
+; WHAT IT DOES
+;   A compliment here has three parts: a start ("You are"), a
+;   describing phrase ("as clever as") and a comparison ("a dolphin
+;   doing math"). Picking one piece from each list gives hundreds of
+;   different compliments, all of them nice. Type a name and the
+;   compliment is addressed to that person, framed with hearts.
+;
+; HOW TO USE
+;   Run it and type the name of someone you want to cheer up (or your
+;   own). You get three compliments. Type another name for more, or
+;   QUIT to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * multiplying choices: 5 starts x 6 middles x 7 endings
+;   * drawing a heart from two arcs and two lines
+;   * SENTENCE joining lists into one line
+;
+; THINGS TO TRY
+;   * Work out how many different compliments there are
+;   * Add a list of things the person might be good at
+; ============================================================
+
+make "starts [[you are] [honestly, you are] [everyone agrees you are] [I think you are] [you are clearly]]
+make "middles [[as clever as] [as kind as] [as bright as] [as brave as] [as cheerful as] [as wonderful as]]
+make "endings [[a dolphin doing math] [a lighthouse on a stormy night] [a puppy with a new ball] [a rainbow after lunch] [the sun on a Saturday] [a dragon who bakes cookies] [a library full of comics]]
+
+; WORD can only join words, so to put ! after a phrase we add it to
+; the last word of the phrase.
+to exclaim :phrase
+  output lput word last :phrase "! butlast :phrase
+end
+
+to compliment :name
+  output (sentence word :name ", pick :starts pick :middles exclaim pick :endings)
+end
+
+to heart :x :y :size :color
+  ; Start at the bottom point and walk round the outline: a straight
+  ; side, a half circle, a quarter turn at the dip, a half circle, and
+  ; the other straight side back to the point.
+  penup setxy :x :y setheading 45 setpencolor :color pendown
+  filled :color [
+    fd :size
+    repeat 18 [fd :size * pi / 36 lt 10]
+    rt 90
+    repeat 18 [fd :size * pi / 36 lt 10]
+    fd :size
+  ]
+  penup
+end
+
+to frame :lines
+  clearscreen hideturtle
+  repeat 14 [heart -380 + 55 * repcount 230 14 pick [4 5 12 13]]
+  repeat 14 [heart -380 + 55 * repcount -280 14 pick [4 5 12 13]]
+  setpencolor 13 setlabelheight 16
+  localmake "y 100
+  foreach :lines [penup setxy -360 :y label ? make "y :y - 70]
+end
+
+to cheer
+  print []
+  print [Who deserves a compliment? Type a name, or quit.]
+  localmake "who readword
+  if or emptyp :who memberp :who [quit stop q bye] [print [Have a lovely day.] stop]
+  localmake "lines (list compliment :who compliment :who compliment :who)
+  foreach :lines [print ?]
+  frame :lines
+  cheer
+end
+
+cheer

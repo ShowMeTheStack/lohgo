@@ -1,0 +1,89 @@
+; ============================================================
+; TITLE:    Limerick Builder
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Intermediate
+; TAGS:     poetry, rhyme, limerick, templates
+; SUMMARY:  Asks for a name and a place, finds rhymes from its own lists, and writes a five-line limerick.
+; ============================================================
+;
+; WHAT IT DOES
+;   A limerick has five lines. Lines 1, 2 and 5 rhyme with each other,
+;   and the short lines 3 and 4 rhyme with each other (AABBA). The
+;   program asks you to pick a place from a menu, so that it knows
+;   three words that rhyme with it, and for a person's name. Then it
+;   fills a limerick template with the rhymes and prints it with the
+;   rhyme letters beside each line.
+;
+; HOW TO USE
+;   Run it, type the name of someone, then type the number of a place.
+;   Run it again for a different limerick: the B rhymes are random.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a rhyme scheme as a pattern of letters, AABBA
+;   * a place and its rhyming words stored together in one list
+;   * templates: fixed text with gaps that SENTENCE fills
+;
+; THINGS TO TRY
+;   * Add a new place with three words that rhyme with it
+;   * Write a second template and pick one at random
+; ============================================================
+
+; place, then three words that rhyme with it
+make "places [
+  [Peru [shoe] [blue] [glue]]
+  [Spain [train] [rain] [plane]]
+  [Nice [geese] [fleece] [peace]]
+  [Kent [tent] [bent] [cement]]
+  [Rome [comb] [gnome] [home]]
+  [Leeds [beads] [weeds] [seeds]]
+]
+
+; pairs of short rhymes for lines 3 and 4
+make "b.rhymes [[cat hat] [bed red] [sock clock] [bee tea] [frog log] [cake lake]]
+
+to choose.place
+  print [Pick a place by number:]
+  foreach :places [print (sentence # first ?)]
+  localmake "a readword
+  if emptyp :a [output pick :places]
+  if numberp :a [if and :a >= 1 :a <= count :places [output item :a :places]]
+  print [I will choose one for you.]
+  output pick :places
+end
+
+to limerick :name :place
+  localmake "town first :place
+  localmake "r1 first item 2 :place
+  ; the last line gets one of the other two rhymes, chosen at random
+  localmake "r2 first item 2 + random 2 butfirst :place
+  localmake "b pick :b.rhymes
+  output (list ~
+    (sentence [There once was a person from] word :town ",) ~
+    (sentence [called] :name [who was stuck in a] word :r1 ".) ~
+    (sentence [They found a] word first :b ",) ~
+    (sentence [put it on a] word last :b ",) ~
+    (sentence [and danced all the way home in the] word :r2 ".))
+end
+
+to scheme.print :lines
+  foreach :lines [print (sentence item # [A A B B A] "| | ?)]
+end
+
+to card :lines
+  clearscreen hideturtle setbackground [255 250 240]
+  setlabelheight 20 setpencolor 1
+  localmake "y 120
+  foreach :lines [
+    penup setxy ifelse memberp # [3 4] [-240] [-300] :y label ?
+    make "y :y - 50
+  ]
+end
+
+print [Type the name of someone, or press Enter for a surprise:]
+make "name readword
+if or emptyp :name not wordp :name [make "name pick [Pat Lou Mo Kit]]
+make "place choose.place
+make "poem limerick :name :place
+print []
+scheme.print :poem
+card :poem

@@ -1,0 +1,126 @@
+; ============================================================
+; TITLE:    The Whispering Cave
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Intermediate
+; TAGS:     adventure, choices, story, readword, procedures
+; SUMMARY:  A choose-your-own-adventure story where every choice you type leads to a different scene and picture.
+; ============================================================
+;
+; WHAT IT DOES
+;   You are exploring a cave said to whisper secrets. Each scene is
+;   its own procedure: it draws a little picture, tells you what you
+;   see, and offers two or three choices. Your answer decides which
+;   scene procedure runs next. There are three different endings to
+;   find, and none of them are scary.
+;
+; HOW TO USE
+;   Run it and type one of the words in capitals that the story
+;   offers, such as LEFT or RIGHT. Type QUIT to leave the cave.
+;
+; CONCEPTS YOU WILL LEARN
+;   * one procedure per scene, and scenes that call other scenes
+;   * CASE to pick the next scene from your answer
+;   * a helper that keeps asking until it gets a word it knows
+;
+; THINGS TO TRY
+;   * Add a fourth ending behind the waterfall
+;   * Keep an inventory list and only open the chest with the key
+; ============================================================
+
+; Ask until the answer is one of the choices. Outputs the choice or "quit.
+to choice :options
+  ; shows the choices like  [left/right]
+  type (word "|[| reduce [(word ?1 "/ ?2)] :options "|] |)
+  localmake "a readword
+  ; CASE finds no scene for "quit, so the story simply stops.
+  if or emptyp :a memberp :a [quit q exit] [print [You tiptoe out of the cave.] output "quit]
+  make "a lowercase :a
+  if memberp :a :options [output :a]
+  print (sentence [The cave whispers: choose] :options)
+  output choice :options
+end
+
+to backdrop :color
+  clearscreen hideturtle setbackground [30 25 35]
+  ; a rough cave mouth outline
+  penup setxy -380 -250 setpencolor :color setpensize 6 pendown
+  setxy -300 150 setxy -100 260 setxy 100 270 setxy 300 160 setxy 380 -250
+  setpensize 1
+end
+
+to entrance
+  backdrop 8
+  penup setxy 0 -100 setpencolor 6 pendown filled 6 [arc 360 20]
+  print [You stand at the mouth of the Whispering Cave with a lantern.]
+  print [The tunnel splits. To the LEFT you hear water, to the RIGHT you see a glow.]
+  case choice [left right] [
+    [[left] river]
+    [[right] glow]
+  ]
+end
+
+to river
+  backdrop 1
+  penup setxy -380 -150 setpencolor 11 setpensize 8 pendown
+  repeat 16 [setheading 60 fd 30 setheading 120 fd 30]
+  setpensize 1
+  print [An underground river rushes past. A small boat is tied to a rock.]
+  print [Do you take the BOAT or follow the PATH beside the water?]
+  case choice [boat path] [
+    [[boat] lake.ending]
+    [[path] crystals]
+  ]
+end
+
+to glow
+  backdrop 14
+  for [i 1 12] [
+    penup setxy (random 600) - 300 (random 300) - 150 setpencolor 6 pendown dot pos
+  ]
+  print [The glow comes from thousands of tiny glowworms on the ceiling.]
+  print [A narrow crack leads ON, or you can go BACK to the entrance.]
+  case choice [on back] [
+    [[on] crystals]
+    [[back] entrance]
+  ]
+end
+
+to crystals
+  backdrop 13
+  repeat 7 [
+    penup setxy (random 500) - 250 -200 setheading (random 40) - 20 setpencolor 11
+    pendown filled 11 [fd 60 + random 80 rt 160 fd 30 setheading 180 fd 20]
+  ]
+  print [You reach a hall of crystals. One crystal hums when you touch it.]
+  print [Will you SING to it, or KNOCK on it?]
+  case choice [sing knock] [
+    [[sing] song.ending]
+    [[knock] door.ending]
+  ]
+end
+
+to lake.ending
+  backdrop 1
+  penup setxy -60 -60 setpencolor 8 pendown filled 8 [setheading 90 fd 120 rt 120 fd 30 rt 60 fd 90 rt 60 fd 30]
+  print [The boat drifts onto a silver lake where the whispers become a soft song.]
+  print [You float there until morning, then row home with a story nobody believes.]
+  print [THE END - the lake ending.]
+end
+
+to song.ending
+  backdrop 13
+  print [You sing, and every crystal joins in. The cave has been waiting for a duet.]
+  print [The whispers were the cave humming to itself. Now it has a friend.]
+  print [THE END - the singing ending.]
+end
+
+to door.ending
+  backdrop 14
+  penup setxy -40 -200 setpencolor 8 pendown filled 8 [repeat 2 [fd 160 rt 90 fd 80 rt 90]]
+  print [Knock knock. A door opens in the rock, and sunlight pours in.]
+  print [You step out on a hillside you have never seen, with a bag of shiny pebbles.]
+  print [THE END - the secret door ending.]
+end
+
+entrance
+setbackground 7

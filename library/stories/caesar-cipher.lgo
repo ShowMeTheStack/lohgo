@@ -1,0 +1,108 @@
+; ============================================================
+; TITLE:    Caesar Cipher Wheel
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Intermediate
+; TAGS:     secret codes, cipher, ascii, char, cracking
+; SUMMARY:  Encodes messages by shifting letters along the alphabet, draws the cipher wheel, and cracks a secret by trying every shift.
+; ============================================================
+;
+; WHAT IT DOES
+;   Julius Caesar is said to have hidden his letters by moving every
+;   letter three places along: A becomes D, B becomes E, and so on,
+;   with X, Y, Z going round to A, B, C. The program draws a cipher
+;   wheel with the plain alphabet outside and the code alphabet inside.
+;   It also cracks a message without knowing the shift: it tries all
+;   25 shifts and picks the one that has the most common English
+;   letters in it.
+;
+; HOW TO USE
+;   Press Run to see a secret cracked. Then type your own message and a
+;   shift from 1 to 25. Type QUIT to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ASCII turns a letter into a number, CHAR turns it back
+;   * MODULO wraps numbers round, like the hours on a clock
+;   * cracking by trying every key and scoring the results
+;
+; THINGS TO TRY
+;   * Encode with shift 13 twice. What happens, and why?
+;   * Improve the cracker by giving E more points than other letters
+; ============================================================
+
+to shift.letter :c :n
+  localmake "code ascii uppercase :c
+  ; only change A to Z; spaces and punctuation stay as they are
+  if or :code < 65 :code > 90 [output :c]
+  output char 65 + modulo :code - 65 + :n 26
+end
+
+to shift.word :w :n
+  output map [shift.letter ? :n] :w
+end
+
+to encode :message :n
+  output map [shift.word ? :n] :message
+end
+
+; How English does a message look? Count its common letters.
+to score :message
+  localmake "letters reduce "word fput "| | :message
+  output count filter [memberp ? "ETAOINSHR] :letters
+end
+
+to crack :secret
+  localmake "best 0
+  localmake "best.score -1
+  for [n 1 25] [
+    localmake "s score encode :secret 26 - :n
+    if :s > :best.score [make "best :n make "best.score :s]
+  ]
+  output :best
+end
+
+to wheel :n
+  clearscreen hideturtle setlabelheight 16
+  penup home setpencolor 0 setpensize 2
+  setxy 0 -230 setheading 90 pendown repeat 72 [fd 230 * pi / 36 lt 5] penup
+  setxy 0 -180 setheading 90 pendown repeat 72 [fd 180 * pi / 36 lt 5] penup
+  setxy 0 -130 setheading 90 pendown repeat 72 [fd 130 * pi / 36 lt 5] penup
+  for [i 0 25] [
+    ; plain letter on the outer ring, its code letter on the inner ring
+    home setheading :i * 360 / 26 + 7
+    fd 197 setheading 0 setpencolor 1 lt 90 fd 5 rt 90 bk 6 label char 65 + :i
+    home setheading :i * 360 / 26 + 7
+    fd 148 setheading 0 setpencolor 4 lt 90 fd 5 rt 90 bk 6 label shift.letter char 65 + :i :n
+  ]
+  setxy -40 -10 setpencolor 0 setlabelheight 22 label (word "|shift | :n)
+end
+
+to ask.shift
+  print [What shift? A number from 1 to 25.]
+  localmake "a readword
+  if numberp :a [if and :a >= 1 :a <= 25 [output int :a]]
+  print [I will use 3, like Caesar.]
+  output 3
+end
+
+to play
+  print []
+  print [Type a message to encode, or quit:]
+  localmake "m readlist
+  if or not listp :m emptyp :m [stop]
+  if memberp first :m [quit stop q] [stop]
+  localmake "n ask.shift
+  localmake "secret encode :m :n
+  print (sentence [Secret:] :secret)
+  print (sentence [Decoded again:] encode :secret 26 - :n)
+  wheel :n
+  play
+end
+
+make "intercepted [WKH WUHDVXUH LV EXULHG XQGHU WKH ROG RDN WUHH]
+print (sentence [Intercepted message:] :intercepted)
+make "key crack :intercepted
+print (sentence [The cracker thinks the shift is] :key)
+print (sentence [Decoded:] encode :intercepted 26 - :key)
+wheel :key
+play
+print [Vale! That is goodbye in Latin.]

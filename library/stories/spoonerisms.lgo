@@ -1,0 +1,103 @@
+; ============================================================
+; TITLE:    Spoonerism Swapper
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Intermediate
+; TAGS:     words, sounds, swapping, consonant clusters
+; SUMMARY:  Swaps the starting sounds of two words to make spoonerisms, like "a lack of pies" becoming "a pack of lies".
+; ============================================================
+;
+; WHAT IT DOES
+;   A spoonerism happens when you mix up the beginnings of two words:
+;   "a crushing blow" comes out as "a blushing crow". They are named
+;   after Reverend Spooner, who was famous for doing it by accident.
+;   The program finds the first two important words in your phrase
+;   (it skips little words like "a" and "the"), splits each into its
+;   starting consonants and the rest, and swaps the starts. A picture
+;   shows the two pieces crossing over.
+;
+; HOW TO USE
+;   Press Run to see some examples, then type your own phrase, like
+;   "bad salad" or "tons of soil". Type QUIT to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * splitting a word at its first vowel
+;   * skipping words with a list of little words
+;   * rebuilding a sentence with only two words changed
+;
+; THINGS TO TRY
+;   * Spoonerize the last two important words instead of the first two
+;   * Try "a well oiled bicycle": a word starting with a vowel has no
+;     starting consonants to swap. What should happen then?
+; ============================================================
+
+make "little.words [a an the of to and in on my your is]
+
+to vowel? :c
+  output memberp lowercase :c "aeiouy
+end
+
+; "crushing  outputs  [cr ushing]
+to split.word :w
+  output split.helper " :w
+end
+
+to split.helper :front :rest
+  if emptyp :rest [output list :front "]
+  ; a y at the very start (like "yellow") counts as a consonant
+  if and vowel? first :rest not emptyp :front [output list :front :rest]
+  if and vowel? first :rest not equalp lowercase first :rest "y [output list :front :rest]
+  output split.helper word :front first :rest butfirst :rest
+end
+
+; positions of the first two words that are not little words
+to two.big.words :phrase
+  localmake "found []
+  for [i 1 count :phrase] [
+    if and (count :found) < 2 not memberp item :i :phrase :little.words [make "found lput :i :found]
+  ]
+  output :found
+end
+
+to replace.item :n :new :l
+  output map [ifelse # = :n [:new] [?]] :l
+end
+
+to spoonerize :phrase
+  localmake "where two.big.words :phrase
+  if (count :where) < 2 [output :phrase]
+  localmake "a split.word item first :where :phrase
+  localmake "b split.word item last :where :phrase
+  localmake "new replace.item first :where word first :b last :a :phrase
+  output replace.item last :where word first :a last :b :new
+end
+
+to cards :before :after
+  clearscreen hideturtle setlabelheight 24
+  penup setxy -340 120 setpencolor 1 label :before
+  setxy -340 -120 setpencolor 4 label :after
+  ; two crossing arrows: the starts swap places
+  setpencolor 15 setpensize 3
+  setxy -250 80 pendown setxy 50 -70 penup
+  setxy 50 80 pendown setxy -250 -70 penup
+  setpensize 1
+end
+
+to try :phrase
+  localmake "s spoonerize :phrase
+  print (sentence :phrase "-> :s)
+  cards :phrase :s
+end
+
+foreach [[a lack of pies] [a crushing blow] [jelly beans] [tons of soil]] [try ? wait 40]
+
+to loop
+  print []
+  print [Type a phrase to spoonerize, or quit:]
+  localmake "p readlist
+  if or not listp :p emptyp :p [print [Goodbye! Or should that be: Boodgye?] stop]
+  if memberp first :p [quit q stop] [print [Goodbye! Or should that be: Boodgye?] stop]
+  try map [lowercase ?] :p
+  loop
+end
+
+loop

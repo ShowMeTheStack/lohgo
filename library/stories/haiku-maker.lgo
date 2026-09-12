@@ -1,0 +1,122 @@
+; ============================================================
+; TITLE:    Haiku Maker
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Advanced
+; TAGS:     poetry, syllables, counting, vowels, random
+; SUMMARY:  Counts syllables with a rough vowel rule and builds 5-7-5 haiku from phrases that fit exactly.
+; ============================================================
+;
+; WHAT IT DOES
+;   A haiku is a three-line poem with 5, 7 and 5 syllables. First the
+;   program needs to count syllables, which is hard for a computer, so
+;   it uses a rough rule: count groups of vowels in a row, and do not
+;   count a silent E at the end of a word. Then it builds each line by
+;   picking phrases whose syllables add up to exactly the right number.
+;   Last, you can type your own lines and have their syllables counted.
+;
+; HOW TO USE
+;   Press Run to see a haiku and its syllable counts. Then type any
+;   line to count it. Press Enter on an empty line, or type QUIT, to
+;   finish.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a rule that is usually right: vowel groups make syllables
+;   * filling a total exactly by trying pieces that fit
+;   * starting over when the pieces do not fit (simple backtracking)
+;
+; THINGS TO TRY
+;   * Find words the counter gets wrong, like "fire" or "poem"
+;   * Check each pool has phrases short enough to finish a line: if
+;     every ending had 3 syllables, a 5 syllable line could never fit
+;   * Add an exceptions list for words the rule gets wrong
+; ============================================================
+
+to vowel? :c
+  output memberp :c "aeiouy
+end
+
+; Count groups of vowels: "flower" has o and e, so 2.
+to vowel.groups :w :in.group
+  if emptyp :w [output 0]
+  if vowel? first :w [
+    output (ifelse :in.group [0] [1]) + vowel.groups butfirst :w "true]
+  output vowel.groups butfirst :w "false
+end
+
+to syllables :w
+  localmake "w lowercase :w
+  localmake "n vowel.groups :w "false
+  ; A silent e at the end: "stone" and "smile" have one syllable.
+  ; But "le" after a consonant is spoken: "lit-tle", "ta-ble".
+  if and (count :w) > 2 equalp last :w "e [
+    if not and (equalp last butlast :w "l) (not vowel? last butlast butlast :w) [make "n :n - 1]]
+  if :n < 1 [make "n 1]
+  output :n
+end
+
+to line.syllables :line
+  output reduce "sum fput 0 map [syllables ?] :line
+end
+
+make "openings [[the old pond] [morning mist] [a cold wind] [under the moon] [by the river] [in the garden] [first snow] [the long road] [rain on the roof]]
+make "subjects [[a small frog] [one crow] [the children] [a leaf] [an old cat] [the fisherman] [my shadow]]
+make "actions [[jumps in] [falls softly] [sits alone] [drifts away] [sleeps in the sun] [sings to the morning] [floats down the river]]
+make "endings [[then silence] [deep sleep] [the day ends] [spring is here] [I smile] [all is still] [home again] [soft light] [at last]]
+
+; Pick phrases from POOL until they add up to exactly TARGET syllables.
+; If no phrase fits the space that is left, start the line again.
+to build :pool :target
+  localmake "line []
+  localmake "left :target
+  while [:left > 0] [
+    localmake "fits filter [(line.syllables ?) <= :left] :pool
+    ifelse emptyp :fits [
+      make "line [] make "left :target
+    ] [
+      localmake "piece pick :fits
+      make "line sentence :line :piece
+      make "left :left - line.syllables :piece
+    ]
+  ]
+  output :line
+end
+
+; The middle line needs grammar: a subject, then something it does.
+; Pick a subject, then only the actions that make the total exact.
+to middle.line :target
+  localmake "who pick :subjects
+  localmake "need :target - line.syllables :who
+  localmake "fits filter [(line.syllables ?) = :need] :actions
+  if emptyp :fits [output middle.line :target]
+  output sentence :who pick :fits
+end
+
+to show.line :line
+  print (sentence :line "- line.syllables :line [syllables:] map [syllables ?] :line)
+end
+
+to scroll :lines
+  clearscreen hideturtle setbackground [245 240 225]
+  penup setxy -60 -200 setheading 0 setpencolor [120 60 60] setpensize 6
+  pendown fd 400 penup
+  setpencolor 0 setlabelheight 26
+  localmake "y 80
+  foreach :lines [penup setxy -20 :y label ? make "y :y - 60]
+  ; a red seal stamp in the corner, like an ink painting
+  penup setxy 230 -180 setpencolor 4 pendown filled 4 [repeat 4 [fd 40 rt 90]]
+end
+
+to count.yours
+  print []
+  print [Type a line of your own and I will count its syllables. Press Enter to finish.]
+  localmake "line readlist
+  if or not listp :line emptyp :line [print [Sayonara.] stop]
+  if memberp first :line [quit stop bye] [print [Sayonara.] stop]
+  show.line :line
+  count.yours
+end
+
+make "haiku (list build :openings 5 middle.line 7 build :endings 5)
+foreach :haiku [show.line ?]
+scroll :haiku
+count.yours

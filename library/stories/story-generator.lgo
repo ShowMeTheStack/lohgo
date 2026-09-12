@@ -1,0 +1,70 @@
+; ============================================================
+; TITLE:    Once Upon a Random Time
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Beginner
+; TAGS:     random, pick, lists, stories
+; SUMMARY:  Makes up a new fairy tale every time you run it, by picking characters, places and events from lists.
+; ============================================================
+;
+; WHAT IT DOES
+;   Every fairy tale has the same bones: a hero, a place, a problem, a
+;   helper, and a happy ending. This program keeps a list of choices
+;   for each part and uses PICK to choose one of each, so every run
+;   tells a different story. The hero's name is chosen once and used
+;   all the way through, so the story hangs together.
+;
+; HOW TO USE
+;   Press Run again and again for new stories. Add your own ideas to
+;   the lists to change what can happen.
+;
+; CONCEPTS YOU WILL LEARN
+;   * PICK chooses a random item from a list
+;   * choosing something once and remembering it in a variable
+;   * SENTENCE glues words and lists into one sentence
+;
+; THINGS TO TRY
+;   * Add a villain list and a sentence about the villain
+;   * Make the story three paragraphs long
+;   * Count how many different stories the lists can make
+; ============================================================
+
+make "heroes [[a brave mouse] [a young witch] [a clumsy knight] [a clever goat] [a tiny dragon] [a shy robot]]
+make "names [Pip Morgana Bumble Gertrude Ember Bolt]
+make "places [[in a forest of glass trees] [on an island made of cheese] [in a castle on a cloud] [under a mountain] [beside a talking river]]
+make "problems [[lost the key to the moon] [was turned into a teapot] [forgot how to laugh] [had to find a missing star] [was chased by a grumpy giant]]
+make "helpers [[a wise old owl] [a bag of magic beans] [a friendly troll] [a map drawn in lemon juice] [a singing frog]]
+make "endings [[and they all had pancakes for supper] [and from then on the stars shone twice as bright] [and the giant became a very good friend] [and everyone danced until morning]]
+
+; Put a period on the end of the last word of a phrase.
+; WORD only joins words, so take the last word off, add the dot, put it back.
+to finish :phrase
+  output lput word last :phrase ". butlast :phrase
+end
+
+to tell.story
+  ; Pick the hero and their name together, so they match.
+  localmake "n 1 + random count :heroes
+  localmake "hero item :n :heroes
+  localmake "name item :n :names
+  print (sentence [Once upon a time there lived] :hero [called] word :name ".)
+  print (sentence [They lived] finish pick :places)
+  print (sentence [One day] :name finish pick :problems)
+  print (sentence [Luckily, help came from] finish pick :helpers)
+  print (sentence [With its help,] :name [knew exactly what to do.])
+  print (sentence [In the end the trouble was over,] finish pick :endings)
+  print [The end.]
+end
+
+to frame.book
+  ; a little open book in the turtle world, just for fun
+  clearscreen hideturtle setpensize 2 setpencolor 8
+  penup setxy 0 -120 setheading 0
+  pendown filled [255 248 230] [fd 200 lt 80 fd 230 lt 100 fd 200 lt 80 fd 230]
+  penup setxy 0 -120 setheading 0
+  pendown filled [255 248 230] [fd 200 rt 80 fd 230 rt 100 fd 200 rt 80 fd 230]
+  penup setxy -160 -10 setlabelheight 22 setpencolor 1 label [Once upon]
+  setxy 40 -10 label [a time...]
+end
+
+frame.book
+tell.story

@@ -1,0 +1,127 @@
+; ============================================================
+; TITLE:    Tilly's Rainy Day
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Intermediate
+; TAGS:     story, drawing, animation, scenes
+; SUMMARY:  A short picture book: each page of the story is printed while the turtle draws and animates the scene.
+; ============================================================
+;
+; WHAT IT DOES
+;   Tilly the turtle goes for a walk to the pond. Each page of the
+;   story is one procedure that prints a sentence or two and draws on
+;   the same picture: the sun comes up, Tilly walks to the pond, clouds
+;   roll in, rain falls, and a rainbow finishes the day. Tilly is the
+;   real turtle, shown with SETSHAPE "turtle, walking across the page.
+;
+; HOW TO USE
+;   Press Run and read along. The story moves on by itself.
+;
+; CONCEPTS YOU WILL LEARN
+;   * building a picture up bit by bit across procedures
+;   * moving the turtle slowly with small steps and WAIT
+;   * reusing small drawing procedures (cloud, raindrop, tree)
+;   * two turtles: one draws, one is Tilly
+;
+; THINGS TO TRY
+;   * Add a page where a frog jumps out of the pond
+;   * Make the rainbow appear one color at a time
+; ============================================================
+
+to page :words
+  print []
+  print :words
+  wait 80
+end
+
+to drawer
+  ; turtle 1 does the drawing so Tilly (turtle 0) can stay where she is
+  setturtle 1 hideturtle
+end
+
+to tilly
+  setturtle 0
+end
+
+to ground
+  drawer
+  penup setxy -400 -300 setheading 0 setpencolor [90 170 70]
+  filled [90 170 70] [repeat 2 [fd 180 rt 90 fd 800 rt 90]]
+end
+
+to sun
+  drawer
+  penup setxy -280 200 setpencolor 14 pendown filled 6 [arc 360 45]
+  repeat 12 [penup setxy -280 200 setheading repcount * 30 fd 55 pendown fd 25]
+end
+
+to tree :x
+  drawer
+  penup setxy :x -120 setheading 0 setpencolor 8 pendown setpensize 12 fd 70 setpensize 1
+  penup setxy :x -20 setpencolor 10 pendown filled 10 [arc 360 50]
+end
+
+to pond
+  drawer
+  penup setxy 220 -190 setpencolor 1 pendown filled [80 150 230] [ellipse 130 40]
+end
+
+to walk.to :x
+  tilly setheading 90 showturtle
+  while [xcor < :x] [fd 4 wait 2]
+end
+
+to cloud :x :y
+  drawer
+  penup setpencolor 15
+  foreach [[0 0] [35 10] [70 0] [35 -10]] [
+    setxy :x + first ? :y + last ? pendown filled 15 [arc 360 30] penup
+  ]
+end
+
+to rain
+  drawer
+  setpencolor 1
+  repeat 60 [
+    penup setxy (random 700) - 300 (random 200) - 40 setheading 200
+    pendown fd 18 wait 1
+  ]
+end
+
+to rainbow
+  drawer
+  setpensize 8
+  localmake "colors [4 14 6 2 1 13]
+  for [i 1 6] [
+    penup setxy 0 -120 setheading 270 fd 260 - 10 * :i setheading 0
+    setpencolor item :i :colors pendown
+    ; walk a half circle from left to right over the scene
+    repeat 90 [fd (260 - 10 * :i) * pi / 90 rt 2]
+  ]
+  setpensize 1
+end
+
+clearscreen setbackground [190 225 255]
+setturtle 0 setshape "turtle setpencolor 2 penup setxy -360 -160 setheading 90 hideturtle
+ground
+page [Once there was a turtle called Tilly who woke up early.]
+sun
+tilly showturtle
+page [The sun was shining, so she set off to visit the pond.]
+tree -150
+tree 60
+walk.to -60
+pond
+page [She walked past the two oak trees, slowly, as turtles do.]
+walk.to 150
+page [Just as she reached the pond, big gray clouds rolled in.]
+cloud -120 180
+cloud 60 160
+cloud 230 190
+page [Pitter patter! Down came the rain.]
+rain
+page [Tilly did not mind. Turtles carry their own roof.]
+wait 60
+page [When the rain stopped, a rainbow stretched over the whole sky.]
+rainbow
+tilly showturtle
+page [The end.]

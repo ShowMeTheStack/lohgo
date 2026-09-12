@@ -1,0 +1,94 @@
+; ============================================================
+; TITLE:    Animal Word Chain
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Intermediate
+; TAGS:     word game, last letter, lists, game
+; SUMMARY:  Play the word chain game against the computer: each animal must start with the last letter of the one before.
+; ============================================================
+;
+; WHAT IT DOES
+;   You and the computer take turns naming animals. Each animal has to
+;   begin with the last letter of the previous one: cat, tiger, rabbit,
+;   tortoise... No animal may be used twice. The computer knows a list
+;   of animals and picks one that fits; if it cannot find one, you win.
+;   The chain is drawn as a row of linked boxes, yours in blue and the
+;   computer's in red.
+;
+; HOW TO USE
+;   Run it and type an animal. Then answer the computer's animal with
+;   one that starts with its last letter. Type QUIT to give up.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FIRST and LAST on words to compare letters
+;   * FIND to look for the first item that fits a rule
+;   * a list of used words, so nothing is repeated
+;
+; THINGS TO TRY
+;   * Play with countries or foods instead of animals
+;   * Make the computer choose words that end in hard letters like X
+; ============================================================
+
+make "animals [ant antelope bat bear beaver bee camel cat cheetah cobra cow crab
+  deer dog dolphin donkey duck eagle eel elephant emu falcon ferret fox frog
+  gecko giraffe goat goose gorilla hamster hare hedgehog hippo horse hyena
+  ibis iguana impala jackal jaguar kangaroo koala lemur leopard lion lizard
+  llama lobster mole monkey moose mouse newt octopus ostrich otter owl
+  panda parrot penguin pig pony puma rabbit raccoon rat rhino robin salmon
+  seal shark sheep skunk sloth snail snake spider squid swan tiger toad
+  tortoise toucan turkey turtle walrus wasp weasel whale wolf wombat yak zebra]
+
+to box.word :w :color
+  ; draw the word in a box, then a link to the next box
+  localmake "width 16 + 10 * count :w
+  if xcor + :width > 380 [setxy -380 ycor - 60]
+  localmake "start pos
+  setheading 0 setpencolor :color pendown
+  filled 7 [repeat 2 [fd 36 rt 90 fd :width rt 90]]
+  penup setxy xcor + 8 ycor + 10 setlabelheight 16 label :w
+  setpos :start setheading 90 fd :width setheading 0 fd 18 setheading 90
+  setpencolor 0 pendown fd 14 penup setheading 0 bk 18
+end
+
+to computer.word :letter
+  output find [and equalp first ? :letter not memberp ? :used] :animals
+end
+
+to player.turn :letter
+  ifelse emptyp :letter [
+    print [Name any animal to start:]
+  ] [
+    print (sentence [Your turn: an animal starting with] uppercase :letter)
+  ]
+  localmake "w readword
+  if or emptyp :w memberp :w [quit stop q] [output "quit]
+  make "w lowercase :w
+  if not wordp :w [output player.turn :letter]
+  if memberp "| | :w [print [Just one word, please.] output player.turn :letter]
+  if memberp :w :used [print [That one has been used already!] output player.turn :letter]
+  if not or emptyp :letter equalp first :w :letter [
+    print (sentence [That does not start with] uppercase :letter)
+    output player.turn :letter]
+  output :w
+end
+
+to game
+  localmake "letter "
+  forever [
+    localmake "mine player.turn :letter
+    if equalp :mine "quit [print [You gave up. Good game!] stop]
+    make "used lput :mine :used
+    box.word :mine 1
+    localmake "reply computer.word last :mine
+    if emptyp :reply [print (sentence [I cannot think of an animal starting with] uppercase last :mine [- you win!]) stop]
+    print (sentence [I say:] :reply)
+    make "used lput :reply :used
+    box.word :reply 4
+    make "letter last :reply
+  ]
+end
+
+clearscreen hideturtle
+penup setxy -380 220
+make "used []
+game
+print (sentence [The chain was] count :used [animals long.])

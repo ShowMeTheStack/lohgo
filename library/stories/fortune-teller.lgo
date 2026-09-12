@@ -1,0 +1,105 @@
+; ============================================================
+; TITLE:    Paper Fortune Teller
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Beginner
+; TAGS:     fortune, animation, playground game, lists
+; SUMMARY:  The folded paper fortune teller from the playground, drawn by the turtle: pick a color, then numbers, and get a fortune.
+; ============================================================
+;
+; WHAT IT DOES
+;   You may have folded one of these from a square of paper. The four
+;   outside flaps are colored. You pick a color, and the fortune
+;   teller opens and shuts once for each letter as it is spelled out.
+;   Then you choose one of the numbers showing inside, it opens and
+;   shuts that many times, and you choose again. Under the last flap
+;   is your fortune. All the fortunes are kind ones.
+;
+; HOW TO USE
+;   Run it. Type a color (red, blue, green or yellow), then a number
+;   from the ones the program shows you, twice. QUIT stops.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a simple animation: draw, WAIT, clear, draw the other way
+;   * spelling a word letter by letter with FOREACH
+;   * keeping state in a variable that flips between two values
+;
+; THINGS TO TRY
+;   * Write your own eight fortunes
+;   * Make the opening and shutting faster or slower
+; ============================================================
+
+make "fortunes [
+  [You will make someone laugh today.]
+  [A good idea is about to arrive.]
+  [Someone is proud of you.]
+  [You will learn something surprising this week.]
+  [Your kindness will come back to you.]
+  [An adventure is waiting just around the corner.]
+  [You are better at drawing than you think.]
+  [Tomorrow will be a very good day.]
+]
+make "colors [red blue green yellow]
+make "open "across
+
+; Draw one quarter of the fortune teller as a colored square.
+to flap :x :y :color :number
+  penup setxy :x :y setheading 0 setpencolor 0 setpensize 2
+  pendown filled :color [repeat 4 [fd 110 rt 90]]
+  penup setxy :x + 45 :y + 45 setlabelheight 26 label :number
+end
+
+; The fortune teller opens either across or up-and-down.
+; Each way shows a different set of numbers inside.
+to draw.teller :showing
+  clearscreen hideturtle
+  localmake "gx ifelse equalp :open "across [30] [0]
+  localmake "gy ifelse equalp :open "across [0] [30]
+  localmake "nums ifelse equalp :showing "numbers [numbers.now] [["| | "| | "| | "| |]]
+  flap -110 - :gx 0 + :gy item 1 :colors item 1 :nums
+  flap 0 + :gx 0 + :gy item 2 :colors item 2 :nums
+  flap -110 - :gx -110 - :gy item 3 :colors item 3 :nums
+  flap 0 + :gx -110 - :gy item 4 :colors item 4 :nums
+end
+
+to numbers.now
+  output ifelse equalp :open "across [[1 2 5 6]] [[3 4 7 8]]
+end
+
+to flip
+  make "open ifelse equalp :open "across ["updown] ["across]
+end
+
+to open.shut :times :showing
+  repeat :times [flip draw.teller :showing wait 25]
+end
+
+to choose :question :allowed
+  print :question
+  localmake "a readword
+  if or emptyp :a memberp :a [quit stop q] [output "quit]
+  if memberp :a :allowed [output :a]
+  print (sentence [Please choose one of:] :allowed)
+  output choose :question :allowed
+end
+
+to play
+  draw.teller "colors
+  localmake "c choose [Pick a color: red, blue, green or yellow.] :colors
+  if equalp :c "quit [stop]
+  foreach :c [type ? type "| | open.shut 1 "colors]
+  print []
+  draw.teller "numbers
+  localmake "n choose (sentence [Pick a number:] numbers.now) numbers.now
+  if equalp :n "quit [stop]
+  open.shut :n "numbers
+  localmake "n choose (sentence [Pick one more number:] numbers.now) numbers.now
+  if equalp :n "quit [stop]
+  print []
+  print [Your fortune:]
+  print item :n :fortunes
+  clearscreen
+  penup setxy -340 0 setpencolor 13 setlabelheight 20
+  label item :n :fortunes
+end
+
+play

@@ -1,0 +1,124 @@
+; ============================================================
+; TITLE:    Acrostic Poem
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Intermediate
+; TAGS:     poetry, letters, names, property lists, drawing
+; SUMMARY:  Type a name and get an acrostic poem: each line starts with the next letter of the name, drawn big down the side.
+; ============================================================
+;
+; WHAT IT DOES
+;   In an acrostic poem the first letters of the lines, read downward,
+;   spell a word. The program keeps a few kind phrases for every letter
+;   of the alphabet in a property list called PHRASES. For each letter
+;   of your name it picks one phrase, trying not to use the same phrase
+;   twice when a letter repeats. The poem is drawn with each first
+;   letter large and in a rainbow color.
+;
+; HOW TO USE
+;   Run it and type a name (or any word). Type QUIT to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * FOREACH over the letters of a word
+;   * a property list with one entry for each letter
+;   * remembering what was used so repeats get a different phrase
+;
+; THINGS TO TRY
+;   * Add more phrases for the letters that only have one
+;   * Make an acrostic about a topic, like SUMMER, with matching phrases
+; ============================================================
+
+to phrases :letter :list
+  pprop "phrases :letter :list
+end
+
+phrases "A [[always ready to help] [amazing at jokes]]
+phrases "B [[brave and bright] [bouncing with ideas]]
+phrases "C [[caring for others] [curious about everything]]
+phrases "D [[dreaming big dreams] [daring and kind]]
+phrases "E [[easy to talk to] [excellent at games]]
+phrases "F [[funny and friendly] [full of surprises]]
+phrases "G [[gentle with animals] [good at drawing]]
+phrases "H [[happy most days] [helpful at home]]
+phrases "I [[imaginative and clever] [interested in stars]]
+phrases "J [[joyful as a song] [just and fair]]
+phrases "K [[kind to everyone] [keen to learn]]
+phrases "L [[loves a good story] [loyal to friends]]
+phrases "M [[makes people smile] [marvelous at music]]
+phrases "N [[never gives up] [nice to be around]]
+phrases "O [[outdoors whenever possible] [open to new things]]
+phrases "P [[patient and polite] [plays fair]]
+phrases "Q [[quick to laugh] [quietly brilliant]]
+phrases "R [[really good at riddles] [ready for adventure]]
+phrases "S [[sunny and sweet] [smart and silly]]
+phrases "T [[thoughtful and true] [terrific at teamwork]]
+phrases "U [[unique in every way] [up for anything]]
+phrases "V [[very creative] [vivid imagination]]
+phrases "W [[wonderful and warm] [wise beyond their years]]
+phrases "X [[x marks the spot] [xylophone champion]]
+phrases "Y [[young at heart] [yes to every challenge]]
+phrases "Z [[zooming with energy] [zany and fun]]
+
+to line.for :letter
+  localmake "choices gprop "phrases uppercase :letter
+  if emptyp :choices [output [...]]
+  ; prefer a phrase this poem has not used yet
+  localmake "fresh filter [not memberp ? :used] :choices
+  localmake "p ifelse emptyp :fresh [pick :choices] [pick :fresh]
+  make "used lput :p :used
+  output :p
+end
+
+; MAP over a word must give back letters, so collect the lines in a
+; list with FOREACH and LPUT instead.
+to poem :name
+  make "used []
+  localmake "lines []
+  foreach :name [make "lines lput line.for ? :lines]
+  output :lines
+end
+
+to draw.poem :name :lines
+  clearscreen hideturtle
+  localmake "colors [4 14 6 2 1 13 5]
+  localmake "gap min 70 480 / count :name
+  localmake "y 220
+  foreach :lines [
+    penup setxy -300 :y setpencolor item 1 + remainder # - 1 7 :colors
+    setlabelheight :gap * 0.8 label uppercase item # :name
+    setxy -300 + :gap * 0.8 :y setpencolor 0 setlabelheight :gap * 0.4
+    label butfirst.letter ?
+    make "y :y - :gap
+  ]
+end
+
+; the phrase without its first letter, since that is drawn big
+to butfirst.letter :phrase
+  output fput butfirst first :phrase butfirst :phrase
+end
+
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+to ask.name
+  print []
+  print [Type a name for an acrostic poem, or quit:]
+  localmake "n readword
+  if or emptyp :n memberp :n [quit stop q] [print [Goodbye, poet.] stop]
+  ; keep only letters, so "hello world" becomes helloworld
+  make "n filter [memberp lowercase ? "abcdefghijklmnopqrstuvwxyz] :n
+  if emptyp :n [print [Please use letters.] ask.name stop]
+  if (count :n) > 12 [print [That is long! I will use the first 12 letters.] make "n first.12 :n]
+  localmake "lines poem :n
+  foreach :lines [print (sentence uppercase item # :n "- ?)]
+  draw.poem :n :lines
+  ask.name
+end
+
+to first.12 :w
+  if (count :w) <= 12 [output :w]
+  output first.12 butlast :w
+end
+
+draw.poem "LOGO poem "LOGO
+ask.name

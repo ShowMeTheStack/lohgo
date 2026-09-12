@@ -1,0 +1,100 @@
+; ============================================================
+; TITLE:    The Interview Robot
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Beginner
+; TAGS:     chatbot, questions, variables, biography, robot
+; SUMMARY:  A friendly robot asks you questions, remembers your answers, and writes a short newspaper story about you.
+; ============================================================
+;
+; WHAT IT DOES
+;   The robot (drawn by the turtle) interviews you like a reporter:
+;   your name, your age, your favorite animal, food and hobby. It
+;   reacts to some answers, does a little arithmetic with your age,
+;   and finally writes a newspaper article about you using everything
+;   you said.
+;
+; HOW TO USE
+;   Press Run and answer each question, then press Enter. If you do not
+;   want to answer, just press Enter and the robot will invent
+;   something.
+;
+; CONCEPTS YOU WILL LEARN
+;   * storing each answer in its own variable with MAKE
+;   * replying differently depending on the answer, with IF
+;   * using NUMBERP before doing arithmetic with an answer
+;
+; THINGS TO TRY
+;   * Add a question about a best friend and use it in the article
+;   * Make the robot's eyes change color when it is surprised
+; ============================================================
+
+to robot
+  clearscreen hideturtle setpensize 3 setpencolor 0
+  ; head, eyes, mouth and an antenna
+  penup setxy -60 0 setheading 0 pendown filled 15 [repeat 4 [fd 120 rt 90]]
+  penup setxy -30 80 pendown filled 3 [arc 360 12]
+  penup setxy 30 80 pendown filled 3 [arc 360 12]
+  penup setxy -30 30 setheading 90 pendown fd 60
+  penup setxy 0 120 setheading 0 pendown fd 40 filled 4 [arc 360 8]
+  ; body
+  penup setxy -90 -10 setheading 180 pendown filled 1 [repeat 2 [fd 150 lt 90 fd 180 lt 90]]
+  penup
+end
+
+; Ask a question. Use the backup answer if nothing sensible comes back.
+to interview :question :backup
+  print (sentence [ROBOT:] :question)
+  localmake "a readword
+  if or emptyp :a not wordp :a [print (sentence [ROBOT: Then I will say] word :backup ".) output :backup]
+  output :a
+end
+
+to react.age :age
+  if not numberp :age [print [ROBOT: That is a mysterious age.] stop]
+  if :age < 1 [print [ROBOT: Hmm, are you a robot too?] stop]
+  print (sentence [ROBOT: So you have been alive for about] :age * 365 [days!])
+  if :age > 99 [print [ROBOT: Wow, you must have some stories to tell.]]
+end
+
+to react.animal :animal
+  if memberp :animal [cat cats kitten] [print [ROBOT: Meow! I like cats too.] stop]
+  if memberp :animal [dog dogs puppy] [print [ROBOT: Woof! Dogs are wonderful.] stop]
+  if memberp :animal [robot robots] [print [ROBOT: Thank you, that is very kind.] stop]
+  print (sentence [ROBOT: I have never met a] word :animal ". [Is it friendly?])
+end
+
+to plural :w
+  ; cat becomes cats, but cats stays cats
+  if equalp last :w "s [output :w]
+  output word :w "s
+end
+
+to article
+  clearscreen hideturtle setbackground [245 245 235]
+  penup setxy -360 230 setpencolor 0 setlabelheight 34 label [THE DAILY BYTE]
+  setpensize 2 setxy -360 215 pendown setheading 90 fd 720 penup
+  setlabelheight 18
+  localmake "lines (list ~
+    (sentence [LOCAL STAR] uppercase :name [TALKS TO ROBOT]) ~
+    (sentence :name [is] :age [years old and loves] word plural :animal ".) ~
+    (sentence [When asked about food,] :name [said] :food [is the best.]) ~
+    (sentence [In their spare time they enjoy] word :hobby ".) ~
+    (sentence [Our robot says:] :name [is one of a kind.]))
+  localmake "y 160
+  foreach :lines [penup setxy -360 :y label ? make "y :y - 45]
+  foreach :lines [print ?]
+end
+
+robot
+print [ROBOT: Beep boop. Hello! I am a reporter robot. May I ask you some questions?]
+make "name interview [What is your name?] "Alex
+print (sentence [ROBOT: Nice to meet you,] word :name ".)
+make "age interview [How old are you?] 10
+react.age :age
+make "animal interview [What is your favorite animal?] "otter
+react.animal :animal
+make "food interview [What is your favorite food?] "pizza
+make "hobby interview [What do you like doing for fun?] "drawing
+print [ROBOT: Thank you! Here is my article about you.]
+print []
+article

@@ -1,0 +1,126 @@
+; ============================================================
+; TITLE:    Zoggish Translator
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Intermediate
+; TAGS:     translation, dictionary, property lists, made-up language
+; SUMMARY:  Translates English into Zoggish, a made-up alien language, using a small dictionary and rules for unknown words.
+; ============================================================
+;
+; WHAT IT DOES
+;   Zoggish is spoken on the planet Zog. Common words have their own
+;   Zoggish words, kept in a property list called ZOGGISH: GPROP
+;   "zoggish "hello gives "blarp. Words that are not in the dictionary
+;   are changed by Zoggish rules: every vowel is swapped for the next
+;   vowel along (a to e, e to i, ...) and the word ends in -ix. Plurals
+;   are made by saying the word twice. The program can also translate
+;   back again, by looking words up or running the rules backwards.
+;
+; HOW TO USE
+;   Run it and type an English sentence, like: hello friend I like
+;   your hat. The Zoggish appears in the command center and on a
+;   little alien's speech bubble. Type QUIT to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a dictionary in a property list, looked up with GPROP
+;   * rules for words the dictionary does not know
+;   * MAP to translate every word of a sentence
+;
+; THINGS TO TRY
+;   * Add twenty more words to the dictionary
+;   * Write a rule for words that end in -ing
+;   * Find a word that does not come back right, and work out why
+; ============================================================
+
+to teach :pairs
+  if emptyp :pairs [stop]
+  pprop "zoggish first :pairs first butfirst :pairs
+  pprop "english first butfirst :pairs first :pairs
+  teach butfirst butfirst :pairs
+end
+
+teach [hello blarp goodbye zarg friend glib I zo you za like vorp eat munk
+       the ug a og is ba am bam my zom your zam food nubbo water splish
+       happy wib planet zogg cat mizzle dog wuff]
+
+to next.vowel :c
+  localmake "v member :c "aeiou
+  if emptyp :v [output :c]
+  if (count :v) = 1 [output "a]
+  output first butfirst :v
+end
+
+to rule.word :w
+  output word map [next.vowel ?] :w "ix
+end
+
+; The rule run backwards: drop the -ix and move each vowel back one.
+to prev.vowel :c
+  localmake "v member :c "uoiea
+  if emptyp :v [output :c]
+  if (count :v) = 1 [output "u]
+  output first butfirst :v
+end
+
+to unrule.word :w
+  output map [prev.vowel ?] butlast butlast :w
+end
+
+to to.zoggish :w
+  localmake "w lowercase :w
+  localmake "known gprop "zoggish :w
+  if not emptyp :known [output :known]
+  ; a plural English word: say the single word twice
+  if and (count :w) > 3 equalp last :w "s [
+    localmake "single gprop "zoggish butlast :w
+    if not emptyp :single [output word :single :single]]
+  output rule.word :w
+end
+
+to to.english :w
+  localmake "w lowercase :w
+  localmake "known gprop "english :w
+  if not emptyp :known [output :known]
+  ; a doubled word like mizzlemizzle is a plural
+  localmake "half count :w
+  if (remainder :half 2) = 0 [
+    localmake "front first.n :half / 2 :w
+    if equalp word :front :front :w [
+      if not emptyp gprop "english :front [output word gprop "english :front "s]]]
+  if and (count :w) > 2 equalp last butlast :w "i [if equalp last :w "x [output unrule.word :w]]
+  output word "? :w
+end
+
+to first.n :n :w
+  if :n = 0 [output "]
+  output word first :w first.n :n - 1 butfirst :w
+end
+
+to alien :text
+  clearscreen hideturtle
+  ; a green alien with three eyes
+  penup setxy -250 -150 setpencolor 10 pendown filled 2 [arc 360 70]
+  foreach [-280 -250 -220] [penup setxy ? -130 setpencolor 7 pendown filled 7 [arc 360 12] setpencolor 0 filled 0 [arc 360 5]]
+  penup setxy -250 -80 setheading 0 setpencolor 2 setpensize 3 pendown fd 50 penup
+  setpensize 1
+  ; the speech bubble
+  penup setxy -180 30 setheading 90 setpencolor 0 pendown
+  filled 7 [repeat 2 [fd 540 lt 90 fd 120 lt 90]]
+  penup setxy -160 70 setlabelheight 18 label :text
+end
+
+to translate.loop
+  print []
+  print [Type an English sentence to translate, or quit:]
+  localmake "s readlist
+  if or not listp :s emptyp :s [print [Zarg! That means goodbye.] stop]
+  if memberp first :s [quit stop q] [print [Zarg! That means goodbye.] stop]
+  localmake "z map [to.zoggish ?] :s
+  print (sentence [Zoggish:] :z)
+  print (sentence [Back to English:] map [to.english ?] :z)
+  alien :z
+  translate.loop
+end
+
+alien [blarp glib! zo bam wib]
+print [The alien says: blarp glib! zo bam wib - which means: hello friend! I am happy]
+translate.loop

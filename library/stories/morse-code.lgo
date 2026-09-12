@@ -1,0 +1,108 @@
+; ============================================================
+; TITLE:    Morse Code Beeper
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Intermediate
+; TAGS:     morse code, sound, property lists, decoding
+; SUMMARY:  Turns your message into Morse code, beeps it with SOUND, draws the dots and dashes, and can decode Morse too.
+; ============================================================
+;
+; WHAT IT DOES
+;   Morse code sends letters as short and long beeps: A is .- (short,
+;   long) and S is ... (three short). The code for each letter is kept
+;   in a property list. Your message is printed in Morse, played on the
+;   speaker, and drawn as a ticker tape: round dots and long dashes.
+;   If you type dots and dashes instead of words, it decodes them.
+;
+; HOW TO USE
+;   Turn the sound on and press Run. Type a message like SOS or HELLO.
+;   To decode, type Morse letters separated by spaces, such as
+;   ... --- ...   Type QUIT to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * SOUND [frequency milliseconds] plays a beep
+;   * timing rules: a dash is three dots long, gaps separate letters
+;   * a property list used both ways, letter to code and code to letter
+;
+; THINGS TO TRY
+;   * Slow the beeps down to learn the code by ear
+;   * Add the digits 0 to 9: 1 is .---- and 0 is -----
+;   * Flash a dot on the screen with each beep, like a signal lamp
+; ============================================================
+
+make "dot.ms 90
+make "pitch 650
+
+to learn :pairs
+  if emptyp :pairs [stop]
+  pprop "morse first :pairs first butfirst :pairs
+  pprop "letter first butfirst :pairs first :pairs
+  learn butfirst butfirst :pairs
+end
+
+learn [A .- B -... C -.-. D -.. E . F ..-. G --. H .... I .. J .--- K -.- L .-.. M --
+       N -. O --- P .--. Q --.- R .-. S ... T - U ..- V ...- W .-- X -..- Y -.-- Z --..]
+
+to code.of :c
+  output gprop "morse uppercase :c
+end
+
+to beep :symbol
+  ; a dot is one unit long, a dash three; a one unit gap follows each
+  ifelse equalp :symbol ". [sound list :pitch :dot.ms] [sound list :pitch 3 * :dot.ms]
+  wait :dot.ms * 60 / 1000
+end
+
+to tape.mark :symbol
+  pendown
+  ifelse equalp :symbol ". [filled 0 [arc 360 4] penup fd 16] [
+    setpensize 8 fd 24 setpensize 1 penup fd 12]
+end
+
+to send :message
+  clearscreen hideturtle setpencolor 0
+  penup setxy -380 200 setheading 90
+  foreach :message [
+    foreach ? [
+      localmake "code code.of ?
+      if not emptyp :code [
+        type word :code "| |
+        foreach :code [beep ? tape.mark ?]
+        ; a three unit gap between letters
+        wait 2 * :dot.ms * 60 / 1000
+        fd 20
+        if xcor > 340 [setxy -380 ycor - 40]
+      ]
+    ]
+    type "|/ |
+    fd 30
+    if xcor > 340 [setxy -380 ycor - 40]
+    wait 4 * :dot.ms * 60 / 1000
+  ]
+  print []
+end
+
+to morse? :line
+  ; true when every word is made only of dots and dashes
+  output emptyp filter [not emptyp filter [not memberp ? ".-] ?] :line
+end
+
+to decode :line
+  output map [ifelse emptyp gprop "letter ? ["?] [gprop "letter ?]] :line
+end
+
+to play
+  print []
+  print [Type a message, or Morse with spaces between letters, or quit:]
+  localmake "m readlist
+  if or not listp :m emptyp :m [stop]
+  if memberp first :m [quit q stop] [stop]
+  ifelse morse? :m [
+    print (sentence [That spells:] reduce "word decode :m)
+  ] [send :m]
+  play
+end
+
+print [SOS in Morse code:]
+send [SOS]
+play
+print [-.-.-- That's all, folks.]

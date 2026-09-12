@@ -1,0 +1,128 @@
+; ============================================================
+; TITLE:    Sentence Diagrams
+; CATEGORY: Stories, Chatbots & Language
+; LEVEL:    Advanced
+; TAGS:     grammar, parts of speech, parsing, diagram
+; SUMMARY:  Tags each word of a simple sentence as noun, verb, adjective and so on, then draws a classic sentence diagram.
+; ============================================================
+;
+; WHAT IT DOES
+;   Grammar teachers draw sentences on a line: the subject and verb sit
+;   on a main line split by a bar, the object follows the verb, and the
+;   describing words hang underneath on slanted lines. This program
+;   looks each word up in small dictionaries to find its part of
+;   speech, guesses unknown words from their endings (quickly is an
+;   adverb, jumped is a verb), finds the subject, verb and object, and
+;   draws the diagram.
+;
+; HOW TO USE
+;   Press Run to see an example. Then type your own simple sentence,
+;   like: the hungry cat quickly ate the small fish
+;   Type QUIT or just press Enter to stop.
+;
+; CONCEPTS YOU WILL LEARN
+;   * looking words up in lists to label them
+;   * guessing from word endings when a word is not in the list
+;   * finding a pattern (subject, verb, object) in a list of words
+;
+; THINGS TO TRY
+;   * Add more words to the dictionaries
+;   * Handle "and" so two subjects can share one verb
+; ============================================================
+
+make "dets [the a an my your his her our their this that some]
+make "adjs [big small little happy sad red blue green old young hungry lazy quick brown tall shiny sleepy clever]
+make "verbs [chased ate kicked read saw likes found built sang threw jumped ran sleeps loves wrote is]
+make "advs [quickly slowly happily loudly quietly yesterday today very]
+make "preps [in on under over with near behind to into across]
+
+to part.of :w
+  if memberp :w :dets [output "det]
+  if memberp :w :adjs [output "adj]
+  if memberp :w :verbs [output "verb]
+  if memberp :w :advs [output "adv]
+  if memberp :w :preps [output "prep]
+  ; guesses from the ending of a word we do not know
+  ; (AND works out both of its inputs, so the length check comes first
+  ; in its own IF: LAST BUTLAST of a one-letter word would be an error.)
+  if (count :w) > 3 [
+    if equalp word last butlast :w last :w "ly [output "adv]
+    if equalp word last butlast :w last :w "ed [output "verb]
+  ]
+  output "noun
+end
+
+; Split the tagged words into the parts of the diagram.
+to split.up :words
+  make "subject " make "verb " make "object "
+  make "subj.mods [] make "verb.mods [] make "obj.mods [] make "prep.phrase []
+  localmake "waiting []
+  foreach :words [
+    localmake "t part.of ?
+    cond [
+      [[memberp :t [det adj]] make "waiting lput ? :waiting]
+      [[equalp :t "adv] make "verb.mods lput ? :verb.mods]
+      [[equalp :t "prep] make "prep.phrase (list ?)]
+      [[and equalp :t "verb emptyp :verb] make "verb ?]
+      [[equalp :t "noun] place.noun ? :waiting make "waiting []]
+      [else make "waiting []]
+    ]
+  ]
+end
+
+to place.noun :n :mods
+  if not emptyp :prep.phrase [make "prep.phrase sentence :prep.phrase :n stop]
+  if emptyp :subject [make "subject :n make "subj.mods :mods stop]
+  if emptyp :object [make "object :n make "obj.mods :mods]
+end
+
+to text.at :x :y :text
+  penup setxy :x :y + 6 label :text
+end
+
+to hang :x :y :words
+  ; describing words go on slanted lines below a word
+  foreach :words [
+    penup setxy :x + 30 * # :y setheading 150 pendown fd 60 penup
+    setheading 0 bk 18 label ?
+  ]
+end
+
+to diagram
+  clearscreen hideturtle setpencolor 0 setpensize 2 setlabelheight 18
+  penup setxy -340 60 setheading 90 pendown fd 680 penup
+  ; the subject bar crosses the line, the object bar does not
+  setxy -110 30 setheading 0 pendown fd 70 penup
+  setxy 110 60 pendown fd 30 penup
+  text.at -320 60 :subject
+  text.at -90 60 :verb
+  text.at 130 60 :object
+  hang -330 60 :subj.mods
+  hang -100 60 :verb.mods
+  hang 120 60 :obj.mods
+  if (count :prep.phrase) > 1 [
+    penup setxy 0 60 setheading 150 pendown fd 80 penup setheading 0 bk 20 label first :prep.phrase
+    setxy 0 60 setheading 150 fd 80 setheading 90 pendown fd 150 penup
+    text.at xcor - 140 ycor last :prep.phrase
+  ]
+end
+
+to explain :words
+  print map [word ? word "/ part.of ?] :words
+  split.up :words
+  print (sentence [subject:] word :subject "| | [verb:] word :verb "| | [object:] :object)
+  diagram
+end
+
+to ask.loop
+  print []
+  print [Type a simple sentence, or press Enter to stop:]
+  localmake "s readlist
+  if or not listp :s emptyp :s [print [Goodbye.] stop]
+  if memberp first :s [quit stop] [print [Goodbye.] stop]
+  explain map [lowercase ?] :s
+  ask.loop
+end
+
+explain [the clever girl quickly kicked the red ball into the park]
+ask.loop
