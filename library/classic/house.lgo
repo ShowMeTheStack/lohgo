@@ -1,0 +1,108 @@
+; ============================================================
+; TITLE:    House from Square and Triangle
+; CATEGORY: Classic Logo
+; LEVEL:    Beginner
+; TAGS:     procedures, debugging, Mindstorms, filling
+; SUMMARY:  The famous first project: put SQUARE and TRIANGLE together to make a house, find the bug, and fix it.
+; ============================================================
+;
+; WHAT IT DOES
+;   On the left you see a first try at a house: the roof has ended up
+;   inside the walls. On the right is the fixed house, colored in, with
+;   a door, a window and a chimney.
+;
+; HOW TO USE
+;   Press Run. Then type  clean square 100  or  clean triangle 100  or
+;   clean house 100  in the command center and watch each piece.
+;
+; CONCEPTS YOU WILL LEARN
+;   * teaching the turtle new words with TO ... END
+;   * using your own words to build bigger ones
+;   * a "bug" is just a surprise you can understand and fix
+;
+; THINGS TO TRY
+;   * Make a street of houses of different sizes with REPEAT.
+;   * Add a second window next to the first.
+;   * Change the roof so it is a taller, pointier triangle.
+; ============================================================
+
+; In Mindstorms (1980) Seymour Papert tells this story. A child who
+; knows SQUARE and TRIANGLE types SQUARE TRIANGLE to get a house, and
+; the triangle comes out inside the square. Nothing is "wrong" with the
+; computer: the turtle did exactly what it was told. Thinking about where
+; the turtle is, and which way it faces, finds the fix. Papert used this
+; to show that bugs are something to learn from, not to be ashamed of.
+
+to square :size
+  repeat 4 [forward :size right 90]
+end
+
+to triangle :size
+  repeat 3 [forward :size right 120]
+end
+
+; The first try. SQUARE leaves the turtle at the bottom left corner
+; facing up, so TRIANGLE starts there too and turns into the square.
+to buggy.house :size
+  square :size
+  triangle :size
+end
+
+; The fix: walk up to the top of the wall, turn 30 degrees so the
+; triangle points up instead of in, draw it, then go back home.
+to house :size
+  square :size
+  forward :size
+  right 30
+  triangle :size
+  left 30
+  back :size
+end
+
+; The colored house. Each FILLED shape covers what is already on the
+; screen, so we work like a painter: the big wall first, then the door
+; and window on top of it. The chimney goes up before the roof, so the
+; roof hides the bottom of the chimney.
+to fancy.house :size
+  localmake "x xcor
+  localmake "y ycor
+  setpencolor 0
+  ; walls
+  filled [250 220 150] [square :size]
+  ; door
+  penup setxy :x + :size * 0.15 :y setheading 0 pendown
+  filled [140 80 40] [square2 :size * 0.22 :size * 0.45]
+  ; window
+  penup setxy :x + :size * 0.55 :y + :size * 0.5 setheading 0 pendown
+  filled [180 220 255] [square :size * 0.25]
+  ; chimney, standing on top of the wall
+  penup setxy :x + :size * 0.7 :y + :size setheading 0 pendown
+  filled [120 120 130] [square2 :size * 0.12 :size * 0.8]
+  ; roof, the same way as in HOUSE
+  penup setxy :x :y setheading 0 pendown
+  forward :size right 30
+  filled [200 60 50] [triangle :size]
+end
+
+; a rectangle, used for the door and the chimney
+to square2 :width :height
+  repeat 2 [forward :height right 90 forward :width right 90]
+end
+
+to caption :x :text
+  penup setxy :x -200 setheading 0
+  setpencolor 0
+  label :text
+end
+
+clearscreen hideturtle
+setbackground [235 245 255]
+setpensize 3
+setlabelheight 18
+penup setxy -320 -120 pendown
+setpencolor [200 50 50]
+buggy.house 160
+caption -330 [square triangle: oops!]
+penup setxy 100 -120 pendown
+fancy.house 200
+caption 110 [the fixed house]

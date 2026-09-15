@@ -1,0 +1,119 @@
+; ============================================================
+; TITLE:    Animals from Arcs
+; CATEGORY: Classic Logo
+; LEVEL:    Intermediate
+; TAGS:     arcs, ARCR, ARCL, drawing, procedures
+; SUMMARY:  A rabbit and a snail drawn only from circles, petals and spirals built on two little helpers, ARCR and ARCL.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws a sitting rabbit with long ears and a fluffy tail, and a snail
+;   with a spiral shell, on a sunny meadow. Every curve comes from
+;   ARCR (an arc turning right) or ARCL (an arc turning left).
+;
+; HOW TO USE
+;   Press Run. Then try  clean arcr 100 90  and  arcl 50 180  in the
+;   command center to see what the helpers do on their own.
+;
+; CONCEPTS YOU WILL LEARN
+;   * ARCR and ARCL: a circle is "a little forward, a little turn"
+;   * a petal or leaf is two arcs with a turn between them
+;   * drawing in layers: things at the back are drawn first, and each
+;     new FILLED shape covers what is already there
+;
+; THINGS TO TRY
+;   * Give the rabbit a carrot (an orange triangle and a green petal).
+;   * Make a second, smaller snail racing the first one.
+;   * Draw a duck: a big circle body, a small circle head, a petal beak.
+; ============================================================
+
+; Many early Logo manuals handed children two helper procedures much
+; like these, often called ARCR and ARCL, so they could draw round
+; things before they knew any trigonometry. The turtle really walks the
+; arc instead of standing still like the ARC primitive, which is handy
+; when you want to know where the turtle ends up.
+
+; Walk DEGREES of a circle of radius R, turning right (or left).
+; Each 5-degree step is 2 * pi * R / 72 long.
+to arcr :r :degrees
+  repeat :degrees / 5 [forward :r * 0.0872665 right 5]
+end
+
+to arcl :r :degrees
+  repeat :degrees / 5 [forward :r * 0.0872665 left 5]
+end
+
+; A filled circle centred on (X, Y): start at its left edge facing up.
+to disk :x :y :r :color
+  penup setxy :x - :r :y setheading 0 pendown
+  filled :color [arcr :r 360]
+end
+
+; A petal from (X, Y) pointing in direction DIR. The petal leans 30
+; degrees to the right of its first heading, so we start 30 to the left.
+to petal :x :y :dir :len :color
+  penup setxy :x :y setheading :dir - 30 pendown
+  filled :color [arcr :len 60 right 120 arcr :len 60]
+end
+
+to rabbit :x :y
+  ; from the back to the front: each part covers the ones before it
+  setpencolor [120 110 110]
+  disk :x - 82 :y - 30 20 [255 255 255]              ; tail
+  petal :x - 22 :y + 140 -15 95 [235 230 225]        ; ears
+  petal :x + 22 :y + 140 15 95 [235 230 225]
+  petal :x - 25 :y + 150 -15 68 [250 190 200]        ; inside of the ears
+  petal :x + 25 :y + 150 15 68 [250 190 200]
+  disk :x :y 80 [225 220 215]                        ; body
+  disk :x :y + 115 45 [235 230 225]                  ; head
+  disk :x - 45 :y - 72 22 [235 230 225]              ; front feet
+  disk :x + 45 :y - 72 22 [235 230 225]
+  ; eyes and nose are DOTs, drawn last so they sit on the face
+  setpensize 9 setpencolor 0
+  dot list :x - 17 :y + 125
+  dot list :x + 17 :y + 125
+  setpencolor [230 120 140]
+  dot list :x :y + 105
+  setpensize 2
+end
+
+; The shell is a spiral: a half circle, then a slightly smaller half
+; circle, again and again. Drawn after the shell's fill so it shows.
+to shell.spiral :r
+  if :r < 6 [stop]
+  arcl :r 180
+  shell.spiral :r * 0.75
+end
+
+to snail :x :y
+  ; the body first: a long rounded slug shape that the shell sits on
+  setpencolor [120 140 60]
+  penup setxy :x - 120 :y - 110 setheading 90 pendown
+  filled [180 200 100] [forward 230 arcl 25 180 forward 230 arcl 25 180]
+  setpencolor [110 70 30]
+  disk :x :y 80 [220 150 70]
+  penup setxy :x + 80 :y setheading 0 pendown
+  setpensize 4
+  shell.spiral 80
+  setpensize 2
+  ; eye stalks with dots on the tips
+  setpensize 4
+  foreach [-145 -125] [
+    penup setxy :x - 112 :y - 64 pendown
+    setxy :x + ? :y + 20
+    setpensize 12 dot pos setpensize 4
+  ]
+  setpensize 2
+end
+
+clearscreen hideturtle
+setbackground [200 230 255]
+setpensize 2
+; the background first: sun in the corner and the meadow
+setpencolor [250 200 40]
+disk 330 230 45 [255 220 60]
+setpencolor [80 160 70]
+penup setxy -400 -200 setheading 90 pendown
+filled [120 200 100] [forward 800 right 90 forward 100 right 90 forward 800 right 90 forward 100]
+rabbit -190 -120
+snail 170 -110

@@ -1,0 +1,133 @@
+; ============================================================
+; TITLE:    Doctor (a Little Eliza)
+; CATEGORY: Classic Logo
+; LEVEL:    Advanced
+; TAGS:     chatbot, pattern matching, lists, Eliza
+; SUMMARY:  A small version of Weizenbaum's famous ELIZA "doctor" that answers by spotting key phrases and turning your words around.
+; ============================================================
+;
+; WHAT IT DOES
+;   Holds a conversation in the command center. If you type "I am
+;   tired" the doctor might ask "How long have you been tired?". It
+;   knows nothing at all; it only looks for a few key phrases and
+;   swaps words like I and you. People are still surprised how real
+;   that can feel.
+;
+; HOW TO USE
+;   Press Run and answer in the command center. Type bye (or an empty
+;   line) to finish. Try sentences with "I am", "I feel", "my",
+;   "because", "always", "computer", or questions.
+;
+; CONCEPTS YOU WILL LEARN
+;   * searching a sentence for a phrase, and keeping what comes after it
+;   * a table of rules stored as a list of lists
+;   * swapping words with a lookup list, using MAP
+;   * PICK to choose one of several answers at random
+;
+; THINGS TO TRY
+;   * Add a rule for "I want" that answers "Why do you want ...?".
+;   * Make the doctor remember something you said earlier and bring it up later.
+;   * Count how many times you used the word "no" and comment on it.
+; ============================================================
+
+; Joseph Weizenbaum wrote ELIZA at MIT in the mid 1960s. Its best known
+; script, DOCTOR, imitated a therapist who mostly turns your own words
+; into questions. Logo, with its words and lists, is a natural language
+; for a small version, and Eliza-like programs became a favorite
+; project for Logo learners.
+
+; Each rule is: a key phrase, then some possible answers. A * in an
+; answer is replaced by whatever you said after the key phrase, with I
+; and you swapped. The first rule whose phrase is found wins, so the
+; more specific phrases come first.
+make "rules [
+  [[i am] [How long have you been * ?] [Why do you tell me you are * ?] [Do you enjoy being * ?]]
+  [[i feel] [Do you often feel * ?] [What makes you feel * ?]]
+  [[i want] [What would it mean to you if you got * ?] [Why do you want * ?]]
+  [[because] [Is that the real reason?] [What other reasons come to mind?]]
+  [[my mother] [Tell me more about your family.] [How do you get on with your mother?]]
+  [[my father] [Does your father make you feel * ?] [Tell me more about your family.]]
+  [[my] [Your * ?] [Why does your * matter to you?] [Let's talk more about your * .]]
+  [[always] [Can you think of a specific example?] [Really, always?]]
+  [[computer] [Do computers worry you?] [What do you think about machines?]]
+  [[yes] [You seem quite sure.] [I see. Please go on.]]
+  [[no] [Why not?] [You are being a bit negative.]]
+  [[hello] [Hello. What brings you here today?]]
+]
+
+make "fallbacks [[Please go on.] [I see.] [Tell me more.] [How does that make you feel?] [Why do you say that?]]
+
+; Words to swap when we hand your words back to you.
+make "swaps [[i you] [me you] [my your] [am are] [you I] [your my] [myself yourself]]
+
+to swap.word :w
+  localmake "pair find [equalp first ? :w] :swaps
+  if emptyp :pair [output :w]
+  output last :pair
+end
+
+; Take punctuation off the end of a word, so "tired." matches "tired".
+to bare :w
+  if emptyp :w [output :w]
+  if memberp last :w [. , ! ?] [output bare butlast :w]
+  output :w
+end
+
+; AFTER outputs what follows PHRASE in SENTENCE, or the word "none" if
+; the phrase is not there. It checks the front of the sentence, then
+; tries again one word further on.
+to after :phrase :sentence
+  if (count :sentence) < (count :phrase) [output "none]
+  if starts.with :phrase :sentence [output fill.rest :phrase :sentence]
+  output after :phrase butfirst :sentence
+end
+
+to starts.with :phrase :sentence
+  if emptyp :phrase [output "true]
+  if not equalp first :phrase first :sentence [output "false]
+  output starts.with butfirst :phrase butfirst :sentence
+end
+
+to fill.rest :phrase :sentence
+  if emptyp :phrase [output :sentence]
+  output fill.rest butfirst :phrase butfirst :sentence
+end
+
+; Put the swapped words where the * is, and glue a final ? or . onto
+; the word before it, so we print "tired?" and not "tired ?".
+to answer :template :rest
+  localmake "out []
+  foreach :template [
+    ifelse equalp ? "* [make "out sentence :out map [swap.word ?] :rest] [make "out lput ? :out]
+  ]
+  if and memberp last :out [? .] (count :out) > 1 [
+    make "out lput (word last butlast :out last :out) butlast butlast :out]
+  output :out
+end
+
+to reply :line
+  localmake "words map [lowercase bare ?] :line
+  foreach :rules [
+    localmake "rest after first ? :words
+    if not equalp :rest "none [output answer pick butfirst ? :rest]
+  ]
+  ; no rule matched: a question gets a question back
+  if equalp last last :line "? [output [Why do you ask?]]
+  output pick :fallbacks
+end
+
+to session
+  type "|> |
+  localmake "line readlist
+  if or emptyp :line memberp first :line [bye quit goodbye] [
+    print [Goodbye. Our time is up for today.] stop]
+  print reply :line
+  session
+end
+
+print [Hello, I am the Doctor. What is your name?]
+make "name readword
+if or emptyp :name numberp :name [make "name "friend]
+print (sentence [Nice to meet you,] word :name ". [What is on your mind?])
+print [Type bye when you want to stop.]
+session

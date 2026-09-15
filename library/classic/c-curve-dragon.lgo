@@ -1,0 +1,118 @@
+; ============================================================
+; TITLE:    C-Curve and Dragon
+; CATEGORY: Classic Logo
+; LEVEL:    Advanced
+; TAGS:     recursion, fractals, Turtle Geometry, measuring
+; SUMMARY:  Two famous recursive curves from Turtle Geometry, the C-curve and the dragon, grown level by level and then drawn side by side.
+; ============================================================
+;
+; WHAT IT DOES
+;   First a slideshow grows the C-curve from level 0 (a single line)
+;   to level 11. Then the final picture shows a big C-curve on the left
+;   and a dragon curve on the right, colored along their length so you
+;   can follow the path from start to finish.
+;
+; HOW TO USE
+;   Press Run. To draw one yourself type  clean c 6 8  or
+;   clean ldragon 6 10  in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * recursion with a level number that counts down to 0
+;   * two procedures that call each other (LDRAGON and RDRAGON)
+;   * a pen-up "dry run" to measure a drawing before drawing it
+;
+; THINGS TO TRY
+;   * Change RIGHT 90 / LEFT 90 in C to 60 and see a new curve.
+;   * Draw four dragons from the same point, facing 0, 90, 180 and 270.
+;     They fit together without overlapping.
+;   * Count the lines: how many does level 10 have? (Look at :count.)
+; ============================================================
+
+; Both curves are in Abelson and diSessa's Turtle Geometry (1981), in
+; the chapter on recursive designs. The C-curve replaces each line by
+; two lines at right angles, again and again. The dragon is the same
+; idea, except that the two halves turn opposite ways, which keeps the
+; curve from ever crossing itself.
+
+to c :size :level
+  if :level = 0 [line.step :size stop]
+  c :size :level - 1
+  right 90
+  c :size :level - 1
+  left 90
+end
+
+to ldragon :size :level
+  if :level = 0 [line.step :size stop]
+  ldragon :size :level - 1
+  left 90
+  rdragon :size :level - 1
+end
+
+to rdragon :size :level
+  if :level = 0 [line.step :size stop]
+  ldragon :size :level - 1
+  right 90
+  rdragon :size :level - 1
+end
+
+; Every single line goes through LINE.STEP. When measuring it only
+; records the box the curve covers; when drawing it also shades the
+; color from orange at the start to blue at the end.
+to line.step :size
+  forward :size
+  make "count :count + 1
+  if :measuring [
+    make "box (list min xcor item 1 :box  max xcor item 2 :box  min ycor item 3 :box  max ycor item 4 :box)
+    stop
+  ]
+  localmake "t :count / :total
+  setpencolor (list 250 - 200 * :t 140 40 + 210 * :t)
+end
+
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+to max :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+; FIT draws a curve so it fills a box of size W by H centred at (CX, CY).
+; It runs the curve once with the pen up (size 1) to measure it, then
+; works out the size and the starting point for the real drawing.
+to fit :curve :level :cx :cy :w :h
+  make "measuring "true
+  make "count 0
+  make "box [0 0 0 0]
+  penup home
+  run (list :curve 1 :level)
+  make "total :count
+  ; the measured width and height (at least 1, because a level-0
+  ; curve is a single straight line with no width at all)
+  localmake "bw max 1 (item 2 :box) - (item 1 :box)
+  localmake "bh max 1 (item 4 :box) - (item 3 :box)
+  localmake "size min :w / :bw :h / :bh
+  make "measuring "false
+  make "count 0
+  setxy :cx - :size * ((item 1 :box) + (item 2 :box)) / 2 :cy - :size * ((item 3 :box) + (item 4 :box)) / 2
+  setheading 0
+  pendown
+  run (list :curve :size :level)
+end
+
+to grow.c
+  for [level 0 11] [
+    clean
+    fit "c :level 0 0 600 440
+    wait 30
+  ]
+end
+
+clearscreen hideturtle
+setbackground [18 20 30]
+setpensize 2
+grow.c
+clean
+fit "c 12 -200 0 340 400
+fit "ldragon 12 200 0 340 400

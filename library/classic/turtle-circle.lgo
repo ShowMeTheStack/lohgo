@@ -1,0 +1,88 @@
+; ============================================================
+; TITLE:    Playing Turtle: the Circle
+; CATEGORY: Classic Logo
+; LEVEL:    Beginner
+; TAGS:     Mindstorms, circles, REPEAT, polygons
+; SUMMARY:  Papert's turtle circle: a little forward, a little turn, 360 times, and then polygons that slowly turn into circles.
+; ============================================================
+;
+; WHAT IT DOES
+;   Across the top, four circles are drawn slowly, each with a bigger
+;   step. Along the bottom, polygons with 3, 4, 5, 6, 8, 12 and 36 sides
+;   show how a shape with many sides starts to look round.
+;
+; HOW TO USE
+;   Press Run and watch the turtle walk. Then try walking a circle
+;   yourself on the floor: a tiny step, a tiny turn, over and over.
+;   Type  clean circle 3  in the command center for a bigger circle.
+;
+; CONCEPTS YOU WILL LEARN
+;   * REPEAT and the "total trip" of 360 degrees
+;   * a bigger step makes a bigger circle, the turning stays the same
+;   * a circle is a polygon with very many very short sides
+;
+; THINGS TO TRY
+;   * Make a half circle with REPEAT 180.
+;   * Turn LEFT instead of RIGHT. Where does the circle go?
+;   * Find the step that makes a circle exactly 200 wide.
+; ============================================================
+
+; In Mindstorms (1980) Seymour Papert describes children finding out how
+; to draw a circle by "playing turtle": walking in a circle themselves
+; and noticing that they take a small step forward, turn a little, and
+; do it again. Written down, that is  REPEAT 360 [FORWARD 1 RIGHT 1].
+; Papert called this kind of learning "body syntonic": the child's own
+; body helps them understand the turtle.
+
+; CIRCLE draws slowly, so you can see the turtle walk. Every 10 steps it
+; waits a moment.
+to circle :step
+  repeat 360 [
+    forward :step
+    right 1
+    if (remainder repcount 10) = 0 [wait 1]
+  ]
+end
+
+; A circle made with step S has a perimeter of 360 * S, so its width is
+; 360 * S / pi, about 115 * S. We use that to place them in a row.
+to circle.at :x :step :color
+  penup
+  setxy :x - 115 * :step / 2 120
+  setheading 0
+  pendown
+  setpencolor :color
+  circle :step
+  penup
+  setxy :x - 25 120 - 57.5 * :step - 28
+  label (sentence "step :step)
+end
+
+; A polygon with the same perimeter (240 steps), so they all
+; have about the same size and are easy to compare.
+to polygon :sides
+  repeat :sides [forward 240 / :sides right 360 / :sides]
+end
+
+to polygon.row
+  localmake "x -370
+  foreach [3 4 5 6 8 12 36] [
+    penup setxy :x -170 setheading 0 pendown
+    setpencolor [40 90 200]
+    polygon ?
+    penup setxy :x + 30 -270
+    label ?
+    make "x :x + 108
+    wait 15
+  ]
+end
+
+clearscreen hideturtle
+setbackground [252 250 240]
+setpensize 3
+setlabelheight 16
+circle.at -300 0.5 [230 80 60]
+circle.at -175 1 [240 160 30]
+circle.at 0 1.5 [60 160 80]
+circle.at 250 2 [120 80 200]
+polygon.row

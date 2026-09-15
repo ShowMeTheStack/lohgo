@@ -1,0 +1,106 @@
+; ============================================================
+; TITLE:    Turtle Music Box
+; CATEGORY: Classic Logo
+; LEVEL:    Intermediate
+; TAGS:     music, TONE, lists, property lists, drawing
+; SUMMARY:  Plays "Frere Jacques" from a list of note names and draws each note as a colored bar while it sounds.
+; ============================================================
+;
+; WHAT IT DOES
+;   Plays the old round "Frere Jacques" (Are You Sleeping) through the
+;   speaker. While each note sounds, the turtle draws it as a bar on a
+;   music roll: higher notes sit higher, longer notes are wider, and
+;   each note name has its own color.
+;
+; HOW TO USE
+;   Turn the sound on and press Run. To play a tune of your own, try
+;   play [[c4 1] [e4 1] [g4 2]]  in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a tune stored as a list of [note beats] pairs
+;   * taking a word apart: "g4" is the letter g and the octave 4
+;   * turning a note name into a frequency with a formula
+;   * TONE frequency milliseconds
+;
+; THINGS TO TRY
+;   * Make the tempo faster by changing :beat.
+;   * Write "Twinkle Twinkle Little Star" as a list and play it.
+;   * Play the tune again one octave higher by adding 12 to every note.
+; ============================================================
+
+; Making music was part of Logo from early on. At MIT in the 1970s
+; Jeanne Bamberger worked with children composing tunes as Logo
+; procedures, and many later Logos had a TONE or SOUND command. The
+; big idea is the same as with the turtle: a tune is a list you can
+; build, change and play with.
+
+make "beat 300          ; milliseconds for one beat
+
+; Semitones above C for each letter. A sharp adds one more.
+pprop "notes "c 0
+pprop "notes "d 2
+pprop "notes "e 4
+pprop "notes "f 5
+pprop "notes "g 7
+pprop "notes "a 9
+pprop "notes "b 11
+
+; NUMBER turns a name like "g4" or "f#3" into a MIDI-style note number.
+; Middle C (c4) is 60, and the A above it (a4) is 69.
+to number :name
+  localmake "n gprop "notes first :name
+  if equalp item 2 :name "# [output :n + 1 + 12 * (1 + last :name)]
+  output :n + 12 * (1 + last :name)
+end
+
+; A4 is 440 Hz, and every semitone multiplies the frequency by the
+; twelfth root of 2.
+to frequency :number
+  output 440 * power 2 (:number - 69) / 12
+end
+
+to note.color :name
+  output item 1 + gprop "notes first :name ~
+    [[230 60 60] [0 0 0] [240 140 30] [0 0 0] [230 200 30] [60 170 70] [0 0 0] ~
+     [40 150 210] [0 0 0] [80 90 220] [0 0 0] [160 70 200]]
+end
+
+; Draw one note on the roll, then sound it. The bar's height on the
+; screen comes from the note number, its width from the beats.
+to play.note :pair
+  localmake "name first :pair
+  localmake "beats last :pair
+  localmake "y ((number :name) - 60) * 14 - 60
+  penup setxy :x :y setheading 90 pendown
+  setpensize 10
+  setpencolor note.color :name
+  forward :beats * 24 - 4
+  penup forward 4
+  tone frequency number :name :beats * :beat
+  make "x :x + :beats * 24
+end
+
+to play :tune
+  foreach :tune [play.note ?]
+end
+
+to staff
+  setpencolor [210 210 220]
+  setpensize 1
+  for [i -6 12] [
+    penup setxy -390 :i * 14 - 60 setheading 90 pendown
+    forward 780
+  ]
+end
+
+make "jacques [[c4 1] [d4 1] [e4 1] [c4 1] [c4 1] [d4 1] [e4 1] [c4 1]
+  [e4 1] [f4 1] [g4 2] [e4 1] [f4 1] [g4 2]
+  [g4 0.5] [a4 0.5] [g4 0.5] [f4 0.5] [e4 1] [c4 1]
+  [g4 0.5] [a4 0.5] [g4 0.5] [f4 0.5] [e4 1] [c4 1]
+  [c4 1] [g3 1] [c4 2] [c4 1] [g3 1] [c4 2]]
+
+clearscreen hideturtle
+setbackground [250 250 245]
+staff
+make "x -385
+play :jacques

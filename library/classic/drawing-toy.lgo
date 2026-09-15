@@ -1,0 +1,105 @@
+; ============================================================
+; TITLE:    Etch-a-Turtle Drawing Toy
+; CATEGORY: Classic Logo
+; LEVEL:    Beginner
+; TAGS:     keyboard, events, KEYBOARDON, drawing
+; SUMMARY:  A turtle drawing toy: arrow keys draw, number keys pick colors, and the space bar lifts the pen.
+; ============================================================
+;
+; WHAT IT DOES
+;   Turns the turtle into a drawing toy, a bit like the famous red toy
+;   with two knobs. Each arrow key moves the turtle 10 steps in that
+;   direction, drawing as it goes. A color bar at the bottom shows the
+;   colors you can choose.
+;
+; HOW TO USE
+;   Press Run, then CLICK THE TURTLE WORLD so it gets your key presses.
+;     arrow keys   draw up, down, left and right
+;     1 to 8       choose a color (see the bar at the bottom)
+;     space        pen up / pen down (move without drawing)
+;     W and N      wider or narrower pen
+;     C            clear the page
+;   Press Stop when you are done.
+;
+; CONCEPTS YOU WILL LEARN
+;   * KEYBOARDON runs a list of instructions every time a key goes down
+;   * KEYBOARDVALUE tells you which key it was, as a number
+;   * the program waits in FOREVER while the events do the work
+;
+; THINGS TO TRY
+;   * Add diagonal moves on the keys Q, E, Z and X.
+;   * Make the step size bigger when you hold Shift (use another key).
+;   * Draw your name, then save the picture with the camera button.
+; ============================================================
+
+; Drawing toys like this were among the first things people made when
+; Logo moved onto home computers: the turtle becomes a pen that you
+; steer by hand. Here the keyboard is the steering wheel. Key codes
+; follow the old Windows numbering: 37 left, 38 up, 39 right, 40 down,
+; 32 space, and the letters and digits are their ASCII codes (A is 65,
+; the digit 1 is 49).
+
+to setup
+  clearscreen
+  setbackground [250 248 240]
+  make "palette [[20 20 20] [220 40 40] [240 140 20] [230 200 0] [40 160 60] [30 110 220] [140 60 200] [150 90 50]]
+  make "width 3
+  color.bar
+  penup home pendown
+  setpencolor first :palette
+  setpensize :width
+  setshape "arrow
+  showturtle
+end
+
+; Eight colored blocks along the bottom with their key numbers.
+; It remembers the pen color and size and puts them back at the end,
+; so pressing C does not lose the color you were using.
+to color.bar
+  localmake "oldcolor pencolor
+  penup
+  setlabelheight 14
+  for [i 1 8] [
+    setxy -330 + :i * 70 -270
+    setpencolor item :i :palette
+    setpensize 22
+    pendown forward 0 penup
+    setxy -334 + :i * 70 -295
+    setpencolor 0
+    label :i
+  ]
+  setpencolor :oldcolor
+  setpensize :width
+end
+
+; Move 10 steps in a fixed direction. Setting the heading first means
+; the arrow keys always mean the same thing on the screen, like the
+; knobs of the toy.
+to go :direction
+  setheading :direction
+  forward 10
+end
+
+to pen.toggle
+  ifelse pendownp [penup] [pendown]
+end
+
+to key.pressed
+  localmake "k keyboardvalue
+  if :k = 38 [go 0 stop]
+  if :k = 39 [go 90 stop]
+  if :k = 40 [go 180 stop]
+  if :k = 37 [go 270 stop]
+  if :k = 32 [pen.toggle stop]
+  ; digits 1 to 8 have the codes 49 to 56
+  if and :k >= 49 :k <= 56 [setpencolor item :k - 48 :palette stop]
+  if :k = 87 [make "width :width + 1 setpensize :width stop]
+  if :k = 78 [if :width > 1 [make "width :width - 1] setpensize :width stop]
+  if :k = 67 [clean color.bar penup home pendown]
+end
+
+setup
+keyboardon [key.pressed]
+print [Click the turtle world, then use the arrow keys to draw.]
+print [1-8 colors, space pen up/down, W wider, N narrower, C clear.]
+forever [wait 10]

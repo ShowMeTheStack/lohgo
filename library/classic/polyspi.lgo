@@ -1,0 +1,66 @@
+; ============================================================
+; TITLE:    POLYSPI Slideshow
+; CATEGORY: Classic Logo
+; LEVEL:    Beginner
+; TAGS:     turtle geometry, spirals, recursion, color
+; SUMMARY:  POLYSPI from Turtle Geometry grows the side a little each step, and a slideshow shows what different angles do.
+; ============================================================
+;
+; WHAT IT DOES
+;   Shows a slideshow of spirals. Each one is drawn by POLYSPI with a
+;   different angle: 90 makes a square spiral, 91 makes it twist,
+;   120 makes a triangle spiral, 144 a star spiral, and so on.
+;
+; HOW TO USE
+;   Press Run and watch. Afterwards type your own, for example
+;   clean polyspi 2 117 3  in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a recursive procedure that changes one of its inputs
+;   * a stop rule (the base case) so the recursion ends
+;   * FOREACH to run the same thing for every item of a list
+;
+; THINGS TO TRY
+;   * Add 89 and 92 to the list of angles. Which way do they twist?
+;   * Change the increment from 3 to 1 for a finer spiral.
+;   * Make the stop size bigger than 300 and see the turtle leave the window.
+; ============================================================
+
+; Abelson and diSessa's Turtle Geometry (1981) builds POLYSPI from POLY
+; by letting the side grow:
+;     TO POLYSPI :SIDE :ANGLE :INC
+;       FORWARD :SIDE  RIGHT :ANGLE
+;       POLYSPI (:SIDE + :INC) :ANGLE :INC
+;     END
+; Like POLY it never stops on its own. We add one line at the top, a
+; stop rule, so the spiral ends when the sides get long.
+
+to polyspi :side :angle :inc
+  if :side > 300 [stop]
+  ; The color depends on the side, so the spiral fades from the
+  ; middle outwards through the rainbow.
+  setpencolor (list 255 - :side / 2 (:side * 3) / 4 + 40 120 + :side / 3)
+  forward :side
+  right :angle
+  polyspi :side + :inc :angle :inc
+end
+
+; One slide: start in the middle, draw, write the angle, then pause
+; so the picture can be enjoyed.
+to slide :angle
+  clean
+  penup home pendown
+  polyspi 2 :angle 3
+  penup
+  setxy -380 -280
+  setheading 0
+  setpencolor 7
+  label (sentence [polyspi 2] :angle 3)
+  wait 90
+end
+
+clearscreen hideturtle
+setbackground [15 15 30]
+setpensize 2
+setlabelheight 20
+foreach [90 91 120 121 144 72 60 175] [slide ?]

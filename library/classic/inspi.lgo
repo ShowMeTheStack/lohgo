@@ -1,0 +1,94 @@
+; ============================================================
+; TITLE:    INSPI Designs
+; CATEGORY: Classic Logo
+; LEVEL:    Intermediate
+; TAGS:     turtle geometry, recursion, symmetry, measuring
+; SUMMARY:  INSPI from Turtle Geometry keeps the side fixed but grows the angle, and draws surprising symmetric designs.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws four INSPI designs, one in each quarter of the screen. Each
+;   design is measured first with the pen up, then scaled and moved so
+;   that it fits neatly in its own box.
+;
+; HOW TO USE
+;   Press Run. To draw one by hand try  clean inspi 5 2 7 360  (side,
+;   first angle, how much the angle grows, and how many steps).
+;
+; CONCEPTS YOU WILL LEARN
+;   * changing an input a little on every step
+;   * a "dry run" with the pen up to measure a drawing
+;   * scaling a drawing to fit a box
+;
+; THINGS TO TRY
+;   * Use an increment that divides 360, like 10 or 20, and count arms.
+;   * Try increments of 7, 11 and 13 (they share no factor with 360).
+;   * Change the side: does the shape change or only its size?
+; ============================================================
+
+; In Turtle Geometry (Abelson and diSessa, 1981) INSPI comes right after
+; POLY. POLY always turns by the same angle; INSPI adds a little to the
+; angle every time:
+;     TO INSPI :SIDE :ANGLE :INC
+;       FORWARD :SIDE  RIGHT :ANGLE
+;       INSPI :SIDE :ANGLE + :INC :INC
+;     END
+; The book's version runs forever. Ours takes a number of steps, so it
+; can stop and let the next design have a turn.
+
+to inspi :side :angle :inc :steps
+  repeat :steps [
+    forward :side
+    right :angle
+    make "angle :angle + :inc
+  ]
+end
+
+; MEASURE walks the whole design with the pen up and remembers the
+; smallest and biggest x and y it reaches. It outputs [left right bottom top].
+to measure :angle :inc :steps
+  localmake "box (list 0 0 0 0)
+  penup home
+  repeat :steps [
+    forward 1
+    right :angle
+    make "angle :angle + :inc
+    make "box (list min xcor first :box  max xcor item 2 :box ~
+                    min ycor item 3 :box  max ycor last :box)
+  ]
+  output :box
+end
+
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+to max :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+; DESIGN measures with a side of 1, works out how big a side fits in a
+; box of the given size, then starts the turtle so the design is centred.
+to design :cx :cy :angle :inc :steps :color
+  localmake "b measure :angle :inc :steps
+  localmake "w (item 2 :b) - (item 1 :b)
+  localmake "h (item 4 :b) - (item 3 :b)
+  localmake "side 240 / (max :w :h)
+  ; the middle of the measured box, in side-1 units
+  localmake "mx ((item 1 :b) + (item 2 :b)) / 2
+  localmake "my ((item 3 :b) + (item 4 :b)) / 2
+  penup
+  setxy :cx - :mx * :side :cy - :my * :side
+  setheading 0
+  setpencolor :color
+  pendown
+  inspi :side :angle :inc :steps
+end
+
+clearscreen hideturtle
+setbackground [20 24 40]
+setpensize 2
+design -200 145 2 7 720 [255 200 60]
+design 200 145 5 40 72 [90 200 255]
+design -200 -145 2 20 90 [255 110 150]
+design 200 -145 3 13 720 [140 230 120]

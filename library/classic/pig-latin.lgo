@@ -1,0 +1,83 @@
+; ============================================================
+; TITLE:    Pig Latin
+; CATEGORY: Classic Logo
+; LEVEL:    Intermediate
+; TAGS:     words, recursion, MAP, Computer Science Logo Style
+; SUMMARY:  Translates whatever you type into Pig Latin with the short recursive PIGL procedure made famous by Brian Harvey.
+; ============================================================
+;
+; WHAT IT DOES
+;   You type a sentence and the program says it back in Pig Latin:
+;   "hello world" becomes "ellohay orldway". Words that start with a
+;   vowel just get "ay" on the end. Type quit (or press Enter on an
+;   empty line) to stop.
+;
+; HOW TO USE
+;   Press Run and type sentences in the command center. You can also
+;   call the pieces yourself:  print pigl "string  or
+;   print piglatin [logo is fun]
+;
+; CONCEPTS YOU WILL LEARN
+;   * FIRST, BUTFIRST and WORD to take words apart and glue them back
+;   * a recursive operation that OUTPUTs its answer
+;   * MAP to do the same thing to every word of a sentence
+;
+; THINGS TO TRY
+;   * Make "y" count as a vowel too, and try "rhythm".
+;   * Write UNPIGL, which turns Pig Latin back into English.
+;   * Keep capital letters in the right place: "Sam" to "Amsay".
+; ============================================================
+
+; Brian Harvey's Computer Science Logo Style (volume 1) uses PIGL as one
+; of its first examples of a recursive operation. It is only three
+; lines long:
+;     to pigl :word
+;     if memberp first :word [a e i o u] [output word :word "ay]
+;     output pigl word butfirst :word first :word
+;     end
+; Each time round, the first letter moves to the end, until a vowel is
+; at the front. The book also points out the bug: a word with no vowel
+; at all (like "sky") goes round and round forever. Our version counts
+; how many letters it has moved, and gives up after a full turn.
+
+to pigl :word
+  output pigl.turn :word count :word
+end
+
+; LEFT is how many more letters we may still move before giving up.
+to pigl.turn :word :left
+  if :left = 0 [output word :word "ay]
+  if vowelp first :word [output word :word "ay]
+  output pigl.turn (word butfirst :word first :word) :left - 1
+end
+
+to vowelp :letter
+  output memberp lowercase :letter [a e i o u]
+end
+
+; Numbers stay as they are: "7" in Pig Latin is still 7. A list typed
+; inside brackets is left alone too.
+to translate :word
+  if or listp :word numberp :word [output :word]
+  output pigl :word
+end
+
+to piglatin :sentence
+  output map [translate ?] :sentence
+end
+
+; The conversation loop. READLIST gives us the line as a list of words.
+; An empty answer, or the word quit, ends the program.
+to chat
+  print []
+  print [Type a sentence, or quit to stop:]
+  localmake "line readlist
+  if emptyp :line [print [Ankthay ouyay! That means thank you.] stop]
+  if memberp first :line [quit bye stop exit] [print [Oodbyegay!] stop]
+  print piglatin :line
+  chat
+end
+
+print [Welcome to the Pig Latin machine.]
+print (sentence [For example:] piglatin [the turtle draws pictures])
+chat

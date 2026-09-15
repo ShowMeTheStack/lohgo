@@ -1,0 +1,116 @@
+; ============================================================
+; TITLE:    Birthday Card Conversation
+; CATEGORY: Classic Logo
+; LEVEL:    Beginner
+; TAGS:     READWORD, conversation, checking input, drawing
+; SUMMARY:  The turtle asks your name, age and favorite color, then draws you a birthday cake with the right number of candles.
+; ============================================================
+;
+; WHAT IT DOES
+;   Has a short conversation in the command center. It checks your
+;   answers (an age must be a number, a color must be one it knows) and
+;   asks again if something looks wrong. Then it draws a birthday cake
+;   in your favorite color, with one candle for each year, and writes
+;   your name on the card.
+;
+; HOW TO USE
+;   Press Run and answer the questions in the command center.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READWORD to get an answer, and PRINT to talk back
+;   * checking answers with NUMBERP and MEMBERP
+;   * a procedure that asks again until the answer is good
+;   * using the answers to change a drawing
+;
+; THINGS TO TRY
+;   * Add more colors to the list the turtle knows.
+;   * Ask for a favorite animal and write it on the card.
+;   * Make the candles flicker by drawing the flames again and again.
+; ============================================================
+
+; A program that asks your name and says something back is the
+; traditional first conversation with Logo. This one goes a step
+; further: the answers decide what the turtle draws.
+
+make "known.colors [red orange yellow green blue purple pink]
+make "rgb [[230 60 60] [245 150 40] [240 210 40] [70 170 80] [60 120 230] [150 80 210] [245 130 180]]
+
+to ask.name
+  print [Hello! What is your name?]
+  localmake "answer readword
+  if or emptyp :answer numberp :answer [output "friend]
+  output :answer
+end
+
+; Ask for the age. Anything that is not a sensible number is asked
+; again, up to three times; after that we just guess 7.
+to ask.age :tries
+  if :tries = 0 [print [I will guess you are 7.] output 7]
+  print [How old are you?]
+  localmake "answer readword
+  ; two IFs, because AND would check :answer >= 1 even for a word like
+  ; "Sam", and comparing a word with a number is an error
+  if numberp :answer [if and :answer >= 1 :answer <= 120 [output int :answer]]
+  print [Please type your age as a number, like 9.]
+  output ask.age :tries - 1
+end
+
+to ask.color :tries
+  if :tries = 0 [print [Then I pick blue for you.] output "blue]
+  print (sentence [What is your favorite color?] :known.colors)
+  localmake "answer readword
+  if memberp :answer :known.colors [output lowercase :answer]
+  print [I do not know that color. Pick one from the list.]
+  output ask.color :tries - 1
+end
+
+to color.of :name
+  output item (position :name :known.colors) :rgb
+end
+
+to position :thing :list
+  if equalp :thing first :list [output 1]
+  output 1 + position :thing butfirst :list
+end
+
+to rect :w :h
+  repeat 2 [forward :h right 90 forward :w right 90]
+end
+
+; The cake: two layers and a plate. The candles go along the top, at
+; most 12 of them; for older people the age is written instead.
+to cake :age :color
+  localmake "count ifelse :age > 12 [12] [:age]
+  setpensize 2 setpencolor [90 60 40]
+  penup setxy -150 -60 setheading 0 pendown
+  filled [255 240 225] [rect 300 80]
+  penup setxy -180 -150 pendown
+  filled :color [rect 360 90]
+  penup setxy -220 -170 pendown
+  filled [210 210 220] [rect 440 20]
+  ; candles standing on the top layer, which ends at y = 20
+  for [i 1 :count] [
+    localmake "x -150 + (:i - 0.5) * 300 / :count
+    penup setxy :x 20 setheading 0 pendown
+    setpencolor item 1 + remainder :i 7 :rgb setpensize 7 forward 40
+    setpencolor [255 170 0] setpensize 12 forward 8 penup
+  ]
+  setpensize 2
+  if :age > 12 [
+    penup setxy -20 -10 setpencolor [90 60 40] setlabelheight 30
+    label :age
+  ]
+end
+
+clearscreen hideturtle
+setbackground [255 250 235]
+make "name ask.name
+print (sentence [Nice to meet you,] word :name "!)
+make "age ask.age 3
+make "fav ask.color 3
+print (sentence [Here is a card for you,] word :name ".)
+cake :age color.of :fav
+penup setxy -185 180 setheading 0
+setpencolor color.of :fav
+setlabelheight 40
+label (sentence [Happy birthday,] word :name "!)

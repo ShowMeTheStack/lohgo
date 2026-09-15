@@ -1,0 +1,94 @@
+; ============================================================
+; TITLE:    Mirror Turtles
+; CATEGORY: Classic Logo
+; LEVEL:    Intermediate
+; TAGS:     symmetry, several turtles, ASK, random
+; SUMMARY:  Four turtles copy one wandering path, two of them with left and right swapped, to draw a mirror-symmetric kaleidoscope.
+; ============================================================
+;
+; WHAT IT DOES
+;   Turtle 0 wanders around at random. Turtle 1 does the same moves but
+;   turns left whenever turtle 0 turns right, so its path is the mirror
+;   image. Turtles 2 and 3 do the same upside down. Together they draw a
+;   pattern that is symmetric across both the up-down and left-right
+;   lines, like a kaleidoscope.
+;
+; HOW TO USE
+;   Press Run and watch. Every run makes a new design. Press Stop when
+;   you have one you like.
+;
+; CONCEPTS YOU WILL LEARN
+;   * mirror symmetry: swapping left and right turns
+;   * several turtles, each told what to do with ASK
+;   * passing a turn direction (1 or -1) as an input
+;
+; THINGS TO TRY
+;   * Use only turtles 0 and 1 for a butterfly with one mirror line.
+;   * Change the starting headings to 45 for diagonal mirrors.
+;   * Make the turn bigger and the steps smaller for curly designs.
+; ============================================================
+
+; An old Logo trick for mirror drawings is to write the drawing with a
+; variable that says which way to turn. Turn right by :angle times 1
+; and you get the drawing; turn right by :angle times -1 (which is the
+; same as turning left) and you get its mirror image. Here each turtle
+; keeps its own sign in a property list.
+
+to setup
+  clearscreen
+  setbackground [16 18 34]
+  ; start all four in the middle; 0 and 1 face up, 2 and 3 face down
+  foreach [0 1 2 3] [
+    setturtle ?
+    penup home pendown
+    hideturtle
+    setpensize 2
+  ]
+  ask 2 [setheading 180]
+  ask 3 [setheading 180]
+  ; the turning sign for each turtle
+  pprop "mirror 0 1
+  pprop "mirror 1 -1
+  pprop "mirror 2 -1
+  pprop "mirror 3 1
+  make "turn 0
+  make "hue 0
+  setturtle 0
+end
+
+; One move for one turtle: step forward and turn by its own sign.
+to move.one :who :len :angle
+  ask :who [
+    forward :len
+    right :angle * gprop "mirror :who
+  ]
+end
+
+; The wandering: the turn drifts a little each step, so the path curls
+; smoothly instead of zigzagging. Every turtle gets the same numbers.
+to wander
+  make "turn :turn + (random 21) - 10
+  if :turn > 25 [make "turn 25]
+  if :turn < -25 [make "turn -25]
+  make "hue :hue + 1
+  localmake "color rainbow :hue
+  foreach [0 1 2 3] [
+    ask ? [setpencolor :color]
+    move.one ? 6 :turn
+  ]
+  ; If turtle 0 strays too far, send all four back home and go on.
+  ask 0 [if (distance [0 0]) > 270 [make "far "true]]
+  if :far [
+    make "far "false
+    foreach [0 1 2 3] [ask ? [penup setxy 0 0 pendown]]
+  ]
+end
+
+; A smooth trip around the color wheel, from a single counting number.
+to rainbow :n
+  output (list 150 + 100 * sin :n * 2  150 + 100 * sin :n * 2 + 120  150 + 100 * sin :n * 2 + 240)
+end
+
+make "far "false
+setup
+repeat 2000 [wander if (remainder repcount 4) = 0 [wait 1]]

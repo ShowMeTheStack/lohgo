@@ -1,0 +1,84 @@
+; ============================================================
+; TITLE:    POLY Gallery
+; CATEGORY: Classic Logo
+; LEVEL:    Beginner
+; TAGS:     turtle geometry, polygons, stars, total turning
+; SUMMARY:  The famous POLY procedure from Turtle Geometry draws six different figures from just two numbers.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws a gallery of six figures in a grid: a triangle, a square,
+;   a five-pointed star, a nine-pointed star and two more. Every one
+;   of them is made by the same tiny procedure, POLY, with a different
+;   side and angle.
+;
+; HOW TO USE
+;   Press Run. Then type your own, for example  poly 100 135  or
+;   poly 80 160  in the command center (clean first if you like).
+;
+; CONCEPTS YOU WILL LEARN
+;   * a procedure with two inputs
+;   * repeating "forward, turn" is all a polygon really is
+;   * the total turning of a closed path is a multiple of 360
+;
+; THINGS TO TRY
+;   * Try angles that do not divide 360 evenly, like 100 or 170.
+;   * Change the gallery list at the bottom to show your favorites.
+;   * What happens with an angle of 1? Of 359?
+; ============================================================
+
+; In Abelson and diSessa's book Turtle Geometry (1981) the very first
+; program is POLY:
+;     TO POLY :SIDE :ANGLE
+;       FORWARD :SIDE  RIGHT :ANGLE
+;       POLY :SIDE :ANGLE
+;     END
+; It never stops. The turtle just keeps going round its figure. The book
+; then shows that the figure closes once the turtle has turned through a
+; whole number of full turns (360, 720, 1080 ...). That idea is used here
+; so our POLY stops by itself, which lets us draw many figures in a row.
+
+to poly :side :angle
+  localmake "turned 0
+  ; DO.UNTIL runs the body at least once, then checks if we are home.
+  do.until [
+    forward :side
+    right :angle
+    make "turned :turned + :angle
+  ] [(remainder :turned 360) = 0]
+end
+
+; Draw one figure centred roughly in a cell of the gallery.
+; The start point is shifted left and up by about half the side (the turtle turns
+; right, so the figure hangs below its starting edge) so
+; the figure sits in the middle of its cell.
+to figure :x :y :side :angle :color
+  penup
+  setxy :x - :side / 2 :y + :side / 2
+  setheading 90
+  pendown
+  setpencolor :color
+  poly :side :angle
+  ; Write the two numbers under the figure, so the reader can see
+  ; that only the inputs changed.
+  penup
+  setxy :x - 30 :y - 115
+  setheading 0
+  label (sentence "poly :side :angle)
+end
+
+to gallery
+  clearscreen
+  hideturtle
+  setbackground [250 246 235]
+  setpensize 3
+  setlabelheight 16
+  figure -260 120 110 120 "#4169e1
+  figure 0 120 100 90 "#2e8b57
+  figure 260 120 120 144 "#dc143c
+  figure -260 -150 110 160 "#ff8c00
+  figure 0 -150 70 60 "#8040b0
+  figure 260 -150 120 135 "#008080
+end
+
+gallery

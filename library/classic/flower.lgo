@@ -1,0 +1,94 @@
+; ============================================================
+; TITLE:    Petal, Flower, Garden
+; CATEGORY: Classic Logo
+; LEVEL:    Beginner
+; TAGS:     procedures, arcs, building blocks, color
+; SUMMARY:  Builds a garden the classic way: quarter circles make a petal, petals make a flower, flowers make a garden.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws three flowers on stems with leaves, standing on green grass.
+;   Each flower has a different number of petals and a different color.
+;
+; HOW TO USE
+;   Press Run. Then try  clean flower 8 5 "#ff66aa  in the command center.
+;   The inputs are the number of petals, the petal size and the color.
+;
+; CONCEPTS YOU WILL LEARN
+;   * small procedures used as building blocks for bigger ones
+;   * FILLED to color in a shape the turtle walks around
+;   * the turtle ends where it started, so pieces fit together
+;
+; THINGS TO TRY
+;   * Give a flower 12 petals of size 2.
+;   * Change QCIRCLE to turn 3 degrees 30 times. What happens to the petals?
+;   * Add a fourth flower, or a sun in the sky made of petals.
+; ============================================================
+
+; Papert's book Mindstorms (1980) uses exactly this chain of ideas to
+; show how a child builds big things out of small ones: a quarter
+; circle, then a petal from two quarter circles, then a flower from
+; petals. Each piece is easy to check on its own.
+
+; A quarter of a circle: 18 steps of 5 degrees is 90 degrees in all.
+to qcircle :size
+  repeat 18 [forward :size right 5]
+end
+
+; Two quarter circles back to back make a pointed petal. After the two
+; RIGHT 90s the turtle has turned 90+90+90+90 = 360, so it ends facing
+; the way it started. That is what makes the next step easy.
+to petal :size
+  qcircle :size
+  right 90
+  qcircle :size
+  right 90
+end
+
+to flower :petals :size :color
+  setpencolor :color
+  repeat :petals [
+    filled :color [petal :size]
+    right 360 / :petals
+  ]
+  ; a yellow middle, drawn as one fat dot on top of the petals
+  setpensize :size * 7
+  setpencolor [250 200 40]
+  dot pos
+  setpensize 2
+end
+
+; A leaf is a petal too, just green and lying on its side.
+to leaf :size :heading
+  setheading :heading
+  setpencolor [40 140 60]
+  filled [80 180 90] [petal :size]
+end
+
+; PLANT draws the stem from the middle of the flower down to the
+; ground, with one leaf on the way, and then the flower head. Later
+; drawing covers earlier drawing, so the head hides the top of the stem.
+to plant :x :petals :size :color :height
+  penup setxy :x :height setheading 180 pendown
+  setpencolor [40 140 60]
+  setpensize 4
+  forward :height + 200
+  back 80
+  setpensize 2
+  leaf 3 30
+  penup setxy :x :height setheading 0 pendown
+  flower :petals :size :color
+end
+
+to grass
+  penup setxy -400 -200 setheading 90 pendown
+  filled [110 190 90] [forward 800 right 90 forward 100 right 90 forward 800 right 90 forward 100]
+end
+
+clearscreen hideturtle
+setbackground [225 240 255]
+setpensize 2
+grass
+plant -230 6 4 [230 60 90] 60
+plant 0 10 3 [150 90 220] 150
+plant 230 8 3.5 [255 140 40] 90

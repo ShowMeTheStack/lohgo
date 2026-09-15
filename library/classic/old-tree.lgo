@@ -1,0 +1,102 @@
+; ============================================================
+; TITLE:    The Classic Recursive Tree
+; CATEGORY: Classic Logo
+; LEVEL:    Intermediate
+; TAGS:     recursion, trees, state transparency, random
+; SUMMARY:  The recursive tree every Logo book draws, in three versions: plain, grown-up with thick trunk and leaves, and a wind-blown random one.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws three trees side by side. The first is the plain textbook
+;   tree: every branch splits into two smaller branches. The second has
+;   a thick brown trunk that thins out and green leaves on the tips.
+;   The third uses random angles and lengths, so it looks more natural
+;   and is different every time.
+;
+; HOW TO USE
+;   Press Run. Run again to get a new wild tree. Type  clean tree 80
+;   in the command center to draw the plain tree on its own.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a procedure that uses itself on a smaller problem
+;   * the stop rule that keeps the recursion from going on forever
+;   * "state transparency": each branch puts the turtle back exactly
+;     where it found it, which is why the pieces fit together
+;
+; THINGS TO TRY
+;   * Change the 30-degree turns to 20 or 45 in TREE.
+;   * Make the branches shrink by 0.6 or 0.8 instead of 0.7.
+;   * Give WILD.TREE three branches instead of two.
+; ============================================================
+
+; This tree, in one form or another, appears in nearly every Logo book,
+; including Abelson and diSessa's Turtle Geometry and Harvey's Computer
+; Science Logo Style. The important rule, stressed in both, is that the
+; procedure must leave the turtle in the same place and heading it
+; started with. Then a big tree is just a trunk with two smaller trees
+; on top, and each of those can trust the other to tidy up after itself.
+
+to tree :size
+  if :size < 5 [stop]
+  forward :size
+  left 30
+  tree :size * 0.7
+  right 60
+  tree :size * 0.7
+  left 30
+  back :size          ; go back down the trunk: state transparency
+end
+
+; The same shape, but the pen gets thinner with the size, and tiny
+; branches get a green leaf dot.
+to grown.tree :size
+  if :size < 6 [
+    setpencolor [60 170 70]
+    setpensize 7
+    dot pos
+    stop
+  ]
+  setpencolor [110 70 40]
+  setpensize :size / 7
+  forward :size
+  left 25
+  grown.tree :size * 0.72
+  right 50
+  grown.tree :size * 0.72
+  left 25
+  ; reset the pen, because the branches changed it on the way
+  setpencolor [110 70 40]
+  setpensize :size / 7
+  penup back :size pendown
+end
+
+; Random turns and lengths, and a color that goes from brown at the
+; trunk to green at the twigs. Because we remember the exact angles we
+; used, we can undo them, so the tree is still state transparent.
+to wild.tree :size
+  if :size < 5 [stop]
+  localmake "a 10 + random 25
+  localmake "b 10 + random 25
+  setpensize :size / 10
+  setpencolor (list 60 + :size / 2 110 - :size / 3 40)
+  forward :size
+  left :a
+  wild.tree :size * (60 + random 25) / 100
+  right :a + :b
+  wild.tree :size * (60 + random 25) / 100
+  left :b
+  penup back :size pendown
+end
+
+to plant :x :kind :size
+  penup setxy :x -250 setheading 0 pendown
+  run (list :kind :size)
+end
+
+clearscreen hideturtle
+setbackground [235 242 230]
+setpensize 2
+setpencolor [70 70 70]
+plant -270 "tree 62
+plant 0 "grown.tree 82
+plant 270 "wild.tree 80

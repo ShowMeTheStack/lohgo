@@ -1,0 +1,74 @@
+; ============================================================
+; TITLE:    Squiral
+; CATEGORY: Classic Logo
+; LEVEL:    Beginner
+; TAGS:     squares, spirals, REPEAT, color, variables
+; SUMMARY:  Squares that grow a little and turn a little each time stack up into a whirling "squiral".
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws 60 squares around the same corner. Each one is a bit bigger
+;   than the last and turned a few degrees, and each has its own color.
+;   On the right, a second squiral uses outlines only, so you can see
+;   the separate squares that make up the whirl.
+;
+; HOW TO USE
+;   Press Run. Then change the numbers in the two calls at the bottom:
+;   the number of squares, how much each one grows, and how far it turns.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a SQUARE procedure with a size input
+;   * a variable that changes inside REPEAT
+;   * how small changes, repeated, add up to a curve
+;
+; THINGS TO TRY
+;   * Turn by 15 instead of 9, or by -9 to whirl the other way.
+;   * Grow by 1.1 instead of 1.05 (the squares get big fast).
+;   * Use triangles instead of squares.
+; ============================================================
+
+; Square spirals, often nicknamed "squirals", have been drawn in Logo
+; classrooms since the turtle first appeared. They show how a gentle
+; change, repeated many times, makes a curve out of straight lines.
+
+to square :size
+  repeat 4 [forward :size right 90]
+end
+
+; A filled square, colored by its number N. Three sine waves, a third
+; of a circle apart, walk the color smoothly around the rainbow.
+to colored.square :size :n
+  setpencolor [30 30 45]
+  filled (list 150 + 100 * sin :n * 6  150 + 100 * sin :n * 6 + 120  150 + 100 * sin :n * 6 + 240) [square :size]
+end
+
+; Each FILLED square covers the ones drawn before it. If we started
+; small, the big squares would hide everything. So we draw backwards:
+; the biggest square first, the smallest last. Square number N has size
+; 8 times GROW to the power N - 1, and is turned (N - 1) times TURN.
+to squiral :count :grow :turn
+  localmake "h heading
+  for [n :count 1] [
+    setheading :h + (:n - 1) * :turn
+    colored.square 8 * power :grow :n - 1 :n
+  ]
+end
+
+to line.squiral :count :grow :turn
+  localmake "size 6
+  repeat :count [
+    setpencolor (list 60 + repcount * 2.5 220 - repcount * 2 255)
+    square :size
+    right :turn
+    make "size :size * :grow
+  ]
+end
+
+clearscreen hideturtle
+setbackground [30 30 45]
+setpensize 1
+penup setxy -160 50 setheading 0 pendown
+squiral 60 1.05 9
+penup setxy 250 -30 setheading 0 pendown
+setpensize 2
+line.squiral 72 1.04 10

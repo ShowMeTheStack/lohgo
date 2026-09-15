@@ -1,0 +1,123 @@
+; ============================================================
+; TITLE:    Dynaturtle
+; CATEGORY: Classic Logo
+; LEVEL:    Advanced
+; TAGS:     Mindstorms, physics, keyboard, velocity, WRAP
+; SUMMARY:  Papert's dynaturtle: a turtle that keeps moving after you kick it, so you have to think like Newton to park it on a target.
+; ============================================================
+;
+; WHAT IT DOES
+;   This turtle does not stop when you stop pressing keys. A kick
+;   changes its speed, and it keeps drifting in a straight line until
+;   another kick changes that. The game is to stop the turtle on the
+;   yellow target. Turning does NOT change the way it drifts, which is
+;   the surprising part.
+;
+; HOW TO USE
+;   Press Run, then CLICK THE TURTLE WORLD so it gets your keys.
+;     LEFT / RIGHT arrows   turn the turtle 15 degrees
+;     UP arrow or space     kick it forward (in the way it is facing)
+;     Q                     quit
+;   To stop, turn the turtle to face backwards and kick. Park on the
+;   target with a speed under 0.6 to score. Press Stop to end.
+;
+; CONCEPTS YOU WILL LEARN
+;   * velocity as two numbers, a sideways speed and an up-down speed
+;   * a kick adds to the velocity using SIN and COS of the heading
+;   * WRAP mode, so the turtle leaves one side and comes back on the other
+;   * a game loop that reads keys with KEYP and READCHAR without waiting
+;
+; THINGS TO TRY
+;   * Add a little friction: multiply both speeds by 0.99 every step.
+;   * Make kicks stronger or weaker.
+;   * Add gravity: take 0.02 off the up-down speed every step.
+; ============================================================
+
+; In Mindstorms (1980) Seymour Papert describes the "dynaturtle", a
+; turtle that obeys Newton's laws of motion. Children (and, he notes,
+; physics students) expected it to go where it was pointing, and were
+; surprised that it kept its old motion. Playing with it builds a feel
+; for velocity that a page of equations does not.
+
+to setup
+  clearscreen
+  wrap
+  setbackground :sky
+  setshape "arrow
+  setpencolor [120 200 255]
+  penup home
+  showturtle
+  make "vx 0
+  make "vy 0
+  make "score 0
+  make "target [0 0]
+  new.target
+  print [Click the turtle world. Arrows turn, UP or space kicks, Q quits.]
+end
+
+; Erase the old target (paint over it in the background color) and put
+; a new one somewhere random.
+to new.target
+  draw.target :target "true
+  make "target list (random 600) - 300 (random 400) - 200
+  draw.target :target "false
+end
+
+; The target is a yellow ring: a big yellow dot with a smaller dot of
+; the background color in the middle.
+to draw.target :place :erase
+  localmake "color pencolor
+  setpensize 36
+  ifelse :erase [setpencolor :sky] [setpencolor [250 210 50]]
+  dot :place
+  setpensize 18
+  setpencolor :sky
+  dot :place
+  setpensize 1
+  setpencolor :color
+end
+
+; A kick of strength 0.5 in the direction the turtle faces. Heading 0
+; is up, so the sideways part uses SIN and the up-down part uses COS.
+to kick
+  make "vx :vx + 0.5 * sin heading
+  make "vy :vy + 0.5 * cos heading
+  tone 180 15
+end
+
+to keys
+  if not keyp [stop]
+  localmake "k readchar
+  if emptyp :k [stop]
+  if equalp :k "LEFT [left 15]
+  if equalp :k "RIGHT [right 15]
+  if or equalp :k "UP equalp :k "| | [kick]
+  if equalp :k "q [throw "quit]
+end
+
+to speed
+  output sqrt :vx * :vx + :vy * :vy
+end
+
+to check.target
+  if (distance :target) > 14 [stop]
+  if speed > 0.6 [stop]
+  make "score :score + 1
+  print (sentence [Parked! Score:] :score)
+  sound [523 80 659 80 784 120]
+  new.target
+end
+
+; One tick: read a key, drift, check. SETXY in WRAP mode wraps the turtle
+; round the edges for us, so we just add the velocity to the position.
+to tick
+  keys
+  setxy xcor + :vx ycor + :vy
+  check.target
+  wait 1
+end
+
+make "sky [15 20 40]
+setup
+catch "quit [forever [tick]]
+print (sentence [Bye! You parked] :score [times.])

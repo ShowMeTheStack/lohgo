@@ -1,0 +1,99 @@
+; ============================================================
+; TITLE:    Teach the Turtle a New Word
+; CATEGORY: Classic Logo
+; LEVEL:    Intermediate
+; TAGS:     DEFINE, procedures, RUN, CATCH, interactive
+; SUMMARY:  You type a name and some commands, and the program teaches them to Logo as a brand new procedure with DEFINE.
+; ============================================================
+;
+; WHAT IT DOES
+;   Asks you for the name of a new word, then for the turtle commands
+;   that the word should mean. It tries the commands, and if they work
+;   it uses DEFINE to make a real Logo procedure with that name. Then
+;   it draws your new word three times in a row, so you can see it is
+;   now part of the language.
+;
+; HOW TO USE
+;   Press Run and answer in the command center, for example:
+;     name:      zigzag
+;     commands:  repeat 3 [rt 45 fd 30 lt 90 fd 30 rt 45]
+;   Type quit (or press Enter on an empty line) to stop. Your new
+;   words stay defined, so afterwards you can type  zigzag  yourself.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a procedure is really just a name plus a list of instructions
+;   * DEFINE builds a procedure from lists while the program runs
+;   * CATCH "ERROR keeps a mistake from stopping the whole program
+;   * RUN carries out a list of instructions
+;
+; THINGS TO TRY
+;   * Teach a word that uses another word you taught before.
+;   * Type  po "zigzag  (PRINTOUT) to see the procedure you made.
+;   * Make the program ask for an input, like :size, for the new word.
+; ============================================================
+
+; Seymour Papert liked to say that in Logo the child teaches the
+; computer, rather than the other way round. Every TO ... END teaches
+; Logo a new word. This program makes that idea very concrete: the
+; words you invent here become real procedures, the same as if you had
+; typed TO ... END in the editor.
+
+to ask.name
+  print []
+  print [What new word shall we teach the turtle? Type quit to stop.]
+  localmake "name readword
+  if emptyp :name [output "quit]
+  if memberp :name [quit bye stop exit] [output "quit]
+  ; The name must be one plain word that is not a number and not
+  ; already a Logo primitive (we cannot teach FORWARD a new meaning).
+  if numberp :name [print [A number cannot be a new word. Try a name like zigzag.] output ask.name]
+  if memberp "| | :name [print [Just one word please, with no spaces.] output ask.name]
+  if primitivep :name [print (sentence :name [is already a Logo word. Pick another.]) output ask.name]
+  ; and not one of this program's own procedures, or it would break itself
+  if memberp :name [ask.name ask.commands show.off teach] [
+    print [That word is part of this program. Pick another.] output ask.name]
+  output :name
+end
+
+; Ask for commands until they run without an error. A bad answer
+; prints Logo's own error message, which is a good hint.
+to ask.commands :name :tries
+  if :tries = 0 [output []]
+  print (sentence [What should] :name [mean? Type turtle commands, like  fd 50 rt 90])
+  localmake "body readlist
+  if emptyp :body [output []]
+  if memberp first :body [quit bye stop exit] [output []]
+  clean penup home pendown
+  catch "error [run :body output :body]
+  print (sentence [Hmm, the turtle could not do that:] item 2 error)
+  output ask.commands :name :tries - 1
+end
+
+; Show the new word three times along a line, so you see it is reusable.
+to show.off :name
+  clean
+  foreach [-250 0 250] [
+    penup setxy ? 0 setheading 0 pendown
+    setpencolor item 1 + random 4 [[220 60 60] [40 120 220] [40 160 80] [230 140 20]]
+    run (list :name)
+  ]
+end
+
+to teach
+  localmake "name ask.name
+  if equalp :name "quit [print [Thanks for teaching me!] stop]
+  localmake "body ask.commands :name 5
+  if emptyp :body [print [All right, let's stop here.] stop]
+  define :name (list [] :body)
+  print (sentence [Now the turtle knows] word :name ". [Here it is three times:])
+  show.off :name
+  teach
+end
+
+clearscreen
+setpensize 3
+; A word taught before you start, as an example.
+define "triangle [[] [repeat 3 [forward 80 right 120]]]
+print [I already know TRIANGLE. Watch!]
+triangle
+teach

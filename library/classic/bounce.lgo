@@ -1,0 +1,93 @@
+; ============================================================
+; TITLE:    Bounce
+; CATEGORY: Classic Logo
+; LEVEL:    Beginner
+; TAGS:     animation, reflection, headings, sound
+; SUMMARY:  A turtle ball bounces around a billiard table, beeping at each cushion and leaving a colorful trail.
+; ============================================================
+;
+; WHAT IT DOES
+;   The turtle runs around inside a table. When it reaches a side it
+;   bounces off like a billiard ball, changes the color of its trail and
+;   beeps. After a while the trail makes a criss-cross lattice.
+;
+; HOW TO USE
+;   Press Run and watch (turn the sound on). Press Stop to end it.
+;   Change the starting heading at the bottom, for example to 30 or 45.
+;
+; CONCEPTS YOU WILL LEARN
+;   * how a heading changes when something bounces off a wall
+;   * IF to check the walls on every step
+;   * a simple animation loop with WAIT
+;
+; THINGS TO TRY
+;   * Start with heading 45 on a square table. What happens?
+;   * Make the table smaller or wider.
+;   * Add a second turtle with a different heading.
+; ============================================================
+
+; Bouncing things were one of the first animations people wrote in Logo.
+; The geometry is simple and worth knowing. A heading counts clockwise
+; from straight up. Bouncing off a left or right wall flips the
+; sideways part of the motion, which makes the new heading 360 minus
+; the old one. Bouncing off the top or bottom flips the up-down part:
+; the new heading is 180 minus the old one.
+
+make "halfwidth 330
+make "halfheight 220
+
+to table
+  penup setxy 0 - :halfwidth - 12 0 - :halfheight - 12 setheading 0 pendown
+  setpencolor [90 50 20]
+  setpensize 16
+  repeat 2 [forward 2 * :halfheight + 24 right 90 forward 2 * :halfwidth + 24 right 90]
+  setpensize 2
+end
+
+to beep
+  tone 300 + random 500 25
+end
+
+to next.color
+  make "hue :hue + 1
+  setpencolor item 1 + remainder :hue 6 [[255 220 80] [255 120 120] [120 220 255] [200 160 255] [140 255 160] [255 180 90]]
+end
+
+; One step of the ball. After moving, check each wall. We also put the
+; ball back inside the wall, so it can never get stuck outside.
+to move.ball
+  forward 6
+  if (abs xcor) > :halfwidth [
+    setheading 360 - heading
+    setx :halfwidth * sign xcor
+    next.color beep
+  ]
+  if (abs ycor) > :halfheight [
+    setheading 180 - heading
+    sety :halfheight * sign ycor
+    next.color beep
+  ]
+end
+
+to sign :n
+  if :n < 0 [output -1]
+  output 1
+end
+
+to bounce :start.heading
+  clearscreen
+  setbackground [20 90 50]
+  table
+  make "hue 0
+  penup home pendown
+  setheading :start.heading
+  setshape "circle
+  showturtle
+  next.color
+  repeat 3000 [
+    move.ball
+    if (remainder repcount 4) = 0 [wait 1]
+  ]
+end
+
+bounce 23

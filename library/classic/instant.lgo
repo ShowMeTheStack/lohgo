@@ -1,0 +1,96 @@
+; ============================================================
+; TITLE:    INSTANT: One Key, One Command
+; CATEGORY: Classic Logo
+; LEVEL:    Beginner
+; TAGS:     keyboard, READCHAR, young children, CASE
+; SUMMARY:  Drive the turtle with single letters (F, B, R, L and friends), the way the youngest Logo users first met the turtle.
+; ============================================================
+;
+; WHAT IT DOES
+;   Each key you press is one turtle command, done at once. F walks
+;   forward, R turns right, C changes the color, and so on. A help card
+;   is written in the corner of the screen.
+;
+; HOW TO USE
+;   Press Run, then CLICK THE TURTLE WORLD so it gets your key presses.
+;     F  forward 30        B  back 30
+;     R  right 30          L  left 30
+;     U  pen up            D  pen down
+;     C  next color        H  go home
+;     S  stamp a turtle    E  erase everything
+;     Q  quit
+;   The arrow keys work too.
+;
+; CONCEPTS YOU WILL LEARN
+;   * READCHAR waits for one key and outputs it
+;   * CASE picks what to do from a list of choices
+;   * a loop that keeps going until you say stop
+;
+; THINGS TO TRY
+;   * Add a key T that turns the turtle around (right 180).
+;   * Make F walk 10 steps instead of 30 for finer drawings.
+;   * Add a key that draws a whole square in one go.
+; ============================================================
+
+; Very young children can drive the turtle before they can type whole
+; words. Early Logo classrooms often gave them a little program like
+; this one, usually called INSTANT: every key does one thing right away.
+; Later the children learn that the same commands can be typed in full
+; and saved as procedures of their own.
+
+to help.card
+  penup setxy -390 280 setheading 0
+  setpencolor 15
+  setlabelheight 14
+  foreach [[F forward, B back] [R right, L left] [U pen up, D pen down] ~
+           [C color, H home] [S stamp, E erase] [Q quit]] [
+    label ?
+    setxy -390 ycor - 18
+  ]
+  penup home pendown
+end
+
+to next.color
+  make "colors lput first :colors butfirst :colors
+  setpencolor first :colors
+end
+
+; DO.KEY carries out one key. CASE ignores upper and lower case, so f
+; and F both work. Keys we do not know are ignored, so nothing bad can
+; happen whatever a child presses.
+to do.key :key
+  case :key [
+    [[f UP] forward 30]
+    [[b DOWN] back 30]
+    [[r RIGHT] right 30]
+    [[l LEFT] left 30]
+    [[u] penup]
+    [[d] pendown]
+    [[c] next.color]
+    [[h] home]
+    [[s] stamp]
+    [[e] clean help.card]
+    [else ignore :key]
+  ]
+end
+
+to instant
+  clearscreen
+  setbackground [245 245 235]
+  setpensize 3
+  setshape "turtle
+  make "colors [[30 90 220] [220 50 50] [40 160 70] [240 150 20] [150 60 200] [0 0 0]]
+  help.card
+  setpencolor first :colors
+  showturtle
+  print [Click the turtle world, then press F B R L U D C H S E. Q quits.]
+  forever [
+    localmake "key readchar
+    ; READCHAR can give back an empty list if the keyboard is gone
+    if emptyp :key [stop]
+    if equalp :key "q [print [Bye!] stop]
+    do.key :key
+  ]
+end
+
+instant

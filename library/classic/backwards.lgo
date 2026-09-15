@@ -1,0 +1,90 @@
+; ============================================================
+; TITLE:    Backwards Words and Palindromes
+; CATEGORY: Classic Logo
+; LEVEL:    Intermediate
+; TAGS:     words, recursion, palindromes, OUTPUT
+; SUMMARY:  Writes its own recursive REVERSE, shows every step of the recursion, and checks your words for palindromes.
+; ============================================================
+;
+; WHAT IT DOES
+;   First it shows how a recursive procedure turns "turtle" into
+;   "eltrut", one level at a time. Then you type words or sentences and
+;   it says them backwards and tells you if they are palindromes
+;   (the same both ways, like "racecar" or "step on no pets").
+;
+; HOW TO USE
+;   Press Run and type in the command center. An empty line or the
+;   word quit stops the program.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a recursive operation: the answer for a big word is built from
+;     the answer for a smaller one
+;   * the base case: an empty word reversed is still empty
+;   * the same idea works on words (letters) and sentences (words)
+;
+; THINGS TO TRY
+;   * Change SHOW.BACKWARDS to use LAST and BUTLAST instead of FIRST and BUTFIRST.
+;   * Find a palindrome sentence of your own.
+;   * Logo already has REVERSE built in. Check that it agrees with ours.
+; ============================================================
+
+; Reversing a word is a favorite first example of a recursive operation
+; in Logo books, Brian Harvey's Computer Science Logo Style among them.
+; The idea: the backwards of "turtle" is the backwards of "urtle"
+; followed by "t". We call ours BACKWARDS because REVERSE is already a
+; Logo primitive.
+
+to backwards :thing
+  if emptyp :thing [output :thing]
+  if wordp :thing [output word backwards butfirst :thing first :thing]
+  ; for a sentence, move whole words instead of letters
+  output lput first :thing backwards butfirst :thing
+end
+
+; The same procedure, but it prints what happens on the way down and
+; on the way back up. INDENT pushes each level further to the right.
+to show.backwards :thing :indent
+  type :indent print (sentence [backwards of] :thing [= ?])
+  if emptyp :thing [type :indent print [the empty word, so the answer is empty] output "]
+  localmake "rest show.backwards butfirst :thing word :indent "|  |
+  localmake "answer word :rest first :thing
+  type :indent print (sentence [backwards of] :thing [is] :answer)
+  output :answer
+end
+
+; Letters and digits only, all lower case, so "Step on no pets" still counts.
+to squash :sentence
+  output lowercase filter [keepp ?] reduce [word ?1 ?2] fput " :sentence
+end
+
+to keepp :char
+  output memberp lowercase :char "abcdefghijklmnopqrstuvwxyz0123456789
+end
+
+to palindromep :sentence
+  localmake "letters squash :sentence
+  if emptyp :letters [output "false]
+  output equalp :letters backwards :letters
+end
+
+to ask.loop
+  print []
+  print [Type a word or a sentence, or quit to stop:]
+  localmake "line readlist
+  if emptyp :line [print [Bye!] stop]
+  if equalp :line [quit] [print [!eyB] stop]
+  ; one word: turn its letters around; several words: turn the sentence
+  ifelse (count :line) = 1 ~
+    [print sentence [Backwards:] backwards first :line] ~
+    [print sentence [Backwards:] backwards :line]
+  print sentence [Letter by letter:] backwards squash :line
+  ifelse palindromep :line ~
+    [print [That is a palindrome!]] ~
+    [print [Not a palindrome.]]
+  ask.loop
+end
+
+ignore show.backwards "turtle "
+print []
+print [Now you try. Palindromes to test: racecar, step on no pets, never odd or even]
+ask.loop

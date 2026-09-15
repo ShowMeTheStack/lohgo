@@ -1,0 +1,96 @@
+; ============================================================
+; TITLE:    The Wandering Turtles
+; CATEGORY: Classic Logo
+; LEVEL:    Intermediate
+; TAGS:     random, several turtles, distance, square root
+; SUMMARY:  Four turtles take random steps on a grid, and the program checks how far a random walker really gets.
+; ============================================================
+;
+; WHAT IT DOES
+;   Four turtles start in the middle. Each one, again and again, picks
+;   one of the four directions at random and takes a step of 10. Their
+;   colored trails spread out like ink in water. At the end the program
+;   prints how far each turtle ended up from home and compares it with
+;   the square-root rule for random walks.
+;
+; HOW TO USE
+;   Press Run and watch. Run again for a different walk. Change the
+;   number of steps in the last line.
+;
+; CONCEPTS YOU WILL LEARN
+;   * RANDOM to make choices
+;   * ASK to move several turtles
+;   * DISTANCE to measure how far a turtle is from a point
+;   * a surprising fact: after N steps you are usually about the
+;     square root of N steps from where you started
+;
+; THINGS TO TRY
+;   * Allow 8 directions (turn by multiples of 45).
+;   * Make the turtles walk 4 times as long. Do they get 4 times as far?
+;   * Use WRAP so turtles that leave on one side come back on the other.
+; ============================================================
+
+; The random walk is a classic turtle experiment: it shows how chance,
+; repeated, has a shape of its own. A walker who takes N steps of
+; length L, each in a random direction, ends up on average roughly
+; L times the square root of N from the start (not N times L, as you
+; might first guess, because many steps cancel out).
+
+make "colors [[230 60 60] [40 140 230] [40 170 80] [240 160 20]]
+
+to setup
+  clearscreen
+  setbackground [248 246 240]
+  grid
+  foreach [0 1 2 3] [
+    setturtle ?
+    penup home pendown
+    setpensize 2
+    setpencolor item ? + 1 :colors
+    setshape "circle
+    showturtle
+  ]
+end
+
+; A pale grid, so you can see the walkers stay on the lines.
+to grid
+  setpencolor [225 222 210]
+  setpensize 1
+  for [x -400 400 10] [penup setxy :x -300 pendown setxy :x 300]
+  for [y -300 300 10] [penup setxy -400 :y pendown setxy 400 :y]
+end
+
+; One random step: face one of the four directions and walk 10.
+to wander
+  setheading 90 * random 4
+  forward 10
+end
+
+to walk :steps
+  repeat :steps [
+    foreach [0 1 2 3] [ask ? [wander]]
+    if (remainder repcount 5) = 0 [wait 1]
+  ]
+end
+
+to report :steps
+  print (sentence [After] :steps [steps of 10:])
+  localmake "total 0
+  foreach [0 1 2 3] [
+    localmake "d ask.distance ?
+    make "total :total + :d
+    print (sentence [turtle] ? [is] round :d [steps from home])
+  ]
+  print (sentence [Their average is] round :total / 4 [steps.])
+  print (sentence [The square-root rule says about] round 10 * sqrt :steps [steps.])
+  print [With only four walkers the average can be far off. Run it again!]
+end
+
+to ask.distance :who
+  setturtle :who
+  output distance [0 0]
+end
+
+setup
+walk 600
+report 600

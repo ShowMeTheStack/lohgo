@@ -1,0 +1,106 @@
+; ============================================================
+; TITLE:    Spirolaterals
+; CATEGORY: Classic Logo
+; LEVEL:    Intermediate
+; TAGS:     patterns, total turning, closing paths, grids
+; SUMMARY:  Walk 1, 2, 3 ... N steps turning the same way after each, repeat, and see which spirolaterals come home and which wander away.
+; ============================================================
+;
+; WHAT IT DOES
+;   Draws six spirolaterals in a grid. A spirolateral of order N walks
+;   1 unit, turns, walks 2 units, turns, and so on up to N units, then
+;   starts again at 1. Most of them come back home and close into a
+;   pattern; one in the grid never closes, and the label says so.
+;   The last one uses a "reversal": on some steps it turns left.
+;
+; HOW TO USE
+;   Press Run. Try your own with  clean ignore spiro 10 6 90 []  in the
+;   command center: unit size, order and angle, then a list of the
+;   steps that turn left instead of right.
+;
+; CONCEPTS YOU WILL LEARN
+;   * nested loops: an inner FOR inside an outer loop
+;   * the total turning rule: a path closes when its turning adds up
+;     to a whole number of full turns (and it is not a straight line)
+;   * why order 4 with 90 degrees runs away
+;
+; THINGS TO TRY
+;   * Find all the orders that never close with 90 degrees. (Try 8, 12.)
+;   * Try angle 60 or 120 with orders 3 to 10.
+;   * Put a reversal on the first and the last step.
+; ============================================================
+
+; Spirolaterals were first described by Frank Odds in the 1970s, and
+; teachers soon found they suit the turtle perfectly: each one is
+; just FORWARD and RIGHT inside two loops. They fit the idea from
+; Turtle Geometry that a path closes when its total turning is a
+; multiple of 360.
+
+; One round: walk 1, 2, ... ORDER units. Steps whose numbers are in the
+; LEFTS list turn left instead of right. While measuring, every corner
+; is added to the box the figure covers.
+to spiro.round :unit :order :angle :lefts
+  for [i 1 :order] [
+    forward :i * :unit
+    if :measuring [grow.box]
+    ifelse memberp :i :lefts [left :angle] [right :angle]
+  ]
+end
+
+; Repeat rounds until the turtle is back at the start facing the same
+; way, or give up after 12 rounds. Outputs the number of rounds, or 0.
+to spiro :unit :order :angle :lefts
+  localmake "start pos
+  localmake "h heading
+  repeat 12 [
+    spiro.round :unit :order :angle :lefts
+    if and (distance :start) < 0.01 (abs (heading - :h)) < 0.01 [output repcount]
+  ]
+  output 0
+end
+
+to grow.box
+  make "box (list min xcor item 1 :box  max xcor item 2 :box  min ycor item 3 :box  max ycor item 4 :box)
+end
+
+to min :a :b
+  output ifelse :a < :b [:a] [:b]
+end
+
+to max :a :b
+  output ifelse :a > :b [:a] [:b]
+end
+
+; Draw one spirolateral centred in the cell around (X, Y), with a
+; caption under it. First a pen-up walk with unit 1 measures it, then
+; the unit is chosen so the figure fills a 190 by 150 space.
+to cell :x :y :order :angle :lefts :color
+  make "measuring "true
+  make "box [0 0 0 0]
+  penup home
+  ignore spiro 1 :order :angle :lefts
+  make "measuring "false
+  localmake "unit min 190 / ((item 2 :box) - (item 1 :box)) 150 / ((item 4 :box) - (item 3 :box))
+  setxy :x - :unit * ((item 1 :box) + (item 2 :box)) / 2 :y + 15 - :unit * ((item 3 :box) + (item 4 :box)) / 2
+  setheading 0
+  pendown
+  setpencolor :color
+  localmake "rounds spiro :unit :order :angle :lefts
+  penup setxy :x - 70 :y - 95 setheading 0
+  setpencolor [60 60 60]
+  label (sentence "order :order "angle :angle ifelse emptyp :lefts [[]] [(sentence [left on] :lefts)])
+  setxy :x - 70 :y - 113
+  ifelse :rounds = 0 [label [never closes]] [label (sentence [closes after] :rounds [rounds])]
+end
+
+clearscreen hideturtle
+setbackground [250 248 242]
+setpensize 2
+setlabelheight 14
+make "measuring "false
+cell -265 150 3 90 [] [220 70 60]
+cell 0 150 5 90 [] [40 120 210]
+cell 265 150 7 90 [] [40 160 80]
+cell -265 -130 4 90 [] [150 80 200]
+cell 0 -130 5 120 [] [230 140 20]
+cell 265 -130 7 90 [3] [200 60 140]

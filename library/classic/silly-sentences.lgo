@@ -1,0 +1,80 @@
+; ============================================================
+; TITLE:    Silly Sentence Machine
+; CATEGORY: Classic Logo
+; LEVEL:    Intermediate
+; TAGS:     words, grammar, recursion, property lists, random
+; SUMMARY:  A tiny grammar stored in property lists grows random, grammatical and quite silly sentences.
+; ============================================================
+;
+; WHAT IT DOES
+;   Prints ten random sentences such as
+;     "the purple turtle quietly tickles a sleepy teacher near the moon."
+;   Every sentence follows the same rules of grammar, but the words are
+;   picked at random, so you get a new batch every run.
+;
+; HOW TO USE
+;   Press Run. Run it again for new sentences. Type  print expand "sentence
+;   in the command center for one more.
+;
+; CONCEPTS YOU WILL LEARN
+;   * a grammar: rules that say how bigger parts are built from smaller ones
+;   * property lists (PPROP and GPROP) as a little dictionary
+;   * a recursive operation that expands a part into words
+;   * PICK to choose at random, MAP.SE to join the pieces into a sentence
+;
+; THINGS TO TRY
+;   * Add your own nouns and verbs, maybe names of your friends.
+;   * Add a rule so a sentence can be "sentence and sentence".
+;   * Make a question rule: "does the turtle tickle the moon?"
+; ============================================================
+
+; The very first Logo, in the late 1960s, had no turtle at all. It
+; worked with words and sentences, and making the computer write
+; funny sentences was one of the things children did with it. This
+; program keeps that spirit, using a grammar the way a linguist would.
+
+; RULE stores the choices for one part of speech. Each choice is a list
+; of parts; a part that has no rule of its own is an actual word.
+to rule :part :choices
+  pprop "grammar :part :choices
+end
+
+to grammar
+  rule "sentence     [[nounphrase verbphrase .] [nounphrase verbphrase place .]]
+  rule "nounphrase   [[article noun] [article adjective noun] [article adjective noun]]
+  rule "verbphrase   [[verb nounphrase] [adverb verb nounphrase] [verb nounphrase]]
+  rule "place        [[near article noun] [under the bed] [on the moon] [in a teapot]]
+  rule "article      [[the] [a] [my] [every]]
+  rule "adjective    [[purple] [sleepy] [enormous] [tiny] [grumpy] [polite] [wobbly]]
+  rule "noun         [[turtle] [teacher] [banana] [robot] [giraffe] [cloud] [pirate]]
+  rule "verb         [[tickles] [paints] [follows] [sings to] [borrows] [hugs] [ignores]]
+  rule "adverb       [[quietly] [bravely] [slowly] [secretly] [happily]]
+end
+
+; EXPAND turns a part into a list of words. If the part has a rule, it
+; picks one choice and expands every piece of it. If not, the part is
+; a word already and we just hand it back. This is the base case.
+to expand :part
+  localmake "choices gprop "grammar :part
+  if emptyp :choices [output (list :part)]
+  output map.se [expand ?] pick :choices
+end
+
+; The sentence comes out as a list of words with a "." at the end. To
+; print it nicely we glue the full stop onto the last word.
+to tidy :words
+  output lput (word last butlast :words last :words) butlast butlast :words
+end
+
+; Capitalize the first letter of the first word.
+to capital :words
+  localmake "w first :words
+  output fput (word uppercase first :w butfirst :w) butfirst :words
+end
+
+grammar
+print [Ten silly sentences:]
+print []
+repeat 10 [
+  print (sentence (word repcount ".) capital tidy expand "sentence)
+]
