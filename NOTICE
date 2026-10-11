@@ -1,0 +1,74 @@
+Lohgo
+Copyright (c) 2026 Jyotiprakash Mishra <mail@jyotiprakash.org>
+https://lohgo.jyotiprakash.org
+
+This notice says which terms cover which parts of this repository. If a file is
+not listed below, it is covered by section 1.
+
+
+1. SOFTWARE AND CONTENT: GNU General Public License v3.0 or later, with an
+   attribution term
+   -------------------------------------------------------------------------------
+
+   Covered: everything in this repository, including the Logo interpreter, the
+   studio (editor, turtle world, command center, debugger), the build and test
+   tools, the example programs (samples/), the program library (library/), the
+   lessons, the tours, the language reference text, and the built index.html.
+
+   License text: LICENSE (GNU GPL v3.0). You may use, modify and distribute this
+   work under GPL-3.0-or-later. Derived works must be distributed under the same
+   license, with their complete corresponding source code.
+
+   Additional term under section 7(b) of the GNU GPL v3.0:
+   Every copy and every derived work must preserve the following author
+   attribution, both in the source files and in the Appropriate Legal Notices
+   displayed by any work that contains or is built from this software (for an
+   interactive program or a website, in an "About" box or on a page that is
+   reachable from every screen, such as an "About" or "Credits" page):
+
+       Based on "Lohgo" by Jyotiprakash Mishra
+       (https://lohgo.jyotiprakash.org)
+
+   This applies equally to modified versions, translations, ports to other
+   languages, and works that include any part of the example programs, the
+   library programs, the lessons or the reference text. Removing or obscuring
+   this attribution is a violation of the license, and under section 8 of the
+   GNU GPL it terminates your rights under it.
+
+   Additional term under section 7(c) of the GNU GPL v3.0:
+   Modified versions must be marked as changed from the original, in reasonable
+   ways, and must not be presented as the original Lohgo.
+
+
+2. NAMES (not licensed)
+   -------------------------------------------------------------------------------
+
+   The name "Lohgo" and the domain lohgo.jyotiprakash.org identify the author's
+   work. Under section 7(e) of the GNU GPL v3.0, no rights are granted to use
+   them for a derived work, except to give the attribution required above.
+
+
+3. OTHER LOGO IMPLEMENTATIONS
+   -------------------------------------------------------------------------------
+
+   Lohgo implements the Logo language as documented for Berkeley Logo (UCBLogo,
+   by Brian Harvey and others at the University of California, Berkeley) and
+   adds commands in the style of MSWLogo and FMSLogo and of LCSI Logo. It was
+   written from scratch and contains no code from any of these projects. The
+   names of these implementations are used only to describe compatibility.
+
+
+4. TRADEMARKS
+   -------------------------------------------------------------------------------
+
+   "Logo" is the name of a programming language and is used here in that sense.
+   MicroWorlds and LogoWriter are trademarks of Logo Computer Systems Inc.
+   Terrapin is a trademark of Terrapin Software. Apple and Apple II are
+   trademarks of Apple Inc. Windows is a trademark of Microsoft Corporation.
+   Chrome and Chromium are trademarks of Google LLC. GitHub is a trademark of
+   GitHub, Inc. All other trademarks are the property of their respective
+   owners.
+
+   These names are used only to describe compatibility and history. Lohgo is an
+   independent implementation. It is not affiliated with, endorsed by, or
+   sponsored by any of these organisations or projects.
