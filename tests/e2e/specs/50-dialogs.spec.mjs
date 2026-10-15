@@ -46,6 +46,7 @@ export default function (t) {
     p.assert.deepEqual(links, [
       ['lohgo.jyotiprakash.org', 'https://lohgo.jyotiprakash.org/', '_blank', 'noopener'],
       ['source code', 'https://github.com/ShowMeTheStack/lohgo', '_blank', 'noopener'],
+      ['About the author…', p.b.url + '#', '', ''],
     ]);
     await p.key('Escape');
   }, { fresh: true });

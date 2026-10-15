@@ -1055,3 +1055,25 @@ body.touch .world-keys { display: flex; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* About the author: a retro snapshot pinned to the paper */
+.modal.author-modal { width: min(760px, 100%); }
+.author-head { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; margin: 6px 0 14px; }
+.author-photo { position: relative; flex-shrink: 0; width: 180px; height: 225px; padding: 8px 8px 26px; background: #fbf8f1;
+  box-shadow: var(--shadow-pop); transform: rotate(-2.5deg); border-radius: 3px; }
+.author-photo img { display: block; width: 100%; height: 100%; image-rendering: pixelated; filter: contrast(1.05); }
+.author-photo::after { content: ""; position: absolute; left: 8px; right: 8px; top: 8px; bottom: 26px; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, .14) 0, rgba(0, 0, 0, .14) 1px, transparent 1px, transparent 3px),
+    radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, .35) 100%); }
+.author-name { font: 800 22px var(--font-head); letter-spacing: -.01em; margin-bottom: 4px; }
+.author-role { color: var(--ink-2); margin: 1px 0; }
+.author-nums { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 14px; margin: 12px 0 10px; font-size: 13px; }
+.author-nums b { color: var(--accent); font-size: 15px; }
+.author-links { font-size: 13px; }
+.author-sec { margin: 12px 0; }
+.author-sec-t { font: 700 11px var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.author-row { margin: 3px 0; padding-left: 14px; text-indent: -14px; font-size: 13.5px; }
+.welcome .welcome-by { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+.welcome .welcome-by a { color: inherit; }
+:root[data-theme="retro"] .author-photo { background: #031503; }
+@media (max-width: 560px) { .author-photo { width: 140px; height: 175px; transform: none; } .author-head { gap: 14px; } }

@@ -39,6 +39,7 @@
     "ide/help.js",
     "ide/lessons.js",
     "ide/library.js",
+    "ide/author.js",
     "ide/app.js"
   ],
   "css": [

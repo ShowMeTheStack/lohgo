@@ -907,6 +907,7 @@
         { label: 'Language reference', sc: 'F1', action: () => LG.Help && LG.Help.open(this) },
         { label: 'Keyboard shortcuts', action: () => this.shortcutsDialog() },
         { label: 'Colours and themes…', action: () => this.settingsDialog() },
+        { label: 'About the author', action: () => LG.authorDialog() },
         { label: 'About Lohgo', action: () => this.aboutDialog() },
       ];
     }
@@ -1067,7 +1068,11 @@
         There is NO WARRANTY.</p>
         <p class="muted">Logo is not a trademark. MSWLogo and FMSLogo are the work of their authors; Berkeley Logo (UCBLogo) is by
         Brian Harvey and others at the University of California, Berkeley. Lohgo is an independent implementation, is not affiliated
-        with or endorsed by any of them, and contains no code from them.</p>`);
+        with or endorsed by any of them, and contains no code from them.</p>
+        <p><a href="#" id="aboutAuthorLink">About the author&hellip;</a></p>`);
+      // close this dialog, then open the author's page
+      const a = document.getElementById('aboutAuthorLink');
+      if (a) a.addEventListener('click', (e) => { e.preventDefault(); const ok = a.closest('.modal').querySelector('.modal-foot button'); if (ok) ok.click(); LG.authorDialog(); });
     }
     async savePicture() {
       const url = this.turtleView.snapshotDataURL();
@@ -1086,7 +1091,8 @@
         h('h2', 'Hello! I am your turtle.'),
         h('p', 'Type a command below and press Enter, or click one of these:'),
         h('div.row', ex('fd 100 rt 90 fd 100'), ex('repeat 36 [fd 10 rt 10]'), ex('repeat 5 [fd 120 rt 144]')),
-        h('p', { style: { marginTop: '10px', marginBottom: '0' } }, 'Press ', h('kbd', 'F5'), ' to run the program in the editor.')));
+        h('p', { style: { marginTop: '10px', marginBottom: '0' } }, 'Press ', h('kbd', 'F5'), ' to run the program in the editor.'),
+        h('p.welcome-by', 'Made by ', h('a', { href: '#', id: 'welcomeAuthor', onclick: (e) => { e.preventDefault(); LG.authorDialog(); } }, 'Jyotiprakash Mishra'))));
       wrap.appendChild(this.welcomeEl);
     }
     hideWelcome() { if (this.welcomeEl) { this.welcomeEl.remove(); this.welcomeEl = null; } }

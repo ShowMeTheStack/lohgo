@@ -329,6 +329,7 @@ src/ide          the studio: turtle view, command center, editor, debugger
                  panels, files, library, lessons, tours, help, themes
 samples          the example programs
 library          the program library, one folder per category
+assets           the photo on the About the author page
 tests            language and debugger tests, and the headless end to end tests
 tools            build helpers, checkers, the Chrome driver, screenshots
 ```

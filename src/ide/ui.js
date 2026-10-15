@@ -122,7 +122,7 @@
     return new Promise((resolve) => {
       const prevFocus = document.activeElement;
       const back = h('div.modal-back', { role: 'presentation' });
-      const box = h('div.modal' + (opts.wide ? '.wide' : ''), { role: 'dialog', 'aria-modal': 'true', 'aria-label': opts.title || 'Dialog' });
+      const box = h('div.modal' + (opts.wide ? '.wide' : '') + (opts.cls ? '.' + opts.cls : ''), { role: 'dialog', 'aria-modal': 'true', 'aria-label': opts.title || 'Dialog' });
       const head = h('div.modal-head', opts.title || '');
       const body = h('div.modal-body');
       if (typeof opts.body === 'string') body.innerHTML = opts.body;

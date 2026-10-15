@@ -17,7 +17,7 @@ const EXPECTED = [
   ]],
   ['Help', [
     ['Learn Logo (lessons)', ''], ['Program library', ''], ['Guided tours', ''], ['Language reference', 'F1'],
-    ['Keyboard shortcuts', ''], ['Colours and themes…', ''], ['About Lohgo', ''],
+    ['Keyboard shortcuts', ''], ['Colours and themes…', ''], ['About the author', ''], ['About Lohgo', ''],
   ]],
 ];
 
